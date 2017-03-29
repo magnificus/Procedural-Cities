@@ -12,6 +12,15 @@ ASpawner::ASpawner()
 
 }
 
+TArray<FRoadSegment> ASpawner::executeLSystem()
+{
+	FVector origin;
+
+	//for 
+	
+	return TArray<FRoadSegment>();
+}
+
 // Called when the game starts or when spawned
 void ASpawner::BeginPlay()
 {
