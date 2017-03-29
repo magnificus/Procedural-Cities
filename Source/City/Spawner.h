@@ -28,6 +28,15 @@ class CITY_API ASpawner : public AActor
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = data, meta = (AllowPrivateAccess = "true"))
 	FString current;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = data, meta = (AllowPrivateAccess = "true"))
+		FVector stepLength;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = data, meta = (AllowPrivateAccess = "true"))
+		float changeIntensity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = data, meta = (AllowPrivateAccess = "true"))
+		int32 length;
 	
 public:	
 	// Sets default values for this actor's properties

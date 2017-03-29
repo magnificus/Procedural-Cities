@@ -2,6 +2,7 @@
 
 #include "City.h"
 #include "Spawner.h"
+#include "stdlib.h"
 
 
 // Sets default values
@@ -12,13 +13,42 @@ ASpawner::ASpawner()
 
 }
 
+
+float randFloat() {
+	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+}
 TArray<FRoadSegment> ASpawner::executeLSystem()
 {
 	FVector origin;
 
-	//for 
+	TArray<FRoadSegment> segments;
+
+	//.
+
+	FRotator rot = FRotator(0, 0, 0);
+	FRotator rot2nd = FRotator(0, 0, 0);
+	FVector prevEnd = FVector(stepLength);
+	FVector prevStart = FVector(0,0,0);
+
+	for (int i = 0; i < length; i++) {
+		rot2nd += FRotator(0, changeIntensity*(randFloat() - 0.5f), 0);
+		rot += rot2nd;
+		rot2nd.Yaw = rot2nd.Yaw > 10.0f ? 10.0f : rot2nd.Yaw;
+		rot2nd.Yaw = rot2nd.Yaw < -10.0f ? -10.0f : rot2nd.Yaw;
+		FRoadSegment f;
+		f.beginTangent = prevEnd - prevStart;
+		prevStart = prevEnd;
+		f.start = prevEnd;
+		f.end = f.start + rot.RotateVector(stepLength);
+		prevEnd = f.end;
+
+		f.width = 2;
+
+		segments.Add(f);
+
+	}
 	
-	return TArray<FRoadSegment>();
+	return segments;
 }
 
 // Called when the game starts or when spawned
