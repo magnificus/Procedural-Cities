@@ -3,7 +3,10 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "stdlib.h"
+#include <queue>
 #include "Spawner.generated.h"
+
 
 USTRUCT(BlueprintType)
 struct FRoadSegment
@@ -21,29 +24,57 @@ struct FRoadSegment
 
 };
 
+struct logicRoadSegment {
+	int time;
+	FRoadSegment* segment;
+	FRotator firstDegreeRot;
+	FRotator secondDegreeRot;
+	bool operator<(const logicRoadSegment& rhs) const {
+		return rhs.time < this->time;
+	}
+};
+
+
+
 UCLASS()
 class CITY_API ASpawner : public AActor
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = data, meta = (AllowPrivateAccess = "true"))
-	FString current;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = data, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		FVector stepLength;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = data, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float changeIntensity;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = data, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = limits, meta = (AllowPrivateAccess = "true"))
 		int32 length;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = limits, meta = (AllowPrivateAccess = "true"))
+		float maxDist;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+		float minAttachDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+		float mainRoadBranchChance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+		float secondaryRoadBranchChance;
 	
 public:	
 	// Sets default values for this actor's properties
 	ASpawner();
 
-	UFUNCTION(BlueprintCallable, Category = "LSystem")
-	TArray<FRoadSegment> executeLSystem();
+
+	void addRoadForward(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous);
+	void addRoadSide(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous, bool left, float width);
+	void addExtensions(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* current);
+
+	bool placementCheck(TArray<FRoadSegment> &segments, logicRoadSegment* current);
+
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	TArray<FRoadSegment> determineRoadSegments();
 
 protected:
 	// Called when the game starts or when spawned
@@ -53,6 +84,5 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	
 	
 };

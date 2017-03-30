@@ -2,7 +2,8 @@
 
 #include "City.h"
 #include "Spawner.h"
-#include "stdlib.h"
+
+
 
 
 // Sets default values
@@ -17,38 +18,129 @@ ASpawner::ASpawner()
 float randFloat() {
 	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
-TArray<FRoadSegment> ASpawner::executeLSystem()
+
+bool ASpawner::placementCheck(TArray<FRoadSegment> &segments, logicRoadSegment* current) {
+	return current->segment->start.Size() < maxDist;
+	 true;
+}
+
+void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous) {
+	FRoadSegment* prevSeg = previous->segment;
+	logicRoadSegment* newRoadL = new logicRoadSegment();
+	FRoadSegment* newRoad = new FRoadSegment();
+
+	newRoadL->secondDegreeRot = previous->secondDegreeRot + FRotator(0, changeIntensity*(randFloat() - 0.5f), 0);
+	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot;
+
+	newRoad->start = prevSeg->end;
+	newRoad->end = newRoad->start + newRoadL->firstDegreeRot.RotateVector(stepLength);
+	newRoad->beginTangent = prevSeg->end - prevSeg->start;
+	newRoad->width = prevSeg->width;
+	newRoadL->segment = newRoad;
+	newRoadL->time = previous->time;
+	queue.push(newRoadL);
+	
+}
+
+void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous, bool left, float width) {
+	FRoadSegment* prevSeg = previous->segment;
+	logicRoadSegment* newRoadL = new logicRoadSegment();
+	FRoadSegment* newRoad = new FRoadSegment();
+
+	newRoadL->secondDegreeRot = FRotator(0, changeIntensity*(randFloat() - 0.5f), 0);
+	FRotator newRotation = left ? FRotator(0, 270, 0) : FRotator(0, 90, 0);
+	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot + newRotation;
+
+	newRoad->start = prevSeg->end;
+	newRoad->end = newRoad->start + newRoadL->firstDegreeRot.RotateVector(stepLength);
+	newRoad->beginTangent = newRoad->end - newRoad->start;
+	newRoad->width = width;
+	newRoadL->segment = newRoad;
+	newRoadL->time = previous->time+1;
+	queue.push(newRoadL);
+}
+
+void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* current) {
+	FVector tangent = current->segment->end - current->segment->start;
+	if (current->segment->width == 2.0f) {
+		// on the main road, can add extensions
+
+		// forward
+		addRoadForward(queue, current);
+
+		if (randFloat() < mainRoadBranchChance) {
+			if (randFloat() < 0.5f) {
+				addRoadSide(queue, current, true, 1.5f);
+			}
+			else {
+				addRoadSide(queue, current, false, 1.5f);
+
+			}
+		}
+		//forward.
+	}
+
+	else if (current->segment->width == 1.5f) {
+		// side road
+		// forward
+		addRoadForward(queue, current);
+
+		if (randFloat() < secondaryRoadBranchChance) {
+			if (randFloat() < 0.5f) {
+				addRoadSide(queue, current, true, 1.0f);
+			}
+			else {
+				addRoadSide(queue, current, false, 1.0f);
+
+			}
+		}
+	}
+	else {
+		addRoadForward(queue, current);
+	}
+
+	// otherwise, only forward
+
+}
+
+TArray<FRoadSegment> ASpawner::determineRoadSegments()
 {
 	FVector origin;
 
-	TArray<FRoadSegment> segments;
+	TArray<FRoadSegment> determinedSegments;
 
 	//.
 
-	FRotator rot = FRotator(0, 0, 0);
-	FRotator rot2nd = FRotator(0, 0, 0);
-	FVector prevEnd = FVector(stepLength);
-	FVector prevStart = FVector(0,0,0);
+	// the first segment
+	std::priority_queue<logicRoadSegment*> queue;
+	logicRoadSegment* start = new logicRoadSegment();
+	start->time = 0;
+	FRoadSegment* startR = new FRoadSegment();
+	startR->beginTangent = stepLength;
+	startR->start = FVector(0, 0, 0);
+	startR->end = startR->start + stepLength;
+	startR->width = 2.0f;
+	start->segment = startR;
+	start->firstDegreeRot = FRotator(0, 0, 0);
+	start->secondDegreeRot = FRotator(0, 0, 0);
+	queue.push(start);
 
-	for (int i = 0; i < length; i++) {
-		rot2nd += FRotator(0, changeIntensity*(randFloat() - 0.5f), 0);
-		rot += rot2nd;
-		rot2nd.Yaw = rot2nd.Yaw > 10.0f ? 10.0f : rot2nd.Yaw;
-		rot2nd.Yaw = rot2nd.Yaw < -10.0f ? -10.0f : rot2nd.Yaw;
-		FRoadSegment f;
-		f.beginTangent = prevEnd - prevStart;
-		prevStart = prevEnd;
-		f.start = prevEnd;
-		f.end = f.start + rot.RotateVector(stepLength);
-		prevEnd = f.end;
+	// loop for everything else
 
-		f.width = 2;
+	while (queue.size() > 0 && determinedSegments.Num() < length) {
+		logicRoadSegment* current = queue.top();
+		queue.pop();
+		if (placementCheck(determinedSegments, current)) {
+			determinedSegments.Add(*(current->segment));
 
-		segments.Add(f);
-
+			//UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT START X %f"), current->segment->start.X);
+			addExtensions(queue, current);
+		}
+		delete(current->segment);
+		delete(current);
 	}
 	
-	return segments;
+	return determinedSegments;
 }
 
 // Called when the game starts or when spawned
