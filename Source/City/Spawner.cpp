@@ -19,9 +19,20 @@ float randFloat() {
 	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
-bool ASpawner::placementCheck(TArray<FRoadSegment> &segments, logicRoadSegment* current) {
-	return current->segment->start.Size() < maxDist;
-	 true;
+bool ASpawner::placementCheck(TArray<FRoadSegment> &segments, logicRoadSegment* current){
+	if (current->segment->start.Size() > maxDist)
+		return false;
+
+	for (FRoadSegment f : segments) {
+		// dumb collision check
+		float dist = FVector::Dist((f.end - f.start) / 2 + f.start, (current->segment->end - current->segment->start) / 2 + current->segment->start);
+		if (dist < 800) {
+			return false;
+		}
+	}
+	return true;
+	
+
 }
 
 void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous) {
@@ -38,6 +49,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*> &queue, log
 	newRoad->width = prevSeg->width;
 	newRoadL->segment = newRoad;
 	newRoadL->time = previous->time;
+	newRoadL->roadLength = previous->roadLength + 1;
 	queue.push(newRoadL);
 	
 }
@@ -51,12 +63,14 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*> &queue, logicR
 	FRotator newRotation = left ? FRotator(0, 270, 0) : FRotator(0, 90, 0);
 	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot + newRotation;
 
-	newRoad->start = prevSeg->end;
+	FVector startOffset = left ?  FVector(0, 0, 0) : newRoadL->firstDegreeRot.RotateVector(FVector(200, 0, 0));
+	newRoad->start = (prevSeg->end - prevSeg->start)/2 + prevSeg->start + startOffset;
 	newRoad->end = newRoad->start + newRoadL->firstDegreeRot.RotateVector(stepLength);
 	newRoad->beginTangent = newRoad->end - newRoad->start;
 	newRoad->width = width;
 	newRoadL->segment = newRoad;
 	newRoadL->time = previous->time+1;
+	newRoadL->roadLength = 1;
 	queue.push(newRoadL);
 }
 
@@ -66,7 +80,8 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*> &queue, logi
 		// on the main road, can add extensions
 
 		// forward
-		addRoadForward(queue, current);
+		if (current->roadLength < maxMainRoadLength)
+			addRoadForward(queue, current);
 
 		if (randFloat() < mainRoadBranchChance) {
 			if (randFloat() < 0.5f) {
@@ -83,20 +98,25 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*> &queue, logi
 	else if (current->segment->width == 1.5f) {
 		// side road
 		// forward
-		addRoadForward(queue, current);
+		if (current->roadLength < maxSecondaryRoadLength){
+			addRoadForward(queue, current);
 
-		if (randFloat() < secondaryRoadBranchChance) {
-			if (randFloat() < 0.5f) {
-				addRoadSide(queue, current, true, 1.0f);
-			}
-			else {
-				addRoadSide(queue, current, false, 1.0f);
+		//if (randFloat() < secondaryRoadBranchChance) {
+		//	if (randFloat() < 0.5f) {
+		addRoadSide(queue, current, true, 1.0f);
+		//	}
+		//	else {
+		addRoadSide(queue, current, false, 1.0f);
 
-			}
+		//	}
 		}
 	}
 	else {
-		addRoadForward(queue, current);
+		if (current->roadLength < maxTertiaryLength)
+			addRoadForward(queue, current);
+
+		addRoadSide(queue, current, true, 1.0f);
+		addRoadSide(queue, current, false, 1.0f);
 	}
 
 	// otherwise, only forward
@@ -123,6 +143,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	start->segment = startR;
 	start->firstDegreeRot = FRotator(0, 0, 0);
 	start->secondDegreeRot = FRotator(0, 0, 0);
+	start->roadLength = 1;
 	queue.push(start);
 
 	// loop for everything else

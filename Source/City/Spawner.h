@@ -29,6 +29,7 @@ struct logicRoadSegment {
 	FRoadSegment* segment;
 	FRotator firstDegreeRot;
 	FRotator secondDegreeRot;
+	int roadLength;
 	bool operator<(const logicRoadSegment& rhs) const {
 		return rhs.time < this->time;
 	}
@@ -61,6 +62,13 @@ class CITY_API ASpawner : public AActor
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float secondaryRoadBranchChance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+		float maxMainRoadLength;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+		float maxSecondaryRoadLength;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+		float maxTertiaryLength;
 	
 public:	
 	// Sets default values for this actor's properties
