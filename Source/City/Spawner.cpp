@@ -20,8 +20,8 @@ float randFloat() {
 }
 
 bool ASpawner::placementCheck(TArray<FRoadSegment> &segments, logicRoadSegment* current){
-	if (current->segment->start.Size() > maxDist)
-		return false;
+	//if (current->segment->start.Size() > maxDist)
+		//return false;
 
 	for (FRoadSegment f : segments) {
 		// dumb collision check
@@ -47,9 +47,13 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*> &queue, log
 	newRoad->end = newRoad->start + newRoadL->firstDegreeRot.RotateVector(stepLength);
 	newRoad->beginTangent = prevSeg->end - prevSeg->start;
 	newRoad->width = prevSeg->width;
+	newRoad->type = prevSeg->type;
 	newRoadL->segment = newRoad;
 	newRoadL->time = previous->time;
 	newRoadL->roadLength = previous->roadLength + 1;
+	newRoad->out = Direction::F;
+	newRoad->dir = Direction::F;
+	newRoadL->previous = previous;
 	queue.push(newRoadL);
 	
 }
@@ -63,20 +67,26 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*> &queue, logicR
 	FRotator newRotation = left ? FRotator(0, 270, 0) : FRotator(0, 90, 0);
 	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot + newRotation;
 
-	FVector startOffset = left ?  FVector(0, 0, 0) : newRoadL->firstDegreeRot.RotateVector(FVector(200, 0, 0));
-	newRoad->start = (prevSeg->end - prevSeg->start)/2 + prevSeg->start + startOffset;
+	FVector startOffset = !left ? FVector(0, 0, 0) : newRotation.RotateVector(FVector(0, -standardWidth, 0));
+	newRoad->start = prevSeg->end + startOffset;
 	newRoad->end = newRoad->start + newRoadL->firstDegreeRot.RotateVector(stepLength);
 	newRoad->beginTangent = newRoad->end - newRoad->start;
 	newRoad->width = width;
+	newRoad->type = RoadType::secondary;
 	newRoadL->segment = newRoad;
+	// every side track has less priority
+	newRoad->dir = left ? Direction::L : Direction::R;
+	newRoad->out = Direction::F;
 	newRoadL->time = previous->time+1;
 	newRoadL->roadLength = 1;
+	newRoadL->previous = previous;
+
 	queue.push(newRoadL);
 }
 
 void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* current) {
 	FVector tangent = current->segment->end - current->segment->start;
-	if (current->segment->width == 2.0f) {
+	if (current->segment->type == RoadType::main) {
 		// on the main road, can add extensions
 
 		// forward
@@ -85,41 +95,26 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*> &queue, logi
 
 		if (randFloat() < mainRoadBranchChance) {
 			if (randFloat() < 0.5f) {
-				addRoadSide(queue, current, true, 1.5f);
+				addRoadSide(queue, current, true, 2.0f);
 			}
 			else {
-				addRoadSide(queue, current, false, 1.5f);
+				addRoadSide(queue, current, false, 2.0f);
 
 			}
 		}
 		//forward.
 	}
 
-	else if (current->segment->width == 1.5f) {
+	else if (current->segment->type == RoadType::secondary) {
 		// side road
-		// forward
 		if (current->roadLength < maxSecondaryRoadLength){
 			addRoadForward(queue, current);
 
-		//if (randFloat() < secondaryRoadBranchChance) {
-		//	if (randFloat() < 0.5f) {
-		addRoadSide(queue, current, true, 1.0f);
-		//	}
-		//	else {
-		addRoadSide(queue, current, false, 1.0f);
-
-		//	}
+		addRoadSide(queue, current, true, 2.0f);
+		addRoadSide(queue, current, false, 2.0f);
 		}
 	}
-	else {
-		if (current->roadLength < maxTertiaryLength)
-			addRoadForward(queue, current);
 
-		addRoadSide(queue, current, true, 1.0f);
-		addRoadSide(queue, current, false, 1.0f);
-	}
-
-	// otherwise, only forward
 
 }
 
@@ -140,10 +135,13 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	startR->start = FVector(0, 0, 0);
 	startR->end = startR->start + stepLength;
 	startR->width = 2.0f;
+	startR->type = RoadType::main;
 	start->segment = startR;
 	start->firstDegreeRot = FRotator(0, 0, 0);
 	start->secondDegreeRot = FRotator(0, 0, 0);
 	start->roadLength = 1;
+	startR->out = Direction::F;
+
 	queue.push(start);
 
 	// loop for everything else
@@ -157,6 +155,29 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 			//UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT START X %f"), current->segment->start.X);
 			addExtensions(queue, current);
 		}
+		if (current->segment->dir != Direction::F) {
+			// wasnt forward, have to adjust previous road
+			logicRoadSegment* prev = current->previous;
+			if (prev->segment->out == Direction::F) {
+				if (current->segment->dir == Direction::L) {
+					prev->segment->out = Direction::LF;
+				}
+				else if (current->segment->dir == Direction::R) {
+					prev->segment->out = Direction::FR;
+				}
+			}
+			else {
+				prev->segment->out = Direction::LFR;
+			}
+
+		}
+		delete(current->segment);
+		delete(current);
+	}
+
+	while (queue.size() > 0) {
+		logicRoadSegment* current = queue.top();
+		queue.pop();
 		delete(current->segment);
 		delete(current);
 	}

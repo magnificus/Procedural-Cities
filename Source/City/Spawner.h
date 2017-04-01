@@ -1,11 +1,30 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "GameFramework/Actor.h"
 #include "stdlib.h"
 #include <queue>
 #include "Spawner.generated.h"
+
+
+// would be much prettier with a 3-bit solution but that doesn't work with Blueprints... :(
+UENUM(BlueprintType)
+enum class Direction : uint8
+{
+	L 	UMETA(DisplayName = "Left"),
+	F 	UMETA(DisplayName = "Forward"),
+	R	UMETA(DisplayName = "Right"),
+	LF  UMETA(DisplayName = "Left Front"),
+	LR  UMETA(DisplayName = "Left Right"),
+	FR  UMETA(DisplayName = "Forward Right"),
+	LFR UMETA(DisplayName = "All Directions")
+};
+
+UENUM(BlueprintType)
+enum class RoadType : uint8
+{
+	main 	UMETA(DisplayName = "Main Road"),
+	secondary UMETA(DisplayName = "Secondary Road")
+};
 
 
 USTRUCT(BlueprintType)
@@ -21,11 +40,18 @@ struct FRoadSegment
 		float width;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector beginTangent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		Direction dir;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		Direction out;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		RoadType type;
 
 };
 
 struct logicRoadSegment {
 	int time;
+	logicRoadSegment* previous;
 	FRoadSegment* segment;
 	FRotator firstDegreeRot;
 	FRotator secondDegreeRot;
@@ -41,6 +67,9 @@ UCLASS()
 class CITY_API ASpawner : public AActor
 {
 	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = General, meta = (AllowPrivateAccess = "true"))
+		float standardWidth;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		FVector stepLength;
@@ -60,15 +89,10 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float mainRoadBranchChance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
-		float secondaryRoadBranchChance;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
 		float maxMainRoadLength;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
 		float maxSecondaryRoadLength;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
-		float maxTertiaryLength;
 	
 public:	
 	// Sets default values for this actor's properties
