@@ -26,7 +26,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 	for (FRoadSegment* f : segments) {
 		// dumb collision check, just measure between centres
 		float dist = FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start);
-		if (dist < 4000) {
+		if (dist < 10000) {
 			return false;
 		}
 	}
