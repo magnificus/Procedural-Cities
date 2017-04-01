@@ -56,8 +56,8 @@ struct logicRoadSegment {
 	FRotator firstDegreeRot;
 	FRotator secondDegreeRot;
 	int roadLength;
-	bool operator<(const logicRoadSegment& rhs) const {
-		return rhs.time < this->time;
+	bool operator<(const logicRoadSegment* rhs) const {
+		return this->time < rhs->time;
 	}
 };
 
@@ -99,11 +99,11 @@ public:
 	ASpawner();
 
 
-	void addRoadForward(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous);
-	void addRoadSide(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous, bool left, float width);
-	void addExtensions(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* current);
+	void addRoadForward(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous, std::vector<logicRoadSegment*> &allsegments);
+	void addRoadSide(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous, bool left, float width, std::vector<logicRoadSegment*> &allsegments, RoadType newType);
+	void addExtensions(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments);
 
-	bool placementCheck(TArray<FRoadSegment> &segments, logicRoadSegment* current);
+	bool placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FRoadSegment> determineRoadSegments();
