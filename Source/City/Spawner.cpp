@@ -49,7 +49,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->width = prevSeg->width;
 	newRoad->type = prevSeg->type;
 	newRoadL->segment = newRoad;
-	newRoadL->time = previous->time;
+	newRoadL->time = previous->segment->type != RoadType::main ? previous->time + FMath::Rand() % 3 : previous->time;
 	newRoadL->roadLength = previous->roadLength + 1;
 	newRoad->out = Direction::F;
 	newRoad->dir = Direction::F;
@@ -79,7 +79,8 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	// every side track has less priority
 	newRoad->dir = left ? Direction::L : Direction::R;
 	newRoad->out = Direction::F;
-	newRoadL->time = previous->segment->type != RoadType::main ? previous->time : previous->time + 1;
+
+	newRoadL->time = previous->segment->type != RoadType::main ? previous->time +FMath::Rand() % 3: (previous->time + 1);
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
 
