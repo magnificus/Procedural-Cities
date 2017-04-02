@@ -26,7 +26,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 	for (FRoadSegment* f : segments) {
 		// dumb collision check, just measure between centres
 		float dist = FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start);
-		if (dist < 10000) {
+		if (dist < minRoadCenterDist) {
 			return false;
 		}
 	}
@@ -35,7 +35,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 
 }
 
-void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous, std::vector<logicRoadSegment*> &allsegments) {
+void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* previous, std::vector<logicRoadSegment*> &allsegments) {
 	FRoadSegment* prevSeg = previous->segment;
 	logicRoadSegment* newRoadL = new logicRoadSegment();
 	FRoadSegment* newRoad = new FRoadSegment();
@@ -60,7 +60,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*> &queue, log
 	
 }
 
-void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* previous, bool left, float width, std::vector<logicRoadSegment*> &allsegments, RoadType newType) {
+void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* previous, bool left, float width, std::vector<logicRoadSegment*> &allsegments, RoadType newType) {
 	FRoadSegment* prevSeg = previous->segment;
 	logicRoadSegment* newRoadL = new logicRoadSegment();
 	FRoadSegment* newRoad = new FRoadSegment();
@@ -79,8 +79,8 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*> &queue, logicR
 	// every side track has less priority
 	newRoad->dir = left ? Direction::L : Direction::R;
 	newRoad->out = Direction::F;
-	newRoadL->time = previous->time + 1;
-	newRoadL->roadLength = previous->segment->type == RoadType::main ? 1 : previous->roadLength+1;
+	newRoadL->time = previous->segment->type != RoadType::main ? previous->time : previous->time + 1;
+	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
 
 	queue.push(newRoadL);
@@ -88,7 +88,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*> &queue, logicR
 
 }
 
-void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments) {
+void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments) {
 	FVector tangent = current->segment->end - current->segment->start;
 	if (current->segment->type == RoadType::main) {
 		// on the main road, can add extensions
@@ -136,7 +136,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	//.
 
 	// the first segment
-	std::priority_queue<logicRoadSegment*> queue;
+	std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> queue;
 
 
 	std::vector<logicRoadSegment*> allSegments;
