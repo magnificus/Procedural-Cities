@@ -69,8 +69,8 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	FRotator newRotation = left ? FRotator(0, 270, 0) : FRotator(0, 90, 0);
 	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot + newRotation;
 
-	FVector startOffset = !left ? FVector(0, 0, 0) : newRotation.RotateVector(FVector(0, -standardWidth, 0));
-	newRoad->start = prevSeg->start + (prevSeg->end - prevSeg->start) / 2;// + startOffset;
+	FVector startOffset = newRotation.RotateVector(FVector(0, standardWidth / 2, 0)); //: newRotation.RotateVector(FVector(0, -standardWidth / 2, 0));
+	newRoad->start = prevSeg->start + (prevSeg->end - prevSeg->start) / 2 + startOffset;
 	newRoad->end = newRoad->start + newRoadL->firstDegreeRot.RotateVector(stepLength);
 	newRoad->beginTangent = newRoad->end - newRoad->start;
 	newRoad->width = width;
