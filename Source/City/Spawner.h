@@ -46,6 +46,14 @@ struct FRoadSegment
 		Direction out;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		RoadType type;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FVector v1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FVector v2;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FVector v3;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FVector v4;
 
 };
 
@@ -56,9 +64,6 @@ struct logicRoadSegment {
 	FRotator firstDegreeRot;
 	FRotator secondDegreeRot;
 	int roadLength;
-	//bool operator<(const logicRoadSegment* rhs) const {
-	//	return this->time < rhs->time;
-	//}
 };
 
 struct roadComparator {
@@ -97,8 +102,12 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float mainRoadBranchChance;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+		float collisionLeniency;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
 		float maxMainRoadLength;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
 		float maxSecondaryRoadLength;
 
@@ -108,7 +117,7 @@ public:
 	// Sets default values for this actor's properties
 	ASpawner();
 
-
+	void addVertices(FRoadSegment* f);
 	void addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* previous, std::vector<logicRoadSegment*> &allsegments);
 	void addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* previous, bool left, float width, std::vector<logicRoadSegment*> &allsegments, RoadType newType);
 	void addExtensions(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments);
