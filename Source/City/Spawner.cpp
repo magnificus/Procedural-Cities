@@ -21,10 +21,22 @@ float randFloat() {
 	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
+void ASpawner::addVertices(FRoadSegment* road) {
+	road->v1 = road->start + FRotator(0, 90, 0).RotateVector(road->beginTangent) * standardWidth*road->width / 2;
+	road->v2 = road->start - FRotator(0, 90, 0).RotateVector(road->beginTangent) * standardWidth*road->width / 2;
+	FVector endTangent = road->end - road->start;
+	endTangent.Normalize();
+	road->v3 = road->end + FRotator(0, 90, 0).RotateVector(endTangent) * standardWidth*road->width / 2;
+	road->v4 = road->end - FRotator(0, 90, 0).RotateVector(endTangent) * standardWidth*road->width / 2;
+
+}
+
+
 
 void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4) {
 	float res = FVector::DotProduct(tangent, v1);
-	min, max = res;
+	min = res;
+	max = res;
 	res = FVector::DotProduct(tangent, v2);
 	min = std::min(min, res);
 	max = std::max(max, res);
@@ -34,6 +46,9 @@ void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, 
 	res = FVector::DotProduct(tangent, v4);
 	min = std::min(min, res);
 	max = std::max(max, res);
+
+	//min = std::abs(min);
+	//max = std::abs(max);
 }
 
 
@@ -64,10 +79,43 @@ bool lineToLineIntersection(const FVector &fromA, const FVector &fromB, const FV
 	return false;
 }
 
+struct Point {
+	float x;
+	float y;
+};
+
+Point* intersection(Point p1, Point p2, Point p3, Point p4) {
+	// Store the values for fast access and easy
+	// equations-to-code conversion
+	float x1 = p1.x, x2 = p2.x, x3 = p3.x, x4 = p4.x;
+	float y1 = p1.y, y2 = p2.y, y3 = p3.y, y4 = p4.y;
+
+	float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+	// If d is zero, there is no intersection
+	if (d == 0) return NULL;
+
+	// Get the x and y
+	float pre = (x1*y2 - y1*x2), post = (x3*y4 - y3*x4);
+	float x = (pre * (x3 - x4) - (x1 - x2) * post) / d;
+	float y = (pre * (y3 - y4) - (y1 - y2) * post) / d;
+
+	// Check if the x and y coordinates are within both lines
+	if (x < std::min(x1, x2) || x > std::max(x1, x2) ||
+		x < std::min(x3, x4) || x > std::max(x3, x4)) return NULL;
+	if (y < std::min(y1, y2) || y > std::max(y1, y2) ||
+		y < std::min(y3, y4) || y > std::max(y3, y4)) return NULL;
+
+	// Return the point of intersection
+	Point* ret = new Point();
+	ret->x = x;
+	ret->y = y;
+	return ret;
+}
+
+
 bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current){
 
 	// use SAT collision between all roads
-
 	FVector myTangent1 = current->segment->end - current->segment->start;
 	myTangent1.Normalize();
 	FVector myTangent2 = FRotator(0, 90, 0).RotateVector(myTangent1);
@@ -86,10 +134,18 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 	float myMax4;
 
 	//current->segment->v1.ToString();
-	UE_LOG(LogTemp, Log, TEXT("v1: %s, v2: %s\nv3: %s, v4: %s"), *current->segment->v1.ToString(), *current->segment->v2.ToString(), *current->segment->v3.ToString(), *current->segment->v4.ToString());
+	//UE_LOG(LogTemp, Log, TEXT("v1: %s, v2: %s\nv3: %s, v4: %s"), *current->segment->v1.ToString(), *current->segment->v2.ToString(), *current->segment->v3.ToString(), *current->segment->v4.ToString());
 
 
+	float stepDist = stepLength.Size();
 	for (FRoadSegment* f : segments) {
+
+		float dist = FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start);
+		if (dist > stepDist) {
+			continue;
+		}
+
+
 		// try all tangents (there are four since both shapes are rectangles)
 
 		float min;
@@ -97,12 +153,15 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		// return true means no overlap, there are in fact 8 cases but well be alright only testing for 4 (fight me)
 		getMinMax(min, max, myTangent1, f->v1, f->v2, f->v3, f->v4);
 		if (std::max(min, myMin1) >= std::min(max, myMax1)- collisionLeniency) {
-			//UE_LOG(LogTemp, Log, TEXT("failed on 1st pass"));
+			UE_LOG(LogTemp, Log, TEXT("failed on 1st pass"));
 			continue;
 		}
+
+		//UE_LOG(LogTemp, Log, TEXT("min: %f, max: %f"), min, max);
+
 		getMinMax(min, max, myTangent2, f->v1, f->v2, f->v3, f->v4);
 		if (std::max(min, myMin2) >= std::min(max, myMax2) - collisionLeniency) {
-			//UE_LOG(LogTemp, Log, TEXT("failed on 2nd pass"));
+			UE_LOG(LogTemp, Log, TEXT("failed on 2nd pass"));
 			continue;
 		}
 
@@ -111,7 +170,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		getMinMax(myMin3, myMax3, thirdTangent, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
 		getMinMax(min, max, thirdTangent, f->v1, f->v2, f->v3, f->v4);
 		if (std::max(min, myMin3) >= std::min(max, myMax3) - collisionLeniency) {
-			//UE_LOG(LogTemp, Log, TEXT("failed on third pass"));
+			UE_LOG(LogTemp, Log, TEXT("failed on third pass"));
 			continue;
 		}
 
@@ -119,17 +178,31 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		getMinMax(myMin4, myMax4, fourthTangent, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
 		getMinMax(min, max, fourthTangent, f->v1, f->v2, f->v3, f->v4);
 		if (std::max(min, myMin4) >= std::min(max, myMax4) - collisionLeniency) {
-			//UE_LOG(LogTemp, Log, TEXT("failed on fourth pass"));
+			UE_LOG(LogTemp, Log, TEXT("failed on fourth pass"));
 			continue;
 		}
 
 		// OVERLAP! assume it's the end, if they are simply too close, remove the new part, otherwise adjust it
-		float dist = FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start);
 		//FVector point;
-		//if (dist < minRoadCenterDist) {
-		return false;
-		//}
-		//lineToLineIntersection(current->segment->start, f->start, current->segment->end, f->end, current->segment->end);
+
+
+		//return false;
+		//
+		FVector result;
+		// since intersection, find intersection point
+		float start1X = current->segment->start.X;
+		float start1Y = current->segment->start.Y;
+		
+		float start2X = f->start.X;
+		float start2Y = f->start.Y;
+
+		float dir1X = current->segment->end.X - start1X;
+		float dir1Y = current->segment->end.Y - start1Y;
+
+		float dir2X = f->end.X - start1X;
+		float dir2Y = f->end.Y - start1Y;
+		float intersectX = (start1X - start2X) / 
+
 		
 	}
 
@@ -146,15 +219,6 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 
 }
 
-void ASpawner::addVertices(FRoadSegment* road) {
-	road->v1 = road->start + FRotator(0, 90, 0).RotateVector(road->beginTangent) * standardWidth*road->width/2;
-	road->v2 = road->start + FRotator(0, 270, 0).RotateVector(road->beginTangent) * standardWidth*road->width /2;
-	FVector endTangent = road->end - road->start;
-	endTangent.Normalize();
-	road->v3 = road->end + FRotator(0, 90, 0).RotateVector(endTangent) * standardWidth*road->width /2;
-	road->v4 = road->end + FRotator(0, 270, 0).RotateVector(endTangent) * standardWidth*road->width /2;
-
-}
 
 void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* previous, std::vector<logicRoadSegment*> &allsegments) {
 	FRoadSegment* prevSeg = previous->segment;
