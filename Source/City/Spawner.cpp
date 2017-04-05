@@ -16,6 +16,46 @@ ASpawner::ASpawner()
 
 
 
+int convertToMapIndex(int x, int y) {
+	return x * 10000 + y;
+}
+
+void addRoadToMap(TMap <int, TArray<FRoadSegment*>*> &map, FRoadSegment* current, float intervalLength) {
+	FVector middle = (current->end - current->start) / 2 + current->start;
+	int x = FMath::RoundToInt((middle.X / intervalLength));
+	int y = FMath::RoundToInt((middle.Y / intervalLength));
+	for (int i = -1; i <= 1; i++) {
+		for (int j = -1; j <= 1; j++) {
+			if (map.Find(convertToMapIndex(i+x, j+y)) == nullptr) {
+				TArray<FRoadSegment*>* newArray = new TArray<FRoadSegment*>();
+				newArray->Add(current);
+				map.Emplace(convertToMapIndex(i+x, j+y), newArray);
+			}
+			else {
+				map[convertToMapIndex(i+x, j+y)]->Add(current);
+			}
+		}
+	}
+
+}
+
+TArray<TArray<FRoadSegment*>*> getRelevantSegments(TMap <int, TArray<FRoadSegment*>*> &map, FRoadSegment* current, float intervalLength) {
+	TArray<TArray<FRoadSegment*>*> allInteresting;
+	FVector middle = (current->end - current->start) / 2 + current->start;
+	int x = FMath::RoundToInt((middle.X / intervalLength));
+	int y = FMath::RoundToInt((middle.Y / intervalLength));
+
+	for (int i = -1; i <= 1; i++) {
+		for (int j = -1; j <= 1; j++) {
+			if (map.Find(convertToMapIndex(i+x, j+y)) != nullptr) {
+				allInteresting.Add(map[convertToMapIndex(i+x, j+y)]);
+			}
+		}
+	}
+
+	return allInteresting;
+
+}
 
 float randFloat() {
 	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
@@ -30,6 +70,9 @@ void ASpawner::addVertices(FRoadSegment* road) {
 	road->v4 = road->end - FRotator(0, 90, 0).RotateVector(endTangent) * standardWidth*road->width / 2;
 
 }
+
+
+
 
 
 
@@ -52,39 +95,14 @@ void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, 
 }
 
 
-bool lineToLineIntersection(const FVector &fromA, const FVector &fromB, const FVector &toA, const FVector &toB, FVector& _outIntersection)
-{
-	FVector da = fromB - fromA;
-	FVector db = toB - toA;
-	FVector dc = toA - fromA;
-
-	FVector crossDaDb = FVector::CrossProduct(da, db);
-	float prod = crossDaDb.X * crossDaDb.X + crossDaDb.Y * crossDaDb.Y + crossDaDb.Z * crossDaDb.Z;
-	if (prod == 0 || FVector::DotProduct(dc, crossDaDb) != 0)
-	{
-		return false;
-	}
-	float res = FVector::DotProduct(FVector::CrossProduct(dc, db), FVector::CrossProduct(da, db)) / prod;
-
-	_outIntersection = fromA + da * FVector(res, res, res);
-
-	FVector fromAToIntersectPoint = _outIntersection - fromA;
-	FVector fromBToIntersectPoint = _outIntersection - fromB;
-	FVector toAToIntersectPoint = _outIntersection - toA;
-	FVector toBToIntersectPoint = _outIntersection - toB;
-	if (FVector::DotProduct(fromAToIntersectPoint, fromBToIntersectPoint) <= 0 && FVector::DotProduct(toAToIntersectPoint, toBToIntersectPoint) <= 0)
-	{
-		return true;
-	}
-	return false;
-}
-
 struct Point {
 	float x;
 	float y;
 };
 
-Point* intersection(Point p1, Point p2, Point p3, Point p4) {
+
+
+Point intersection(Point p1, Point p2, Point p3, Point p4) {
 	// Store the values for fast access and easy
 	// equations-to-code conversion
 	float x1 = p1.x, x2 = p2.x, x3 = p3.x, x4 = p4.x;
@@ -92,7 +110,7 @@ Point* intersection(Point p1, Point p2, Point p3, Point p4) {
 
 	float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 	// If d is zero, there is no intersection
-	if (d == 0) return NULL;
+	if (d == 0) return Point{ 0,0 };
 
 	// Get the x and y
 	float pre = (x1*y2 - y1*x2), post = (x3*y4 - y3*x4);
@@ -101,19 +119,26 @@ Point* intersection(Point p1, Point p2, Point p3, Point p4) {
 
 	// Check if the x and y coordinates are within both lines
 	if (x < std::min(x1, x2) || x > std::max(x1, x2) ||
-		x < std::min(x3, x4) || x > std::max(x3, x4)) return NULL;
+		x < std::min(x3, x4) || x > std::max(x3, x4)) return Point{ 0,0 };
 	if (y < std::min(y1, y2) || y > std::max(y1, y2) ||
-		y < std::min(y3, y4) || y > std::max(y3, y4)) return NULL;
+		y < std::min(y3, y4) || y > std::max(y3, y4)) return Point{ 0,0 };
 
 	// Return the point of intersection
-	Point* ret = new Point();
-	ret->x = x;
-	ret->y = y;
+	Point ret;
+	ret.x = x;
+	ret.y = y;
 	return ret;
 }
 
+FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt)
+{
+	lineDir.Normalize();//this needs to be a unit vector
+	FVector v = pnt - linePnt;
+	float d = FVector::DotProduct(v, lineDir);
+	return linePnt + lineDir * d;
+}
 
-bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current){
+bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map){
 
 	// use SAT collision between all roads
 	FVector myTangent1 = current->segment->end - current->segment->start;
@@ -133,87 +158,83 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 	float myMin4;
 	float myMax4;
 
-	//current->segment->v1.ToString();
-	//UE_LOG(LogTemp, Log, TEXT("v1: %s, v2: %s\nv3: %s, v4: %s"), *current->segment->v1.ToString(), *current->segment->v2.ToString(), *current->segment->v3.ToString(), *current->segment->v4.ToString());
-
 
 	float stepDist = stepLength.Size();
-	for (FRoadSegment* f : segments) {
+	//getRelevantRoads();
+	TArray<TArray<FRoadSegment*>*> relevant = getRelevantSegments(map, current->segment, stepLength.Size() / 2);
 
-		float dist = FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start);
-		if (dist > stepDist) {
-			continue;
+	//UE_LOG(LogTemp, Log, TEXT("relevant elements: %i"), relevant.Num());
+
+	for (TArray<FRoadSegment*>* s : relevant) {
+		for (FRoadSegment* f : (*s)) {
+
+			FVector nearest = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
+			if (FVector::Dist(nearest, current->segment->end) < minAttachDistance) {
+				current->segment->end = nearest;
+				addVertices(current->segment);
+				continue;
+			}
+			//float dist = FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start);
+			//if (dist > stepDist) {
+			//	continue;
+			//}
+
+
+			// try all tangents (there are four since both shapes are rectangles)
+
+			float min;
+			float max;
+			// return true means no overlap, there are in fact 8 cases but well be alright only testing for 4 (fight me)
+			getMinMax(min, max, myTangent1, f->v1, f->v2, f->v3, f->v4);
+			if (std::max(min, myMin1) >= std::min(max, myMax1) - collisionLeniency) {
+				//UE_LOG(LogTemp, Log, TEXT("failed on 1st pass"));
+				continue;
+			}
+
+			getMinMax(min, max, myTangent2, f->v1, f->v2, f->v3, f->v4);
+			if (std::max(min, myMin2) >= std::min(max, myMax2) - collisionLeniency) {
+				//UE_LOG(LogTemp, Log, TEXT("failed on 2nd pass"));
+				continue;
+			}
+
+			FVector thirdTangent = f->end - f->start;
+			thirdTangent.Normalize();
+			getMinMax(myMin3, myMax3, thirdTangent, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
+			getMinMax(min, max, thirdTangent, f->v1, f->v2, f->v3, f->v4);
+			if (std::max(min, myMin3) >= std::min(max, myMax3) - collisionLeniency) {
+				//UE_LOG(LogTemp, Log, TEXT("failed on third pass"));
+				continue;
+			}
+
+			FVector fourthTangent = FRotator(0, 90, 0).RotateVector(thirdTangent);
+			getMinMax(myMin4, myMax4, fourthTangent, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
+			getMinMax(min, max, fourthTangent, f->v1, f->v2, f->v3, f->v4);
+			if (std::max(min, myMin4) >= std::min(max, myMax4) - collisionLeniency) {
+				//UE_LOG(LogTemp, Log, TEXT("failed on fourth pass"));
+				continue;
+			}
+
+			// OVERLAP!
+
+			Point p1{ current->segment->start.X, current->segment->start.Y };
+			Point p2{ current->segment->end.X, current->segment->end.Y };
+			Point p3{ f->start.X, f->start.Y };
+			Point p4{ f->end.X, f->end.Y };
+
+
+			Point intSec = intersection(p1, p2, p3, p4);
+
+			if (intSec.x == 0) {
+				//continue;
+				return false;
+			}
+			current->segment->end = FVector(intSec.x, intSec.y, 0);
+			addVertices(current->segment);
+
+
 		}
-
-
-		// try all tangents (there are four since both shapes are rectangles)
-
-		float min;
-		float max;
-		// return true means no overlap, there are in fact 8 cases but well be alright only testing for 4 (fight me)
-		getMinMax(min, max, myTangent1, f->v1, f->v2, f->v3, f->v4);
-		if (std::max(min, myMin1) >= std::min(max, myMax1)- collisionLeniency) {
-			UE_LOG(LogTemp, Log, TEXT("failed on 1st pass"));
-			continue;
-		}
-
-		//UE_LOG(LogTemp, Log, TEXT("min: %f, max: %f"), min, max);
-
-		getMinMax(min, max, myTangent2, f->v1, f->v2, f->v3, f->v4);
-		if (std::max(min, myMin2) >= std::min(max, myMax2) - collisionLeniency) {
-			UE_LOG(LogTemp, Log, TEXT("failed on 2nd pass"));
-			continue;
-		}
-
-		FVector thirdTangent = f->end - f->start;
-		thirdTangent.Normalize();
-		getMinMax(myMin3, myMax3, thirdTangent, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
-		getMinMax(min, max, thirdTangent, f->v1, f->v2, f->v3, f->v4);
-		if (std::max(min, myMin3) >= std::min(max, myMax3) - collisionLeniency) {
-			UE_LOG(LogTemp, Log, TEXT("failed on third pass"));
-			continue;
-		}
-
-		FVector fourthTangent = FRotator(0, 90, 0).RotateVector(thirdTangent);
-		getMinMax(myMin4, myMax4, fourthTangent, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
-		getMinMax(min, max, fourthTangent, f->v1, f->v2, f->v3, f->v4);
-		if (std::max(min, myMin4) >= std::min(max, myMax4) - collisionLeniency) {
-			UE_LOG(LogTemp, Log, TEXT("failed on fourth pass"));
-			continue;
-		}
-
-		// OVERLAP! assume it's the end, if they are simply too close, remove the new part, otherwise adjust it
-		//FVector point;
-
-
-		//return false;
-		//
-		FVector result;
-		// since intersection, find intersection point
-		float start1X = current->segment->start.X;
-		float start1Y = current->segment->start.Y;
-		
-		float start2X = f->start.X;
-		float start2Y = f->start.Y;
-
-		float dir1X = current->segment->end.X - start1X;
-		float dir1Y = current->segment->end.Y - start1Y;
-
-		float dir2X = f->end.X - start1X;
-		float dir2Y = f->end.Y - start1Y;
-		float intersectX = (start1X - start2X) / 
-
-		
 	}
 
-
-	//for (FRoadSegment* f : segments) {
-	//	// dumb collision check, just measure between centres
-	//	float dist = FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start);
-	//	if (dist < minRoadCenterDist) {
-	//		return false;
-	//	}
-	//}
 	return true;
 	
 
@@ -285,18 +306,18 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 			addRoadForward(queue, current, allsegments);
 
 		if (randFloat() < mainRoadBranchChance) {
-			if (randFloat() < 0.1f) {
+			if (randFloat() < 0.15f) {
 				addRoadSide(queue, current, true, 4.0f, allsegments, RoadType::main);
 			}
 
-			else if (randFloat() < 0.2f) {
+			else if (randFloat() < 0.15f) {
 				addRoadSide(queue, current, false, 4.0f, allsegments, RoadType::main);
 			}
 			else {
-				if (randFloat() < 0.5f) {
+				if (randFloat() < secondaryRoadBranchChance) {
 					addRoadSide(queue, current, true, 2.0f, allsegments, RoadType::secondary);
 				}
-				if (randFloat() < 0.5f) {
+				if (randFloat() < secondaryRoadBranchChance) {
 					addRoadSide(queue, current, false, 2.0f, allsegments, RoadType::secondary);
 
 				}
@@ -317,6 +338,10 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 
 }
 
+
+
+
+
 TArray<FRoadSegment> ASpawner::determineRoadSegments()
 {
 	FVector origin;
@@ -325,9 +350,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	TArray<FRoadSegment*> determinedSegments;
 	TArray<FRoadSegment> finishedSegments;
 
-	//.
 
-	// the first segment
 	std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> queue;
 
 
@@ -350,13 +373,17 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	queue.push(start);
 
+	// map for faster comparisons
+	TMap <int, TArray<FRoadSegment*>*> segmentsOrganized;
+
 	// loop for everything else
 
 	while (queue.size() > 0 && determinedSegments.Num() < length) {
 		logicRoadSegment* current = queue.top();
 		queue.pop();
-		if (placementCheck(determinedSegments, current)) {
+		if (placementCheck(determinedSegments, current, segmentsOrganized)) {
 			determinedSegments.Add(current->segment);
+			addRoadToMap(segmentsOrganized, current->segment, 10000);
 
 			//UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT START X %f"), current->segment->start.X);
 			addExtensions(queue, current, allSegments);
@@ -379,6 +406,14 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		//}
 	}
 
+
+	TArray<int> keys;
+	segmentsOrganized.GetKeys(keys);
+	UE_LOG(LogTemp, Warning, TEXT("deleting %i keys in map"), keys.Num());
+	for (int key : keys) {
+		delete(segmentsOrganized[key]);
+	}
+
 	for (FRoadSegment* f : determinedSegments) {
 		finishedSegments.Add(*f);
 	}
@@ -387,9 +422,10 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		delete(s->segment);
 		delete(s);
 	}
+
 	
 
-	return finishedSegments	;
+	return finishedSegments;
 }
 
 // Called when the game starts or when spawned

@@ -57,6 +57,16 @@ struct FRoadSegment
 
 };
 
+USTRUCT(BlueprintType)
+struct FPolygon
+{
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FVector> points;
+
+};
+
 struct logicRoadSegment {
 	int time;
 	logicRoadSegment* previous;
@@ -71,6 +81,8 @@ struct roadComparator {
 		return arg1->time > arg2->time;
 	}
 };
+
+
 
 
 UCLASS()
@@ -101,6 +113,8 @@ class CITY_API ASpawner : public AActor
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float mainRoadBranchChance;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+		float secondaryRoadBranchChance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float collisionLeniency;
@@ -122,10 +136,13 @@ public:
 	void addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* previous, bool left, float width, std::vector<logicRoadSegment*> &allsegments, RoadType newType);
 	void addExtensions(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments);
 
-	bool placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current);
+	bool placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FRoadSegment> determineRoadSegments();
+
+	//UFUNCTION(BlueprintCallable, Category = "Generation")
+	//TArray<FPolygon> getBuildingPolygons(TArray<FRoadSegment> segments);
 
 protected:
 	// Called when the game starts or when spawned
