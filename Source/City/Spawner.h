@@ -98,6 +98,9 @@ class CITY_API ASpawner : public AActor
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float changeIntensity;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+		float secondaryChangeIntensity;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float minRoadCenterDist;
@@ -141,8 +144,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FRoadSegment> determineRoadSegments();
 
-	//UFUNCTION(BlueprintCallable, Category = "Generation")
-	//TArray<FPolygon> getBuildingPolygons(TArray<FRoadSegment> segments);
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	TArray<FPolygon> getBuildingPolygons(TArray<FRoadSegment> &segments);
 
 protected:
 	// Called when the game starts or when spawned

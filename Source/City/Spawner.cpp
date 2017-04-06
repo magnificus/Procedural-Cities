@@ -102,15 +102,15 @@ struct Point {
 
 
 
-Point intersection(Point p1, Point p2, Point p3, Point p4) {
+FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 	// Store the values for fast access and easy
 	// equations-to-code conversion
-	float x1 = p1.x, x2 = p2.x, x3 = p3.x, x4 = p4.x;
-	float y1 = p1.y, y2 = p2.y, y3 = p3.y, y4 = p4.y;
+	float x1 = p1.X, x2 = p2.X, x3 = p3.X, x4 = p4.X;
+	float y1 = p1.Y, y2 = p2.Y, y3 = p3.Y, y4 = p4.Y;
 
 	float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 	// If d is zero, there is no intersection
-	if (d == 0) return Point{ 0,0 };
+	if (d == 0) return FVector{0,0,0};
 
 	// Get the x and y
 	float pre = (x1*y2 - y1*x2), post = (x3*y4 - y3*x4);
@@ -119,14 +119,12 @@ Point intersection(Point p1, Point p2, Point p3, Point p4) {
 
 	// Check if the x and y coordinates are within both lines
 	if (x < std::min(x1, x2) || x > std::max(x1, x2) ||
-		x < std::min(x3, x4) || x > std::max(x3, x4)) return Point{ 0,0 };
+		x < std::min(x3, x4) || x > std::max(x3, x4)) return FVector{0,0,0};
 	if (y < std::min(y1, y2) || y > std::max(y1, y2) ||
-		y < std::min(y3, y4) || y > std::max(y3, y4)) return Point{ 0,0 };
+		y < std::min(y3, y4) || y > std::max(y3, y4)) return FVector{0,0,0};
 
 	// Return the point of intersection
-	Point ret;
-	ret.x = x;
-	ret.y = y;
+	FVector ret{ x,y,0 };
 	return ret;
 }
 
@@ -165,19 +163,17 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 
 	//UE_LOG(LogTemp, Log, TEXT("relevant elements: %i"), relevant.Num());
 
+	float minAttachDistanceSquared = FMath::Pow(minAttachDistance, 2);
 	for (TArray<FRoadSegment*>* s : relevant) {
 		for (FRoadSegment* f : (*s)) {
 
+			// ()
 			FVector nearest = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
-			if (FVector::Dist(nearest, current->segment->end) < minAttachDistance) {
+			if (FVector::DistSquared(nearest, current->segment->end) < minAttachDistanceSquared) {
 				current->segment->end = nearest;
 				addVertices(current->segment);
 				continue;
 			}
-			//float dist = FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start);
-			//if (dist > stepDist) {
-			//	continue;
-			//}
 
 
 			// try all tangents (there are four since both shapes are rectangles)
@@ -216,19 +212,16 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 
 			// OVERLAP!
 
-			Point p1{ current->segment->start.X, current->segment->start.Y };
-			Point p2{ current->segment->end.X, current->segment->end.Y };
-			Point p3{ f->start.X, f->start.Y };
-			Point p4{ f->end.X, f->end.Y };
+			FVector newE = intersection(current->segment->start, current->segment->end, f->start, f->end);
 
-
-			Point intSec = intersection(p1, p2, p3, p4);
-
-			if (intSec.x == 0) {
+			if (newE.X == 0) {
 				//continue;
 				return false;
 			}
-			current->segment->end = FVector(intSec.x, intSec.y, 0);
+			if (FVector::Dist(newE, current->segment->start) < stepLength.Size()/4) {
+				return false;
+			}
+			current->segment->end = newE;
 			addVertices(current->segment);
 
 
@@ -246,7 +239,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	logicRoadSegment* newRoadL = new logicRoadSegment();
 	FRoadSegment* newRoad = new FRoadSegment();
 
-	newRoadL->secondDegreeRot = previous->secondDegreeRot + FRotator(0, changeIntensity*(randFloat() - 0.5f), 0);
+	newRoadL->secondDegreeRot = previous->secondDegreeRot + FRotator(0, (prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity)*(randFloat() - 0.5f), 0);
 	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot;
 
 	newRoad->start = prevSeg->end;
@@ -272,7 +265,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	logicRoadSegment* newRoadL = new logicRoadSegment();
 	FRoadSegment* newRoad = new FRoadSegment();
 
-	newRoadL->secondDegreeRot = FRotator(0, changeIntensity*(randFloat() - 0.5f), 0);
+	newRoadL->secondDegreeRot = FRotator(0, (prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity)*(randFloat() - 0.5f), 0);
 	FRotator newRotation = left ? FRotator(0, 90, 0) : FRotator(0, 270, 0);
 	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot + newRotation;
 
@@ -288,7 +281,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	newRoad->dir = left ? Direction::L : Direction::R;
 	newRoad->out = Direction::F;
 
-	newRoadL->time = previous->segment->type != RoadType::main ? previous->time +FMath::Rand() % 3: (previous->time + 1);
+	newRoadL->time = previous->segment->type != RoadType::main ? previous->time +FMath::Rand() % 2: (previous->time + 1);
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
 
@@ -307,18 +300,18 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 
 		if (randFloat() < mainRoadBranchChance) {
 			if (randFloat() < 0.15f) {
-				addRoadSide(queue, current, true, 4.0f, allsegments, RoadType::main);
+				addRoadSide(queue, current, true, 3.0f, allsegments, RoadType::main);
 			}
 
 			else if (randFloat() < 0.15f) {
-				addRoadSide(queue, current, false, 4.0f, allsegments, RoadType::main);
+				addRoadSide(queue, current, false, 3.0f, allsegments, RoadType::main);
 			}
 			else {
 				if (randFloat() < secondaryRoadBranchChance) {
-					addRoadSide(queue, current, true, 2.0f, allsegments, RoadType::secondary);
+					addRoadSide(queue, current, true, 1.0f, allsegments, RoadType::secondary);
 				}
 				if (randFloat() < secondaryRoadBranchChance) {
-					addRoadSide(queue, current, false, 2.0f, allsegments, RoadType::secondary);
+					addRoadSide(queue, current, false, 1.0f, allsegments, RoadType::secondary);
 
 				}
 			}
@@ -330,17 +323,13 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 		if (current->roadLength < maxSecondaryRoadLength){
 			addRoadForward(queue, current, allsegments);
 
-		addRoadSide(queue, current, true, 2.0f, allsegments, RoadType::secondary);
-		addRoadSide(queue, current, false, 2.0f, allsegments, RoadType::secondary);
+		addRoadSide(queue, current, true, 1.0f, allsegments, RoadType::secondary);
+		addRoadSide(queue, current, false, 1.0f, allsegments, RoadType::secondary);
 		}
 	}
 
 
 }
-
-
-
-
 
 TArray<FRoadSegment> ASpawner::determineRoadSegments()
 {
@@ -361,7 +350,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	startR->beginTangent = stepLength;
 	startR->start = FVector(0, 0, 0);
 	startR->end = startR->start + stepLength;
-	startR->width = 4.0f;
+	startR->width = 3.0f;
 	startR->type = RoadType::main;
 	start->segment = startR;
 	start->firstDegreeRot = FRotator(0, 0, 0);
@@ -427,6 +416,59 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	return finishedSegments;
 }
+
+TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> &segments) {
+	TArray<FPolygon> shapes;
+	TSet<FPolygon> unConnected;
+
+	for (FRoadSegment f : segments) {
+		// two collision segments for every road
+		FVector tangent = f.end - f.start;
+		tangent.Normalize();
+		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*standardWidth/2*f.width;
+		FPolygon left;
+		left.points.Add(f.start + sideOffset);
+		left.points.Add(f.end + sideOffset);
+		FPolygon right;
+		right.points.Add(f.start - sideOffset);
+		right.points.Add(f.end - sideOffset);
+
+		//unConnected
+	}
+
+	for (int i = 0; i < shapes.Num(); i++) {
+		for (int j = i+1; j < shapes.Num(); j++) {
+			FPolygon pol1 = shapes[i];
+			FPolygon pol2 = shapes[j];
+			// check lines
+			for (int k = 1; k < pol1.points.Num(); k++) {
+				for (int l = 1; l < pol2.points.Num(); l++) {
+					FVector intPoint = intersection(pol1.points[k-1], pol1.points[k], pol2.points[k-1], pol2.points[k]);
+					FVector middle1 = (pol1.points[k] - pol1.points[k - 1]) / 2 + pol1.points[k-1];
+					float len1 = FVector::Dist(pol1.points[k], pol1.points[k - 1]);
+					FVector middle2 = (pol2.points[k] - pol2.points[k - 1]) / 2 + pol1.points[k - 1];
+					float len2 = FVector::Dist(pol2.points[k], pol2.points[k - 1]);
+
+					if (intPoint.X != 0){ // && FVector::Dist(intPoint, middle1) < len1/2 && FVector::Dist(intPoint, middle2) < len2/2){
+						// a collision is determined
+						pol1.points[k] = intPoint;
+
+						// take the furthest
+						FVector toAdd = (FVector::Dist(intPoint, pol1.points[k - 1]) < FVector::Dist(intPoint, pol1.points[k]) ? pol1[k-1]);
+							pol1.points.Add(toAdd);
+
+
+					}
+
+
+				}
+			}
+		}
+	}
+
+	return shapes;
+}
+
 
 // Called when the game starts or when spawned
 void ASpawner::BeginPlay()
