@@ -3,6 +3,7 @@
 #include "GameFramework/Actor.h"
 #include "stdlib.h"
 #include <queue>
+#include "Components/SplineMeshComponent.h"
 #include "Spawner.generated.h"
 
 
@@ -102,9 +103,6 @@ class CITY_API ASpawner : public AActor
 		float secondaryChangeIntensity;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
-		float minRoadCenterDist;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = limits, meta = (AllowPrivateAccess = "true"))
 		int32 length;
 
@@ -112,7 +110,7 @@ class CITY_API ASpawner : public AActor
 		float maxDist;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
-		float minAttachDistance;
+		float maxAttachDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float mainRoadBranchChance;
@@ -128,7 +126,10 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
 		float maxSecondaryRoadLength;
 
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+		UStaticMesh* meshRoad;
+	
+	TArray<USplineMeshComponent*> splineComponents;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -144,8 +145,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FRoadSegment> determineRoadSegments();
 
+	UFUNCTION(BlueprintCallable, Category = "Rendering")
+	void buildRoads(TArray<FRoadSegment> segments);
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	TArray<FPolygon> getBuildingPolygons(TArray<FRoadSegment> &segments);
+	TArray<FPolygon> getBuildingPolygons(TArray<FRoadSegment> segments);
+
 
 protected:
 	// Called when the game starts or when spawned
