@@ -65,6 +65,13 @@ struct FPolygon
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FVector> points;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool open = false;
+
+	FVector center;
+
+
 
 };
 
@@ -128,7 +135,11 @@ class CITY_API ASpawner : public AActor
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
 		UStaticMesh* meshRoad;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+		UStaticMesh* meshPolygon;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+		USplineMeshComponent* base;
+
 	TArray<USplineMeshComponent*> splineComponents;
 	
 public:	
@@ -147,6 +158,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Rendering")
 	void buildRoads(TArray<FRoadSegment> segments);
+
+	UFUNCTION(BlueprintCallable, Category = "Rendering")
+	void buildPolygons(TArray<FPolygon> segments);
+
+
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FPolygon> getBuildingPolygons(TArray<FRoadSegment> segments);
 

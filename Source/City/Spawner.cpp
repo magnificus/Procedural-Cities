@@ -10,7 +10,7 @@ ASpawner::ASpawner()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	//USplineMeshComponent = CreateDefaultSubobject(TEXT("spline"));
 }
 
 
@@ -167,6 +167,12 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		for (FRoadSegment* f : (*s)) {
 
 			// ()
+			// can't be too close
+			if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 2000) {
+				return false;
+			}
+
+
 			FVector nearest = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
 			if (FVector::DistSquared(nearest, current->segment->end) < maxAttachDistanceSquared) {
 				current->segment->end = nearest;
@@ -270,7 +276,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot + newRotation;
 
 	FVector startOffset = newRoadL->firstDegreeRot.RotateVector(FVector(standardWidth*previous->segment->width / 2, 0, 0));
-	newRoad->start = prevSeg->start + (prevSeg->end - prevSeg->start) / 2 + startOffset;
+	newRoad->start = /*prevSeg->end - (standardWidth * (prevSeg->end - prevSeg->start).Normalize()/2) + startOffset; */prevSeg->start + (prevSeg->end - prevSeg->start) / 2 + startOffset;
 	newRoad->end = newRoad->start + newRoadL->firstDegreeRot.RotateVector(stepLength);
 	newRoad->beginTangent = newRoad->end - newRoad->start;
 	newRoad->beginTangent.Normalize();
@@ -308,10 +314,10 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 			}
 			else {
 				if (randFloat() < secondaryRoadBranchChance) {
-					addRoadSide(queue, current, true, 1.0f, allsegments, RoadType::secondary);
+					addRoadSide(queue, current, true, 2.0f, allsegments, RoadType::secondary);
 				}
 				if (randFloat() < secondaryRoadBranchChance) {
-					addRoadSide(queue, current, false, 1.0f, allsegments, RoadType::secondary);
+					addRoadSide(queue, current, false, 2.0f, allsegments, RoadType::secondary);
 
 				}
 			}
@@ -323,8 +329,8 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 		if (current->roadLength < maxSecondaryRoadLength){
 			addRoadForward(queue, current, allsegments);
 
-		addRoadSide(queue, current, true, 1.0f, allsegments, RoadType::secondary);
-		addRoadSide(queue, current, false, 1.0f, allsegments, RoadType::secondary);
+		addRoadSide(queue, current, true, 2.0f, allsegments, RoadType::secondary);
+		addRoadSide(queue, current, false, 2.0f, allsegments, RoadType::secondary);
 		}
 	}
 
@@ -420,11 +426,8 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 void ASpawner::buildRoads(TArray<FRoadSegment> segments) {
 	//spline
 	for (USplineMeshComponent* s : splineComponents) {
-		if (s)
-			s->DestroyComponent();
+		s->DestroyComponent();
 	}
-	
-
 
 	for (FRoadSegment f : segments) {
 		//UE_LOG(LogTemp, Warning, TEXT("Placing road..."));
@@ -439,64 +442,196 @@ void ASpawner::buildRoads(TArray<FRoadSegment> segments) {
 
 }
 
-TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
-	TArray<FPolygon> shapes;
-	TSet<FPolygon> unConnected;
+void ASpawner::buildPolygons(TArray<FPolygon> polygons) {
 
+		for (FPolygon p : polygons) {
+			for (int i = 1; i < p.points.Num(); i++) {
+				USplineMeshComponent *s = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
+				s->SetStaticMesh(meshPolygon);
+				s->SetCastShadow(false);
+				s->SetStartAndEnd(p.points[i-1], p.points[i] - p.points[i-1], p.points[i] , p.points[i] - p.points[i - 1], true);
+				splineComponents.Add(s);
+			}
+
+		}
+
+}
+
+void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<FPolygon*> &shapes)
+{
+	FVector middle = (inPol->points[1] - inPol->points[0]) / 2 + inPol->points[0];
+	float len = FVector::Dist(inPol->points[1], inPol->points[0]) / 2;
+	float extraLen = 100;
+	if (len < 2000) {
+		return;
+	}
+	// split lines blocking roads
+	for (FRoadSegment f : segments) {
+		float roadLen = FVector::Dist(f.start, f.end) / 2;
+		FVector fMid = (f.end- f.start) / 2 + f.start;
+		FVector intSec = intersection(f.start, f.end, inPol->points[0], inPol->points[1]);
+		while (intSec.X != 0) {
+			FVector tangent = FRotator(0, 90, 0).RotateVector(f.end - f.start);
+			tangent.Normalize();
+			FVector first;
+			FVector second;
+			if (FVector::DistSquared(intSec, inPol->points[0]) > FVector::DistSquared(intSec + tangent * 10, inPol->points[0])) {
+				// got closer, so use 
+				first = inPol->points[0];
+				second = inPol->points[1];
+			}
+			else {
+				// got further away
+				first = inPol->points[1];
+				second = inPol->points[0];
+			}
+			FPolygon* newP = new FPolygon();
+			newP->points.Add(first);
+			newP->points.Add(intSec + extraLen*tangent);
+			FVector &toChange = second;
+			toChange = intSec - extraLen*tangent;
+			decidePolygonFate(segments, newP, shapes);
+			intSec = intersection(f.start, f.end, inPol->points[0], inPol->points[1]);
+			len = FVector::Dist(inPol->points[1], inPol->points[0]) / 2;
+			//return;
+		}
+	}
+	if (len < 2000) {
+		return;
+	}
+	bool shallAdd = true;
+
+	int toAppend = -1;
+	TArray<FPolygon*> toRemove;
+	for (int i = 0; i < shapes.Num(); i++) {
+		FPolygon *pol = shapes[i];
+		// check lines
+		for (int k = 1; k < pol->points.Num(); k++) {
+			FVector res = intersection(inPol->points[0], inPol->points[1], pol->points[k - 1], pol->points[k]);
+			FVector middlePol = (pol->points[k] - pol->points[k - 1]) / 2 + pol->points[k - 1];
+			float polLen = FVector::Dist(pol->points[k - 1], pol->points[k]) / 2;
+			if (res.X != 0.0f) {
+				// both polygons will retain at least one and lose at least one point
+				// intersection
+				//UE_LOG(LogTemp, Log, TEXT("collision! %s"), *res.ToString());
+
+				FVector toEmplace = FVector::DistSquared(inPol->points[0], res) < FVector::DistSquared(inPol->points[1], res) ? inPol->points[1] : inPol->points[0];
+
+				// add extra point
+				//if (toAppend == -1) {
+				//	if (FVector::DistSquared(pol->points[k - 1], res) < FVector::DistSquared(pol->points[k], res)) {
+				//		pol->points.RemoveAt(k - 1);
+				//		pol->points.EmplaceAt(k - 1, res);
+				//		pol->points.EmplaceAt(k - 1, toEmplace);
+				//		//pol->points.Add(res);
+				//		//pol->points.Add(toEmplace);
+				//	} else {
+				//		pol->points.RemoveAt(k);
+				//		pol->points.EmplaceAt(k, res);
+				//		pol->points.EmplaceAt(k + 1, toEmplace);
+				//		//pol->points.Add(res);
+				//		//pol->points.Add(toEmplace);
+				//	}
+				//	toAppend = i;
+				//	shallAdd = false;
+				//}
+				//else {
+				//	//shapes[toAppend]->points.Append(pol->points);
+				//	//toRemove.Add(shapes[i]);
+				//}
+
+				break;
+				//return;
+
+			}
+		}
+	}
+	for (FPolygon* f : toRemove) {
+		shapes.Remove(f);
+		delete(f);
+	}
+	if (shallAdd) {
+		shapes.Add(inPol);
+	}
+	return;
+
+}
+
+void beautify(FPolygon *f) {
+	// if two points are too close together, combine them using the one closest to the middle
+	FVector center;
+	for (FVector v : f->points) {
+		center += v;
+	}
+	center /= f->points.Num();
+
+	for (int i = 0; i < f->points.Num(); i++) {
+		for (int j = i+1; j < f->points.Num(); j++) {
+			if (FVector::Dist(f->points[i], f->points[j]) < 1000) {
+
+				if (FVector::DistSquared(f->points[i], center) < FVector::DistSquared(f->points[j], center)) {
+					f->points[j] = f->points[i];
+				}
+				else {
+					f->points[i] = f->points[j];
+				}
+				int min = std::min(i, j);
+				int max = std::max(i, j);
+				if (max == f->points.Num() - 1 && min == 0) {
+					f->open = false;
+				}
+			}
+		}
+	}
+
+	//f->points.Sort([center](FVector f1, FVector f2) {
+	//	FVector::DotProcuct
+	//	return false;//center.D < center.CosineAngle2D(f2);
+	//});
+}
+
+TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
+	TArray<FPolygon*> shapes;
+
+
+	// get coherent polygons
 	for (FRoadSegment f : segments) {
 		// two collision segments for every road
 		FVector tangent = f.end - f.start;
-		FVector extraLength = tangent / 16;
 		tangent.Normalize();
-		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*(standardWidth/2*f.width + 100);
-		FPolygon left;
-		left.points.Add(f.start + sideOffset - extraLength);
-		left.points.Add(f.end + sideOffset + extraLength);
-		FPolygon right;
-		right.points.Add(f.start - sideOffset - extraLength);
-		right.points.Add(f.end - sideOffset + extraLength);
+		FVector extraLength = tangent * 400;
+		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*(standardWidth / 2 * f.width);
+		FPolygon* left = new FPolygon();
+		left->points.Add(f.start + sideOffset - extraLength);
+		left->points.Add(f.end + sideOffset + extraLength);
+		FPolygon* right = new FPolygon();;
+		right->points.Add(f.start - sideOffset - extraLength);
+		right->points.Add(f.end - sideOffset + extraLength);
 
-		float halfSquared = FMath::Pow(stepLength.Size() / 2, 2);
+		decidePolygonFate(segments, left, shapes);
+		decidePolygonFate(segments, right, shapes);
 
-		FVector middle = (left.points[1] - left.points[0]) / 2 + left.points[0];
-
-		for (int i = 0; i < shapes.Num(); i++) {
-			FPolygon &pol = shapes[i];
-			// check lines
-			for (int k = 1; k < pol.points.Num(); k++) {
-				FVector res = intersection(left.points[0], left.points[1], pol.points[k - 1], pol.points[k]);
-				if (res.X != 0 && FVector::DistSquared(middle, res) < halfSquared){
-					// intersection
-					pol.points.Append(left.points);
-					goto outOfLoop1;
-
-				}
-			}
-		}
-		shapes.Add(left);
-		outOfLoop1:
-
-		middle = (right.points[1] - right.points[0]) / 2 + right.points[0];
-
-		for (int i = 0; i < shapes.Num(); i++) {
-			FPolygon &pol = shapes[i];
-			// check lines
-			for (int k = 1; k < pol.points.Num(); k++) {
-				FVector res = intersection(right.points[0], right.points[1], pol.points[k - 1], pol.points[k]);
-				if (res.X != 0 && FVector::DistSquared(middle, res) < halfSquared) {
-					// intersection
-					pol.points.Append(right.points);
-					goto outOfLoop2;
-
-				}
-			}
-		}
-		shapes.Add(right);
-	outOfLoop2:
-		;
-		//unConnected
 	}
-	return shapes;
+
+	// zip em together neatly
+	for (FPolygon *f : shapes) {
+		beautify(f);
+	}
+	//for (int i = 0; i < shapes.Num(); i++) {
+	//	FPolygon* f = shapes[i];
+	//	if (f->points.Num() < 3) {
+	//		shapes.RemoveAt(i);
+	//		i--;
+	//		delete(f);
+	//	}
+
+	//}
+	TArray<FPolygon> toReturn;
+	for (FPolygon* f : shapes) {
+		toReturn.Add(*f);
+		delete(f);
+	}
+	return toReturn;
 
 
 }
