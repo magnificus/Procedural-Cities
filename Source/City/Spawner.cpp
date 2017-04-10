@@ -167,8 +167,8 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		for (FRoadSegment* f : (*s)) {
 
 			// ()
-			// can't be too close
-			if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 2000) {
+			// can't be too close to another segment
+			if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 1000) {
 				return false;
 			}
 
@@ -177,7 +177,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 			if (FVector::DistSquared(nearest, current->segment->end) < maxAttachDistanceSquared) {
 				current->segment->end = nearest;
 				addVertices(current->segment);
-				continue;
+				//continue;
 			}
 
 
@@ -461,45 +461,46 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 {
 	FVector middle = (inPol->points[1] - inPol->points[0]) / 2 + inPol->points[0];
 	float len = FVector::Dist(inPol->points[1], inPol->points[0]) / 2;
-	float extraLen = 100;
-	if (len < 2000) {
+	float middleOffset = 300;
+	float extraRoadLen = 500;
+	if (len < 1000) {
 		return;
 	}
 	// split lines blocking roads
 	for (FRoadSegment f : segments) {
+		FVector tangent = (f.end - f.start);
+		tangent.Normalize();
 		float roadLen = FVector::Dist(f.start, f.end) / 2;
 		FVector fMid = (f.end- f.start) / 2 + f.start;
-		FVector intSec = intersection(f.start, f.end, inPol->points[0], inPol->points[1]);
-		while (intSec.X != 0) {
-			FVector tangent = FRotator(0, 90, 0).RotateVector(f.end - f.start);
-			tangent.Normalize();
-			FVector first;
-			FVector second;
-			if (FVector::DistSquared(intSec, inPol->points[0]) > FVector::DistSquared(intSec + tangent * 10, inPol->points[0])) {
-				// got closer, so use 
-				first = inPol->points[0];
-				second = inPol->points[1];
+		FVector intSec = intersection(f.start - tangent*extraRoadLen, f.end + tangent*extraRoadLen, inPol->points[0], inPol->points[1]);
+		int count = 0;
+		while (intSec.X != 0.0f && count++ < 10) {
+
+			FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
+			FPolygon* newP = new FPolygon();
+			if (FVector::DistSquared(intSec, inPol->points[0]) > FVector::DistSquared(intSec + altTangent * middleOffset, inPol->points[0])) {
+				// 0 got closer, so use 0
+				newP->points.Add(inPol->points[0]);
+				newP->points.Add(intSec + altTangent * middleOffset);
+				inPol->points[0] = intSec - altTangent * middleOffset;
 			}
 			else {
-				// got further away
-				first = inPol->points[1];
-				second = inPol->points[0];
+				// 0 got further away, use 1 instead
+				newP->points.Add(inPol->points[1]);
+				newP->points.Add(intSec + altTangent * middleOffset);
+				inPol->points[1] = intSec - altTangent * middleOffset;
 			}
-			FPolygon* newP = new FPolygon();
-			newP->points.Add(first);
-			newP->points.Add(intSec + extraLen*tangent);
-			FVector &toChange = second;
-			toChange = intSec - extraLen*tangent;
 			decidePolygonFate(segments, newP, shapes);
-			intSec = intersection(f.start, f.end, inPol->points[0], inPol->points[1]);
+			intSec = intersection(f.start - tangent * extraRoadLen, f.end + tangent * extraRoadLen, inPol->points[0], inPol->points[1]);
 			len = FVector::Dist(inPol->points[1], inPol->points[0]) / 2;
 			//return;
 		}
 	}
-	if (len < 2000) {
+	if (len < 1000) {
 		return;
 	}
 	bool shallAdd = true;
+	bool inFront = false;
 
 	int toAppend = -1;
 	TArray<FPolygon*> toRemove;
@@ -518,27 +519,39 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 				FVector toEmplace = FVector::DistSquared(inPol->points[0], res) < FVector::DistSquared(inPol->points[1], res) ? inPol->points[1] : inPol->points[0];
 
 				// add extra point
-				//if (toAppend == -1) {
-				//	if (FVector::DistSquared(pol->points[k - 1], res) < FVector::DistSquared(pol->points[k], res)) {
-				//		pol->points.RemoveAt(k - 1);
-				//		pol->points.EmplaceAt(k - 1, res);
-				//		pol->points.EmplaceAt(k - 1, toEmplace);
-				//		//pol->points.Add(res);
-				//		//pol->points.Add(toEmplace);
-				//	} else {
-				//		pol->points.RemoveAt(k);
-				//		pol->points.EmplaceAt(k, res);
-				//		pol->points.EmplaceAt(k + 1, toEmplace);
-				//		//pol->points.Add(res);
-				//		//pol->points.Add(toEmplace);
-				//	}
-				//	toAppend = i;
-				//	shallAdd = false;
-				//}
-				//else {
-				//	//shapes[toAppend]->points.Append(pol->points);
-				//	//toRemove.Add(shapes[i]);
-				//}
+				if (toAppend == -1) {
+					if (FVector::DistSquared(pol->points[k - 1], res) < FVector::DistSquared(pol->points[k], res)) {
+						pol->points.RemoveAt(k - 1);
+						pol->points.EmplaceAt(k - 1, res);
+						pol->points.EmplaceAt(k - 1, toEmplace);
+						inFront = true;
+						//pol->points.Add(res);
+						//pol->points.Add(toEmplace);
+					} else {
+						pol->points.RemoveAt(k);
+						pol->points.EmplaceAt(k, res);
+						pol->points.EmplaceAt(k + 1, toEmplace);
+						inFront = false;
+						//pol->points.Add(res);
+						//pol->points.Add(toEmplace);
+					}
+					toAppend = i;
+					shallAdd = false;
+				}
+				else {
+					// TODO take care of the order as well ;);););););;););)
+					if (inFront) {
+						pol->points.Append(shapes[toAppend]->points);
+						toRemove.Add(shapes[toAppend]);
+						toAppend = i;
+
+					}
+					else {
+						shapes[toAppend]->points.Append(pol->points);
+						toRemove.Add(shapes[i]);
+					}
+
+				}
 
 				break;
 				//return;
@@ -583,11 +596,6 @@ void beautify(FPolygon *f) {
 			}
 		}
 	}
-
-	//f->points.Sort([center](FVector f1, FVector f2) {
-	//	FVector::DotProcuct
-	//	return false;//center.D < center.CosineAngle2D(f2);
-	//});
 }
 
 TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
@@ -617,15 +625,15 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 	for (FPolygon *f : shapes) {
 		beautify(f);
 	}
-	//for (int i = 0; i < shapes.Num(); i++) {
-	//	FPolygon* f = shapes[i];
-	//	if (f->points.Num() < 3) {
-	//		shapes.RemoveAt(i);
-	//		i--;
-	//		delete(f);
-	//	}
+	for (int i = 0; i < shapes.Num(); i++) {
+		FPolygon* f = shapes[i];
+		if (f->points.Num() < 3) {
+			shapes.RemoveAt(i);
+			i--;
+			delete(f);
+		}
 
-	//}
+	}
 	TArray<FPolygon> toReturn;
 	for (FPolygon* f : shapes) {
 		toReturn.Add(*f);
