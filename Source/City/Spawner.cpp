@@ -461,8 +461,8 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 {
 	FVector middle = (inPol->points[1] - inPol->points[0]) / 2 + inPol->points[0];
 	float len = FVector::Dist(inPol->points[1], inPol->points[0]) / 2;
-	float middleOffset = 300;
-	float extraRoadLen = 500;
+	float middleOffset = 400;
+	float extraRoadLen = 1000;
 	if (len < 1000) {
 		return;
 	}
@@ -516,24 +516,21 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 				// intersection
 				//UE_LOG(LogTemp, Log, TEXT("collision! %s"), *res.ToString());
 
-				FVector toEmplace = FVector::DistSquared(inPol->points[0], res) < FVector::DistSquared(inPol->points[1], res) ? inPol->points[1] : inPol->points[0];
 
 				// add extra point
 				if (toAppend == -1) {
+					FVector toEmplace = FVector::DistSquared(inPol->points[0], res) < FVector::DistSquared(inPol->points[1], res) ? inPol->points[1] : inPol->points[0];
+
 					if (FVector::DistSquared(pol->points[k - 1], res) < FVector::DistSquared(pol->points[k], res)) {
 						pol->points.RemoveAt(k - 1);
 						pol->points.EmplaceAt(k - 1, res);
 						pol->points.EmplaceAt(k - 1, toEmplace);
 						inFront = true;
-						//pol->points.Add(res);
-						//pol->points.Add(toEmplace);
 					} else {
 						pol->points.RemoveAt(k);
 						pol->points.EmplaceAt(k, res);
 						pol->points.EmplaceAt(k + 1, toEmplace);
 						inFront = false;
-						//pol->points.Add(res);
-						//pol->points.Add(toEmplace);
 					}
 					toAppend = i;
 					shallAdd = false;
@@ -541,14 +538,50 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 				else {
 					// TODO take care of the order as well ;);););););;););)
 					if (inFront) {
+						pol->points.RemoveAt(pol->points.Num() - 1);
+						pol->points.Add(res);
+
+						shapes[toAppend]->points.RemoveAt(0);
 						pol->points.Append(shapes[toAppend]->points);
+
+						//if (k == 1) {
+						//	// bottom up
+						//	for (int j = shapes[toAppend]->points.Num() - 1; j >= 0; j--) {
+						//		pol->points.Add(shapes[toAppend]->points[j]);
+						//	}
+						//}
+						//else {
+						//	// top down
+						//	shapes[toAppend]->points.RemoveAt(0);
+						//	pol->points.Append(shapes[toAppend]->points);
+
+						//}
 						toRemove.Add(shapes[toAppend]);
 						toAppend = i;
 
 					}
 					else {
+						shapes[toAppend]->points.RemoveAt(shapes[toAppend]->points.Num() - 1);
+						shapes[toAppend]->points.Add(res);
+						pol->points.RemoveAt(0);
 						shapes[toAppend]->points.Append(pol->points);
-						toRemove.Add(shapes[i]);
+
+						//if (k == 1) {
+						//	// bottom up
+						//	for (int j = pol->points.Num() - 1; j >= 0; j--) {
+						//		shapes[toAppend]->points.Add(pol->points[j]);
+						//	}
+						//}
+						//else {
+						//	// top down
+						//	pol->points.RemoveAt(0);
+						//	shapes[toAppend]->points.Append(pol->points);
+
+						//}
+						//toAppend = i;
+						//toRemove.Add(shapes[toAppend]);
+						//shapes[toAppend]->points.Append(pol->points);
+						toRemove.Add(pol);
 					}
 
 				}
@@ -590,7 +623,10 @@ void beautify(FPolygon *f) {
 				}
 				int min = std::min(i, j);
 				int max = std::max(i, j);
+				// if the last and first point are very close together, we're dealing with a closed polygon
 				if (max == f->points.Num() - 1 && min == 0) {
+					UE_LOG(LogTemp, Log, TEXT("Closed polygon detected"));
+
 					f->open = false;
 				}
 			}
@@ -607,14 +643,16 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 		// two collision segments for every road
 		FVector tangent = f.end - f.start;
 		tangent.Normalize();
-		FVector extraLength = tangent * 400;
+		FVector extraLength = tangent * 700;
 		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*(standardWidth / 2 * f.width);
 		FPolygon* left = new FPolygon();
 		left->points.Add(f.start + sideOffset - extraLength);
 		left->points.Add(f.end + sideOffset + extraLength);
+		left->buildLeft = true;
 		FPolygon* right = new FPolygon();;
 		right->points.Add(f.start - sideOffset - extraLength);
 		right->points.Add(f.end - sideOffset + extraLength);
+		right->buildLeft = false;
 
 		decidePolygonFate(segments, left, shapes);
 		decidePolygonFate(segments, right, shapes);

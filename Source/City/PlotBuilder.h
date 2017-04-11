@@ -3,7 +3,15 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "HouseBuilder.h"
+#include "BaseLibrary.h"
 #include "PlotBuilder.generated.h"
+
+
+
+struct FPolygon;
+
+
 
 UCLASS()
 class CITY_API APlotBuilder : public AActor
@@ -14,6 +22,7 @@ public:
 	// Sets default values for this actor's properties
 	APlotBuilder();
 
+	void BuildPlot(PlotPolygon p);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

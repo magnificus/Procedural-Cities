@@ -4,6 +4,7 @@
 #include "PlotBuilder.h"
 
 
+
 // Sets default values
 APlotBuilder::APlotBuilder()
 {
@@ -17,6 +18,16 @@ void APlotBuilder::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void APlotBuilder::BuildPlot(PlotPolygon p) {
+	for (int i = 0; i < p.f.points.Num(); i++) {
+
+	}
+	if (p.f.open) {
+
+	}
+
 }
 
 // Called every frame
