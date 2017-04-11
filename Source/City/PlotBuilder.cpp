@@ -20,13 +20,13 @@ void APlotBuilder::BeginPlay()
 	
 }
 
-void APlotBuilder::BuildPlot(PlotPolygon p) {
-	for (int i = 0; i < p.f.points.Num(); i++) {
+void APlotBuilder::BuildPlot(FPlotPolygon p) {
+	//for (int i = 0; i < p.f.points.Num(); i++) {
 
-	}
-	if (p.f.open) {
+	//}
+	//if (p.f.open) {
 
-	}
+	//}
 
 }
 

@@ -287,7 +287,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	newRoad->dir = left ? Direction::L : Direction::R;
 	newRoad->out = Direction::F;
 
-	newRoadL->time = previous->segment->type != RoadType::main ? previous->time +FMath::Rand() % 2: (previous->time + 1);
+	newRoadL->time = /*previous->segment->type != RoadType::main ? previous->time +FMath::Rand() % 2: (*/previous->time + 1; //);
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
 
@@ -540,22 +540,9 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 					if (inFront) {
 						pol->points.RemoveAt(pol->points.Num() - 1);
 						pol->points.Add(res);
-
 						shapes[toAppend]->points.RemoveAt(0);
 						pol->points.Append(shapes[toAppend]->points);
 
-						//if (k == 1) {
-						//	// bottom up
-						//	for (int j = shapes[toAppend]->points.Num() - 1; j >= 0; j--) {
-						//		pol->points.Add(shapes[toAppend]->points[j]);
-						//	}
-						//}
-						//else {
-						//	// top down
-						//	shapes[toAppend]->points.RemoveAt(0);
-						//	pol->points.Append(shapes[toAppend]->points);
-
-						//}
 						toRemove.Add(shapes[toAppend]);
 						toAppend = i;
 
@@ -566,21 +553,6 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 						pol->points.RemoveAt(0);
 						shapes[toAppend]->points.Append(pol->points);
 
-						//if (k == 1) {
-						//	// bottom up
-						//	for (int j = pol->points.Num() - 1; j >= 0; j--) {
-						//		shapes[toAppend]->points.Add(pol->points[j]);
-						//	}
-						//}
-						//else {
-						//	// top down
-						//	pol->points.RemoveAt(0);
-						//	shapes[toAppend]->points.Append(pol->points);
-
-						//}
-						//toAppend = i;
-						//toRemove.Add(shapes[toAppend]);
-						//shapes[toAppend]->points.Append(pol->points);
 						toRemove.Add(pol);
 					}
 
@@ -663,15 +635,15 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 	for (FPolygon *f : shapes) {
 		beautify(f);
 	}
-	for (int i = 0; i < shapes.Num(); i++) {
-		FPolygon* f = shapes[i];
-		if (f->points.Num() < 3) {
-			shapes.RemoveAt(i);
-			i--;
-			delete(f);
-		}
+	//for (int i = 0; i < shapes.Num(); i++) {
+	//	FPolygon* f = shapes[i];
+	//	if (f->points.Num() < 3) {
+	//		shapes.RemoveAt(i);
+	//		i--;
+	//		delete(f);
+	//	}
 
-	}
+	//}
 	TArray<FPolygon> toReturn;
 	for (FPolygon* f : shapes) {
 		toReturn.Add(*f);

@@ -17,12 +17,12 @@ AHouseBuilder::AHouseBuilder()
 
 void AHouseBuilder::placeHouse(FHousePolygon f)
 {
-	if (f.polygon.buildLeft) {
-		RootComponent = StaticMeshComponent;
-		FVector Location(0, 0, 0);
-		StaticMeshComponent->Mobility = EComponentMobility::Static;
-		StaticMeshComponent->SetStaticMesh(Chair1);
-	}
+	//if (f.polygon.buildLeft) {
+	//	RootComponent = StaticMeshComponent;
+	//	FVector Location(0, 0, 0);
+	//	StaticMeshComponent->Mobility = EComponentMobility::Static;
+	//	StaticMeshComponent->SetStaticMesh(Chair1);
+	//}
 }
 
 // Called when the game starts or when spawned

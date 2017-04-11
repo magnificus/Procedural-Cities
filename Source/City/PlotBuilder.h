@@ -22,7 +22,7 @@ public:
 	// Sets default values for this actor's properties
 	APlotBuilder();
 
-	void BuildPlot(PlotPolygon p);
+	void BuildPlot(FPlotPolygon p);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
