@@ -23,6 +23,8 @@ public:
 	APlotBuilder();
 
 	void BuildPlot(FPlotPolygon p);
+
+	TArray<AHouseBuilder*> houses;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

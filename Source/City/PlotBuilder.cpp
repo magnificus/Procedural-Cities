@@ -21,12 +21,24 @@ void APlotBuilder::BeginPlay()
 }
 
 void APlotBuilder::BuildPlot(FPlotPolygon p) {
-	//for (int i = 0; i < p.f.points.Num(); i++) {
+	for (int i = 1; i < p.f.points.Num(); i++) {
+		FVector location;
+		FActorSpawnParameters spawnInfo;
+		location = (p.f.points[i] - p.f.points[i - 1]) / 2 + p.f.points[i - 1];
+		FVector offset =  FRotator(0, p.f.buildLeft ? 90 : 270, 0).RotateVector(FVector(3000, 0, 0));
+		
+		AHouseBuilder* h = GetWorld()->SpawnActor<AHouseBuilder>(location, FRotator(0, 0, 0), spawnInfo);
+		FHousePolygon fh;
+		FPolygon pol;
+		pol.points.Add(p.f.points[i - 1]);
+		pol.points.Add(p.f.points[i]);
+		pol.points.Add(p.f.)
+		//fh.
+		//h->placeHouse()
+	}
+	if (p.f.open) {
 
-	//}
-	//if (p.f.open) {
-
-	//}
+	}
 
 }
 
