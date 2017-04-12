@@ -4,6 +4,7 @@
 
 #include "Components/SplineMeshComponent.h"
 #include "BaseLibrary.h"
+#include "PlotBuilder.h"
 #include "Spawner.generated.h"
 
 
@@ -59,6 +60,7 @@ class CITY_API ASpawner : public AActor
 		USplineMeshComponent* base;
 
 	TArray<USplineMeshComponent*> splineComponents;
+	TArray<APlotBuilder*> plots;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -80,6 +82,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Rendering")
 	void buildPolygons(TArray<FPolygon> segments);
 
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	void buildPlots(TArray<FPolygon> polygons);
+
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FPolygon> getBuildingPolygons(TArray<FRoadSegment> segments);
@@ -89,6 +94,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+	virtual void BeginDestroy() override;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

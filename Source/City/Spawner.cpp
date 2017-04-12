@@ -56,9 +56,6 @@ TArray<TArray<FRoadSegment*>*> getRelevantSegments(TMap <int, TArray<FRoadSegmen
 
 }
 
-float randFloat() {
-	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-}
 
 void ASpawner::addVertices(FRoadSegment* road) {
 	road->v1 = road->start + FRotator(0, 90, 0).RotateVector(road->beginTangent) * standardWidth*road->width / 2;
@@ -72,68 +69,6 @@ void ASpawner::addVertices(FRoadSegment* road) {
 
 
 
-
-
-
-void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4) {
-	float res = FVector::DotProduct(tangent, v1);
-	min = res;
-	max = res;
-	res = FVector::DotProduct(tangent, v2);
-	min = std::min(min, res);
-	max = std::max(max, res);
-	res = FVector::DotProduct(tangent, v3);
-	min = std::min(min, res);
-	max = std::max(max, res);
-	res = FVector::DotProduct(tangent, v4);
-	min = std::min(min, res);
-	max = std::max(max, res);
-
-	//min = std::abs(min);
-	//max = std::abs(max);
-}
-
-
-struct Point {
-	float x;
-	float y;
-};
-
-
-
-FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
-	// Store the values for fast access and easy
-	// equations-to-code conversion
-	float x1 = p1.X, x2 = p2.X, x3 = p3.X, x4 = p4.X;
-	float y1 = p1.Y, y2 = p2.Y, y3 = p3.Y, y4 = p4.Y;
-
-	float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-	// If d is zero, there is no intersection
-	if (d == 0) return FVector{0,0,0};
-
-	// Get the x and y
-	float pre = (x1*y2 - y1*x2), post = (x3*y4 - y3*x4);
-	float x = (pre * (x3 - x4) - (x1 - x2) * post) / d;
-	float y = (pre * (y3 - y4) - (y1 - y2) * post) / d;
-
-	// Check if the x and y coordinates are within both lines
-	if (x < std::min(x1, x2) || x > std::max(x1, x2) ||
-		x < std::min(x3, x4) || x > std::max(x3, x4)) return FVector{0,0,0};
-	if (y < std::min(y1, y2) || y > std::max(y1, y2) ||
-		y < std::min(y3, y4) || y > std::max(y3, y4)) return FVector{0,0,0};
-
-	// Return the point of intersection
-	FVector ret{ x,y,0 };
-	return ret;
-}
-
-FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt)
-{
-	lineDir.Normalize();//this needs to be a unit vector
-	FVector v = pnt - linePnt;
-	float d = FVector::DotProduct(v, lineDir);
-	return linePnt + lineDir * d;
-}
 
 bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map){
 
@@ -180,7 +115,6 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				//continue;
 			}
 
-
 			// try all tangents (there are four since both shapes are rectangles)
 
 			float min;
@@ -188,13 +122,11 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 			// return true means no overlap, there are in fact 8 cases but well be alright only testing for 4 (fight me)
 			getMinMax(min, max, myTangent1, f->v1, f->v2, f->v3, f->v4);
 			if (std::max(min, myMin1) >= std::min(max, myMax1) - collisionLeniency) {
-				//UE_LOG(LogTemp, Log, TEXT("failed on 1st pass"));
 				continue;
 			}
 
 			getMinMax(min, max, myTangent2, f->v1, f->v2, f->v3, f->v4);
 			if (std::max(min, myMin2) >= std::min(max, myMax2) - collisionLeniency) {
-				//UE_LOG(LogTemp, Log, TEXT("failed on 2nd pass"));
 				continue;
 			}
 
@@ -203,7 +135,6 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 			getMinMax(myMin3, myMax3, thirdTangent, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
 			getMinMax(min, max, thirdTangent, f->v1, f->v2, f->v3, f->v4);
 			if (std::max(min, myMin3) >= std::min(max, myMax3) - collisionLeniency) {
-				//UE_LOG(LogTemp, Log, TEXT("failed on third pass"));
 				continue;
 			}
 
@@ -211,7 +142,6 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 			getMinMax(myMin4, myMax4, fourthTangent, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
 			getMinMax(min, max, fourthTangent, f->v1, f->v2, f->v3, f->v4);
 			if (std::max(min, myMin4) >= std::min(max, myMax4) - collisionLeniency) {
-				//UE_LOG(LogTemp, Log, TEXT("failed on fourth pass"));
 				continue;
 			}
 
@@ -255,7 +185,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->width = prevSeg->width;
 	newRoad->type = prevSeg->type;
 	newRoadL->segment = newRoad;
-	newRoadL->time = previous->segment->type != RoadType::main ? previous->time + FMath::Rand() % 3 : previous->time;
+	newRoadL->time = previous->segment->type != RoadType::main ? previous->time + FMath::Rand() % 1 : previous->time;
 	newRoadL->roadLength = previous->roadLength + 1;
 	newRoad->out = Direction::F;
 	newRoad->dir = Direction::F;
@@ -287,7 +217,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	newRoad->dir = left ? Direction::L : Direction::R;
 	newRoad->out = Direction::F;
 
-	newRoadL->time = /*previous->segment->type != RoadType::main ? previous->time +FMath::Rand() % 2: (*/previous->time + 1; //);
+	newRoadL->time = previous->segment->type != RoadType::main ? previous->time +FMath::Rand() % 1: (previous->time + 1);
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
 
@@ -334,6 +264,34 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 		}
 	}
 
+
+}
+
+void ASpawner::OnConstruction(const FTransform & Transform) {
+	for (auto It = splineComponents.CreateIterator(); It; It++)
+	{
+		(*It)->DestroyComponent();
+	}
+	for (auto It = plots.CreateIterator(); It; It++) {
+		(*It)->Destroy();
+	}
+	TArray<FRoadSegment> roadSegments = determineRoadSegments();
+	buildRoads(roadSegments);
+	TArray<FPolygon> polygons = getBuildingPolygons(roadSegments);
+	buildPolygons(polygons);
+	buildPlots(polygons);
+}
+
+void ASpawner::BeginDestroy()
+{
+	for (auto It = splineComponents.CreateIterator(); It; It++)
+	{
+		(*It)->DestroyComponent();
+	}
+	for (auto It = plots.CreateIterator(); It; It++) {
+		(*It)->Destroy();
+	}
+	Super::BeginDestroy();
 
 }
 
@@ -425,9 +383,6 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 void ASpawner::buildRoads(TArray<FRoadSegment> segments) {
 	//spline
-	for (USplineMeshComponent* s : splineComponents) {
-		s->DestroyComponent();
-	}
 
 	for (FRoadSegment f : segments) {
 		//UE_LOG(LogTemp, Warning, TEXT("Placing road..."));
@@ -669,3 +624,20 @@ void ASpawner::Tick(float DeltaTime)
 
 }
 
+void ASpawner::buildPlots(TArray<FPolygon> polygons) {
+	for (FPolygon p : polygons) {
+			// one house per segment
+			FActorSpawnParameters spawnInfo;
+			APlotBuilder* pb = GetWorld()->SpawnActor<APlotBuilder>(FVector(0,0,0), FRotator(0, 0, 0), spawnInfo);
+			FPlotPolygon ph;
+			ph.f = p;
+			//pb->pl
+			ph.population = 1;
+
+			pb->BuildPlot(ph);
+			plots.Add(pb);
+			//fh.
+			//h->placeHouse()
+		
+	}
+}

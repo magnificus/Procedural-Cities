@@ -19,15 +19,20 @@ public:
 	AHouseBuilder();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Demo, meta = (AllowPrivateAccess = "true"))
-		UStaticMesh* placeHolderHouseMesh;
+		UStaticMeshComponent* placeHolderHouseMesh;
+
+	TArray<UStaticMeshComponent*> meshesArray;
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 		void placeHouse(FHousePolygon f);
 
-
+	//UPROPERTY(VisibleAnywhere, Category = Materials)
+	//	UProceduralMeshComponent * mesh;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	virtual void BeginDestroy() override;
 
 public:	
 	// Called every frame

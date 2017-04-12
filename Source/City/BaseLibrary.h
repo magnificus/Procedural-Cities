@@ -123,11 +123,33 @@ struct FPlotPolygon {
 };
 
 
+struct Point {
+	float x;
+	float y;
+};
+/*
+Get min and max value projected on FVector tangent, used in SAT collision detection for rectangles
+*/
 
+
+/*
+Calculate whether two lines intersect and where
+*/
+
+
+void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
+FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
+bool testIntersection(FVector tangents[], FVector vertices1[], FVector vertices2[]);
+float randFloat();
+FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
+
+FVector getCenter(FPolygon p);
 
 class CITY_API BaseLibrary
 {
 public:
 	BaseLibrary();
 	~BaseLibrary();
+
+
 };

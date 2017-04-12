@@ -20,8 +20,26 @@ void APlotBuilder::BeginPlay()
 	
 }
 
+void APlotBuilder::BeginDestroy()
+{
+	Super::BeginDestroy();
+	for (auto It = houses.CreateIterator(); It; It++)
+	{
+		(*It)->Destroy();
+	}
+
+}
+
 void APlotBuilder::BuildPlot(FPlotPolygon p) {
+	for (auto It = houses.CreateIterator(); It; It++)
+	{
+		(*It)->Destroy();
+	}
+
+	houses.Empty();
+
 	for (int i = 1; i < p.f.points.Num(); i++) {
+		// one house per segment
 		FVector location;
 		FActorSpawnParameters spawnInfo;
 		location = (p.f.points[i] - p.f.points[i - 1]) / 2 + p.f.points[i - 1];
@@ -32,13 +50,19 @@ void APlotBuilder::BuildPlot(FPlotPolygon p) {
 		FPolygon pol;
 		pol.points.Add(p.f.points[i - 1]);
 		pol.points.Add(p.f.points[i]);
-		pol.points.Add(p.f.)
+		pol.points.Add(p.f.points[i] + offset);
+		pol.points.Add(p.f.points[i - 1] + offset);
+		pol.center = getCenter(pol);
+		fh.polygon = pol;
+		fh.population = 1.0;
+		h->placeHouse(fh);
+		houses.Add(h);
 		//fh.
 		//h->placeHouse()
 	}
-	if (p.f.open) {
+	//if (p.f.open) {
 
-	}
+	//}
 
 }
 
