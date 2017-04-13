@@ -13,7 +13,8 @@ UCLASS()
 class CITY_API AHouseBuilder : public AActor
 {
 	GENERATED_BODY()
-	
+	TArray<USplineMeshComponent*> splineComponents;
+
 public:	
 	// Sets default values for this actor's properties
 	AHouseBuilder();
@@ -22,6 +23,9 @@ public:
 		UStaticMeshComponent* placeHolderHouseMesh;
 
 	TArray<UStaticMeshComponent*> meshesArray;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+		USplineMeshComponent* base;
+	UStaticMesh* meshPolygon;
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 		void placeHouse(FHousePolygon f);
@@ -32,7 +36,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
-	virtual void BeginDestroy() override;
+	//virtual void BeginDestroy() override;
 
 public:	
 	// Called every frame

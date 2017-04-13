@@ -51,7 +51,7 @@ FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 }
 
 // TODO
-bool testIntersection(FVector tangents[], FVector vertices1[], FVector vertices2[]) {
+bool testIntersection(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2) {
 	return false;
 }
 

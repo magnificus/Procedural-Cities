@@ -10,7 +10,12 @@ ASpawner::ASpawner()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	//USplineMeshComponent = CreateDefaultSubobject(TEXT("spline"));
+
+	PathSpline = CreateDefaultSubobject<USplineMeshComponent>(TEXT("Path"));
+
+	FString pathName = "StaticMesh'/Game/road.road'";
+	ConstructorHelpers::FObjectFinder<UStaticMesh> buildingMesh(*pathName);
+	meshRoad = buildingMesh.Object;
 }
 
 
@@ -90,17 +95,18 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 	float myMin4;
 	float myMax4;
 
+	FVector stepLength = current->segment->type == RoadType::main ? primaryStepLength : secondaryStepLength;
 
 	float stepDist = stepLength.Size();
 	//getRelevantRoads();
-	TArray<TArray<FRoadSegment*>*> relevant = getRelevantSegments(map, current->segment, stepLength.Size() / 2);
+	//TArray<TArray<FRoadSegment*>*> relevant = getRelevantSegments(map, current->segment, stepLength.Size() / 2);
 
 	//UE_LOG(LogTemp, Log, TEXT("relevant elements: %i"), relevant.Num());
 
 	float maxAttachDistanceSquared = FMath::Pow(maxAttachDistance, 2);
-	for (TArray<FRoadSegment*>* s : relevant) {
-		for (FRoadSegment* f : (*s)) {
-
+	//for (TArray<FRoadSegment*>* s : relevant) {
+	//	for (FRoadSegment* f : (*s)) {
+	for (FRoadSegment* f : segments){
 			// ()
 			// can't be too close to another segment
 			if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 1000) {
@@ -160,8 +166,6 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 			current->segment->end = newE;
 			addVertices(current->segment);
 
-
-		}
 	}
 
 	return true;
@@ -177,6 +181,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 
 	newRoadL->secondDegreeRot = previous->secondDegreeRot + FRotator(0, (prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity)*(randFloat() - 0.5f), 0);
 	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot;
+	FVector stepLength = prevSeg->type == RoadType::main ? primaryStepLength : secondaryStepLength;
 
 	newRoad->start = prevSeg->end;
 	newRoad->end = newRoad->start + newRoadL->firstDegreeRot.RotateVector(stepLength);
@@ -205,6 +210,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	FRotator newRotation = left ? FRotator(0, 90, 0) : FRotator(0, 270, 0);
 	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot + newRotation;
 
+	FVector stepLength = newType == RoadType::main ? primaryStepLength : secondaryStepLength;
 	FVector startOffset = newRoadL->firstDegreeRot.RotateVector(FVector(standardWidth*previous->segment->width / 2, 0, 0));
 	newRoad->start = /*prevSeg->end - (standardWidth * (prevSeg->end - prevSeg->start).Normalize()/2) + startOffset; */prevSeg->start + (prevSeg->end - prevSeg->start) / 2 + startOffset;
 	newRoad->end = newRoad->start + newRoadL->firstDegreeRot.RotateVector(stepLength);
@@ -267,33 +273,61 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 
 }
 
-void ASpawner::OnConstruction(const FTransform & Transform) {
+void ASpawner::generate() {
 	for (auto It = splineComponents.CreateIterator(); It; It++)
 	{
 		(*It)->DestroyComponent();
 	}
-	for (auto It = plots.CreateIterator(); It; It++) {
-		(*It)->Destroy();
+	for (APlotBuilder *pb : plots) {
+		pb->Destroy();
 	}
+	splineComponents.Empty();
+	plots.Empty();
+	
 	TArray<FRoadSegment> roadSegments = determineRoadSegments();
 	buildRoads(roadSegments);
 	TArray<FPolygon> polygons = getBuildingPolygons(roadSegments);
-	buildPolygons(polygons);
+	//buildPolygons(polygons);
 	buildPlots(polygons);
+	GetWorld()->GetGameViewport()->GetEngineShowFlags()->SetSplines(true);
+	
 }
 
-void ASpawner::BeginDestroy()
-{
-	for (auto It = splineComponents.CreateIterator(); It; It++)
-	{
-		(*It)->DestroyComponent();
-	}
-	for (auto It = plots.CreateIterator(); It; It++) {
-		(*It)->Destroy();
-	}
-	Super::BeginDestroy();
+//void ASpawner::OnConstruction(const FTransform & Transform) {
+//	for (auto It = splineComponents.CreateIterator(); It; It++)
+//	{
+//		(*It)->DestroyComponent();
+//	}
+//	for (APlotBuilder *pb : plots) {
+//		pb->Destroy();
+//	}
+//	splineComponents.Empty();
+//	plots.Empty();
+//
+//	TArray<FRoadSegment> roadSegments = determineRoadSegments();
+//	buildRoads(roadSegments);
+//	TArray<FPolygon> polygons = getBuildingPolygons(roadSegments);
+//	//buildPolygons(polygons);
+//	buildPlots(polygons);
+//	//GetWorld()->GetGameViewport()->GetEngineShowFlags()->SetSplines(true);
+//
+//}
 
-}
+//void ASpawner::BeginDestroy()
+//{
+//	for (auto It = splineComponents.CreateIterator(); It; It++)
+//	{
+//		if (*It)
+//			(*It)->DestroyComponent();
+//	}
+//	for (auto It = plots.CreateIterator(); It; It++)
+//	{
+//		if (*It)
+//			(*It)->Destroy();
+//	}
+//	Super::BeginDestroy();
+//
+//}
 
 TArray<FRoadSegment> ASpawner::determineRoadSegments()
 {
@@ -311,9 +345,9 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	logicRoadSegment* start = new logicRoadSegment();
 	start->time = 0;
 	FRoadSegment* startR = new FRoadSegment();
-	startR->beginTangent = stepLength;
+	startR->beginTangent = primaryStepLength;
 	startR->start = FVector(0, 0, 0);
-	startR->end = startR->start + stepLength;
+	startR->end = startR->start + primaryStepLength;
 	startR->width = 3.0f;
 	startR->type = RoadType::main;
 	start->segment = startR;
@@ -383,6 +417,17 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 void ASpawner::buildRoads(TArray<FRoadSegment> segments) {
 	//spline
+		for (auto It = splineComponents.CreateIterator(); It; It++)
+		{
+			if (*It)
+				(*It)->DestroyComponent();
+		}
+		for (auto It = plots.CreateIterator(); It; It++)
+		{
+			if (*It)
+				(*It)->Destroy();
+		}
+
 
 	for (FRoadSegment f : segments) {
 		//UE_LOG(LogTemp, Warning, TEXT("Placing road..."));
@@ -392,6 +437,7 @@ void ASpawner::buildRoads(TArray<FRoadSegment> segments) {
 		s->SetStartScale(FVector2D(f.width, 1));
 		s->SetEndScale(FVector2D(f.width, 1));
 		s->SetStartAndEnd(f.start + FVector(0, 0, 50), f.beginTangent, f.end  + FVector(0, 0, 50), f.end - f.start, true);
+		s->Activate();
 		splineComponents.Add(s);
 	}
 
@@ -532,6 +578,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 
 void beautify(FPolygon *f) {
 	// if two points are too close together, combine them using the one closest to the middle
+	return;
 	FVector center;
 	for (FVector v : f->points) {
 		center += v;

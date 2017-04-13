@@ -21,7 +21,9 @@ class CITY_API ASpawner : public AActor
 		float standardWidth;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
-		FVector stepLength;
+		FVector primaryStepLength;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+		FVector secondaryStepLength;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float changeIntensity;
@@ -56,12 +58,14 @@ class CITY_API ASpawner : public AActor
 		UStaticMesh* meshRoad;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
 		UStaticMesh* meshPolygon;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
-		USplineMeshComponent* base;
+
+
+	UPROPERTY(EditAnywhere, Instanced, Category = "Path spline")
+		USplineMeshComponent* PathSpline;
 
 	TArray<USplineMeshComponent*> splineComponents;
 	TArray<APlotBuilder*> plots;
-	
+		
 public:	
 	// Sets default values for this actor's properties
 	ASpawner();
@@ -85,6 +89,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	void buildPlots(TArray<FPolygon> polygons);
 
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	void generate();
+
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FPolygon> getBuildingPolygons(TArray<FRoadSegment> segments);
@@ -94,9 +101,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	virtual void OnConstruction(const FTransform& Transform) override;
+	//virtual void OnConstruction(const FTransform& Transform) override;
 
-	virtual void BeginDestroy() override;
+	//virtual void BeginDestroy() override;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
