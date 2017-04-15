@@ -17,14 +17,16 @@ UCLASS()
 class CITY_API APlotBuilder : public AActor
 {
 	GENERATED_BODY()
-	TArray<AHouseBuilder*> houses;
 
 public:	
 	// Sets default values for this actor's properties
 	APlotBuilder();
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void BuildPlot(FPlotPolygon p);
+	TArray<FHousePolygon> getHousePolygons(FPlotPolygon p);
+
+	//UFUNCTION(BlueprintCallable, Category = "Generation")
+	//void BuildPlot(FPlotPolygon p);
 
 protected:
 	// Called when the game starts or when spawned

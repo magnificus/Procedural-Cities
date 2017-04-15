@@ -78,94 +78,57 @@ void ASpawner::addVertices(FRoadSegment* road) {
 bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map){
 
 	// use SAT collision between all roads
-	FVector myTangent1 = current->segment->end - current->segment->start;
-	myTangent1.Normalize();
-	FVector myTangent2 = FRotator(0, 90, 0).RotateVector(myTangent1);
-	float myMin1;
-	float myMax1;
-	getMinMax(myMin1, myMax1, myTangent1, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
+	FVector tangent1 = current->segment->end - current->segment->start;
+	tangent1.Normalize();
+	FVector tangent2 = FRotator(0, 90, 0).RotateVector(tangent1);
 
-	float myMin2;
-	float myMax2;
-	getMinMax(myMin2, myMax2, myTangent2, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
-
-	float myMin3;
-	float myMax3;
-
-	float myMin4;
-	float myMax4;
-
-	FVector stepLength = current->segment->type == RoadType::main ? primaryStepLength : secondaryStepLength;
-
-	float stepDist = stepLength.Size();
-	//getRelevantRoads();
-	//TArray<TArray<FRoadSegment*>*> relevant = getRelevantSegments(map, current->segment, stepLength.Size() / 2);
-
-	//UE_LOG(LogTemp, Log, TEXT("relevant elements: %i"), relevant.Num());
+	
+	TArray<FVector> vert1;
+	vert1.Add(current->segment->v1);
+	vert1.Add(current->segment->v2);
+	vert1.Add(current->segment->v3);
+	vert1.Add(current->segment->v4);
 
 	float maxAttachDistanceSquared = FMath::Pow(maxAttachDistance, 2);
 	//for (TArray<FRoadSegment*>* s : relevant) {
 	//	for (FRoadSegment* f : (*s)) {
 	for (FRoadSegment* f : segments){
-			// ()
-			// can't be too close to another segment
-			if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 1000) {
-				return false;
-			}
 
+		TArray<FVector> tangents;
 
-			FVector nearest = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
-			if (FVector::DistSquared(nearest, current->segment->end) < maxAttachDistanceSquared) {
-				current->segment->end = nearest;
-				addVertices(current->segment);
-				//continue;
-			}
+		// can't be too close to another segment
+		//if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 1000) {
+		//	return false;
+		//}
 
-			// try all tangents (there are four since both shapes are rectangles)
+		FVector tangent3 = f->end - f->start;
+		FVector tangent4 = FRotator(0, 90, 0).RotateVector(tangent3);
 
-			float min;
-			float max;
-			// return true means no overlap, there are in fact 8 cases but well be alright only testing for 4 (fight me)
-			getMinMax(min, max, myTangent1, f->v1, f->v2, f->v3, f->v4);
-			if (std::max(min, myMin1) >= std::min(max, myMax1) - collisionLeniency) {
-				continue;
-			}
+		tangents.Add(tangent1);
+		tangents.Add(tangent2);
+		tangents.Add(tangent3);
+		tangents.Add(tangent4);
 
-			getMinMax(min, max, myTangent2, f->v1, f->v2, f->v3, f->v4);
-			if (std::max(min, myMin2) >= std::min(max, myMax2) - collisionLeniency) {
-				continue;
-			}
+		TArray<FVector> vert2;
+		vert2.Add(f->v1);
+		vert2.Add(f->v2);
+		vert2.Add(f->v3);
+		vert2.Add(f->v4);
 
-			FVector thirdTangent = f->end - f->start;
-			thirdTangent.Normalize();
-			getMinMax(myMin3, myMax3, thirdTangent, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
-			getMinMax(min, max, thirdTangent, f->v1, f->v2, f->v3, f->v4);
-			if (std::max(min, myMin3) >= std::min(max, myMax3) - collisionLeniency) {
-				continue;
-			}
-
-			FVector fourthTangent = FRotator(0, 90, 0).RotateVector(thirdTangent);
-			getMinMax(myMin4, myMax4, fourthTangent, current->segment->v1, current->segment->v2, current->segment->v3, current->segment->v4);
-			getMinMax(min, max, fourthTangent, f->v1, f->v2, f->v3, f->v4);
-			if (std::max(min, myMin4) >= std::min(max, myMax4) - collisionLeniency) {
-				continue;
-			}
-
-			// OVERLAP!
-
+		if (testCollision(tangents, vert1, vert2, collisionLeniency)) {
 			FVector newE = intersection(current->segment->start, current->segment->end, f->start, f->end);
-
+			//return false;
 			if (newE.X == 0) {
 				//continue;
 				return false;
 			}
-			if (FVector::Dist(newE, current->segment->start) < stepLength.Size()/2) {
-				// new road is too small
-				return false;
-			}
 			current->segment->end = newE;
 			addVertices(current->segment);
+			if (FVector::Dist(current->segment->start, current->segment->end) < 5000) {
+				return false;
+			}
 
+		}
 	}
 
 	return true;
@@ -288,7 +251,7 @@ void ASpawner::generate() {
 	buildRoads(roadSegments);
 	TArray<FPolygon> polygons = getBuildingPolygons(roadSegments);
 	//buildPolygons(polygons);
-	buildPlots(polygons);
+//	buildPlots(polygons);
 	GetWorld()->GetGameViewport()->GetEngineShowFlags()->SetSplines(true);
 	
 }
@@ -437,7 +400,6 @@ void ASpawner::buildRoads(TArray<FRoadSegment> segments) {
 		s->SetStartScale(FVector2D(f.width, 1));
 		s->SetEndScale(FVector2D(f.width, 1));
 		s->SetStartAndEnd(f.start + FVector(0, 0, 50), f.beginTangent, f.end  + FVector(0, 0, 50), f.end - f.start, true);
-		s->Activate();
 		splineComponents.Add(s);
 	}
 
@@ -460,7 +422,6 @@ void ASpawner::buildPolygons(TArray<FPolygon> polygons) {
 
 void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<FPolygon*> &shapes)
 {
-	FVector middle = (inPol->points[1] - inPol->points[0]) / 2 + inPol->points[0];
 	float len = FVector::Dist(inPol->points[1], inPol->points[0]) / 2;
 	float middleOffset = 400;
 	float extraRoadLen = 1000;
@@ -468,14 +429,27 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 		return;
 	}
 	// split lines blocking roads
+
+	float width = 100;
+	FVector tangent1 = inPol->points[1] - inPol->points[0];
+	tangent1.Normalize();
+	FVector tangent2 = FRotator(0, 90, 0).RotateVector(tangent1);
+	TArray<FVector> lineVertices;
+	FVector v1 = inPol->points[0] + width * tangent2;
+	FVector v2 = inPol->points[0] - width * tangent2;
+	FVector v3 = inPol->points[1] + width * tangent2;
+	FVector v4 = inPol->points[1] - width * tangent2;
+	lineVertices.Add(v1);
+	lineVertices.Add(v2);
+	lineVertices.Add(v3);
+	lineVertices.Add(v4);
+
 	for (FRoadSegment f : segments) {
 		FVector tangent = (f.end - f.start);
 		tangent.Normalize();
 		float roadLen = FVector::Dist(f.start, f.end) / 2;
-		FVector fMid = (f.end- f.start) / 2 + f.start;
 		FVector intSec = intersection(f.start - tangent*extraRoadLen, f.end + tangent*extraRoadLen, inPol->points[0], inPol->points[1]);
-		int count = 0;
-		while (intSec.X != 0.0f && count++ < 10) {
+		while (intSec.X != 0.0f) {
 
 			FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
 			FPolygon* newP = new FPolygon();
@@ -576,6 +550,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 
 }
 
+
 void beautify(FPolygon *f) {
 	// if two points are too close together, combine them using the one closest to the middle
 	return;
@@ -671,20 +646,20 @@ void ASpawner::Tick(float DeltaTime)
 
 }
 
-void ASpawner::buildPlots(TArray<FPolygon> polygons) {
-	for (FPolygon p : polygons) {
-			// one house per segment
-			FActorSpawnParameters spawnInfo;
-			APlotBuilder* pb = GetWorld()->SpawnActor<APlotBuilder>(FVector(0,0,0), FRotator(0, 0, 0), spawnInfo);
-			FPlotPolygon ph;
-			ph.f = p;
-			//pb->pl
-			ph.population = 1;
-
-			pb->BuildPlot(ph);
-			plots.Add(pb);
-			//fh.
-			//h->placeHouse()
-		
-	}
-}
+//void ASpawner::buildPlots(TArray<FPolygon> polygons) {
+//	for (FPolygon p : polygons) {
+//			// one house per segment
+//			FActorSpawnParameters spawnInfo;
+//			APlotBuilder* pb = GetWorld()->SpawnActor<APlotBuilder>(FVector(0,0,0), FRotator(0, 0, 0), spawnInfo);
+//			FPlotPolygon ph;
+//			ph.f = p;
+//			//pb->pl
+//			ph.population = 1;
+//
+//			pb->BuildPlot(ph);
+//			plots.Add(pb);
+//			//fh.
+//			//h->placeHouse()
+//		
+//	}
+//}

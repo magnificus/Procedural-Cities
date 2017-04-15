@@ -45,10 +45,12 @@ struct FPolygon
 		TArray<FVector> points;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool open = false;
+	bool open = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool buildLeft;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector center;
 };
 
@@ -57,9 +59,12 @@ struct FHousePolygon {
 
 	GENERATED_USTRUCT_BODY();
 
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FPolygon polygon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float population;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int type;
 };
 
@@ -119,8 +124,11 @@ struct FPlotPolygon {
 	GENERATED_USTRUCT_BODY();
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FPolygon f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float population;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int type;
 
 };
@@ -142,7 +150,7 @@ Calculate whether two lines intersect and where
 
 void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
-bool testIntersection(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2);
+bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
 float randFloat();
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
 
