@@ -420,14 +420,15 @@ void ASpawner::buildPolygons(TArray<FPolygon> polygons) {
 
 }
 
-void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<FPolygon*> &shapes)
+void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* inPol, TArray<FPolygon*> &shapes, TMap<FPolygon*, TArray<FPolygon*>*> &map)
 {
-	float len = FVector::Dist(inPol->points[1], inPol->points[0]) / 2;
-	float middleOffset = 400;
-	float extraRoadLen = 1000;
+	float len = FVector::Dist(inPol->points[1], inPol->points[0]);
+	float middleOffset = 100;
+	float extraRoadLen = 100;
 	if (len < 1000) {
 		return;
 	}
+
 	// split lines blocking roads
 
 	float width = 100;
@@ -447,7 +448,6 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 	for (FRoadSegment f : segments) {
 		FVector tangent = (f.end - f.start);
 		tangent.Normalize();
-		float roadLen = FVector::Dist(f.start, f.end) / 2;
 		FVector intSec = intersection(f.start - tangent*extraRoadLen, f.end + tangent*extraRoadLen, inPol->points[0], inPol->points[1]);
 		while (intSec.X != 0.0f) {
 
@@ -461,132 +461,261 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, FPolygon* &inPol, TArray<
 			}
 			else {
 				// 0 got further away, use 1 instead
-				newP->points.Add(inPol->points[1]);
 				newP->points.Add(intSec + altTangent * middleOffset);
+				newP->points.Add(inPol->points[1]);
 				inPol->points[1] = intSec - altTangent * middleOffset;
 			}
-			decidePolygonFate(segments, newP, shapes);
+			decidePolygonFate(segments, newP,shapes, map);
 			intSec = intersection(f.start - tangent * extraRoadLen, f.end + tangent * extraRoadLen, inPol->points[0], inPol->points[1]);
-			len = FVector::Dist(inPol->points[1], inPol->points[0]) / 2;
 			//return;
 		}
 	}
+	len = FVector::Dist(inPol->points[1], inPol->points[0]);
 	if (len < 1000) {
 		return;
 	}
 	bool shallAdd = true;
-	bool inFront = false;
-
-	int toAppend = -1;
 	TArray<FPolygon*> toRemove;
+	//TArra
+
+	bool hasPlaced = false;
 	for (int i = 0; i < shapes.Num(); i++) {
 		FPolygon *pol = shapes[i];
 		// check lines
-		for (int k = 1; k < pol->points.Num(); k++) {
-			FVector res = intersection(inPol->points[0], inPol->points[1], pol->points[k - 1], pol->points[k]);
-			FVector middlePol = (pol->points[k] - pol->points[k - 1]) / 2 + pol->points[k - 1];
-			float polLen = FVector::Dist(pol->points[k - 1], pol->points[k]) / 2;
-			if (res.X != 0.0f) {
+		for (int k = 1; k < pol->points.Num(); k++){
+
+			TArray<FVector> tangents;
+			FVector tangent3 = pol->points[k] - pol->points[k - 1];
+			tangent3.Normalize();
+
+			FVector tangent4 = FRotator(0, 90, 0).RotateVector(tangent3);
+
+			tangents.Add(tangent1);
+			tangents.Add(tangent2);
+			tangents.Add(tangent3);
+			tangents.Add(tangent4);
+
+			TArray<FVector> lineVertices2;
+			lineVertices2.Add(pol->points[k - 1] + tangent4 * width);
+			lineVertices2.Add(pol->points[k - 1] - tangent4 * width);
+			lineVertices2.Add(pol->points[k] + tangent4 * width);
+			lineVertices2.Add(pol->points[k] - tangent4 * width);
+
+			
+			//FVector res = intersection(inPol->points[0], inPol->points[1], pol->points[k - 1], pol->points[k]);
+			//FVector middlePol = (pol->points[k] - pol->points[k - 1]) / 2 + pol->points[k - 1];
+			//float polLen = FVector::Dist(pol->points[k - 1], pol->points[k]) / 2;
+			if (testCollision(tangents, lineVertices, lineVertices2, 0)){
+				UE_LOG(LogTemp, Log, TEXT("testcollision: true"));
+
+				if (!hasPlaced) {
+					TArray<FPolygon*> *array = map[pol];
+					array->Add(inPol);
+					map.Add(inPol, array);
+					hasPlaced = true;
+				}
+				else {
+					auto prev = map[pol];
+					TArray<FPolygon*> *array = map[inPol];
+					array->Append(*prev);
+					TArray<FPolygon*> *array2 = map[pol];
+					for (FPolygon* f : *array2) {
+						map->Add(f,inPol);
+					}
+					delete(prev);
+				}
+
+				//FVector res = intersection(inPol->points[0], inPol->points[1], pol->points[k - 1], pol->points[k]);
+				//if (res.X != 0.0f) {
+				//	FVector furthest = FVector::DistSquared(res, inPol->points[0]) > FVector::DistSquared(res, inPol->points[1]) ? inPol->points[0] : inPol->points[1];
+				//	pol->points.Add(res);
+				//	pol->points.Add(furthest);
+				//}
+				//else {
+				//	FVector furthest = FVector::DistSquared(pol->points[k], inPol->points[0]) > FVector::DistSquared(pol->points[k], inPol->points[1]) ? inPol->points[0] : inPol->points[1];
+				//	pol->points.Add(furthest);
+				//	return;
+				//	//int place = FVector::DistSquared(furthest, pol->points[0]) < FVector::DistSquared(furthest, pol->points[1]) < 
+				//	//if ()
+				//}
+
+				//pol->points.Add(inPol->points[0]);
+				//pol->points.Add(inPol->points[1]);
+				//goto loopDone;
+			//if (res.X != 0.0f) {
 				// both polygons will retain at least one and lose at least one point
 				// intersection
 				//UE_LOG(LogTemp, Log, TEXT("collision! %s"), *res.ToString());
 
 
 				// add extra point
-				if (toAppend == -1) {
-					FVector toEmplace = FVector::DistSquared(inPol->points[0], res) < FVector::DistSquared(inPol->points[1], res) ? inPol->points[1] : inPol->points[0];
+				//if (toAppend == -1) {
+				//	FVector toEmplace = FVector::DistSquared(inPol->points[0], res) < FVector::DistSquared(inPol->points[1], res) ? inPol->points[1] : inPol->points[0];
 
-					if (FVector::DistSquared(pol->points[k - 1], res) < FVector::DistSquared(pol->points[k], res)) {
-						pol->points.RemoveAt(k - 1);
-						pol->points.EmplaceAt(k - 1, res);
-						pol->points.EmplaceAt(k - 1, toEmplace);
-						inFront = true;
-					} else {
-						pol->points.RemoveAt(k);
-						pol->points.EmplaceAt(k, res);
-						pol->points.EmplaceAt(k + 1, toEmplace);
-						inFront = false;
-					}
-					toAppend = i;
-					shallAdd = false;
-				}
-				else {
-					// TODO take care of the order as well ;);););););;););)
-					if (inFront) {
-						pol->points.RemoveAt(pol->points.Num() - 1);
-						pol->points.Add(res);
-						shapes[toAppend]->points.RemoveAt(0);
-						pol->points.Append(shapes[toAppend]->points);
+				//	if (FVector::DistSquared(pol->points[k - 1], res) < FVector::DistSquared(pol->points[k], res)) {
+				//		pol->points.RemoveAt(k - 1);
+				//		pol->points.EmplaceAt(k - 1, res);
+				//		pol->points.EmplaceAt(k - 1, toEmplace);
+				//		inFront = true;
+				//	} else {
+				//		pol->points.RemoveAt(k);
+				//		pol->points.EmplaceAt(k, res);
+				//		pol->points.EmplaceAt(k + 1, toEmplace);
+				//		inFront = false;
+				//	}
+				//	toAppend = i;
+				//	shallAdd = false;
+				//}
+				//else {
+				//	// TODO take care of the order as well ;);););););;););)
+				//	if (inFront) {
+				//		pol->points.RemoveAt(pol->points.Num() - 1);
+				//		pol->points.Add(res);
+				//		shapes[toAppend]->points.RemoveAt(0);
+				//		pol->points.Append(shapes[toAppend]->points);
 
-						toRemove.Add(shapes[toAppend]);
-						toAppend = i;
+				//		toRemove.Add(shapes[toAppend]);
+				//		toAppend = i;
 
-					}
-					else {
-						shapes[toAppend]->points.RemoveAt(shapes[toAppend]->points.Num() - 1);
-						shapes[toAppend]->points.Add(res);
-						pol->points.RemoveAt(0);
-						shapes[toAppend]->points.Append(pol->points);
+				//	}
+				//	else {
+				//		shapes[toAppend]->points.RemoveAt(shapes[toAppend]->points.Num() - 1);
+				//		shapes[toAppend]->points.Add(res);
+				//		pol->points.RemoveAt(0);
+				//		shapes[toAppend]->points.Append(pol->points);
 
-						toRemove.Add(pol);
-					}
+				//		toRemove.Add(pol);
+				//	}
 
-				}
+				//}
 
-				break;
+				//break;
 				//return;
 
 			}
-		}
-	}
-	for (FPolygon* f : toRemove) {
-		shapes.Remove(f);
-		delete(f);
-	}
-	if (shallAdd) {
-		shapes.Add(inPol);
-	}
-	return;
+			else {
+				UE_LOG(LogTemp, Log, TEXT("testcollision: false"));
 
-}
-
-
-void beautify(FPolygon *f) {
-	// if two points are too close together, combine them using the one closest to the middle
-	return;
-	FVector center;
-	for (FVector v : f->points) {
-		center += v;
-	}
-	center /= f->points.Num();
-
-	for (int i = 0; i < f->points.Num(); i++) {
-		for (int j = i+1; j < f->points.Num(); j++) {
-			if (FVector::Dist(f->points[i], f->points[j]) < 1000) {
-
-				if (FVector::DistSquared(f->points[i], center) < FVector::DistSquared(f->points[j], center)) {
-					f->points[j] = f->points[i];
-				}
-				else {
-					f->points[i] = f->points[j];
-				}
-				int min = std::min(i, j);
-				int max = std::max(i, j);
-				// if the last and first point are very close together, we're dealing with a closed polygon
-				if (max == f->points.Num() - 1 && min == 0) {
-					UE_LOG(LogTemp, Log, TEXT("Closed polygon detected"));
-
-					f->open = false;
-				}
 			}
 		}
 	}
+//loopDone:
+//	for (FPolygon* f : toRemove) {
+//		shapes.Remove(f);
+//		delete(f);
+//	}
+	//if (shallAdd) {
+	//	shapes.Add(inPol);
+	//}
+	shapes.Add(inPol);
+	if (!hasPlaced) {
+		map.Add(inPol, new TArray<FPolygon*>());
+		map[inPol]->Add(inPol);
+	}
+	return;
+
 }
+
+struct PolygonPoint {
+	FPolygon* pol;
+	FVector point;
+};
+
+FPolygon* beautify(TArray<FPolygon*> polygons) {
+
+	TMap<FPolygon*, PolygonPoint> successors;
+	TMap<FPolygon*, FPolygon*> parents;
+	for (FPolygon* f : polygons){
+		for (FPolygon* f2 : polygons) {
+			UE_LOG(LogTemp, Log, TEXT("assembling..."));
+
+			if (f == f2)
+				continue;
+
+			FVector res = intersection(f->points[0], f->points[1], f2->points[0], f2->points[1]);
+			if (res.X != 0.0f) {
+				successors.Add(f, PolygonPoint{ f2, res });
+				parents.Add(f2, f);
+				//break;
+			}
+			else {
+				if (FVector::Dist(f2->points[0], f->points[1]) < 700) {
+					successors.Add(f, PolygonPoint{ f2, f2->points[0] });
+					parents.Add(f2, f);
+					//break;
+				}
+				else if (FVector::Dist(f2->points[1], f->points[1]) < 700) {
+					successors.Add(f, PolygonPoint{ f2, f2->points[0] });
+					parents.Add(f2, f);
+					//break;
+				}
+			}
+
+				
+		}
+	}
+	FPolygon* current = polygons[0];
+	FPolygon** next = &current;
+	while (next) {
+		UE_LOG(LogTemp, Log, TEXT("here1"));
+
+		current = *next;
+		next = parents.Find(current);
+	}
+	next = &current;
+
+	FPolygon* newPolygon = new FPolygon();
+	newPolygon->buildLeft = polygons[0]->buildLeft;
+	newPolygon->center = FVector(0, 0, 0);
+	newPolygon->points.Add(current->points[0]);
+
+	PolygonPoint *nextPP = successors.Find(current);
+	while (nextPP) {
+		UE_LOG(LogTemp, Log, TEXT("here2"));
+
+		current = nextPP->pol;
+		newPolygon->points.Add(nextPP->point);
+		nextPP = successors.Find(current);
+	}
+	return newPolygon;
+}
+
+//void beautify(FPolygon *f) {
+	// if two points are too close together, combine them using the one closest to the middle
+	//return;
+	//FVector center;
+	//for (FVector v : f->points) {
+	//	center += v;
+	//}
+	//center /= f->points.Num();
+
+	//for (int i = 0; i < f->points.Num(); i++) {
+	//	for (int j = i+1; j < f->points.Num(); j++) {
+	//		if (FVector::Dist(f->points[i], f->points[j]) < 1000) {
+
+	//			if (FVector::DistSquared(f->points[i], center) < FVector::DistSquared(f->points[j], center)) {
+	//				f->points[j] = f->points[i];
+	//			}
+	//			else {
+	//				f->points[i] = f->points[j];
+	//			}
+	//			int min = std::min(i, j);
+	//			int max = std::max(i, j);
+	//			// if the last and first point are very close together, we're dealing with a closed polygon
+	//			if (max == f->points.Num() - 1 && min == 0) {
+	//				UE_LOG(LogTemp, Log, TEXT("Closed polygon detected"));
+
+	//				f->open = false;
+	//			}
+	//		}
+	//	}
+	//}
+//}
 
 TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 	TArray<FPolygon*> shapes;
 
-
+	TMap<FPolygon*, TArray<FPolygon*>*> map;
 	// get coherent polygons
 	for (FRoadSegment f : segments) {
 		// two collision segments for every road
@@ -603,15 +732,32 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 		right->points.Add(f.end - sideOffset + extraLength);
 		right->buildLeft = false;
 
-		decidePolygonFate(segments, left, shapes);
-		decidePolygonFate(segments, right, shapes);
+		decidePolygonFate(segments, left, shapes, map);
+		decidePolygonFate(segments, right, shapes, map);
 
 	}
 
 	// zip em together neatly
-	for (FPolygon *f : shapes) {
-		beautify(f);
+	auto it = map.CreateIterator();
+	while (it) {
+
+
+
+		TArray<FPolygon*> *pols = it->Value;
+
+
+
+
+		FPolygon* res = beautify(*pols);
+		shapes.Add(res);
+		++it;
+		UE_LOG(LogTemp, Log, TEXT("pollegögg!"));
+
 	}
+
+	//for (FPolygon *f : shapes) {
+	//	beautify(f);
+	//}
 	//for (int i = 0; i < shapes.Num(); i++) {
 	//	FPolygon* f = shapes[i];
 	//	if (f->points.Num() < 3) {

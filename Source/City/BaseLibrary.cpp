@@ -61,7 +61,7 @@ bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<F
 	for (FVector t : tangents) {
 		getMinMax(min1, max1, t, vertices1[0], vertices1[1], vertices1[2], vertices1[3]);
 		getMinMax(min2, max2, t, vertices2[0], vertices2[1], vertices2[2], vertices2[3]);
-		if (std::max(min1, min2) >= std::min(max1, max2) - collisionLeniency) {
+		if (std::max(min1, min2) >= (std::min(max1, max2) - collisionLeniency)) {
 			return false;
 		}
 	}
