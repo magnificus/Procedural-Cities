@@ -77,6 +77,12 @@ struct FHousePolygon {
 	FPolygon polygon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector housePosition;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float height;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float population;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int type;

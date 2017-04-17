@@ -57,59 +57,96 @@ AProcMeshActor::AProcMeshActor()
 	tangents.Add(FProcMeshTangent(0, 1, 0));
 	tangents.Add(FProcMeshTangent(0, 1, 0));
 
-	mesh->CreateMeshSection_LinearColor(1, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
+	//mesh->CreateMeshSection_LinearColor(1, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
 }
 
-void AProcMeshActor::buildWall(FVector p1, FVector p2, FVector p3, FVector p4) {
+// uses fan triangulation, doesn't work with convex shapes
+void AProcMeshActor::buildPolygon(FPolygon pol, FVector offset) {
+	TArray<FVector> vertices;
+	TArray<int32> triangles;
+
+	FVector origin = pol.points[0];
+	for (FVector f : pol.points)
+		vertices.Add(f  + offset);
+
+	for (int i = 2; i < pol.points.Num(); i++) {
+		triangles.Add(0);
+		triangles.Add(i - 1);
+		triangles.Add(i);
+
+		triangles.Add(i);
+		triangles.Add(i - 1);
+		triangles.Add(0);
+	}
+
+
+	TArray<FVector> normals;
+	TArray<FVector2D> UV0;
+	TArray<FLinearColor> vertexColors;
+	TArray<FProcMeshTangent> tangents;
+	mesh->CreateMeshSection_LinearColor(currIndex++, vertices, triangles, normals, UV0, vertexColors, tangents, false);
+
+}
+
+void AProcMeshActor::buildTriangle(FVector p1, FVector p2, FVector p3) {
+	// 4 faces for a wall, two triangles in each direction
+
 	TArray<FVector> vertices;
 	vertices.Add(p1);
 	vertices.Add(p2);
 	vertices.Add(p3);
-	vertices.Add(p3);
+
+	TArray<int32> Triangles;
+	Triangles.Add(0);
+	Triangles.Add(1);
+	Triangles.Add(2);
+
+	Triangles.Add(2);
+	Triangles.Add(1);
+	Triangles.Add(0);
+
+	TArray<FVector> normals;
+	TArray<FVector2D> UV0;
+	TArray<FLinearColor> vertexColors;
+	TArray<FProcMeshTangent> tangents;
+
+	mesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
+
+}
+
+void AProcMeshActor::buildWall(FVector p1, FVector p2, FVector p3, FVector p4) {
+	// 4 faces for a wall, two triangles in each direction
+
+	TArray<FVector> vertices;
 	vertices.Add(p1);
+	vertices.Add(p2);
+	vertices.Add(p3);
 	vertices.Add(p4);
 
 	TArray<int32> Triangles;
 	Triangles.Add(0);
 	Triangles.Add(1);
 	Triangles.Add(2);
+
+	Triangles.Add(2);
+	Triangles.Add(1);
 	Triangles.Add(3);
-	Triangles.Add(4);
-	Triangles.Add(5);
+
+
+	Triangles.Add(2);
+	Triangles.Add(1);
+	Triangles.Add(0);
+
+	Triangles.Add(3);
+	Triangles.Add(1);
+	Triangles.Add(2);
 
 	TArray<FVector> normals;
-	normals.Add(FVector(1, 0, 0));
-	normals.Add(FVector(1, 0, 0));
-	normals.Add(FVector(1, 0, 0));
-	normals.Add(FVector(1, 0, 0));
-	normals.Add(FVector(1, 0, 0));
-	normals.Add(FVector(1, 0, 0));
-
 	TArray<FVector2D> UV0;
-	UV0.Add(FVector2D(0, 0));
-	UV0.Add(FVector2D(10, 0));
-	UV0.Add(FVector2D(0, 10));
-	UV0.Add(FVector2D(0, 0));
-	UV0.Add(FVector2D(10, 0));
-	UV0.Add(FVector2D(0, 10));
-
 	TArray<FLinearColor> vertexColors;
-	vertexColors.Add(FLinearColor(0.75, 0.75, 0.75, 1.0));
-	vertexColors.Add(FLinearColor(0.75, 0.75, 0.75, 1.0));
-	vertexColors.Add(FLinearColor(0.75, 0.75, 0.75, 1.0));
-	vertexColors.Add(FLinearColor(0.75, 0.75, 0.75, 1.0));
-	vertexColors.Add(FLinearColor(0.75, 0.75, 0.75, 1.0));
-	vertexColors.Add(FLinearColor(0.75, 0.75, 0.75, 1.0));
-
 	TArray<FProcMeshTangent> tangents;
-	tangents.Add(FProcMeshTangent(0, 1, 0));
-	tangents.Add(FProcMeshTangent(0, 1, 0));
-	tangents.Add(FProcMeshTangent(0, 1, 0));
-	tangents.Add(FProcMeshTangent(0, 1, 0));
-	tangents.Add(FProcMeshTangent(0, 1, 0));
-	tangents.Add(FProcMeshTangent(0, 1, 0));
 
-	mesh->CreateMeshSection_LinearColor(1, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
+	mesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
 
 }
 

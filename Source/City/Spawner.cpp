@@ -392,9 +392,9 @@ struct LinkedLine {
 };
 
 void invertAndParents(LinkedLine* line) {
-	//TSet<LinkedLine*> taken;
-	while (line){// && !taken.Contains(line)) {
-		//taken.Add(line);
+	TSet<LinkedLine*> taken;
+	while (line && !taken.Contains(line)) {
+		taken.Add(line);
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
 		line->line.p2 = temp;
@@ -406,9 +406,9 @@ void invertAndParents(LinkedLine* line) {
 }
 
 void invertAndChildren(LinkedLine* line) {
-	//TSet<LinkedLine*> taken;
-	while (line) {//&& !taken.Contains(line)) {
-		//taken.Add(line);
+	TSet<LinkedLine*> taken;
+	while (line && !taken.Contains(line)) {
+		taken.Add(line);
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
 		line->line.p2 = temp;
@@ -600,7 +600,7 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 
 	TArray<FPolygon> polygons;
 	int count = 0;
-	while (remaining.Num() > 0) {
+	while (remaining.Num() > 0 && count++ < 1000) {
 		TSet<LinkedLine*> taken;
 		UE_LOG(LogTemp, Log, TEXT("remaining: %i"), remaining.Num());
 		auto it = remaining.CreateIterator();

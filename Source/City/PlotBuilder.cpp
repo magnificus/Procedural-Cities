@@ -35,6 +35,8 @@ TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
 		//	toOffset.Normalize();
 		//	point += offsetTowardCenter*toOffset;
 		//}
+		fh.housePosition = center;
+		fh.height = randFloat() * 6000 + 4000;
 		float area = p.f.getArea();
 		UE_LOG(LogTemp, Log, TEXT("area of new polygon: %f"), area);
 
@@ -59,6 +61,10 @@ TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
 			pol.points.Add(p.f.points[i - 1] + offset);
 			fh.polygon = pol;
 			fh.population = 1.0;
+			fh.height = randFloat() * 6000 + 4000;
+
+			FVector center = p.f.getCenter();
+			fh.housePosition = center;
 
 			housePolygons.Add(fh);
 		}

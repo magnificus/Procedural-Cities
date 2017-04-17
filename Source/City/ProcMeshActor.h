@@ -4,6 +4,7 @@
 
 #include "GameFramework/Actor.h"
 #include "ProceduralMeshComponent.h"
+#include "BaseLibrary.h"
 #include "ProcMeshActor.generated.h"
 
 UCLASS()
@@ -14,7 +15,16 @@ class CITY_API AProcMeshActor : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AProcMeshActor();
+
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	void buildTriangle(FVector p1, FVector p2, FVector p3);
+
+	UFUNCTION(BlueprintCallable, Category = "Generation")
 	void buildWall(FVector p1, FVector p2, FVector p3, FVector p4);
+
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	void buildPolygon(FPolygon pol, FVector offset);
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -27,6 +37,7 @@ public:
 private:
 	UPROPERTY(VisibleAnywhere, Category = Materials)
 	UProceduralMeshComponent * mesh;
+	int currIndex = 1;
 	
 	
 };
