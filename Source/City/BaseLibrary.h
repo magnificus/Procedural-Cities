@@ -45,13 +45,27 @@ struct FPolygon
 		TArray<FVector> points;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool open = false;
+	bool open = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool buildLeft;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector center;
+	FVector getCenter() {
+		FVector center = FVector(0, 0, 0);
+		for (FVector f : points) {
+			center += f;
+		}
+		center /= points.Num();
+		return center;
+	}
+
+	// only cares about dimensions X and Y, not Z
+	float getArea() {
+		float area = 0;
+		for (int i = 0; i < points.Num()-2; i += 2)
+			area += points[i + 1].X * (points[i + 2].Y - points[i].Y) + points[i + 1].Y * (points[i].X - points[i + 2].X);
+		return area / 2;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -154,7 +168,7 @@ bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<F
 float randFloat();
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
 
-FVector getCenter(FPolygon p);
+//FVector getCenter(FPolygon p);
 
 class CITY_API BaseLibrary
 {

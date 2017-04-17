@@ -100,6 +100,11 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 3000) {
 			return false;
 		}
+		//FVector closest = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
+		//if (FVector::DistSquared(closest, current->segment->end) < maxAttachDistanceSquared) {
+		//	current->segment->end = closest;
+		//	addVertices(current->segment);
+		//}
 
 		FVector tangent3 = f->end - f->start;
 		FVector tangent4 = FRotator(0, 90, 0).RotateVector(tangent3);
@@ -124,7 +129,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 			}
 			current->segment->end = newE;
 			addVertices(current->segment);
-			if (FVector::Dist(current->segment->start, current->segment->end) < 5000) {
+			if (FVector::Dist(current->segment->start, current->segment->end) < 4000) {
 				return false;
 			}
 
@@ -236,62 +241,6 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 
 }
 
-void ASpawner::generate() {
-	for (auto It = splineComponents.CreateIterator(); It; It++)
-	{
-		(*It)->DestroyComponent();
-	}
-	for (APlotBuilder *pb : plots) {
-		pb->Destroy();
-	}
-	splineComponents.Empty();
-	plots.Empty();
-	
-	TArray<FRoadSegment> roadSegments = determineRoadSegments();
-	buildRoads(roadSegments);
-	TArray<FPolygon> polygons = getBuildingPolygons(roadSegments);
-	//buildPolygons(polygons);
-//	buildPlots(polygons);
-	GetWorld()->GetGameViewport()->GetEngineShowFlags()->SetSplines(true);
-	
-}
-
-//void ASpawner::OnConstruction(const FTransform & Transform) {
-//	for (auto It = splineComponents.CreateIterator(); It; It++)
-//	{
-//		(*It)->DestroyComponent();
-//	}
-//	for (APlotBuilder *pb : plots) {
-//		pb->Destroy();
-//	}
-//	splineComponents.Empty();
-//	plots.Empty();
-//
-//	TArray<FRoadSegment> roadSegments = determineRoadSegments();
-//	buildRoads(roadSegments);
-//	TArray<FPolygon> polygons = getBuildingPolygons(roadSegments);
-//	//buildPolygons(polygons);
-//	buildPlots(polygons);
-//	//GetWorld()->GetGameViewport()->GetEngineShowFlags()->SetSplines(true);
-//
-//}
-
-//void ASpawner::BeginDestroy()
-//{
-//	for (auto It = splineComponents.CreateIterator(); It; It++)
-//	{
-//		if (*It)
-//			(*It)->DestroyComponent();
-//	}
-//	for (auto It = plots.CreateIterator(); It; It++)
-//	{
-//		if (*It)
-//			(*It)->Destroy();
-//	}
-//	Super::BeginDestroy();
-//
-//}
-
 TArray<FRoadSegment> ASpawner::determineRoadSegments()
 {
 	FVector origin;
@@ -355,6 +304,15 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 		//}
 	}
+
+	// attach loose ends
+	//for (FRoadSegment* f : determinedSegments) {
+	//	for (FRoadSegment* f2 : determinedSegments) {
+	//		if (f == f2)
+	//			continue;
+
+	//	}
+	//}
 
 
 	TArray<int> keys;
@@ -434,7 +392,9 @@ struct LinkedLine {
 };
 
 void invertAndParents(LinkedLine* line) {
-	while (line) {
+	//TSet<LinkedLine*> taken;
+	while (line){// && !taken.Contains(line)) {
+		//taken.Add(line);
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
 		line->line.p2 = temp;
@@ -446,7 +406,9 @@ void invertAndParents(LinkedLine* line) {
 }
 
 void invertAndChildren(LinkedLine* line) {
-	while (line) {
+	//TSet<LinkedLine*> taken;
+	while (line) {//&& !taken.Contains(line)) {
+		//taken.Add(line);
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
 		line->line.p2 = temp;
@@ -486,7 +448,8 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 		FVector tangent = (f.end - f.start);
 		tangent.Normalize();
 		FVector intSec = intersection(f.start - tangent*extraRoadLen, f.end + tangent*extraRoadLen, inLine->line.p1, inLine->line.p2);
-		while (intSec.X != 0.0f) {
+		int counter = 0;
+		while (intSec.X != 0.0f && counter++ < 5) {
 
 			FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
 			LinkedLine* newP = new LinkedLine();
@@ -609,10 +572,8 @@ struct PolygonPoint {
 };
 
 TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
-	//TArray<FPolygon*> shapes;
 
 	TArray<LinkedLine*> lines;
-	//TMap<FPolygon*, TArray<FPolygon*>> map;
 	// get coherent polygons
 	for (FRoadSegment f : segments) {
 		// two collision segments for every road
@@ -660,29 +621,27 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 		remaining.Remove(curr);
 		while (curr->child && !taken.Contains(curr->child)) {
 			curr = curr->child;
-			//f.points.Add(curr->line.p1);
-			//f.points.Add(curr->line.p2);
 			f.points.Add(curr->point.X != 0.0f ? curr->point : curr->line.p2);
 			remaining.Remove(curr);
 			taken.Add(curr);
 		}
 		if (curr->child && taken.Contains(curr->child)) {
 			f.points.RemoveAt(0);
-			f.points.EmplaceAt(0, intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2));	
+			f.points.EmplaceAt(0, intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2));
 			f.open = false;
-			//f.points.Add(next->point.X != 0.0f ? next->point : next->line.p2);
 		}
 		polygons.Add(f);
 
 	}
 
-	//for (int i = 0; i < polygons.Num(); i++) {
-	//	FPolygon f = polygons[i];
-	//	if (f.points.Num() < 3) {
-	//		polygons.RemoveAt(i);
-	//		i--;
-	//	}
-	//}	
+	// these roads shouldn't exist, so this is mainly to highlight errors
+	for (int i = 0; i < polygons.Num(); i++) {
+		FPolygon f = polygons[i];
+		if (f.points.Num() < 3) {
+			polygons.RemoveAt(i);
+			i--;
+		}
+	}	
 
 	return polygons;
 

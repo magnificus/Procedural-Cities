@@ -21,29 +21,51 @@ void APlotBuilder::BeginPlay()
 
 TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
 	TArray<FHousePolygon> housePolygons;
-	for (int i = 1; i < p.f.points.Num(); i++) {
-		// one house per segment
-		FVector location;
-		FActorSpawnParameters spawnInfo;
-		location = (p.f.points[i] - p.f.points[i - 1]) / 2 + p.f.points[i - 1];
-		FVector toRotate = p.f.points[i] - p.f.points[i - 1];
-		toRotate.Normalize();
-		FVector offset = FRotator(0, p.f.buildLeft ? 90 : 270, 0).RotateVector(toRotate*3000);
 
-		//AHouseBuilder* h = GetWorld()->SpawnActor<AHouseBuilder>(location, FRotator(0, 0, 0), spawnInfo);
+	float minArea = 1000000;
+	if (!p.f.open) {
+		float offsetTowardCenter = 1000;
 		FHousePolygon fh;
-		FPolygon pol;
-		pol.points.Add(p.f.points[i - 1]);
-		pol.points.Add(p.f.points[i]);
-		pol.points.Add(p.f.points[i] + offset);
-		pol.points.Add(p.f.points[i - 1] + offset);
-		pol.center = getCenter(pol);
-		fh.polygon = pol;
-		fh.population = 1.0;
+		fh.polygon = p.f;
+		fh.population = p.population;
+		fh.type = p.type;
+		FVector center = p.f.getCenter();
+		//for (FVector &point : fh.polygon.points) {
+		//	FVector toOffset = center - point;
+		//	toOffset.Normalize();
+		//	point += offsetTowardCenter*toOffset;
+		//}
+		float area = p.f.getArea();
+		UE_LOG(LogTemp, Log, TEXT("area of new polygon: %f"), area);
 
+		//if (area > minArea) {
 		housePolygons.Add(fh);
+		//}
+	}
+	else {
+		float distFromCorner = 500;
+		for (int i = 1; i < p.f.points.Num(); i++) {
+			// one house per segment
+			FHousePolygon fh;
+			FVector toRotate = p.f.points[i] - p.f.points[i - 1];
+			toRotate.Normalize();
+			FVector offset = FRotator(0, p.f.buildLeft ? 90 : 270, 0).RotateVector(toRotate * 2000);
+
+			//AHouseBuilder* h = GetWorld()->SpawnActor<AHouseBuilder>(location, FRotator(0, 0, 0), spawnInfo);
+			FPolygon pol;
+			pol.points.Add(p.f.points[i - 1]);
+			pol.points.Add(p.f.points[i]);
+			pol.points.Add(p.f.points[i] + offset);
+			pol.points.Add(p.f.points[i - 1] + offset);
+			fh.polygon = pol;
+			fh.population = 1.0;
+
+			housePolygons.Add(fh);
+		}
 	}
 	return housePolygons;
+
+	
 }
 
 //void APlotBuilder::BuildPlot(FPlotPolygon p) {

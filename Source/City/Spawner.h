@@ -89,9 +89,6 @@ public:
 	//UFUNCTION(BlueprintCallable, Category = "Generation")
 	//void buildPlots(TArray<FPolygon> polygons);
 
-	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void generate();
-
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FPolygon> getBuildingPolygons(TArray<FRoadSegment> segments);

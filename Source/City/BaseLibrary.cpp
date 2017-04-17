@@ -74,14 +74,6 @@ float randFloat() {
 	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
-FVector getCenter(FPolygon p) {
-	FVector center = FVector(0, 0, 0);
-	for (FVector f : p.points) {
-		center += f;
-	}
-	center /= p.points.Num();
-	return center;
-}
 
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt)
 {
