@@ -22,7 +22,7 @@ void APlotBuilder::BeginPlay()
 TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
 	TArray<FHousePolygon> housePolygons;
 
-	float minArea = 1000000;
+	float minArea = 10000000000;
 	if (!p.f.open) {
 		float offsetTowardCenter = 1000;
 		FHousePolygon fh;
@@ -36,12 +36,13 @@ TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
 		//	point += offsetTowardCenter*toOffset;
 		//}
 		fh.housePosition = center;
-		fh.height = randFloat() * 6000 + 4000;
+		fh.height = randFloat() * 
+			10000 + 3000;
 		float area = p.f.getArea();
 		UE_LOG(LogTemp, Log, TEXT("area of new polygon: %f"), area);
 
 		//if (area > minArea) {
-		housePolygons.Add(fh);
+			housePolygons.Add(fh);
 		//}
 	}
 	else {

@@ -62,9 +62,87 @@ struct FPolygon
 	// only cares about dimensions X and Y, not Z
 	float getArea() {
 		float area = 0;
-		for (int i = 0; i < points.Num()-2; i += 2)
+		int nPoints = points.Num();
+		for (int i = 0; i < nPoints -2; i += 2)
 			area += points[i + 1].X * (points[i + 2].Y - points[i].Y) + points[i + 1].Y * (points[i].X - points[i + 2].X);
-		return area / 2;
+		// the last point binds together beginning and end
+		area += points[nPoints - 1].X * (points[0].Y - points[nPoints - 1].Y) + points[nPoints - 1].Y * (points[nPoints - 1].X - points[0].X);
+		return std::abs(area / 2);
+	}
+
+	FPolygon splitAlongMax() {
+
+		int longest = 0;
+		int sndLongest = 0;
+
+		float longestLen = 0;
+		float sndLongestLen = 0;
+
+		for (int i = 1; i < points.Num(); i++) {
+			FVector p = points[i] - points[i-1];
+			float curr = p.Size();
+			if (curr > sndLongestLen) {
+				if (curr > longestLen) {
+					sndLongestLen = longestLen;
+					sndLongest = longest;
+					longestLen = curr;
+					longest = i;
+				}
+				else {
+					sndLongestLen = curr;
+					sndLongest = i;
+				}
+			}
+		}
+
+		int min = std::min(longest, sndLongest);
+		int max = std::max(sndLongest, longest);
+
+		FVector newCutoff1 = points[min] - points[min - 1];
+		FVector newCutoff2 = points[max] - points[max - 1];
+
+		FVector firstJump = newCutoff1 / 2;
+		FVector sndJump = newCutoff2 / 2;
+
+
+
+		FPolygon newP;
+		newP.open = false;
+
+		FVector firstCut = points[min-1] + firstJump;
+		FVector sndCut = points[max - 1] + sndJump;
+
+		newP.points.Add(firstCut);
+		for (int i = min; i < max; i++) {
+			newP.points.Add(points[i]);
+		}
+		newP.points.Add(sndCut);
+		newP.points.Add(firstCut);
+		int lenToRemove = max - min;
+		points.RemoveAt(min, lenToRemove);
+		points.EmplaceAt(min, firstCut);
+		points.EmplaceAt(min + 1, sndCut);
+
+
+		return newP;
+
+	}
+
+	TArray<FPolygon> recursiveSplit(float maxArea) {
+		float area = getArea();
+		if (area > maxArea){
+			FPolygon newP = splitAlongMax();
+			TArray<FPolygon> tot;// = newP.recursiveSplit(maxArea);
+			tot.Add(newP);
+			//tot.Append(recursiveSplit(maxArea));
+			tot.Add(*this);
+			return tot;
+		}
+		else {
+			TArray<FPolygon> toReturn;
+			toReturn.Add(*this);
+			return toReturn;
+		}
 	}
 };
 
