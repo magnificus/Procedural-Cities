@@ -100,7 +100,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		TArray<FVector> tangents;
 
 		// can't be too close to another segment
-		if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 5000) {
+		if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 8000) {
 			return false;
 		}
 		//FVector closest = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
@@ -429,14 +429,14 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 	float middleOffset = 300;
-	float extraRoadLen = 500;
+	float extraRoadLen = 2000;
 	if (len < 1000) {
 		return;
 	}
 
 	// split lines blocking roads
 
-	float width = 200;
+	float width = 400;
 	FVector tangent1 = inLine->line.p2 - inLine->line.p1;
 	tangent1.Normalize();
 	FVector tangent2 = FRotator(0, 90, 0).RotateVector(tangent1);
@@ -511,9 +511,6 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 						// on the new line, collision end?
 						if (FVector::Dist(inLine->line.p1, res) > FVector::Dist(inLine->line.p2, res)) {
 							// then flip
-							//FVector temp = inLine->line.p1;
-							//inLine->line.p1 = inLine->line.p2;
-							//inLine->line.p2 = temp;
 							invertAndParents(inLine);
 						}
 						else {
@@ -652,12 +649,12 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 	}
 
 	// split polygons into habitable blocks
-	float maxArea = 100000000.0f;
+	float maxArea = 200000000.0f;
 	
 	TArray<FPolygon> refinedPolygons;
 	for (FPolygon &p : polygons) {
 		//if (p.open)
-			refinedPolygons.Add(p);
+		refinedPolygons.Append(p.refine(maxArea));
 		//else
 		//	refinedPolygons.Append(p.recursiveSplit(maxArea));
 	}

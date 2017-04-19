@@ -37,7 +37,7 @@ TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
 		//}
 		fh.housePosition = center;
 		fh.height = randFloat() * 
-			10000 + 3000;
+			15000 + 3000;
 		float area = p.f.getArea();
 		UE_LOG(LogTemp, Log, TEXT("area of new polygon: %f"), area);
 

@@ -63,10 +63,10 @@ struct FPolygon
 	float getArea() {
 		float area = 0;
 		int nPoints = points.Num();
-		for (int i = 0; i < nPoints -2; i += 2)
+		for (int i = 0; i < nPoints - 2; i += 2)
 			area += points[i + 1].X * (points[i + 2].Y - points[i].Y) + points[i + 1].Y * (points[i].X - points[i + 2].X);
 		// the last point binds together beginning and end
-		area += points[nPoints - 1].X * (points[0].Y - points[nPoints - 1].Y) + points[nPoints - 1].Y * (points[nPoints - 1].X - points[0].X);
+		area += points[nPoints - 1].X * (points[0].Y - points[nPoints - 2].Y) + points[nPoints - 1].Y * (points[nPoints - 2].X - points[0].X);
 		return std::abs(area / 2);
 	}
 
@@ -132,10 +132,10 @@ struct FPolygon
 		float area = getArea();
 		if (area > maxArea){
 			FPolygon newP = splitAlongMax();
-			TArray<FPolygon> tot;// = newP.recursiveSplit(maxArea);
+			TArray<FPolygon> tot = newP.recursiveSplit(maxArea);
 			tot.Add(newP);
-			//tot.Append(recursiveSplit(maxArea));
-			tot.Add(*this);
+			tot.Append(recursiveSplit(maxArea));
+			//tot.Add(*this);
 			return tot;
 		}
 		else {
@@ -143,6 +143,41 @@ struct FPolygon
 			toReturn.Add(*this);
 			return toReturn;
 		}
+	}
+
+	// this method merges polygon sides when possible, and combines points
+	void decreaseEdges() {
+		float dirDiffAllowed = 0.1f;
+		float distDiffAllowed = 400;
+
+		for (int i = 1; i < points.Num(); i++) {
+			if (FVector::Dist(points[i - 1], points[i]) < distDiffAllowed) {
+				points.RemoveAt(i-1);
+				i--;
+			}
+		}
+		for (int i = 2; i < points.Num(); i++) {
+			FVector prev = points[i - 1] - points[i - 2];
+			prev.Normalize();
+			FVector curr = points[i] - points[i - 1];
+			curr.Normalize();
+			UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
+			if (FVector::Dist(curr, prev) < dirDiffAllowed) {
+				points.RemoveAt(i-1);
+				i--;
+			}
+		}
+	}
+
+	TArray<FPolygon> refine(float maxArea) {
+		
+		decreaseEdges();
+		//if (!open) {
+		//	return recursiveSplit(maxArea);
+		//}
+		TArray<FPolygon> toReturn;
+		toReturn.Add(*this);
+		return toReturn;
 	}
 };
 
