@@ -84,14 +84,14 @@ public:
 	void buildRoads(TArray<FRoadSegment> segments);
 
 	UFUNCTION(BlueprintCallable, Category = "Rendering")
-	void buildPolygons(TArray<FPolygon> segments);
+	void buildPolygons(TArray<FMetaPolygon> segments);
 
 	//UFUNCTION(BlueprintCallable, Category = "Generation")
 	//void buildPlots(TArray<FPolygon> polygons);
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	TArray<FPolygon> getBuildingPolygons(TArray<FRoadSegment> segments);
+	TArray<FMetaPolygon> getBuildingPolygons(TArray<FRoadSegment> segments);
 
 
 protected:

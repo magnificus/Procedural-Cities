@@ -174,8 +174,6 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoadL->segment = newRoad;
 	newRoadL->time = previous->segment->type != RoadType::main ? previous->time + FMath::Rand() % 1 : previous->time;
 	newRoadL->roadLength = previous->roadLength + 1;
-	newRoad->out = Direction::F;
-	newRoad->dir = Direction::F;
 	newRoadL->previous = previous;
 	addVertices(newRoad);
 	queue.push(newRoadL);
@@ -202,8 +200,6 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	newRoad->type = newType;
 	newRoadL->segment = newRoad;
 	// every side track has less priority
-	newRoad->dir = left ? Direction::L : Direction::R;
-	newRoad->out = Direction::F;
 
 	newRoadL->time = previous->segment->type != RoadType::main ? previous->time +FMath::Rand() % 1: (previous->time + 1);
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
@@ -280,8 +276,6 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	start->firstDegreeRot = FRotator(0, 0, 0);
 	start->secondDegreeRot = FRotator(0, 0, 0);
 	start->roadLength = 1;
-	startR->out = Direction::F;
-	startR->dir = Direction::F;
 	addVertices(startR);
 
 	queue.push(start);
@@ -301,23 +295,6 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 			//UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT START X %f"), current->segment->start.X);
 			addExtensions(queue, current, allSegments);
 		}
-		
-		//if (current->segment->dir != Direction::F) {
-		//	// wasnt forward, have to adjust previous road
-		//	logicRoadSegment* prev = current->previous;
-		//	if (prev->segment->out == Direction::F) {
-		//		if (current->segment->dir == Direction::L) {
-		//			prev->segment->out = Direction::LF;
-		//		}
-		//		else if (current->segment->dir == Direction::R) {
-		//			prev->segment->out = Direction::FR;
-		//		}
-		//	}
-		//	else {
-		//		prev->segment->out = Direction::LFR;
-		//	}
-
-		//}
 	}
 
 
@@ -337,51 +314,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		delete(s);
 	}
 
-	
-
 	return finishedSegments;
-}
-
-void ASpawner::buildRoads(TArray<FRoadSegment> segments) {
-	//spline
-		for (auto It = splineComponents.CreateIterator(); It; It++)
-		{
-			if (*It)
-				(*It)->DestroyComponent();
-		}
-		for (auto It = plots.CreateIterator(); It; It++)
-		{
-			if (*It)
-				(*It)->Destroy();
-		}
-
-
-	for (FRoadSegment f : segments) {
-		//UE_LOG(LogTemp, Warning, TEXT("Placing road..."));
-		USplineMeshComponent *s = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
-		s->SetStaticMesh(meshRoad);
-		s->SetCastShadow(false);
-		s->SetStartScale(FVector2D(f.width, 1));
-		s->SetEndScale(FVector2D(f.width, 1));
-		s->SetStartAndEnd(f.start + FVector(0, 0, 50), f.beginTangent, f.end  + FVector(0, 0, 50), f.end - f.start, true);
-		splineComponents.Add(s);
-	}
-
-}
-
-void ASpawner::buildPolygons(TArray<FPolygon> polygons) {
-
-		for (FPolygon p : polygons) {
-			for (int i = 1; i < p.points.Num(); i++) {
-				USplineMeshComponent *s = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
-				s->SetStaticMesh(meshPolygon);
-				s->SetCastShadow(false);
-				s->SetStartAndEnd(p.points[i-1], p.points[i] - p.points[i-1], p.points[i] , p.points[i] - p.points[i - 1], true);
-				splineComponents.Add(s);
-			}
-
-		}
-
 }
 
 struct Line {
@@ -393,8 +326,8 @@ struct LinkedLine {
 	Line line;
 	bool buildLeft;
 	FVector point = FVector(0.0f, 0.0f, 0.0f);
-	LinkedLine* parent = nullptr;
-	LinkedLine* child = nullptr;
+	LinkedLine* parent;
+	LinkedLine* child;
 };
 
 void invertAndParents(LinkedLine* line) {
@@ -407,7 +340,11 @@ void invertAndParents(LinkedLine* line) {
 		LinkedLine* prevC = line->child;
 		line->child = line->parent;
 		line->parent = prevC;
+		line->point = FVector(0, 0, 0);
+		line->buildLeft = !line->buildLeft;
+
 		line = line->child;
+
 	}
 }
 
@@ -421,22 +358,26 @@ void invertAndChildren(LinkedLine* line) {
 		LinkedLine* prevC = line->child;
 		line->child = line->parent;
 		line->parent = prevC;
+		line->point = FVector(0, 0, 0);
+		line->buildLeft = !line->buildLeft;
+
 		line = line->parent;
 	}
 }
 
-void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArray<LinkedLine*> &lines)
+void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen)
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
-	float middleOffset = 300;
-	float extraRoadLen = 2000;
+	float middleOffset = 600;
+	float width = 1000;
+
 	if (len < 1000) {
+		delete inLine;
 		return;
 	}
 
 	// split lines blocking roads
 
-	float width = 400;
 	FVector tangent1 = inLine->line.p2 - inLine->line.p1;
 	tangent1.Normalize();
 	FVector tangent2 = FRotator(0, 90, 0).RotateVector(tangent1);
@@ -456,6 +397,10 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 		FVector intSec = intersection(f.start - tangent*extraRoadLen, f.end + tangent*extraRoadLen, inLine->line.p1, inLine->line.p2);
 		int counter = 0;
 		while (intSec.X != 0.0f && counter++ < 5) {
+			if (!allowSplit) {
+				delete inLine;
+				return;
+			}
 
 			FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
 			LinkedLine* newP = new LinkedLine();
@@ -471,13 +416,14 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 				newP->line.p2 = inLine->line.p2;
 				inLine->line.p2 = intSec - altTangent * middleOffset;
 			}
-			decidePolygonFate(segments, newP,lines);
+			decidePolygonFate(segments, newP,lines, true, extraRoadLen);
 			intSec = intersection(f.start - tangent * extraRoadLen, f.end + tangent * extraRoadLen, inLine->line.p1, inLine->line.p2);
 			//return;
 		}
 	}
 	len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 	if (len < 1000) {
+		delete inLine;
 		return;
 	}
 
@@ -519,6 +465,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 						inLine->parent = pol;
 						pol->child = inLine;
 						pol->point = res;
+						inLine->buildLeft = pol->buildLeft;
 
 					} 	
 					// so the new line is maybe the master
@@ -527,7 +474,6 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 						if (FVector::Dist(inLine->line.p1, res) > FVector::Dist(inLine->line.p2, res)) {
 							pol->parent = inLine;
 							inLine->child = pol;
-							inLine->point = res;
 
 						}
 						else {
@@ -535,9 +481,9 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 							invertAndChildren(inLine);
 							inLine->child = pol;
 							pol->parent = inLine;
-							inLine->point = res;
 						}
-
+						pol->buildLeft = inLine->buildLeft;
+						inLine->point = res;
 
 					}
 				}else {
@@ -561,10 +507,6 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 			}
 	}
 	lines.Add(inLine);
-	//if (!hasPlaced) {
-	//	map.Emplace(inPol, TArray<FPolygon*>());
-	//	map[inPol].Emplace(inPol);
-	//}
 	return;
 
 }
@@ -574,7 +516,7 @@ struct PolygonPoint {
 	FVector point;
 };
 
-TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
+TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 
 	TArray<LinkedLine*> lines;
 	// get coherent polygons
@@ -582,7 +524,7 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 		// two collision segments for every road
 		FVector tangent = f.end - f.start;
 		tangent.Normalize();
-		FVector extraLength = tangent * 500;
+		FVector extraLength = tangent * 1000;
 		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*(standardWidth / 2 * f.width);
 		LinkedLine* left = new LinkedLine();
 		left->line.p1 = f.start + sideOffset - extraLength;
@@ -593,17 +535,23 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 		right->line.p2 = f.end - sideOffset + extraLength;
 		right->buildLeft = false;
 
+		LinkedLine* inFront = new LinkedLine();
+		inFront->line.p1 = f.end + sideOffset*1.5;
+		inFront->line.p2 = f.end - sideOffset*1.5;
+		float extraRoadLen = 1500;
 
-		decidePolygonFate(segments, left, lines);
-		decidePolygonFate(segments, right, lines);
 
+		decidePolygonFate(segments, left, lines, true, extraRoadLen);
+		decidePolygonFate(segments, right, lines, true, extraRoadLen);
+		//decidePolygonFate(segments, inFront, lines, false, 0);
 	}
 
 	TSet<LinkedLine*> remaining;
 	remaining.Append(lines);
 
-	TArray<FPolygon> polygons;
+	TArray<FMetaPolygon> polygons;
 	int count = 0;
+	// build the actual polýgons from the linked structures
 	while (remaining.Num() > 0){ //&& count++ < 1000) {
 		TSet<LinkedLine*> taken;
 		UE_LOG(LogTemp, Log, TEXT("remaining: %i"), remaining.Num());
@@ -615,7 +563,7 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 			taken.Add(curr);
 		}
 		// now curr is top dog
-		FPolygon f;
+		FMetaPolygon f;
 		f.buildLeft = curr->buildLeft;
 		f.points.Add(curr->line.p1);
 		f.points.Add(curr->point.X != 0.0f ? curr->point : curr->line.p2);
@@ -641,7 +589,7 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 
 	// these roads shouldn't exist, so this is mainly to highlight errors
 	for (int i = 0; i < polygons.Num(); i++) {
-		FPolygon f = polygons[i];
+		FMetaPolygon f = polygons[i];
 		if (f.points.Num() < 3) {
 			polygons.RemoveAt(i);
 			i--;
@@ -650,11 +598,12 @@ TArray<FPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments) {
 
 	// split polygons into habitable blocks
 	float maxArea = 200000000.0f;
+	float minArea = 20000000.0f;
 	
-	TArray<FPolygon> refinedPolygons;
-	for (FPolygon &p : polygons) {
+	TArray<FMetaPolygon> refinedPolygons;
+	for (FMetaPolygon &p : polygons) {
 		//if (p.open)
-		refinedPolygons.Append(p.refine(maxArea));
+		refinedPolygons.Append(p.refine(maxArea, minArea));
 		//else
 		//	refinedPolygons.Append(p.recursiveSplit(maxArea));
 	}

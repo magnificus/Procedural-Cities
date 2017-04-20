@@ -28,7 +28,7 @@ public:
 	UStaticMesh* meshPolygon;
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-		void placeHouse(FHousePolygon f);
+		TArray<FPolygon> getHousePolygons(FHousePolygon &f, int floors, float floorHeight);
 
 	//UPROPERTY(VisibleAnywhere, Category = Materials)
 	//	UProceduralMeshComponent * mesh;

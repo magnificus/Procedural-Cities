@@ -27,68 +27,55 @@ AHouseBuilder::AHouseBuilder()
 	meshPolygon = buildingMesh.Object;
 
 }
+/*
+holes are assumed to be of a certain structure, just four points upper left -> lower left -> lower right -> upper right, no window is allowed to overlap another
+0---3
+|	|
+1---2
+*/
+TArray<FPolygon> getSideWithHoles(FPolygon outer, TArray<FPolygon> holes) {
 
+	TArray<FPolygon> polygons = TArray<FPolygon>();
+	FVector start = outer.points[1];
+	FVector end = outer.points[2];
 
-void AHouseBuilder::placeHouse(FHousePolygon f)
-{
-	//Empty the array and delete all it's components
-	//for (auto It = meshesArray.CreateIterator(); It; It++)
-	//{
-	//	(*It)->DestroyComponent();
-	//}
-
-	//meshesArray.Empty();
-
-	////Register all the components
-	//RegisterAllComponents();
-	////The base name for all our components
-	//FName InitialName = FName("MyCompName");
-
-	//	UStaticMeshComponent* NewComp = NewObject<UStaticMeshComponent>(this, InitialName);
-
-	//	//Add a reference to our array
-	//	meshesArray.Add(NewComp);
-
-	//	FString Str = "House";
-
-	//	//Convert the FString to FName
-	//	InitialName = (*Str);
-
-	//	//If the component is valid, set it's static mesh, relative location and attach it to our parent
-	//	if (NewComp)
-	//	{
-	//		GLog->Log("Registering comp...");
-
-	//		//Register the new component
-	//		NewComp->RegisterComponent();
-
-	//		//Set the static mesh of our component
-	//		NewComp->SetStaticMesh(placeHolderHouseMesh->GetStaticMesh());
-
-
-	//		FVector Location = f.polygon.center;
-
-	//		NewComp->SetWorldLocation(Location);
-	//		//NewComp->SetWorldScale3D(FVector(30, 30, randFloat() * 150 + 30));
-	//		//Attach the component to the root component
-	//		NewComp->AttachTo(GetRootComponent(), NAME_None, EAttachLocation::KeepRelativeOffset);
-	//	}
-
-
-	for (int i = 1; i < f.polygon.points.Num(); i++) {
-		USplineMeshComponent *s = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
-		s->SetStaticMesh(meshPolygon);
-		s->SetCastShadow(false);
-		s->SetStartAndEnd(f.polygon.points[i - 1], f.polygon.points[i] - f.polygon.points[i - 1], f.polygon.points[i], f.polygon.points[i] - f.polygon.points[i - 1], true);
-		splineComponents.Add(s);
-		s->SetHiddenInGame(false);
+	// sort holes according to dist to starting point so that they can be applied in order
+	holes.Sort([start](const FPolygon &p1, const FPolygon &p2) {
+		return FVector::DistSquared(p1.points[1], start) > FVector::DistSquared(p2.points[2], start);
+	});
+	FVector attach1 = outer.points[0];
+	FVector attach2 = attach1;
+	attach2.Z = holes[0].points[0].Z;
+	FVector attach3 = attach1;
+	attach3.Z = holes[0].points[1].Z;
+	FVector attach4 = attach1;
+	attach4.Z = outer.points[1].Z;
+	for (FPolygon p : holes) {
+		FPolygon p1;
+		p1.points.Add(attach1);
+		p1.points.Add(p.points[3]);
 	}
-	USplineMeshComponent *s = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
-	s->SetStaticMesh(meshPolygon);
-	s->SetCastShadow(false);
-	s->SetStartAndEnd(f.polygon.points[f.polygon.points.Num()-1], f.polygon.points[0] - f.polygon.points[f.polygon.points.Num() - 1], f.polygon.points[0], f.polygon.points[0] - f.polygon.points[f.polygon.points.Num() - 1], true);
-	splineComponents.Add(s);
-	s->SetHiddenInGame(false);
+
+
+	return TArray<FPolygon>();
+}
+
+TArray<FPolygon> getGroundPolygons(FHousePolygon &f, float floorHeight, float doorHeight, float doorWidth) {
+	int doorLoc = FMath::FloorToInt(randFloat() * (f.polygon.points.Num() - 1) + 1);
+	FVector side = f.polygon.points[doorLoc] - f.polygon.points[doorLoc - 1];
+	return TArray<FPolygon>();
+}
+
+TArray<FPolygon> getFloorPolygons(FHousePolygon &f, float floorHeight) {
+	return TArray<FPolygon>();
+}
+TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon &f, int floors, float floorHeight)
+{
+	TArray<FPolygon> toReturn;
+	return toReturn;
+	// we have the outline of the house, have to place levels, start with bottom & door
+
+
 
 }
 
@@ -98,17 +85,6 @@ void AHouseBuilder::BeginPlay()
 	Super::BeginPlay();
 	
 }
-
-//void AHouseBuilder::BeginDestroy()
-//{
-//	for (auto It = meshesArray.CreateIterator(); It; It++)
-//	{
-//		if (*It)
-//			(*It)->DestroyComponent();
-//	}
-//	Super::BeginDestroy();
-//
-//}
 
 // Called every frame
 void AHouseBuilder::Tick(float DeltaTime)
