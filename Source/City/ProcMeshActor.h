@@ -25,6 +25,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	void buildPolygon(FPolygon pol, FVector offset);
 
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	void buildPolygons(TArray<FPolygon> polygons);
 
 protected:
 	// Called when the game starts or when spawned

@@ -290,7 +290,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		queue.pop();
 		if (placementCheck(determinedSegments, current, segmentsOrganized)) {
 			determinedSegments.Add(current->segment);
-			addRoadToMap(segmentsOrganized, current->segment, 10000);
+			addRoadToMap(segmentsOrganized, current->segment, primaryStepLength.Size() / 2);
 
 			//UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT START X %f"), current->segment->start.X);
 			addExtensions(queue, current, allSegments);
@@ -530,7 +530,7 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 		left->line.p1 = f.start + sideOffset - extraLength;
 		left->line.p2 = f.end + sideOffset + extraLength;
 		left->buildLeft = true;
-		LinkedLine* right = new LinkedLine();;
+		LinkedLine* right = new LinkedLine();
 		right->line.p1 = f.start - sideOffset - extraLength;
 		right->line.p2 = f.end - sideOffset + extraLength;
 		right->buildLeft = false;
@@ -597,15 +597,12 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 	}
 
 	// split polygons into habitable blocks
-	float maxArea = 200000000.0f;
-	float minArea = 20000000.0f;
+	float maxArea = 2000.0f;
+	float minArea = -200.0f;
 	
 	TArray<FMetaPolygon> refinedPolygons;
 	for (FMetaPolygon &p : polygons) {
-		//if (p.open)
 		refinedPolygons.Append(p.refine(maxArea, minArea));
-		//else
-		//	refinedPolygons.Append(p.recursiveSplit(maxArea));
 	}
 
 	return refinedPolygons;

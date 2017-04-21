@@ -35,17 +35,17 @@ bool testCollision(TArray<FPolygon> &polygons, FPolygon &plot, FPolygon &pol) {
 TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
 	TArray<FHousePolygon> housePolygons;
 
-	if (!p.f.open) {
+	if (!p.open) {
 		float offsetTowardCenter = 1000;
 		FHousePolygon fh;
-		fh.polygon = p.f;
+		fh.points = p.points;
 		fh.population = p.population;
 		fh.type = p.type;
-		FVector center = p.f.getCenter();
+		FVector center = p.getCenter();
 		fh.housePosition = center;
 		fh.height = randFloat() * 
 			15000 + 3000;
-		float area = p.f.getArea();
+		float area = p.getArea();
 		UE_LOG(LogTemp, Log, TEXT("area of new polygon: %f"), area);
 
 		//if (area > minArea) {
@@ -53,31 +53,31 @@ TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
 		//}
 	}
 	else {
-		// TODO
+		// TODO fix open polygon houses
 		return housePolygons;
 		// just have to make sure the buildings overlap each other or the outsides of the plot
 		TArray<FPolygon> placed;
-		for (int i = 1; i < p.f.points.Num(); i++) {
+		for (int i = 1; i < p.points.Num(); i++) {
 			// one house per segment
 			FHousePolygon fh;
-			FVector toRotate = p.f.points[i] - p.f.points[i - 1];
+			FVector toRotate = p.points[i] - p.points[i - 1];
 			toRotate.Normalize();
-			FVector tangent = FRotator(0, p.f.buildLeft ? 90 : 270, 0).RotateVector(toRotate);
+			FVector tangent = FRotator(0, p.buildLeft ? 90 : 270, 0).RotateVector(toRotate);
 
 
 
 			FPolygon pol;
 			float offset = (randFloat() * 10000 + 4000);
-			pol.points.Add(p.f.points[i - 1] + tangent *10);
-			pol.points.Add(p.f.points[i] + tangent *10);
-			pol.points.Add(p.f.points[i] + tangent * offset);
-			pol.points.Add(p.f.points[i - 1] + tangent * offset);
-			pol.points.Add(p.f.points[i - 1] + tangent * 10);
-			FVector center = p.f.getCenter();
+			pol.points.Add(p.points[i - 1] + tangent *10);
+			pol.points.Add(p.points[i] + tangent *10);
+			pol.points.Add(p.points[i] + tangent * offset);
+			pol.points.Add(p.points[i - 1] + tangent * offset);
+			pol.points.Add(p.points[i - 1] + tangent * 10);
+			FVector center = p.getCenter();
 
 
-			if (!testCollision(placed, p.f, pol)) {
-				fh.polygon = pol;
+			if (!testCollision(placed, p, pol)) {
+				fh.points = pol.points;
 				fh.population = 1.0;
 				fh.height = randFloat() * 6000 + 4000;
 				fh.housePosition = center;

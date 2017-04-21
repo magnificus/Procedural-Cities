@@ -22,9 +22,79 @@ enum class RoadType : uint8
 };
 
 
+
+
 USTRUCT(BlueprintType)
-struct FMetaPolygon : FPolygon
+struct FPolygon
 {
+	//GENERATED_BODY();
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<FVector> points;
+
+	FVector getCenter() {
+		FVector center = FVector(0, 0, 0);
+		for (FVector f : points) {
+			center += f;
+		}
+		center /= points.Num();
+		return center;
+	}
+
+	// only cares about dimensions X and Y, not Z
+	float getArea() {
+		// must be even
+		if (points.Num() % 2 != 0) {
+			FVector toAdd = points[0];
+			points.Add(toAdd);
+		}
+		float area = 0;
+		int nPoints = points.Num();
+		for (int i = 0; i < nPoints - 2; i += 2)
+			area += (points[i + 1].X * (points[i + 2].Y - points[i].Y) + points[i + 1].Y * (points[i].X - points[i + 2].X)) * 0.00001;
+		// the last point binds together beginning and end
+		area += points[nPoints - 1].X * (points[0].Y - points[nPoints - 2].Y) + points[nPoints - 1].Y * (points[nPoints - 2].X - points[0].X);
+		return std::abs(area / 2);
+	}
+
+
+
+
+
+	// this method merges polygon sides when possible, and combines points
+	void decreaseEdges() {
+		float dirDiffAllowed = 0.03f;
+		float distDiffAllowed = 400;
+
+		//for (int i = 1; i < points.Num(); i++) {
+		//	if (FVector::Dist(points[i - 1], points[i]) < distDiffAllowed) {
+		//		points.RemoveAt(i-1);
+		//		i--;
+		//	}
+		//}
+		for (int i = 2; i < points.Num(); i++) {
+			FVector prev = points[i - 1] - points[i - 2];
+			prev.Normalize();
+			FVector curr = points[i] - points[i - 1];
+			curr.Normalize();
+			UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
+			if (FVector::Dist(curr, prev) < dirDiffAllowed) {
+				points.RemoveAt(i-1);
+				i--;
+			}
+		}
+	}
+
+
+};
+
+USTRUCT(BlueprintType)
+struct FMetaPolygon : public FPolygon
+{
+
+	GENERATED_USTRUCT_BODY();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool open = true;
 
@@ -67,7 +137,7 @@ struct FMetaPolygon : FPolygon
 
 
 
-		FPolygon newP;
+		FMetaPolygon newP;
 		newP.open = false;
 
 		FVector firstCut = points[min - 1] + firstJump;
@@ -88,91 +158,34 @@ struct FMetaPolygon : FPolygon
 		return newP;
 
 	}
-};
 
-
-USTRUCT(BlueprintType)
-struct FPolygon
-{
-	//GENERATED_BODY();
-	GENERATED_USTRUCT_BODY();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FVector> points;
-
-	FVector getCenter() {
-		FVector center = FVector(0, 0, 0);
-		for (FVector f : points) {
-			center += f;
-		}
-		center /= points.Num();
-		return center;
-	}
-
-	// only cares about dimensions X and Y, not Z
-	float getArea() {
-		float area = 0;
-		int nPoints = points.Num();
-		for (int i = 0; i < nPoints - 2; i += 2)
-			area += points[i + 1].X * (points[i + 2].Y - points[i].Y) + points[i + 1].Y * (points[i].X - points[i + 2].X);
-		// the last point binds together beginning and end
-		area += points[nPoints - 1].X * (points[0].Y - points[nPoints - 2].Y) + points[nPoints - 1].Y * (points[nPoints - 2].X - points[0].X);
-		return std::abs(area / 2);
-	}
-
-
-
-	TArray<FPolygon> recursiveSplit(float maxArea, float minArea) {
+	TArray<FMetaPolygon> recursiveSplit(float maxArea, float minArea) {
 		float area = getArea();
 		if (area < minArea) {
-			return TArray<FPolygon>();
+			return TArray<FMetaPolygon>();
 		}
-		if (area > maxArea){
-			FPolygon newP = splitAlongMax();
-			TArray<FPolygon> tot = newP.recursiveSplit(maxArea, minArea);
+		else if (area > maxArea) {
+			FMetaPolygon newP = splitAlongMax();
+			TArray<FMetaPolygon> tot = newP.recursiveSplit(maxArea, minArea);
 			tot.Add(newP);
 			tot.Append(recursiveSplit(maxArea, minArea));
 			//tot.Add(*this);
 			return tot;
 		}
 		else {
-			TArray<FPolygon> toReturn;
+			TArray<FMetaPolygon> toReturn;
 			toReturn.Add(*this);
 			return toReturn;
 		}
 	}
 
-	// this method merges polygon sides when possible, and combines points
-	void decreaseEdges() {
-		float dirDiffAllowed = 0.01f;
-		float distDiffAllowed = 400;
+	TArray<FMetaPolygon> refine(float maxArea, float minArea) {
 
-		for (int i = 1; i < points.Num(); i++) {
-			if (FVector::Dist(points[i - 1], points[i]) < distDiffAllowed) {
-				points.RemoveAt(i-1);
-				i--;
-			}
+		decreaseEdges();
+		if (!open) {
+			return recursiveSplit(maxArea, minArea);
 		}
-		for (int i = 2; i < points.Num(); i++) {
-			FVector prev = points[i - 1] - points[i - 2];
-			prev.Normalize();
-			FVector curr = points[i] - points[i - 1];
-			curr.Normalize();
-			UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
-			if (FVector::Dist(curr, prev) < dirDiffAllowed) {
-				points.RemoveAt(i-1);
-				i--;
-			}
-		}
-	}
-
-	TArray<FPolygon> refine(float maxArea, float minArea) {
-		
-		//decreaseEdges();
-		//if (!open) {
-		//	return recursiveSplit(maxArea, minArea);
-		//}
-		TArray<FPolygon> toReturn;
+		TArray<FMetaPolygon> toReturn;
 		toReturn.Add(*this);
 		return toReturn;
 	}
@@ -181,14 +194,10 @@ struct FPolygon
 
 
 
-
 USTRUCT(BlueprintType)
-struct FHousePolygon {
+struct FHousePolygon : public FPolygon {
 
 	GENERATED_USTRUCT_BODY();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FPolygon polygon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector housePosition;
@@ -250,12 +259,9 @@ struct roadComparator {
 
 
 USTRUCT(BlueprintType)
-struct FPlotPolygon {
+struct FPlotPolygon : public FMetaPolygon{
 	GENERATED_USTRUCT_BODY();
 
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FMetaPolygon f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float population;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -284,6 +290,7 @@ FVector intersection(FPolygon p1, FPolygon p2);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
 float randFloat();
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
+//FVector project()
 
 //FVector getCenter(FPolygon p);
 

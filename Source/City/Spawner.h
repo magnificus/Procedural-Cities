@@ -80,12 +80,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FRoadSegment> determineRoadSegments();
 
-	UFUNCTION(BlueprintCallable, Category = "Rendering")
-	void buildRoads(TArray<FRoadSegment> segments);
-
-	UFUNCTION(BlueprintCallable, Category = "Rendering")
-	void buildPolygons(TArray<FMetaPolygon> segments);
-
 	//UFUNCTION(BlueprintCallable, Category = "Generation")
 	//void buildPlots(TArray<FPolygon> polygons);
 

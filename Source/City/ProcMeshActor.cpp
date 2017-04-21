@@ -60,6 +60,12 @@ AProcMeshActor::AProcMeshActor()
 	//mesh->CreateMeshSection_LinearColor(1, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
 }
 
+void AProcMeshActor::buildPolygons(TArray<FPolygon> polygons) {
+	for (FPolygon p : polygons) {
+		buildPolygon(p, FVector(0, 0, 0));
+	}
+}
+
 // uses fan triangulation, doesn't work with convex shapes, builds faces in both directions
 void AProcMeshActor::buildPolygon(FPolygon pol, FVector offset) {
 	TArray<FVector> vertices;

@@ -43,35 +43,152 @@ TArray<FPolygon> getSideWithHoles(FPolygon outer, TArray<FPolygon> holes) {
 	holes.Sort([start](const FPolygon &p1, const FPolygon &p2) {
 		return FVector::DistSquared(p1.points[1], start) > FVector::DistSquared(p2.points[2], start);
 	});
-	FVector attach1 = outer.points[0];
-	FVector attach2 = attach1;
-	attach2.Z = holes[0].points[0].Z;
-	FVector attach3 = attach1;
-	attach3.Z = holes[0].points[1].Z;
-	FVector attach4 = attach1;
-	attach4.Z = outer.points[1].Z;
-	for (FPolygon p : holes) {
+	if (holes.Num() > 0) {
+
+		FVector sideTangent = outer.points[1] - outer.points[0];
+
+		FVector attach1 = outer.points[0];
+		FVector attach2 = (holes[0].points[0] - outer.points[0]).ProjectOnTo(sideTangent) + outer.points[0];
+		FVector attach3 = (holes[0].points[1] - outer.points[0]).ProjectOnTo(sideTangent) + outer.points[0];
+		FVector attach4 = outer.points[1];
+
+		FVector tangentUp = outer.points[3] - outer.points[0];
+		FVector tangentDown = outer.points[2] - outer.points[1];
+		//tangentUp.Normalize();
+		//tangentDown.Normalize();
+
+		for (FPolygon p : holes) {
+			FPolygon p1;
+			p1.points.Add(attach1);
+			p1.points.Add(p.points[3]);
+
+			p1.points.Add((p.points[3] - outer.points[0]).ProjectOnTo(tangentUp) + outer.points[0]);
+
+			FPolygon p2;
+			p2.points.Add(attach1);
+			p2.points.Add(attach2);
+			p2.points.Add(p.points[3]);
+
+			FPolygon p3;
+			p3.points.Add(attach2);
+			p3.points.Add(p.points[1]);
+			p3.points.Add(p.points[0]);
+
+			FPolygon p4;
+			p4.points.Add(attach2);
+			p4.points.Add(attach3);
+			p4.points.Add(p.points[1]);
+
+			FPolygon p5;
+			p5.points.Add(attach3);
+			p5.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
+			p5.points.Add(p.points[2]);
+
+			FPolygon p6;
+			p6.points.Add(attach3);
+			p6.points.Add(attach4);
+			p6.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
+
+			polygons.Add(p1);
+			polygons.Add(p2);
+			polygons.Add(p3);
+			polygons.Add(p4);
+			polygons.Add(p5);
+			polygons.Add(p6);
+
+			attach1 = p1.points[2];
+			attach2 = p.points[3];
+			attach3 = p.points[2];
+			attach4 = p6.points[2];
+		}
+		// attach to end of outer
 		FPolygon p1;
 		p1.points.Add(attach1);
-		p1.points.Add(p.points[3]);
+		p1.points.Add(attach4);
+		p1.points.Add(outer.points[2]);
+
+		FPolygon p2;
+		p2.points.Add(attach1);
+		p2.points.Add(outer.points[2]);
+		p2.points.Add(outer.points[3]);
+
+		polygons.Add(p1);
+		polygons.Add(p2);
+	}
+	else {
+		polygons.Add(outer);
 	}
 
 
-	return TArray<FPolygon>();
+
+	return polygons;
 }
 
-TArray<FPolygon> getGroundPolygons(FHousePolygon &f, float floorHeight, float doorHeight, float doorWidth) {
-	int doorLoc = FMath::FloorToInt(randFloat() * (f.polygon.points.Num() - 1) + 1);
-	FVector side = f.polygon.points[doorLoc] - f.polygon.points[doorLoc - 1];
-	return TArray<FPolygon>();
+// just the sides of the house with a hole for a single door
+TArray<FPolygon> getGroundPolygons(FHousePolygon f, float floorHeight, float doorHeight, float doorWidth) {
+
+	TArray<FPolygon> polygons;
+
+	//int doorLoc = FMath::FloorToInt(randFloat() * (f.points.Num() - 1) + 1);
+	int doorLoc = 1;
+	FVector side = f.points[doorLoc] - f.points[doorLoc - 1];
+	float sideLen = side.Size();
+	side.Normalize();
+
+	float distToDoor = (sideLen - doorWidth) / 2;
+	TArray<FPolygon> holes;
+	FPolygon doorPolygon;
+	doorPolygon.points.Add(f.points[doorLoc - 1] + side*distToDoor + FVector(0, 0, doorHeight));
+	doorPolygon.points.Add(f.points[doorLoc - 1] + side*distToDoor);
+	doorPolygon.points.Add(f.points[doorLoc] - side*distToDoor);
+	doorPolygon.points.Add(f.points[doorLoc] - side*distToDoor + FVector(0, 0, doorHeight));
+	holes.Add(doorPolygon);
+
+	FPolygon outer;
+	outer.points.Add(f.points[doorLoc - 1] + FVector(0, 0, floorHeight));
+	outer.points.Add(f.points[doorLoc - 1] + FVector(0, 0, 0));
+	outer.points.Add(f.points[doorLoc] + FVector(0, 0, 0));
+	outer.points.Add(f.points[doorLoc] + FVector(0, 0, floorHeight));
+
+	polygons.Append(getSideWithHoles(outer, holes));
+
+	for (int i = 1; i < f.points.Num(); i++) {
+		if (i == doorLoc)
+			continue;
+		FPolygon newP;
+
+		newP.points.Add(f.points[i - 1] + FVector(0, 0, floorHeight));
+		newP.points.Add(f.points[i - 1]);
+		newP.points.Add(f.points[i]);
+		newP.points.Add(f.points[i] + FVector(0, 0, floorHeight));
+		polygons.Add(newP);
+
+	}
+
+	return polygons;
 }
 
-TArray<FPolygon> getFloorPolygons(FHousePolygon &f, float floorHeight) {
-	return TArray<FPolygon>();
+TArray<FPolygon> getFloorPolygons(FHousePolygon &f, float floorHeight, int windowsPerSide, float windowWidth, float windowHeight) {
+	TArray<FPolygon> polygons;
+	for (int i = 1; i < f.points.Num(); i++) {
+		FPolygon newP;
+
+		newP.points.Add(f.points[i - 1] + FVector(0, 0, floorHeight));
+		newP.points.Add(f.points[i - 1]);
+		newP.points.Add(f.points[i]);
+		newP.points.Add(f.points[i] + FVector(0, 0, floorHeight));
+		polygons.Add(newP);
+
+	}
+	return polygons;
 }
-TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon &f, int floors, float floorHeight)
+TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, float floorHeight)
 {
-	TArray<FPolygon> toReturn;
+	TArray<FPolygon> toReturn = getGroundPolygons(f, floorHeight, 400, 200);
+
+	for (int i = 1; i < floors; i++) {
+		
+	}
 	return toReturn;
 	// we have the outline of the house, have to place levels, start with bottom & door
 
