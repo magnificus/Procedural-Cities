@@ -54,7 +54,7 @@ TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
 	}
 	else {
 		// TODO fix open polygon houses
-		return housePolygons;
+		//return housePolygons;
 		// just have to make sure the buildings overlap each other or the outsides of the plot
 		TArray<FPolygon> placed;
 		for (int i = 1; i < p.points.Num(); i++) {

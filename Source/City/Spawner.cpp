@@ -90,24 +90,16 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 	vert1.Add(current->segment->v3);
 	vert1.Add(current->segment->v4);
 
-	//float maxAttachDistanceSquared = FMath::Pow(maxAttachDistance, 2);
-	//for (TArray<FRoadSegment*>* s : relevant) {
-	//	for (FRoadSegment* f : (*s)) {
-
 	bool hadCollision = false;
 	for (FRoadSegment* f : segments){
 
 		TArray<FVector> tangents;
 
 		// can't be too close to another segment
-		if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 8000) {
+		if (FVector::Dist((f->end - f->start) / 2 + f->start, (current->segment->end - current->segment->start) / 2 + current->segment->start) < 7000) {
 			return false;
 		}
-		//FVector closest = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
-		//if (FVector::DistSquared(closest, current->segment->end) < maxAttachDistanceSquared) {
-		//	current->segment->end = closest;
-		//	addVertices(current->segment);
-		//}
+
 
 		FVector tangent3 = f->end - f->start;
 		FVector tangent4 = FRotator(0, 90, 0).RotateVector(tangent3);
@@ -126,10 +118,11 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		if (testCollision(tangents, vert1, vert2, collisionLeniency)) {
 			hadCollision = true;
 			FVector newE = intersection(current->segment->start, current->segment->end, f->start, f->end);
+			current->time = 100000;
 			//return false;
 			if (newE.X == 0) {
 				// the lines themselves are not colliding, its an edge case
-				FVector closest = NearestPointOnLine(current->segment->start, current->segment->end - current->segment->start, current->segment->end);
+				FVector closest = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
 				if (FVector::Dist(closest, current->segment->end) < maxAttachDistance) {
 					current->segment->end = closest;
 					addVertices(current->segment);
@@ -144,6 +137,18 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 			}
 
 		}
+
+		//FVector closestPoint = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
+		//bool isOnInterval = std::abs(FVector::Dist(f->start, closestPoint) + FVector::Dist(f->end, closestPoint) - FVector::Dist(f->start, f->end)) < 0.01;
+		//if (!isOnInterval) {
+		//	closestPoint = FVector::DistSquared(f->start, current->segment->end) < FVector::DistSquared(f->end, current->segment->end) ? f->start : f->end;
+		//}
+		//if (FVector::Dist(closestPoint, current->segment->end) < maxAttachDistance) {
+		//	current->segment->end = closestPoint;
+		//	addVertices(current->segment);
+		//}
+
+
 	}
 	if (!hadCollision) {
 		current->segment->end -= maxAttachDistance*tangent1;
@@ -290,6 +295,8 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		queue.pop();
 		if (placementCheck(determinedSegments, current, segmentsOrganized)) {
 			determinedSegments.Add(current->segment);
+			if (current->previous && FVector::Dist(current->previous->segment->end, current->segment->start) < 100)
+				current->previous->segment->roadInFront = true;
 			addRoadToMap(segmentsOrganized, current->segment, primaryStepLength.Size() / 2);
 
 			//UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT START X %f"), current->segment->start.X);
@@ -334,13 +341,16 @@ void invertAndParents(LinkedLine* line) {
 	TSet<LinkedLine*> taken;
 	while (line && !taken.Contains(line)) {
 		taken.Add(line);
+		//if (line->parent)
+		//	line->point = line->parent->point;
+		//else
+			line->point = FVector(0.0f, 0.0f, 0.0f);
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
 		line->line.p2 = temp;
 		LinkedLine* prevC = line->child;
 		line->child = line->parent;
 		line->parent = prevC;
-		line->point = FVector(0, 0, 0);
 		line->buildLeft = !line->buildLeft;
 
 		line = line->child;
@@ -352,13 +362,17 @@ void invertAndChildren(LinkedLine* line) {
 	TSet<LinkedLine*> taken;
 	while (line && !taken.Contains(line)) {
 		taken.Add(line);
+		//if (line->child)
+		//	line->point = line->child->point;
+		//else
+			line->point = FVector(0.0f, 0.0f, 0.0f);
+
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
 		line->line.p2 = temp;
 		LinkedLine* prevC = line->child;
 		line->child = line->parent;
 		line->parent = prevC;
-		line->point = FVector(0, 0, 0);
 		line->buildLeft = !line->buildLeft;
 
 		line = line->parent;
@@ -524,7 +538,7 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 		// two collision segments for every road
 		FVector tangent = f.end - f.start;
 		tangent.Normalize();
-		FVector extraLength = tangent * 1000;
+		FVector extraLength = tangent * 950;
 		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*(standardWidth / 2 * f.width);
 		LinkedLine* left = new LinkedLine();
 		left->line.p1 = f.start + sideOffset - extraLength;
@@ -535,15 +549,18 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 		right->line.p2 = f.end - sideOffset + extraLength;
 		right->buildLeft = false;
 
-		LinkedLine* inFront = new LinkedLine();
-		inFront->line.p1 = f.end + sideOffset*1.5;
-		inFront->line.p2 = f.end - sideOffset*1.5;
-		float extraRoadLen = 1500;
+
+		float extraRoadLen = 950;
 
 
 		decidePolygonFate(segments, left, lines, true, extraRoadLen);
+		//if (!f.roadInFront) {
+		//	LinkedLine* inFront = new LinkedLine();
+		//	inFront->line.p1 = f.end + sideOffset*1.5;
+		//	inFront->line.p2 = f.end - sideOffset*1.5;
+		//	decidePolygonFate(segments, inFront, lines, false, 0);
+		//}
 		decidePolygonFate(segments, right, lines, true, extraRoadLen);
-		//decidePolygonFate(segments, inFront, lines, false, 0);
 	}
 
 	TSet<LinkedLine*> remaining;
@@ -552,7 +569,7 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 	TArray<FMetaPolygon> polygons;
 	int count = 0;
 	// build the actual polýgons from the linked structures
-	while (remaining.Num() > 0){ //&& count++ < 1000) {
+	while (remaining.Num() > 0){
 		TSet<LinkedLine*> taken;
 		UE_LOG(LogTemp, Log, TEXT("remaining: %i"), remaining.Num());
 		auto it = remaining.CreateIterator();
@@ -604,7 +621,6 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 	for (FMetaPolygon &p : polygons) {
 		refinedPolygons.Append(p.refine(maxArea, minArea));
 	}
-
 	return refinedPolygons;
 
 

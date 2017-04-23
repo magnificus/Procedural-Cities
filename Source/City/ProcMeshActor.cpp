@@ -60,30 +60,30 @@ AProcMeshActor::AProcMeshActor()
 	//mesh->CreateMeshSection_LinearColor(1, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
 }
 
-void AProcMeshActor::buildPolygons(TArray<FPolygon> polygons) {
-	for (FPolygon p : polygons) {
-		buildPolygon(p, FVector(0, 0, 0));
-	}
-}
-
 // uses fan triangulation, doesn't work with convex shapes, builds faces in both directions
-void AProcMeshActor::buildPolygon(FPolygon pol, FVector offset) {
+void AProcMeshActor::buildPolygons(TArray<FPolygon> pols, FVector offset) {
 	TArray<FVector> vertices;
 	TArray<int32> triangles;
 
-	FVector origin = pol.points[0];
-	for (FVector f : pol.points)
-		vertices.Add(f  + offset);
+	int current = 0;
+	for (FPolygon pol : pols) {
+		FVector origin = pol.points[0];
+		for (FVector f : pol.points)
+			vertices.Add(f + offset);
 
-	for (int i = 2; i < pol.points.Num(); i++) {
-		triangles.Add(0);
-		triangles.Add(i - 1);
-		triangles.Add(i);
+		for (int i = 2; i < pol.points.Num(); i++) {
+			triangles.Add(current);
+			triangles.Add(i - 1 + current);
+			triangles.Add(i + current);
 
-		triangles.Add(i);
-		triangles.Add(i - 1);
-		triangles.Add(0);
+			triangles.Add(i + current);
+			triangles.Add(i - 1 + current);
+			triangles.Add(0 + current);
+		}
+
+		current += pol.points.Num();
 	}
+
 
 
 	TArray<FVector> normals;

@@ -23,10 +23,7 @@ public:
 	void buildWall(FVector p1, FVector p2, FVector p3, FVector p4);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void buildPolygon(FPolygon pol, FVector offset);
-
-	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void buildPolygons(TArray<FPolygon> polygons);
+	void buildPolygons(TArray<FPolygon> pols, FVector offset);
 
 protected:
 	// Called when the game starts or when spawned

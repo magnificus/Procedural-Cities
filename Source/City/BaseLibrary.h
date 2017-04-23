@@ -45,10 +45,10 @@ struct FPolygon
 	// only cares about dimensions X and Y, not Z
 	float getArea() {
 		// must be even
-		if (points.Num() % 2 != 0) {
-			FVector toAdd = points[0];
-			points.Add(toAdd);
-		}
+		//if (points.Num() % 2 != 0) {
+		//	FVector toAdd = points[0];
+		//	points.Add(toAdd);
+		//}
 		float area = 0;
 		int nPoints = points.Num();
 		for (int i = 0; i < nPoints - 2; i += 2)
@@ -181,10 +181,10 @@ struct FMetaPolygon : public FPolygon
 
 	TArray<FMetaPolygon> refine(float maxArea, float minArea) {
 
-		decreaseEdges();
-		if (!open) {
-			return recursiveSplit(maxArea, minArea);
-		}
+			//decreaseEdges();
+			//if (!open) {
+			//	return recursiveSplit(maxArea, minArea);
+			//}
 		TArray<FMetaPolygon> toReturn;
 		toReturn.Add(*this);
 		return toReturn;
@@ -237,6 +237,8 @@ struct FRoadSegment
 		FVector v3;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector v4;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool roadInFront;
 
 };
 
