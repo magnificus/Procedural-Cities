@@ -1,9 +1,12 @@
 # Procedural-Cities
-master thesis
-
 TODO:
 * optimize road attachment
 * fix open polygon house placement
-* start on interiors
+* interiors
+  * ground level details
 * population heatmap
 * heightmap
+* optimize interior load - in
+* trees, vegetation
+* sidewalks
+* proper polygon splits (plots)
