@@ -5,5 +5,6 @@ TODO:
 * start on interiors
 * population heatmap
 * heightmap
-* optimize interior load - in.
-* trees, vegetation.
+* optimize interior load - in
+* trees, vegetation
+* sidewalks
