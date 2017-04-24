@@ -129,8 +129,12 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				}
 				continue;
 			}
-			current->segment->end = newE;
+			FVector tangent = newE - current->segment->end;
+			tangent.Normalize();
+			float len = FVector::Dist(newE, current->segment->end);
+			current->segment->end += (len - standardWidth / 2) * tangent;
 			addVertices(current->segment);
+			current->segment->roadInFront = true;
 			// new road cant be too short
 			if (FVector::Dist(current->segment->start, current->segment->end) < primaryStepLength.Size()/5) {
 				return false;
@@ -245,11 +249,11 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 
 	else if (current->segment->type == RoadType::secondary) {
 		// side road
-		if (current->roadLength < maxSecondaryRoadLength){
+		if (current->roadLength < maxSecondaryRoadLength) {
 			addRoadForward(queue, current, allsegments);
 
-		addRoadSide(queue, current, true, 2.0f, allsegments, RoadType::secondary);
-		addRoadSide(queue, current, false, 2.0f, allsegments, RoadType::secondary);
+			addRoadSide(queue, current, true, 2.0f, allsegments, RoadType::secondary);
+			addRoadSide(queue, current, false, 2.0f, allsegments, RoadType::secondary);
 		}
 	}
 
@@ -305,6 +309,40 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	}
 
 
+
+	//for (FRoadSegment* f2 : determinedSegments) {
+	//	//if (f2->roadInFront)
+	//	//	continue;
+	//	FVector closestYet;
+	//	float closestD = 1000000000.0f;
+	//	for (FRoadSegment* f : determinedSegments) {
+	//		if (f == f2)
+	//			continue;
+
+	//		FVector closestPoint = NearestPointOnLine(f->start, f->end - f->start, f2->end);
+	//		bool isOnInterval = std::abs(FVector::Dist(f->start, closestPoint) + FVector::Dist(f->end, closestPoint) - FVector::Dist(f->start, f->end)) < 0.01f;
+	//		if (!isOnInterval) {
+	//			closestPoint = FVector::DistSquared(f->start, f2->end) < FVector::DistSquared(f->end, f2->end) ? f->start : f->end;
+	//		}
+	//		if (FVector::Dist(closestPoint, f2->end) < closestD) {
+	//			closestYet = closestPoint;
+	//			closestD = FVector::Dist(closestPoint, f2->end);
+	//		//break;
+	//		}
+	//	}
+
+	//	if (closestD < maxAttachDistance){
+	//		UE_LOG(LogTemp, Warning, TEXT("attaching road to road ahead"));
+	//		f2->end = closestYet;
+	//		addVertices(f2);
+	//	}
+
+
+
+	//}
+
+
+
 	TArray<int> keys;
 	segmentsOrganized.GetKeys(keys);
 	UE_LOG(LogTemp, Warning, TEXT("deleting %i keys in map"), keys.Num());
@@ -322,6 +360,20 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	}
 
 	return finishedSegments;
+}
+
+TArray<FPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
+{
+	TArray<FPolygon> polygons;
+	for (FRoadSegment f : segments) {
+		FPolygon p;
+		p.points.Add(f.v1);
+		p.points.Add(f.v2);
+		p.points.Add(f.v3);
+		p.points.Add(f.v4);
+		polygons.Add(p);
+	}
+	return polygons;
 }
 
 struct Line {
@@ -430,6 +482,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 				newP->line.p2 = inLine->line.p2;
 				inLine->line.p2 = intSec - altTangent * middleOffset;
 			}
+			newP->buildLeft = inLine->buildLeft;
 			decidePolygonFate(segments, newP,lines, true, extraRoadLen);
 			intSec = intersection(f.start - tangent * extraRoadLen, f.end + tangent * extraRoadLen, inLine->line.p1, inLine->line.p2);
 			//return;
@@ -479,7 +532,6 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 						inLine->parent = pol;
 						pol->child = inLine;
 						pol->point = res;
-						inLine->buildLeft = pol->buildLeft;
 
 					} 	
 					// so the new line is maybe the master
@@ -496,7 +548,6 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 							inLine->child = pol;
 							pol->parent = inLine;
 						}
-						pol->buildLeft = inLine->buildLeft;
 						inLine->point = res;
 
 					}
@@ -535,6 +586,8 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 	TArray<LinkedLine*> lines;
 	// get coherent polygons
 	for (FRoadSegment f : segments) {
+		//if (f.type == RoadType::main)
+		//	continue;
 		// two collision segments for every road
 		FVector tangent = f.end - f.start;
 		tangent.Normalize();
@@ -613,18 +666,25 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 		}
 	}
 
+
+
 	// split polygons into habitable blocks
-	float maxArea = 2000.0f;
-	float minArea = -200.0f;
+	float maxArea = 200000.0f;
+	float minArea = 0.0f;
 	
 	TArray<FMetaPolygon> refinedPolygons;
 	for (FMetaPolygon &p : polygons) {
 		refinedPolygons.Append(p.refine(maxArea, minArea));
 	}
+
+	for (LinkedLine* l : lines) {
+		delete (l);
+	}
 	return refinedPolygons;
 
 
 }
+
 
 
 // Called when the game starts or when spawned

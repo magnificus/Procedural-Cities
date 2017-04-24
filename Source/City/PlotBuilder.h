@@ -25,6 +25,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FHousePolygon> getHousePolygons(FPlotPolygon p);
 
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	TArray<FHousePolygon> generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others);
+
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	FPolygon generateSidewalkPolygon(FPlotPolygon p);
+
 	//UFUNCTION(BlueprintCallable, Category = "Generation")
 	//void BuildPlot(FPlotPolygon p);
 

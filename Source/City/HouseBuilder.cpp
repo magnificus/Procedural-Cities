@@ -214,13 +214,13 @@ TArray<FPolygon> getFloorPolygons(FHousePolygon &f, float floorBegin, float floo
 		}
 
 		TArray<FPolygon> pols = getSideWithHoles(outer, windows);
-		for (FPolygon p : pols) {
-			int count = 0;
-			for (FVector f : p.points) {
-				UE_LOG(LogTemp, Warning, TEXT("%s %i"), *f.ToString(), count++);
-			}
+		//for (FPolygon p : pols) {
+		//	int count = 0;
+		//	for (FVector f : p.points) {
+		//		UE_LOG(LogTemp, Warning, TEXT("%s %i"), *f.ToString(), count++);
+		//	}
 
-		}
+		//}
 
 		polygons.Append(pols);
 

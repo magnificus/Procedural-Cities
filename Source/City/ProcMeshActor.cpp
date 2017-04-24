@@ -60,7 +60,7 @@ AProcMeshActor::AProcMeshActor()
 	//mesh->CreateMeshSection_LinearColor(1, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
 }
 
-// uses fan triangulation, doesn't work with convex shapes, builds faces in both directions
+// uses fan triangulation sorta, originating from the middle , doesn't work with convex shapes, builds faces in both directions
 void AProcMeshActor::buildPolygons(TArray<FPolygon> pols, FVector offset) {
 	TArray<FVector> vertices;
 	TArray<int32> triangles;
@@ -70,6 +70,9 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> pols, FVector offset) {
 		FVector origin = pol.points[0];
 		for (FVector f : pol.points)
 			vertices.Add(f + offset);
+
+
+		//FVector middle = pol.getCenter();
 
 		for (int i = 2; i < pol.points.Num(); i++) {
 			triangles.Add(current);
