@@ -8,3 +8,4 @@ TODO:
 * optimize interior load - in
 * trees, vegetation
 * sidewalks
+* proper polygon splits (plots)
