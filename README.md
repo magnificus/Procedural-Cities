@@ -2,7 +2,7 @@
 TODO:
 * optimize road attachment
 * fix open polygon house placement
-* start on interiors
+* interiors
 * population heatmap
 * heightmap
 * optimize interior load - in
