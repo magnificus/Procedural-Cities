@@ -133,8 +133,8 @@ TArray<FPolygon> getGroundPolygons(FHousePolygon f, float floorHeight, float doo
 
 	TArray<FPolygon> polygons;
 
-	//int doorLoc = FMath::FloorToInt(randFloat() * (f.points.Num() - 1) + 1);
-	int doorLoc = 1;
+	int doorLoc = FMath::FloorToInt(randFloat() * (f.points.Num() - 1) + 1);
+	//int doorLoc = 1;
 	FVector side = f.points[doorLoc] - f.points[doorLoc - 1];
 	float sideLen = side.Size();
 	side.Normalize();
