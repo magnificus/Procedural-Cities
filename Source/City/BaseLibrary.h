@@ -58,6 +58,12 @@ struct FPolygon
 		return std::abs(area / 2);
 	}
 
+	void offset(FVector offset) {
+		for (FVector &f : points) {
+			f += offset;
+		}
+	};
+
 
 
 
@@ -74,18 +80,6 @@ struct FPolygon
 			}
 		}
 
-		//int i;
-		//int j;
-		//for (i = 0; i < points.Num() - 1; i++) {
-		//	for (j = i; j < points.Num() - 1; j++) {
-		//		if (FVector::Dist(points[j], points[i]) < distDiffAllowed) {
-		//			goto outOfLoop;
-		//		}
-		//	}
-		//}
-		//outOfLoop:
-
-		//points.RemoveAt(i, j - i - 1);
 		for (int i = 2; i < points.Num(); i++) {
 			FVector prev = points[i - 1] - points[i - 2];
 			prev.Normalize();

@@ -174,60 +174,90 @@ TArray<FPolygon> getGroundPolygons(FHousePolygon f, float floorHeight, float doo
 }
 
 TArray<FPolygon> getCorrespondingPolygons(TArray<FVector> origin, TArray<FVector> end) {
-
-}
-
-TArray<FPolygon> getFloorPolygonsWithHole(FHousePolygon &f, float floorBegin, FPolygon hole) {
 	TArray<FPolygon> polygons;
-	for (int i = 1; i < f.points.Num(); i++) {
-		FVector currMid = (f.points[i] - f.points[i - 1]) / 2 + f.points[i - 1];
+	for (int i = 1; i < origin.Num(); i++) {
+		FVector currMid = (origin[i] - origin[i - 1]) / 2 + origin[i - 1];
 		FVector closest;
 		float closestDist = 100000000;
-		for (FVector f : hole.points) {
-			float currDist = FVector::DistSquared(f, currMid);
+		for (FVector f : end) {
+			float currDist = FVector::Dist(f, currMid);
 			if (currDist < closestDist) {
 				closestDist = currDist;
 				closest = f;
 			}
 		}
 		FPolygon newP;
-		newP.points.Add(f.points[i-1]);
+		newP.points.Add(origin[i - 1]);
 		newP.points.Add(closest);
+		newP.points.Add(origin[i]);
+		polygons.Add(newP);
+	}
+	return polygons;
+}
+
+TArray<FPolygon> getFloorPolygonsWithHole(FHousePolygon f, float floorBegin, FPolygon hole) {
+	hole.offset(FVector(0, 0, floorBegin));
+	f.offset(FVector(0, 0, floorBegin));
+	//TArray<FPolygon> polygons = getCorrespondingPolygons(f.points, hole.points);
+	//polygons.Append(getCorrespondingPolygons(hole.points, f.points));
+	//return polygons;
+
+	TArray<FPolygon> polygons;
+	std::vector<int> connections;
+	for (int i = 1; i < f.points.Num(); i++) {
+		FVector currMid = (f.points[i] - f.points[i - 1]) / 2 + f.points[i - 1];
+		int closest = 0;
+		float closestDist = 100000000;
+		for (int j = 0; j < hole.points.Num(); j++) {
+			FVector f2 = hole.points[j];
+			float currDist = FVector::Dist(f2, currMid);
+			if (currDist < closestDist) {
+				closestDist = currDist;
+				closest = j;
+			}
+		}
+		connections.push_back(closest);
+		FPolygon newP;
+		newP.points.Add(f.points[i - 1]);
+		newP.points.Add(hole.points[closest]);
 		newP.points.Add(f.points[i]);
 		polygons.Add(newP);
 	}
-
-	for (int i = 1; i < f.points.Num(); i++) {
-		FVector currMid = (f.points[i] - f.points[i - 1]) / 2 + f.points[i - 1];
-		FVector closest;
-		float closestDist = 100000000;
-		for (FVector f : hole.points) {
-			float currDist = FVector::DistSquared(f, currMid);
-			if (currDist < closestDist) {
-				closestDist = currDist;
-				closest = f;
-			}
+	int prev = connections[0];
+	for (int i = 1; i < connections.size(); i++) {
+		if (connections[i] != prev) {
+			FPolygon newP;
+			newP.points.Add(hole.points[prev]);
+			newP.points.Add(f.points[i]);
+			newP.points.Add(hole.points[connections[i]]);
+			polygons.Add(newP);
+			prev = connections[i];
 		}
+
+	}
+	if (prev != connections[0]) {
 		FPolygon newP;
-		newP.points.Add(f.points[i - 1]);
-		newP.points.Add(closest);
-		newP.points.Add(f.points[i]);
+		newP.points.Add(hole.points[prev]);
+		newP.points.Add(f.points[0]);
+		newP.points.Add(hole.points[connections[0]]);
 		polygons.Add(newP);
 	}
 
 	return polygons;
+
+
 }
 
-TArray<FPolygon> getFloorPolygons(FHousePolygon &f, float floorBegin, float floorHeight, float windowDensity, float windowBegin, float windowWidth, float windowHeight) {
+TArray<FPolygon> getFloorPolygons(FHousePolygon &f, float floorBegin, float floorHeight, float windowDensity, float windowBegin, float windowWidth, float windowHeight, FPolygon hole) {
 	TArray<FPolygon> polygons;
 
-	FPolygon floor;
+	//FPolygon floor;
 
-	for (FVector f2 : f.points) {
-		floor.points.Add(f2 + FVector(0,0, floorBegin));
-	}
+	//for (FVector f2 : f.points) {
+	//	floor.points.Add(f2 + FVector(0,0, floorBegin));
+	//}
 
-	polygons.Add(floor);
+	polygons.Append(getFloorPolygonsWithHole(f, floorBegin, hole));
 	for (int i = 1; i < f.points.Num(); i++) {
 		FPolygon outer;
 		outer.points.Add(f.points[i - 1] + FVector(0, 0, floorHeight + floorBegin));
@@ -282,9 +312,21 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 	float wWidth = randFloat() * 500 + 500;
 	float wHeight = randFloat() * 400 + 200;
 
+	FPolygon hole;
+	FVector center = f.getCenter();
+
+	float holeSize = 1000;
+
+	hole.points.Add(center + FVector(holeSize*0.5, holeSize*0.5, 0));
+	hole.points.Add(center + FVector(holeSize*0.5, -holeSize*0.5, 0));
+	hole.points.Add(center + FVector(-holeSize*0.5, -holeSize*0.5, 0));
+	hole.points.Add(center + FVector(-holeSize*0.5, holeSize*0.5, 0));
+	hole.points.Add(center + FVector(holeSize*0.5, holeSize*0.5, 0));
+
+
 	float currHeight = floorHeight;
 	for (int i = 1; i < floors; i++) {
-		toReturn.Append(getFloorPolygons(f, currHeight, floorHeight, wDens, floorHeight / 3, wWidth, wHeight));
+		toReturn.Append(getFloorPolygons(f, currHeight, floorHeight, wDens, floorHeight / 3, wWidth, wHeight, hole));
 		currHeight += floorHeight;
 	}
 	FPolygon roof;

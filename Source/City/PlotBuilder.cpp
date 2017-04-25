@@ -135,6 +135,9 @@ TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
 			// one house per segment
 			FHousePolygon fh;
 			FVector toRotate = p.points[i] - p.points[i - 1];
+			if (toRotate.Size() < 5000)
+				continue;
+
 			toRotate.Normalize();
 			FVector tangent = FRotator(0, p.buildLeft ? 90 : 270, 0).RotateVector(toRotate);
 
