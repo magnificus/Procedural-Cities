@@ -116,8 +116,9 @@ struct FMetaPolygon : public FPolygon
 
 	FMetaPolygon splitAlongMax() {
 
-		int longest = 0;
-		int sndLongest = 0;
+
+		int longest = 1;
+		int sndLongest = 1;
 
 		float longestLen = 0;
 		float sndLongestLen = 0;
@@ -169,10 +170,10 @@ struct FMetaPolygon : public FPolygon
 
 	TArray<FMetaPolygon> recursiveSplit(float maxArea, float minArea) {
 		float area = getArea();
-		if (area < minArea) {
+		if (area < minArea || points.Num() < 3) {
 			return TArray<FMetaPolygon>();
 		}
-		else if (area > maxArea) {
+		if (area > maxArea) {
 			FMetaPolygon newP = splitAlongMax();
 			TArray<FMetaPolygon> tot = newP.recursiveSplit(maxArea, minArea);
 			tot.Add(newP);

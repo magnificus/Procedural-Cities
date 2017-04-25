@@ -59,6 +59,11 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
 		UStaticMesh* meshPolygon;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
+	float maxHouseArea = 2000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
+	float minHouseArea = 5.0f;
 
 	UPROPERTY(EditAnywhere, Instanced, Category = "Path spline")
 		USplineMeshComponent* PathSpline;

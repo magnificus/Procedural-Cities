@@ -669,12 +669,10 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 
 
 	// split polygons into habitable blocks
-	float maxArea = 200000.0f;
-	float minArea = 0.0f;
 	
 	TArray<FMetaPolygon> refinedPolygons;
 	for (FMetaPolygon &p : polygons) {
-		refinedPolygons.Append(p.refine(maxArea, minArea));
+		refinedPolygons.Append(p.refine(maxHouseArea, minHouseArea));
 	}
 
 	for (LinkedLine* l : lines) {

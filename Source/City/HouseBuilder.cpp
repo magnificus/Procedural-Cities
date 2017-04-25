@@ -27,6 +27,7 @@ AHouseBuilder::AHouseBuilder()
 	meshPolygon = buildingMesh.Object;
 
 }
+
 /*
 holes are assumed to be of a certain structure, just four points upper left -> lower left -> lower right -> upper right, no window is allowed to overlap another
 0---3
@@ -167,6 +168,51 @@ TArray<FPolygon> getGroundPolygons(FHousePolygon f, float floorHeight, float doo
 		newP.points.Add(f.points[i] + FVector(0, 0, floorHeight));
 		polygons.Add(newP);
 
+	}
+
+	return polygons;
+}
+
+TArray<FPolygon> getCorrespondingPolygons(TArray<FVector> origin, TArray<FVector> end) {
+
+}
+
+TArray<FPolygon> getFloorPolygonsWithHole(FHousePolygon &f, float floorBegin, FPolygon hole) {
+	TArray<FPolygon> polygons;
+	for (int i = 1; i < f.points.Num(); i++) {
+		FVector currMid = (f.points[i] - f.points[i - 1]) / 2 + f.points[i - 1];
+		FVector closest;
+		float closestDist = 100000000;
+		for (FVector f : hole.points) {
+			float currDist = FVector::DistSquared(f, currMid);
+			if (currDist < closestDist) {
+				closestDist = currDist;
+				closest = f;
+			}
+		}
+		FPolygon newP;
+		newP.points.Add(f.points[i-1]);
+		newP.points.Add(closest);
+		newP.points.Add(f.points[i]);
+		polygons.Add(newP);
+	}
+
+	for (int i = 1; i < f.points.Num(); i++) {
+		FVector currMid = (f.points[i] - f.points[i - 1]) / 2 + f.points[i - 1];
+		FVector closest;
+		float closestDist = 100000000;
+		for (FVector f : hole.points) {
+			float currDist = FVector::DistSquared(f, currMid);
+			if (currDist < closestDist) {
+				closestDist = currDist;
+				closest = f;
+			}
+		}
+		FPolygon newP;
+		newP.points.Add(f.points[i - 1]);
+		newP.points.Add(closest);
+		newP.points.Add(f.points[i]);
+		polygons.Add(newP);
 	}
 
 	return polygons;
