@@ -186,12 +186,12 @@ struct FMetaPolygon : public FPolygon
 
 		decreaseEdges();
 		TArray<FMetaPolygon> toReturn;
-		//if (!open) {
-		//	toReturn.Append(recursiveSplit(maxArea, minArea));
-		//}
-		//else {
+		if (!open) {
+			toReturn.Append(recursiveSplit(maxArea, minArea));
+		}
+		else {
 			toReturn.Add(*this);
-		//}
+		}
 
 		return toReturn;
 	}
