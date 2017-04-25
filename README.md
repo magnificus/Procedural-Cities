@@ -10,3 +10,5 @@ TODO:
 * trees, vegetation
 * sidewalks
 * proper polygon splits (plots)
+* make building shapes more interesting
+* add detail to buildings
