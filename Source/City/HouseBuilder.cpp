@@ -11,20 +11,6 @@ AHouseBuilder::AHouseBuilder()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	placeHolderHouseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	SetRootComponent(placeHolderHouseMesh);
-
-
-
-	FString pathName = "StaticMesh'/Game/Geometry/Meshes/1M_Cube.1M_Cube'";
-	ConstructorHelpers::FObjectFinder<UStaticMesh> mySSMesh12412(*pathName);
-	placeHolderHouseMesh->SetStaticMesh(mySSMesh12412.Object);
-	placeHolderHouseMesh->SetMobility(EComponentMobility::Static);
-
-
-	pathName = "StaticMesh'/Game/StarterContent/Props/SM_PillarFrame.SM_PillarFrame'";
-	ConstructorHelpers::FObjectFinder<UStaticMesh> buildingMesh(*pathName);
-	meshPolygon = buildingMesh.Object;
 
 }
 
@@ -342,12 +328,14 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 
 	FVector tangent1 = f.points[1] - f.points[0];
 	tangent1.Normalize();
+	FVector tangent2 = FRotator(0, 90, 0).RotateVector(tangent1);
 
 
-	hole.points.Add(center + FVector(holeSize*0.5, holeSize*0.5, 0));
-	hole.points.Add(center + FVector(holeSize*0.5, -holeSize*0.5, 0));
-	hole.points.Add(center + FVector(-holeSize*0.5, -holeSize*0.5, 0));
-	hole.points.Add(center + FVector(-holeSize*0.5, holeSize*0.5, 0));
+	hole.points.Add(center + 0.5 * tangent1 * holeSize + 0.5 * tangent2 * holeSize);
+	hole.points.Add(center - 0.5 * tangent1 * holeSize + 0.5 * tangent2 * holeSize);
+	hole.points.Add(center - 0.5 * tangent1 * holeSize - 0.5 * tangent2 * holeSize);
+	hole.points.Add(center + 0.5 * tangent1 * holeSize - 0.5 * tangent2 * holeSize);
+
 
 
 	float currHeight = floorHeight;
@@ -355,11 +343,11 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 		toReturn.Append(getFloorPolygons(f, currHeight, floorHeight, wDens, floorHeight / 3, wWidth, wHeight, hole));
 		currHeight += floorHeight;
 	}
-	//FPolygon roof;
-	//for (FVector f2 : f.points) {
-	//	roof.points.Add(f2 + FVector(0, 0, currHeight));
-	//}
-	//toReturn.Add(roof);
+	FPolygon roof;
+	for (FVector f2 : f.points) {
+		roof.points.Add(f2 + FVector(0, 0, currHeight));
+	}
+	toReturn.Add(roof);
 	return toReturn;
 	// we have the outline of the house, have to place levels, start with bottom & door
 

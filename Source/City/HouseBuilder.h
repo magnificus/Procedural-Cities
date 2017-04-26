@@ -19,9 +19,6 @@ public:
 	// Sets default values for this actor's properties
 	AHouseBuilder();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Demo, meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* placeHolderHouseMesh;
-
 	TArray<UStaticMeshComponent*> meshesArray;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
 		USplineMeshComponent* base;

@@ -29,8 +29,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
 		int32	maxFloors = 15;
 
-	UFUNCTION(BlueprintCallable, Category = "Generation")
-	TArray<FHousePolygon> getHousePolygons(FPlotPolygon p);
+	//UFUNCTION(BlueprintCallable, Category = "Generation")
+	//TArray<FHousePolygon> getHousePolygons(FPlotPolygon p);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FHousePolygon> generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others);

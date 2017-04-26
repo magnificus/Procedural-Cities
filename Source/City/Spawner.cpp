@@ -603,7 +603,7 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 		right->buildLeft = false;
 
 
-		float extraRoadLen = 950;
+		float extraRoadLen = 700;
 
 
 		decidePolygonFate(segments, left, lines, true, extraRoadLen);
@@ -671,14 +671,12 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 	// split polygons into habitable blocks
 	
 	TArray<FMetaPolygon> refinedPolygons;
-	for (FMetaPolygon &p : polygons) {
-		refinedPolygons.Append(p.refine(maxHouseArea, minHouseArea));
-	}
+
 
 	for (LinkedLine* l : lines) {
 		delete (l);
 	}
-	return refinedPolygons;
+	return polygons;
 
 
 }

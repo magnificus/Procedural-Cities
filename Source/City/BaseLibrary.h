@@ -22,6 +22,7 @@ enum class RoadType : uint8
 };
 
 
+FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 
 
 USTRUCT(BlueprintType)
@@ -43,19 +44,31 @@ struct FPolygon
 	}
 
 	// only cares about dimensions X and Y, not Z
-	float getArea() {
-		// must be even
-		if (points.Num() % 2 != 0) {
-			FVector toAdd = points[0];
-			points.Add(toAdd);
-		}
-		float area = 0;
-		int nPoints = points.Num();
-		for (int i = 0; i < nPoints - 2; i += 2)
-			area += (points[i + 1].X * (points[i + 2].Y - points[i].Y) + points[i + 1].Y * (points[i].X - points[i + 2].X)) * 0.00000001;
-		// the last point binds together beginning and end
-		//area += points[nPoints - 1].X * (points[0].Y - points[nPoints - 2].Y) + points[nPoints - 1].Y * (points[nPoints - 2].X - points[0].X) * 0.00000001;
-		return std::abs(area / 2);
+	double getArea() {
+
+	double tot = 0;
+	FPolygon newP = *this;
+
+	// this makes sure we dont overflow because of our location in the world
+	newP.offset(-(points[0]));
+
+	for (int i = 0; i < points.Num() - 1; i++) {
+		tot += 0.0001*(newP.points[i].X * newP.points[i + 1].Y - newP.points[i].Y - newP.points[i+1].X);
+	}
+	tot /= 2;
+	return std::abs(tot);
+	// must be even
+	//if (points.Num() % 2 != 0) {
+	//	FVector toAdd = points[0];
+	//	points.Add(toAdd);
+	//}
+	//	float area = 0;
+	//	int nPoints = points.Num();
+	//	for (int i = 0; i < nPoints - 2; i += 2)
+	//		area += (points[i + 1].X * (points[i + 2].Y - points[i].Y) + points[i + 1].Y * (points[i].X - points[i + 2].X)) * 0.000001;
+	//	// the last point binds together beginning and end
+	//	//area += points[nPoints - 1].X * (points[0].Y - points[nPoints - 2].Y) + points[nPoints - 1].Y * (points[nPoints - 2].X - points[0].X) * 0.00000001;
+	//	return area / 2;
 	}
 
 	void offset(FVector offset) {
@@ -70,7 +83,7 @@ struct FPolygon
 
 	// this method merges polygon sides when possible, and combines points
 	void decreaseEdges() {
-		float dirDiffAllowed = 0.01f;
+		float dirDiffAllowed = 0.07f;
 		float distDiffAllowed = 300;
 
 		for (int i = 1; i < points.Num(); i++) {
@@ -85,7 +98,7 @@ struct FPolygon
 			prev.Normalize();
 			FVector curr = points[i] - points[i - 1];
 			curr.Normalize();
-			UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
+			//UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
 			if (FVector::Dist(curr, prev) < dirDiffAllowed) {
 				points.RemoveAt(i-1);
 				i--;
@@ -111,69 +124,147 @@ struct FMetaPolygon : public FPolygon
 	FMetaPolygon splitAlongMax() {
 
 
+
 		int longest = 1;
-		int sndLongest = 1;
 
 		float longestLen = 0;
-		float sndLongestLen = 0;
 
+		FVector curr;
 		for (int i = 1; i < points.Num(); i++) {
-			FVector p = points[i] - points[i - 1];
-			float curr = p.Size();
-			if (curr > sndLongestLen) {
-				if (curr > longestLen) {
-					sndLongestLen = longestLen;
-					sndLongest = longest;
-					longestLen = curr;
-					longest = i;
-				}
-				else {
-					sndLongestLen = curr;
-					sndLongest = i;
-				}
+			curr = points[i] - points[i - 1];
+			if (curr.Size() > longestLen) {
+				longestLen = curr.Size();
+				longest = i;
 			}
 		}
 
-		int min = std::min(longest, sndLongest);
-		int max = std::max(sndLongest, longest);
+		FVector middle = (points[longest] - points[longest - 1]) / 2 + points[longest - 1];
+		FVector tangent = FRotator(0, buildLeft ? 270 : 90, 0).RotateVector(curr);
+		FVector p1 = middle;
+		int split = 0;
+		FVector p2;
+		// find first intersecting line, if several, find the one which tangent is at greatest angle, makes sense if you think about it
+		//float greatestDot;
+		for (int i = 1; i < points.Num(); i++) {
+			if (i == longest) {
+				continue;
+			}
+			p2 = intersection(middle + tangent*0.1, middle + tangent*100, points[i - 1], points[i]);
+			if (p2.X != 0.0f) {
+				// split this
+				split = i;
+				break;
+			}
+		}
+		//if (p2.X == 0.0f) {
+		//	tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(curr);
+		//	for (int i = 1; i < points.Num(); i++) {
+		//		if (i == longest) {
+		//			continue;
+		//		}
+		//		p2 = intersection(middle, middle + tangent * 100, points[i - 1], points[i]);
+		//		if (p2.X != 0.0f ) {
+		//			// split this
+		//			split = i;
+		//			break;
+		//		}
+		//	}
+		//}
+		if (p2.X == 0.0f) {
+			// cant split, no target
+			return FMetaPolygon();
+		}
 
-		FVector newCutoff1 = points[min] - points[min - 1];
-		FVector newCutoff2 = points[max] - points[max - 1];
+
 
 		FMetaPolygon newP;
-		newP.open = false;
+		newP.open = open;
+		int min = longest;
+		int max = split;
 
-		FVector firstCut = points[min - 1] + newCutoff1 / 2;
-		FVector sndCut = points[max - 1] + newCutoff2 / 2;
-
-		newP.points.Add(firstCut);
+		// rearrange if split comes before longest in the array
+		if (longest > split) {
+			FVector temp = p1;
+			p1 = p2;
+			p2 = temp;
+			min = split;
+			max = longest;
+		}
+		newP.points.Add(p1);
 		for (int i = min; i < max; i++) {
 			newP.points.Add(points[i]);
 		}
-		newP.points.Add(sndCut);
-		newP.points.Add(firstCut);
-		int lenToRemove = max - min - 1;
-		points.RemoveAt(min, lenToRemove);
-		points.EmplaceAt(min, firstCut);
-		points.EmplaceAt(min + 1, sndCut);	
+		newP.points.Add(p2);
+		newP.points.Add(p1);
+
+		points.RemoveAt(min, max - min);
+		points.EmplaceAt(min, p1);
+		points.EmplaceAt(min + 1, p2);
+
+		//for (int i = 1; i < points.Num(); i++) {
+		//	FVector p = points[i] - points[i - 1];
+		//	float curr = p.Size();
+		//	if (curr > sndLongestLen) {
+		//		if (curr > longestLen) {
+		//			sndLongestLen = longestLen;
+		//			sndLongest = longest;
+		//			longestLen = curr;
+		//			longest = i;
+		//		}
+		//		else {
+		//			sndLongestLen = curr;
+		//			sndLongest = i;
+		//		}
+		//	}
+		//}
+
+		//int min = std::min(longest, sndLongest);
+		//int max = std::max(sndLongest, longest);
+
+		//FVector newCutoff1 = points[min] - points[min - 1];
+		//FVector newCutoff2 = points[max] - points[max - 1];
+
+		//FMetaPolygon newP;
+		//newP.buildLeft = buildLeft;
+		//newP.open = open;
+
+		//FVector firstCut = points[min - 1] + newCutoff1 / 2;
+		//FVector sndCut = points[max - 1] + newCutoff2 / 2;
+
+		//newP.points.Add(firstCut);
+		//for (int i = min; i < max; i++) {
+		//	newP.points.Add(points[i]);
+		//}
+		//newP.points.Add(sndCut);
+		//newP.points.Add(firstCut);
+		//int lenToRemove = max - min;
+		//points.RemoveAt(min, lenToRemove);
+		//points.EmplaceAt(min, firstCut);
+		//points.EmplaceAt(min+1, sndCut);	
 
 
 		return newP;
 
 	}
 
-	TArray<FMetaPolygon> recursiveSplit(float maxArea, float minArea) {
-		float area = getArea();
-		if (area < minArea || points.Num() < 3) {
+	TArray<FMetaPolygon> recursiveSplit(float maxArea, float minArea, int depth) {
+		double area = getArea();
+		if (area < minArea || points.Num() < 3 || depth > 3) {
 			return TArray<FMetaPolygon>();
 		}
 		if (area > maxArea) {
+			TArray<FMetaPolygon> tot;
 			FMetaPolygon newP = splitAlongMax();
-			TArray<FMetaPolygon> tot = newP.recursiveSplit(maxArea, minArea);
-			tot.Add(newP);
-			tot.Append(recursiveSplit(maxArea, minArea));
-			//tot.Add(*this);
-			return tot;
+			if (newP.points.Num() > 2) {
+				tot = newP.recursiveSplit(maxArea, minArea, depth+1);
+				tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
+				//tot.Add(*this);
+				return tot;
+			}
+			else {
+				tot.Add(*this);
+				return tot;
+			}
 		}
 		else {
 			TArray<FMetaPolygon> toReturn;
@@ -186,13 +277,14 @@ struct FMetaPolygon : public FPolygon
 
 		decreaseEdges();
 		TArray<FMetaPolygon> toReturn;
+		//FMetaPolygon other = splitAlongMax();
+		//toReturn.Add(other);
 		if (!open) {
-			toReturn.Append(recursiveSplit(maxArea, minArea));
+			toReturn.Append(recursiveSplit(maxArea, minArea, 0));
 		}
 		else {
 			toReturn.Add(*this);
 		}
-
 		return toReturn;
 	}
 };
@@ -293,7 +385,6 @@ Calculate whether two lines intersect and where
 
 
 void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
-FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 FVector intersection(FPolygon p1, FPolygon p2);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
 float randFloat();
