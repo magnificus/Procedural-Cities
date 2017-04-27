@@ -121,9 +121,35 @@ struct FMetaPolygon : public FPolygon
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool buildLeft;
 
-	FMetaPolygon splitAlongMax() {
+};
 
 
+
+
+USTRUCT(BlueprintType)
+struct FHousePolygon : public FMetaPolygon {
+
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector housePosition;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float height;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float population;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int type;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TSet<int32> entrances;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TSet<int32> windows;
+
+
+
+	FHousePolygon splitAlongMax() {
 
 		int longest = 1;
 
@@ -139,48 +165,46 @@ struct FMetaPolygon : public FPolygon
 		}
 
 		FVector middle = (points[longest] - points[longest - 1]) / 2 + points[longest - 1];
-		FVector tangent = FRotator(0, buildLeft ? 270 : 90, 0).RotateVector(curr);
 		FVector p1 = middle;
 		int split = 0;
-		FVector p2;
+		FVector p2 = FVector(0.0f, 0.0f, 0.0f);
 		// find first intersecting line, if several, find the one which tangent is at greatest angle, makes sense if you think about it
-		//float greatestDot;
+		float leastDot = 10000.0f;
+		FVector tangent = FRotator(0, buildLeft ? 270 : 90, 0).RotateVector(curr);
+		tangent.Normalize();
 		for (int i = 1; i < points.Num(); i++) {
 			if (i == longest) {
 				continue;
 			}
-			p2 = intersection(middle + tangent*0.1, middle + tangent*100, points[i - 1], points[i]);
-			if (p2.X != 0.0f) {
-				// split this
-				split = i;
-				break;
+			curr = intersection(middle, middle + tangent * 100000, points[i - 1], points[i]);
+			if (curr.X != 0.0f) {
+				FVector tangent2 = points[i] - points[i - 1];
+				tangent2.Normalize();
+				float currDot = std::abs(FVector::DotProduct(tangent, tangent2));
+				if (currDot < leastDot) {
+					leastDot = currDot;
+					split = i;
+					p2 = curr;
+				}
 			}
 		}
-		//if (p2.X == 0.0f) {
-		//	tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(curr);
-		//	for (int i = 1; i < points.Num(); i++) {
-		//		if (i == longest) {
-		//			continue;
-		//		}
-		//		p2 = intersection(middle, middle + tangent * 100, points[i - 1], points[i]);
-		//		if (p2.X != 0.0f ) {
-		//			// split this
-		//			split = i;
-		//			break;
-		//		}
-		//	}
-		//}
 		if (p2.X == 0.0f) {
-			// cant split, no target
-			return FMetaPolygon();
+			// cant split, no target, this shouldn't happen :/
+			return FHousePolygon();
 		}
 
 
 
-		FMetaPolygon newP;
+		FHousePolygon newP;
 		newP.open = open;
+		newP.buildLeft = buildLeft;
+		newP.population = population;
+		newP.type = type;
+
 		int min = longest;
 		int max = split;
+
+
 
 		// rearrange if split comes before longest in the array
 		if (longest > split) {
@@ -192,93 +216,73 @@ struct FMetaPolygon : public FPolygon
 		}
 		newP.points.Add(p1);
 		for (int i = min; i < max; i++) {
+			if (entrances.Contains(i)) {
+				entrances.Remove(i);
+				newP.entrances.Add(newP.points.Num());
+			}
+			if (windows.Contains(i)) {
+				windows.Remove(i);
+				newP.windows.Add(newP.points.Num());
+			}
 			newP.points.Add(points[i]);
 		}
+
+		std::vector<int32> toRemove;
+		for (int32 i : entrances) {
+			if (i > max)
+				toRemove.push_back(i);
+		}
+		for (int32 i : toRemove) {
+			entrances.Remove(i);
+			entrances.Add(i - (max - min) + 2);
+		}
+
+		toRemove.clear();
+		for (int32 i : windows) {
+			if (i > max)
+				toRemove.push_back(i);
+		}
+		for (int32 i : toRemove) {
+			windows.Remove(i);
+			windows.Add(i - (max - min) + 2);
+		}
+
 		newP.points.Add(p2);
 		newP.points.Add(p1);
-
+		
 		points.RemoveAt(min, max - min);
 		points.EmplaceAt(min, p1);
 		points.EmplaceAt(min + 1, p2);
-
-		//for (int i = 1; i < points.Num(); i++) {
-		//	FVector p = points[i] - points[i - 1];
-		//	float curr = p.Size();
-		//	if (curr > sndLongestLen) {
-		//		if (curr > longestLen) {
-		//			sndLongestLen = longestLen;
-		//			sndLongest = longest;
-		//			longestLen = curr;
-		//			longest = i;
-		//		}
-		//		else {
-		//			sndLongestLen = curr;
-		//			sndLongest = i;
-		//		}
-		//	}
-		//}
-
-		//int min = std::min(longest, sndLongest);
-		//int max = std::max(sndLongest, longest);
-
-		//FVector newCutoff1 = points[min] - points[min - 1];
-		//FVector newCutoff2 = points[max] - points[max - 1];
-
-		//FMetaPolygon newP;
-		//newP.buildLeft = buildLeft;
-		//newP.open = open;
-
-		//FVector firstCut = points[min - 1] + newCutoff1 / 2;
-		//FVector sndCut = points[max - 1] + newCutoff2 / 2;
-
-		//newP.points.Add(firstCut);
-		//for (int i = min; i < max; i++) {
-		//	newP.points.Add(points[i]);
-		//}
-		//newP.points.Add(sndCut);
-		//newP.points.Add(firstCut);
-		//int lenToRemove = max - min;
-		//points.RemoveAt(min, lenToRemove);
-		//points.EmplaceAt(min, firstCut);
-		//points.EmplaceAt(min+1, sndCut);	
-
-
 		return newP;
 
 	}
 
-	TArray<FMetaPolygon> recursiveSplit(float maxArea, float minArea, int depth) {
+	TArray<FHousePolygon> recursiveSplit(float maxArea, float minArea, int depth) {
 		double area = getArea();
+		TArray<FHousePolygon> tot;
+
 		if (area < minArea || points.Num() < 3 || depth > 3) {
-			return TArray<FMetaPolygon>();
+			tot.Add(*this);
+			return tot;
 		}
 		if (area > maxArea) {
-			TArray<FMetaPolygon> tot;
-			FMetaPolygon newP = splitAlongMax();
+			FHousePolygon newP = splitAlongMax();
 			if (newP.points.Num() > 2) {
-				tot = newP.recursiveSplit(maxArea, minArea, depth+1);
-				tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
-				//tot.Add(*this);
-				return tot;
+				tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
 			}
-			else {
-				tot.Add(*this);
-				return tot;
-			}
+			tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
+
 		}
 		else {
-			TArray<FMetaPolygon> toReturn;
-			toReturn.Add(*this);
-			return toReturn;
+			tot.Add(*this);
 		}
+		return tot;
 	}
 
-	TArray<FMetaPolygon> refine(float maxArea, float minArea) {
+	TArray<FHousePolygon> refine(float maxArea, float minArea) {
 
-		decreaseEdges();
-		TArray<FMetaPolygon> toReturn;
-		//FMetaPolygon other = splitAlongMax();
-		//toReturn.Add(other);
+		//decreaseEdges();
+		TArray<FHousePolygon> toReturn;
 		if (!open) {
 			toReturn.Append(recursiveSplit(maxArea, minArea, 0));
 		}
@@ -287,26 +291,7 @@ struct FMetaPolygon : public FPolygon
 		}
 		return toReturn;
 	}
-};
 
-
-
-
-USTRUCT(BlueprintType)
-struct FHousePolygon : public FPolygon {
-
-	GENERATED_USTRUCT_BODY();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector housePosition;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float height;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float population;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int type;
 };
 
 

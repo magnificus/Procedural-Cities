@@ -119,7 +119,6 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 			hadCollision = true;
 			FVector newE = intersection(current->segment->start, current->segment->end, f->start, f->end);
 			current->time = 100000;
-			//return false;
 			if (newE.X == 0) {
 				// the lines themselves are not colliding, its an edge case
 				FVector closest = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
@@ -129,17 +128,19 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				}
 				continue;
 			}
-			FVector tangent = newE - current->segment->end;
-			tangent.Normalize();
-			float len = FVector::Dist(newE, current->segment->end);
-			current->segment->end += (len - standardWidth / 2) * tangent;
-			addVertices(current->segment);
-			current->segment->roadInFront = true;
-			// new road cant be too short
-			if (FVector::Dist(current->segment->start, current->segment->end) < primaryStepLength.Size()/5) {
-				return false;
+			else {
+				FVector tangent = newE - current->segment->start;
+				tangent.Normalize();
+				float len = FVector::Dist(newE, current->segment->end);
+				current->segment->end += (len - standardWidth / 2) * tangent;
+				current->segment->end = newE;
+				addVertices(current->segment);
+				current->segment->roadInFront = true;
+				// new road cant be too short
+				if (FVector::Dist(current->segment->start, current->segment->end) < primaryStepLength.Size() / 6) {
+					return false;
+				}
 			}
-
 		}
 
 		//FVector closestPoint = NearestPointOnLine(f->start, f->end - f->start, current->segment->end);
@@ -435,7 +436,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, LinkedLine* &inLine, TArr
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 	float middleOffset = 600;
-	float width = 1000;
+	float width = 500;
 
 	if (len < 1000) {
 		delete inLine;
@@ -591,7 +592,7 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 		// two collision segments for every road
 		FVector tangent = f.end - f.start;
 		tangent.Normalize();
-		FVector extraLength = tangent * 950;
+		FVector extraLength = tangent * 700;
 		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*(standardWidth / 2 * f.width);
 		LinkedLine* left = new LinkedLine();
 		left->line.p1 = f.start + sideOffset - extraLength;
@@ -603,7 +604,7 @@ TArray<FMetaPolygon> ASpawner::getBuildingPolygons(TArray<FRoadSegment> segments
 		right->buildLeft = false;
 
 
-		float extraRoadLen = 700;
+		float extraRoadLen = 900;
 
 
 		decidePolygonFate(segments, left, lines, true, extraRoadLen);

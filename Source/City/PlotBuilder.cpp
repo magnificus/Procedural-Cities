@@ -32,36 +32,40 @@ bool testCollision(TArray<FPolygon> &polygons, FPolygon &pol) {
 TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others) {
 	TArray<FHousePolygon> housePolygons;
 
-	float maxArea = 3000.0f;
-	float minArea = 100.0f;
+	float maxArea = 1500.0f;
+	float minArea = 50.0f;
 
 	if (!p.open) {
-		TArray<FMetaPolygon> refinedPolygons = p.refine(maxArea, minArea);
-		for (FMetaPolygon r : refinedPolygons) {
-			FHousePolygon fh;
-			fh.points = r.points;
-			fh.population = p.population;
-			fh.type = p.type;
-			FVector center = r.getCenter();
-			fh.housePosition = center;
-			fh.height = randFloat() * (maxFloors - minFloors) + minFloors;
+		FHousePolygon original;
+		original.points = p.points;
+		original.buildLeft = p.buildLeft;
+		original.open = p.open;
+		original.population = p.population;
+		original.type = p.type;
+		for (int32 i = 1; i < original.points.Num(); i++) {
+			original.entrances.Add(i);
+			original.windows.Add(i);
+		}
+		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, minArea);
+		for (FHousePolygon r : refinedPolygons) {
+			r.height = randFloat() * (maxFloors - minFloors) + minFloors;
 			float area = r.getArea();
 			UE_LOG(LogTemp, Log, TEXT("area of new polygon: %f"), area);
 
 			//if (area > minArea) {
-			housePolygons.Add(fh);
-			others.Add(fh);
+			housePolygons.Add(r);
+			others.Add(r);
 		}
 
 	}
 	else {
 		// wander along the line and place adjacent houses on the curve
 
-		float minLen = 4000;
-		float minWidth = 4000;
+		float minLen = 3000;
+		float minWidth = 3000;
 
-		float maxLen = 15000;
-		float maxWidth = 15000;
+		float maxLen = 9000;
+		float maxWidth = 9000;
 
 		int next = 1;
 		FVector currPos = p.points[0];
@@ -84,6 +88,10 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			pol.points.Add(currPos + len*tangent1);
 			pol.points.Add(currPos + len*tangent1 + width*tangent2);
 			pol.points.Add(currPos + width*tangent2);
+
+			fh.entrances.Add(2);
+			fh.windows.Add(2);
+			fh.windows.Add(4);
 
 			if (!testCollision(others, pol)) {
 				fh.points = pol.points;
