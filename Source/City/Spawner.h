@@ -92,7 +92,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	TArray<FMetaPolygon> getBuildingPolygons(TArray<FRoadSegment> segments);
+	TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> segments);
 
 
 protected:

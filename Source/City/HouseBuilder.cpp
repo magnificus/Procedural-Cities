@@ -115,6 +115,15 @@ TArray<FPolygon> getSideWithHoles(FPolygon outer, TArray<FPolygon> holes) {
 	return polygons;
 }
 
+struct Line {
+	FVector p1;
+	FVector p2;
+};
+
+TArray<Line> getInteriorPlan(FHousePolygon f){
+	return TArray<Line>();
+}
+
 // just the sides of the house with a hole for a single door
 TArray<FPolygon> getGroundPolygons(FHousePolygon f, float floorHeight, float doorHeight, float doorWidth) {
 

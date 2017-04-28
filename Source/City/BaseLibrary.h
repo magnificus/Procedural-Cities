@@ -267,9 +267,9 @@ struct FHousePolygon : public FMetaPolygon {
 		}
 		if (area > maxArea) {
 			FHousePolygon newP = splitAlongMax();
-			if (newP.points.Num() > 2) {
-				tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
-			}
+				//if (newP.points.Num() > 2) {
+				//	tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
+				//}
 			tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
 
 		}
@@ -296,18 +296,33 @@ struct FHousePolygon : public FMetaPolygon {
 
 
 USTRUCT(BlueprintType)
-struct FRoadSegment
+struct FLine {
+	GENERATED_USTRUCT_BODY();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector p1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector p2;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float width;
+
+	FVector getMiddle() {
+		return (p2 - p1) / 2 + p1;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FRoadSegment : public FLine
 {
 	//GENERATED_BODY();
 
 	GENERATED_USTRUCT_BODY();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FVector start;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FVector end;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float width;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//	FVector start;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//	FVector end;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//	float width;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector beginTangent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -384,5 +399,7 @@ public:
 	BaseLibrary();
 	~BaseLibrary();
 
+
+	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> segments);
 
 };
