@@ -115,21 +115,38 @@ TArray<FPolygon> getSideWithHoles(FPolygon outer, TArray<FPolygon> holes) {
 	return polygons;
 }
 
-struct Line {
-	FVector p1;
-	FVector p2;
-};
 
-TArray<Line> getInteriorPlan(FHousePolygon f){
-	return TArray<Line>();
+TArray<FLine> getInteriorPlanGround(FHousePolygon f, FPolygon hole){
+	TArray<FLine> lines;
+
+	TArray<FLine> inputLines;
+
+	// add the walls
+	for (int i = 1; i < f.points.Num(); i++) {
+		inputLines.Add(FLine{ f.points[i - 1], f.points[i], 10 });
+	}
+
+	// add corridors to shaft
+	for (int i : f.entrances) {
+		FVector middle = (f.points[i] - f.points[i - 1] ) / 2 + f.points[i - 1];
+		inputLines.Add(FLine{ middle, hole.getCenter(), 200});
+	}
+
+
+	TArray<FMetaPolygon> pols = BaseLibrary::getSurroundingPolygons(inputLines);
+
+	for (FMetaPolygon p : pols) {
+		for (int i = 1; i < p.points.Num(); i++) {
+			lines.Add(FLine{ p.points[i - 1], p.points[i], 10 });
+		}
+	}
+	return lines;
 }
 
 // just the sides of the house with a hole for a single door
 TArray<FPolygon> getGroundPolygons(FHousePolygon f, float floorHeight, float doorHeight, float doorWidth) {
 
 	TArray<FPolygon> polygons;
-
-	
 
 	for (int i = 1; i < f.points.Num(); i++) {
 		if (f.entrances.Contains(i)) {
@@ -164,28 +181,6 @@ TArray<FPolygon> getGroundPolygons(FHousePolygon f, float floorHeight, float doo
 
 	}
 
-	return polygons;
-}
-
-TArray<FPolygon> getCorrespondingPolygons(TArray<FVector> origin, TArray<FVector> end) {
-	TArray<FPolygon> polygons;
-	for (int i = 1; i < origin.Num(); i++) {
-		FVector currMid = (origin[i] - origin[i - 1]) / 2 + origin[i - 1];
-		FVector closest;
-		float closestDist = 100000000;
-		for (FVector f : end) {
-			float currDist = FVector::Dist(f, currMid);
-			if (currDist < closestDist) {
-				closestDist = currDist;
-				closest = f;
-			}
-		}
-		FPolygon newP;
-		newP.points.Add(origin[i - 1]);
-		newP.points.Add(closest);
-		newP.points.Add(origin[i]);
-		polygons.Add(newP);
-	}
 	return polygons;
 }
 
@@ -309,13 +304,6 @@ TArray<FPolygon> getFloorPolygons(FHousePolygon &f, float floorBegin, float floo
 
 
 		TArray<FPolygon> pols = getSideWithHoles(outer, windows);
-		//for (FPolygon p : pols) {
-		//	int count = 0;
-		//	for (FVector f : p.points) {
-		//		UE_LOG(LogTemp, Warning, TEXT("%s %i"), *f.ToString(), count++);
-		//	}
-
-		//}
 
 		polygons.Append(pols);
 
@@ -347,6 +335,7 @@ FPolygon getShaftHolePolygon(FHousePolygon f) {
 void makeInteresting(FHousePolygon &f) {
 
 }
+
 
 TArray<FPolygon> getShaftSides(FPolygon hole, int openSide, float height) {
 	TArray<FPolygon> sides;
@@ -382,9 +371,18 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 
 	toReturn.Append(getShaftSides(hole, 1, floorHeight * floors));
 
+	TArray<FLine> floorLines = getInteriorPlanGround(f, hole);
+	for (FLine f : floorLines) {
+		FPolygon newP;
+		newP.points.Add(f.p1 + FVector(0, 0, floorHeight));
+		newP.points.Add(f.p1);
+		newP.points.Add(f.p2);
+		newP.points.Add(f.p2 + FVector(0, 0, floorHeight));
+	}
+
 
 	float currHeight = floorHeight;
-	for (int i = 1; i < floors; i++) {
+	for (int i = 1; i < 2; i++) {
 		toReturn.Append(getFloorPolygons(f, currHeight, floorHeight, wDens, floorHeight / 3, wWidth, wHeight, hole));
 		currHeight += floorHeight;
 	}

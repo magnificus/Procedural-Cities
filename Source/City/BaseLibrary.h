@@ -234,7 +234,7 @@ struct FHousePolygon : public FMetaPolygon {
 		}
 		for (int32 i : toRemove) {
 			entrances.Remove(i);
-			entrances.Add(i - (max - min) + 2);
+			entrances.Add(i - (max - min) + 1);
 		}
 
 		toRemove.clear();
@@ -244,7 +244,7 @@ struct FHousePolygon : public FMetaPolygon {
 		}
 		for (int32 i : toRemove) {
 			windows.Remove(i);
-			windows.Add(i - (max - min) + 2);
+			windows.Add(i - (max - min) + 1);
 		}
 
 		newP.points.Add(p2);
@@ -317,12 +317,6 @@ struct FRoadSegment : public FLine
 
 	GENERATED_USTRUCT_BODY();
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//	FVector start;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//	FVector end;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//	float width;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector beginTangent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

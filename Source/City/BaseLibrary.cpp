@@ -269,16 +269,36 @@ void decidePolygonFate(TArray<FLine> &segments, LinkedLine* &inLine, TArray<Link
 			}
 			else {
 				// continous road
+				//if (FVector::Dist(pol->line.p1, inLine->line.getMiddle()) > FVector::Dist(pol->line.p2, inLine->line.getMiddle())) {
+				//	// on the new line, collision end?
+				//	if (FVector::Dist(inLine->line.p1, pol->line.getMiddle()) > FVector::Dist(inLine->line.p2, pol->line.getMiddle())) {
+				//		// then flip
+				//		invertAndParents(inLine);
+				//	}
+				//	else {
 
-				//if (FVector::Dist(pol->line.p1, res) > FVector::Dist(pol->line.p2, res)) {
+				//	}
 				//	inLine->parent = pol;
 				//	pol->child = inLine;
-				//	inLine->point = res;
+				//	//pol->point = res;
+
 				//}
+				//// so the new line is maybe the master
 				//else {
-				//	pol->parent = inLine;
-				//	inLine->child = pol;
-				//	pol->point = res;
+				//	// on inLine, collision end?
+				//	if (FVector::Dist(inLine->line.p1, pol->line.getMiddle()) > FVector::Dist(inLine->line.p2, pol->line.getMiddle())) {
+				//		pol->parent = inLine;
+				//		inLine->child = pol;
+
+				//	}
+				//	else {
+				//		// otherwise flip me
+				//		invertAndChildren(inLine);
+				//		inLine->child = pol;
+				//		pol->parent = inLine;
+				//	}
+				//	inLine->point = res;
+
 				//}
 
 			}
@@ -364,9 +384,12 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> segments)
 			taken.Add(curr);
 		}
 		if (curr->child && taken.Contains(curr->child)) {
-			f.points.RemoveAt(0);
-			f.points.EmplaceAt(0, intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2));
-			//f.points.Add(intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2));
+			FVector res = intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
+			if (res.X != 0.0f) {
+				f.points.RemoveAt(0);
+				f.points.EmplaceAt(0, res);
+			}
+
 			f.open = false;
 		}
 		polygons.Add(f);
