@@ -234,7 +234,7 @@ struct FHousePolygon : public FMetaPolygon {
 		}
 		for (int32 i : toRemove) {
 			entrances.Remove(i);
-			entrances.Add(i - (max - min) + 1);
+			//entrances.Add(i - (max - min) + 2);
 		}
 
 		toRemove.clear();
@@ -244,7 +244,7 @@ struct FHousePolygon : public FMetaPolygon {
 		}
 		for (int32 i : toRemove) {
 			windows.Remove(i);
-			windows.Add(i - (max - min) + 1);
+			//windows.Add(i - (max - min) + 2);
 		}
 
 		newP.points.Add(p2);
@@ -283,12 +283,12 @@ struct FHousePolygon : public FMetaPolygon {
 
 		//decreaseEdges();
 		TArray<FHousePolygon> toReturn;
-		if (!open) {
-			toReturn.Append(recursiveSplit(maxArea, minArea, 0));
-		}
-		else {
+		//if (!open) {
+		//	toReturn.Append(recursiveSplit(maxArea, minArea, 0));
+		//}
+		//else 
 			toReturn.Add(*this);
-		}
+
 		return toReturn;
 	}
 
@@ -298,6 +298,7 @@ struct FHousePolygon : public FMetaPolygon {
 USTRUCT(BlueprintType)
 struct FLine {
 	GENERATED_USTRUCT_BODY();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector p1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -394,6 +395,6 @@ public:
 	~BaseLibrary();
 
 
-	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> segments);
+	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> segments, float stdWidth);
 
 };

@@ -317,7 +317,7 @@ struct PolygonPoint {
 	FVector point;
 };
 
-TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> segments) {
+TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> segments, float stdWidth) {
 
 	TArray<LinkedLine*> lines;
 	// get coherent polygons
@@ -328,7 +328,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> segments)
 		FVector tangent = f.p2 - f.p1;
 		tangent.Normalize();
 		FVector extraLength = tangent * 700;
-		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*(500 * f.width);
+		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*(stdWidth/2 * f.width);
 		LinkedLine* left = new LinkedLine();
 		left->line.p1 = f.p1 + sideOffset - extraLength;
 		left->line.p2 = f.p2 + sideOffset + extraLength;
@@ -396,14 +396,14 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> segments)
 
 	}
 
-	// these roads shouldn't exist, so this is mainly to highlight errors
-	for (int i = 0; i < polygons.Num(); i++) {
-		FMetaPolygon f = polygons[i];
-		if (f.points.Num() < 3) {
-			polygons.RemoveAt(i);
-			i--;
-		}
-	}
+	// these roads generally shouldn't exist, so this is mainly to highlight errors
+	//for (int i = 0; i < polygons.Num(); i++) {
+	//	FMetaPolygon f = polygons[i];
+	//	if (f.points.Num() < 3) {
+	//		polygons.RemoveAt(i);
+	//		i--;
+	//	}
+	//}
 
 
 

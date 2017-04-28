@@ -682,7 +682,7 @@ TArray<FPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FLine> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments);
+	return BaseLibrary::getSurroundingPolygons(segments, standardWidth);
 }
 
 // Called when the game starts or when spawned

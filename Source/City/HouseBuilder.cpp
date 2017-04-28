@@ -123,17 +123,19 @@ TArray<FLine> getInteriorPlanGround(FHousePolygon f, FPolygon hole){
 
 	// add the walls
 	for (int i = 1; i < f.points.Num(); i++) {
-		inputLines.Add(FLine{ f.points[i - 1], f.points[i], 10 });
+		FLine f2;
+		inputLines.Add(FLine{f.points[i - 1], f.points[i], 0.0f });
 	}
 
 	// add corridors to shaft
-	for (int i : f.entrances) {
-		FVector middle = (f.points[i] - f.points[i - 1] ) / 2 + f.points[i - 1];
-		inputLines.Add(FLine{ middle, hole.getCenter(), 200});
-	}
+	//for (int i : f.entrances) {
+	//	FVector middle = (f.points[i] - f.points[i - 1] ) / 2 + f.points[i - 1];
+	//	//FVector middle = (f.points[1] - f.points[0]) / 2 + f.points[0];
+	//	inputLines.Add(FLine{ middle, (hole.getCenter() - middle)*2 + middle, 200.0f});
+	//}
 
 
-	TArray<FMetaPolygon> pols = BaseLibrary::getSurroundingPolygons(inputLines);
+	TArray<FMetaPolygon> pols = BaseLibrary::getSurroundingPolygons(inputLines, 1.0);
 
 	for (FMetaPolygon p : pols) {
 		for (int i = 1; i < p.points.Num(); i++) {
@@ -360,7 +362,7 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 		return TArray < FPolygon>();
 	}
 	makeInteresting(f);
-	TArray<FPolygon> toReturn = getGroundPolygons(f, floorHeight, 400, 200);
+	TArray<FPolygon> toReturn; //= getGroundPolygons(f, floorHeight, 400, 200);
 
 	float wDens = randFloat() * 0.0010 + 0.0005;
 
@@ -369,27 +371,30 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 
 	FPolygon hole = getShaftHolePolygon(f);
 
-	toReturn.Append(getShaftSides(hole, 1, floorHeight * floors));
+	//toReturn.Append(getShaftSides(hole, 1, floorHeight * floors));
 
 	TArray<FLine> floorLines = getInteriorPlanGround(f, hole);
-	for (FLine f : floorLines) {
+	for (FLine fL : floorLines) {
 		FPolygon newP;
-		newP.points.Add(f.p1 + FVector(0, 0, floorHeight));
-		newP.points.Add(f.p1);
-		newP.points.Add(f.p2);
-		newP.points.Add(f.p2 + FVector(0, 0, floorHeight));
+		newP.points.Add(fL.p1 + FVector(0, 0, floorHeight));
+		newP.points.Add(fL.p1);
+		newP.points.Add(fL.p2);
+		newP.points.Add(fL.p2 + FVector(0, 0, floorHeight));
+		newP.points.Add(fL.p1 + FVector(0, 0, floorHeight));
+
+		toReturn.Add(newP);
 	}
 
 
-	float currHeight = floorHeight;
-	for (int i = 1; i < 2; i++) {
-		toReturn.Append(getFloorPolygons(f, currHeight, floorHeight, wDens, floorHeight / 3, wWidth, wHeight, hole));
-		currHeight += floorHeight;
-	}
-	FPolygon roof;
-	for (FVector f2 : f.points) {
-		roof.points.Add(f2 + FVector(0, 0, currHeight));
-	}
+	//float currHeight = floorHeight;
+	//for (int i = 1; i < 2; i++) {
+	//	toReturn.Append(getFloorPolygons(f, currHeight, floorHeight, wDens, floorHeight / 3, wWidth, wHeight, hole));
+	//	currHeight += floorHeight;
+	//}
+	//FPolygon roof;
+	//for (FVector f2 : f.points) {
+	//	roof.points.Add(f2 + FVector(0, 0, currHeight));
+	//}
 	//toReturn.Add(roof);
 	return toReturn;
 	// we have the outline of the house, have to place levels, start with bottom & door
