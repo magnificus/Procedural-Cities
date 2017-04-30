@@ -114,28 +114,42 @@ TArray<FPolygon> getSideWithHoles(FPolygon outer, TArray<FPolygon> holes) {
 
 	return polygons;
 }
+TArray<FLine> getInteriorPlan(FHousePolygon &f, FPolygon hole) {
+	return TArray<FLine>();
+}
 
 
-TArray<FLine> getInteriorPlanGround(FHousePolygon f, FPolygon hole){
+
+
+TArray<FLine> getInteriorPlanGround(FHousePolygon &f, FPolygon hole){
 	TArray<FLine> lines;
 
 	TArray<FLine> inputLines;
 
 	// add the walls
 	for (int i = 1; i < f.points.Num(); i++) {
-		FLine f2;
-		inputLines.Add(FLine{f.points[i - 1], f.points[i], 0.0f });
+		inputLines.Add(FLine{f.points[i - 1], f.points[i], 300.0f });
 	}
 
+	// add shaft area
+	FVector tangent1 = hole.points[1] - hole.points[0];
+	FVector tangent2 = hole.points[2] - hole.points[1];
+
+	FVector middle1 = (hole.points[1] - hole.points[0]) / 2 + hole.points[0];
+	FVector middle2 = (hole.points[2] - hole.points[1]) / 2 + hole.points[1];
+
+	//inputLines.Add(FLine{ middle1, middle1 + tangent2, tangent1.Size() });
+	//inputLines.Add(FLine{ middle2, middle2 + tangent1, tangent2.Size() });
+
+
 	// add corridors to shaft
-	//for (int i : f.entrances) {
-	//	FVector middle = (f.points[i] - f.points[i - 1] ) / 2 + f.points[i - 1];
-	//	//FVector middle = (f.points[1] - f.points[0]) / 2 + f.points[0];
-	//	inputLines.Add(FLine{ middle, (hole.getCenter() - middle)*2 + middle, 200.0f});
-	//}
+	for (int i : f.entrances) {
+		FVector middle = (f.points[i] - f.points[i - 1] ) / 2 + f.points[i - 1];
+		inputLines.Add(FLine{ middle, hole.getCenter(), 400.0f});
+	}
 
 
-	TArray<FMetaPolygon> pols = BaseLibrary::getSurroundingPolygons(inputLines, 1.0);
+	TArray<FMetaPolygon> pols = BaseLibrary::getSurroundingPolygons(inputLines, 1.0f, 100, 50, 100);
 
 	for (FMetaPolygon p : pols) {
 		for (int i = 1; i < p.points.Num(); i++) {

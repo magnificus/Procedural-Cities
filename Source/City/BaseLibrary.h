@@ -36,10 +36,17 @@ struct FPolygon
 
 	FVector getCenter() {
 		FVector center = FVector(0, 0, 0);
-		for (FVector f : points) {
-			center += f;
+		double totLen = 0;
+		for (int i = 1; i < points.Num(); i++) {
+			float len = (points[i] - points[i - 1]).Size();
+			center += ((points[i] - points[i - 1])/2 + points[i-1])*len;
+			totLen += len;
 		}
-		center /= points.Num();
+		//for (FVector f : points) {
+		//	center += f;
+		//}
+		//center /= points.Num
+		center /= totLen;
 		return center;
 	}
 
@@ -395,6 +402,6 @@ public:
 	~BaseLibrary();
 
 
-	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> segments, float stdWidth);
+	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> segments, float stdWidth, float extraLen, float extraRoadLen, float width);
 
 };

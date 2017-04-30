@@ -111,7 +111,7 @@ void invertAndParents(LinkedLine* line) {
 		//if (line->parent)
 		//	line->point = line->parent->point;
 		//else
-		line->point = FVector(0.0f, 0.0f, 0.0f);
+			line->point = FVector(0.0f, 0.0f, 0.0f);
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
 		line->line.p2 = temp;
@@ -132,7 +132,7 @@ void invertAndChildren(LinkedLine* line) {
 		//if (line->child)
 		//	line->point = line->child->point;
 		//else
-		line->point = FVector(0.0f, 0.0f, 0.0f);
+			line->point = FVector(0.0f, 0.0f, 0.0f);
 
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
@@ -146,11 +146,10 @@ void invertAndChildren(LinkedLine* line) {
 	}
 }
 
-void decidePolygonFate(TArray<FLine> &segments, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen)
+void decidePolygonFate(TArray<FLine> &segments, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen, float width)
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
-	float middleOffset = 600;
-	float width = 500;
+	float middleOffset = 100;
 
 	if (len < 1000) {
 		delete inLine;
@@ -198,7 +197,7 @@ void decidePolygonFate(TArray<FLine> &segments, LinkedLine* &inLine, TArray<Link
 				inLine->line.p2 = intSec - altTangent * middleOffset;
 			}
 			newP->buildLeft = inLine->buildLeft;
-			decidePolygonFate(segments, newP, lines, true, extraRoadLen);
+			decidePolygonFate(segments, newP, lines, true, extraRoadLen, width);
 			intSec = intersection(f.p1 - tangent * extraRoadLen, f.p2 + tangent * extraRoadLen, inLine->line.p1, inLine->line.p2);
 			//return;
 		}
@@ -229,6 +228,7 @@ void decidePolygonFate(TArray<FLine> &segments, LinkedLine* &inLine, TArray<Link
 		lineVertices2.Add(pol->line.p1 - tangent4 * width);
 		lineVertices2.Add(pol->line.p2 + tangent4 * width);
 		lineVertices2.Add(pol->line.p2 - tangent4 * width);
+
 
 		if (testCollision(tangents, lineVertices, lineVertices2, 0)) {
 
@@ -317,39 +317,38 @@ struct PolygonPoint {
 	FVector point;
 };
 
-TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> segments, float stdWidth) {
+TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> segments, float stdWidth, float extraLen, float extraRoadLen, float width) {
 
 	TArray<LinkedLine*> lines;
 	// get coherent polygons
 	for (FLine f : segments) {
-		//if (f.type == RoadType::main)
-		//	continue;
 		// two collision segments for every road
 		FVector tangent = f.p2 - f.p1;
 		tangent.Normalize();
-		FVector extraLength = tangent * 700;
+		FVector extraLength = tangent * extraLen;
+
 		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*(stdWidth/2 * f.width);
 		LinkedLine* left = new LinkedLine();
 		left->line.p1 = f.p1 + sideOffset - extraLength;
 		left->line.p2 = f.p2 + sideOffset + extraLength;
 		left->buildLeft = true;
-		LinkedLine* right = new LinkedLine();
-		right->line.p1 = f.p1 - sideOffset - extraLength;
-		right->line.p2 = f.p2 - sideOffset + extraLength;
-		right->buildLeft = false;
+		decidePolygonFate(segments, left, lines, true, extraRoadLen, width);
+
+		if (stdWidth != 0.0f) {
+			LinkedLine* right = new LinkedLine();
+			right->line.p1 = f.p1 - sideOffset - extraLength;
+			right->line.p2 = f.p2 - sideOffset + extraLength;
+			right->buildLeft = false;
+			decidePolygonFate(segments, right, lines, true, extraRoadLen, width);
+		}
 
 
-		float extraRoadLen = 900;
-
-
-		decidePolygonFate(segments, left, lines, true, extraRoadLen);
 		//if (!f.roadInFront) {
 		//	LinkedLine* inFront = new LinkedLine();
 		//	inFront->line.p1 = f.end + sideOffset*1.5;
 		//	inFront->line.p2 = f.end - sideOffset*1.5;
 		//	decidePolygonFate(segments, inFront, lines, false, 0);
 		//}
-		decidePolygonFate(segments, right, lines, true, extraRoadLen);
 	}
 
 	TSet<LinkedLine*> remaining;
@@ -397,13 +396,13 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> segments,
 	}
 
 	// these roads generally shouldn't exist, so this is mainly to highlight errors
-	//for (int i = 0; i < polygons.Num(); i++) {
-	//	FMetaPolygon f = polygons[i];
-	//	if (f.points.Num() < 3) {
-	//		polygons.RemoveAt(i);
-	//		i--;
-	//	}
-	//}
+	for (int i = 0; i < polygons.Num(); i++) {
+		FMetaPolygon f = polygons[i];
+		if (f.points.Num() < 3) {
+			polygons.RemoveAt(i);
+			i--;
+		}
+	}
 
 
 
