@@ -125,34 +125,45 @@ TArray<FLine> getInteriorPlanGround(FHousePolygon &f, FPolygon hole){
 	TArray<FLine> lines;
 
 	TArray<FLine> inputLines;
+	TArray<FLine> blockingLines;
 
-	// add the walls
-	for (int i = 1; i < f.points.Num(); i++) {
-		inputLines.Add(FLine{f.points[i - 1], f.points[i], 0.0f });
-	}
 
-	// add shaft area
-	FVector tangent1 = hole.points[1] - hole.points[0];
-	FVector tangent2 = hole.points[2] - hole.points[1];
-
-	FVector middle1 = (hole.points[1] - hole.points[0]) / 2 + hole.points[0];
-	FVector middle2 = (hole.points[2] - hole.points[1]) / 2 + hole.points[1];
-
-	for (int i = 1; i < hole.points.Num(); i++) {
-		inputLines.Add(FLine{ hole.points[i - 1], hole.points[i], 0.0f });
-	}
-	//inputLines.Add(FLine{ hole.points[0], hole.points[1], 0.0f });
-	//inputLines.Add(FLine{ middle2, middle2 + tangent1, tangent2.Size() });
 
 
 	// add corridors to shaft
 	for (int i : f.entrances) {
-		FVector middle = (f.points[i] - f.points[i - 1] ) / 2 + f.points[i - 1];
-		// TODO offset tangent backwards to open entrance
-		inputLines.Add(FLine{ middle, hole.getCenter(), 400.0f});
+		FVector middle = (f.points[i] - f.points[i - 1]) / 2 + f.points[i - 1];
+		FVector tan = hole.getCenter() - middle;
+		tan.Normalize();
+		FLine l { middle, hole.getCenter(), 300.0f };
+		inputLines.Add(l);
+		blockingLines.Add(l);
 	}
 
-	TArray<FMetaPolygon> pols = BaseLibrary::getSurroundingPolygons(inputLines, 1.0f, 0, 0, 100);
+	//// add shaft area
+	//for (int i = 1; i < hole.points.Num(); i++) {
+	//	FLine l{ hole.points[i - 1], hole.points[i], 0.0f };
+	//	inputLines.Add(l);
+	//	//blockingLines.Add(l);
+	//}
+
+	// add the walls
+	for (int i = 1; i < f.points.Num(); i++) {
+		inputLines.Add(FLine{ f.points[i - 1], f.points[i], 0.0f });
+	}
+
+
+
+	//FVector tangent1 = hole.points[1] - hole.points[0];
+	//FVector tangent2 = hole.points[2] - hole.points[1];
+
+	//FVector middle1 = (hole.points[1] - hole.points[0]) / 2 + hole.points[0];
+	//FVector middle2 = (hole.points[2] - hole.points[1]) / 2 + hole.points[1];
+
+	//inputLines.Add(FLine{ hole.points[0], hole.points[1], 0.0f });
+	//inputLines.Add(FLine{ middle2, middle2 + tangent1, tangent2.Size() });
+
+	TArray<FMetaPolygon> pols = BaseLibrary::getSurroundingPolygons(inputLines, blockingLines, 1.0f, 10, 100, 100, 100);
 
 	for (FMetaPolygon p : pols) {
 		for (int i = 1; i < p.points.Num(); i++) {

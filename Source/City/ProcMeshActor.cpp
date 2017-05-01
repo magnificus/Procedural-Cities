@@ -93,7 +93,7 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> pols, FVector offset) {
 	TArray<FVector2D> UV0;
 	TArray<FLinearColor> vertexColors;
 	TArray<FProcMeshTangent> tangents;
-	mesh->CreateMeshSection_LinearColor(currIndex++, vertices, triangles, normals, UV0, vertexColors, tangents, false);
+	mesh->CreateMeshSection_LinearColor(currIndex++, vertices, triangles, normals, UV0, vertexColors, tangents, true);
 
 }
 

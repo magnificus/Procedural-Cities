@@ -236,12 +236,12 @@ struct FHousePolygon : public FMetaPolygon {
 
 		std::vector<int32> toRemove;
 		for (int32 i : entrances) {
-			if (i > max)
+			if (i >= max)
 				toRemove.push_back(i);
 		}
 		for (int32 i : toRemove) {
 			entrances.Remove(i);
-			//entrances.Add(i - (max - min) + 2);
+			entrances.Add(i - (max - min) + 2);
 		}
 
 		toRemove.clear();
@@ -251,7 +251,7 @@ struct FHousePolygon : public FMetaPolygon {
 		}
 		for (int32 i : toRemove) {
 			windows.Remove(i);
-			//windows.Add(i - (max - min) + 2);
+			windows.Add(i - (max - min) + 2);
 		}
 
 		newP.points.Add(p2);
@@ -290,10 +290,10 @@ struct FHousePolygon : public FMetaPolygon {
 
 		//decreaseEdges();
 		TArray<FHousePolygon> toReturn;
-		//if (!open) {
-		//	toReturn.Append(recursiveSplit(maxArea, minArea, 0));
-		//}
-		//else 
+		if (!open) {
+			toReturn.Append(recursiveSplit(maxArea, minArea, 0));
+		}
+		else 
 			toReturn.Add(*this);
 
 		return toReturn;
@@ -402,6 +402,6 @@ public:
 	~BaseLibrary();
 
 
-	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> segments, float stdWidth, float extraLen, float extraRoadLen, float width);
+	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> &segments, TArray<FLine> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset);
 
 };

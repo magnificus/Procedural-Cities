@@ -146,10 +146,9 @@ void invertAndChildren(LinkedLine* line) {
 	}
 }
 
-void decidePolygonFate(TArray<FLine> &segments, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen, float width)
+void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen, float width, float middleOffset)
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
-	float middleOffset = 100;
 
 	if (len < 1000) {
 		delete inLine;
@@ -171,8 +170,8 @@ void decidePolygonFate(TArray<FLine> &segments, LinkedLine* &inLine, TArray<Link
 	lineVertices.Add(v3);
 	lineVertices.Add(v4);
 
-	for (FLine f : segments) {
-		FVector tangent = (f.p2 - f.p1);
+	for (FLine f : blocking) {
+		FVector tangent = f.p2 - f.p1;
 		tangent.Normalize();
 		FVector intSec = intersection(f.p1 - tangent*extraRoadLen, f.p2 + tangent*extraRoadLen, inLine->line.p1, inLine->line.p2);
 		int counter = 0;
@@ -197,7 +196,7 @@ void decidePolygonFate(TArray<FLine> &segments, LinkedLine* &inLine, TArray<Link
 				inLine->line.p2 = intSec - altTangent * middleOffset;
 			}
 			newP->buildLeft = inLine->buildLeft;
-			decidePolygonFate(segments, newP, lines, true, extraRoadLen, width);
+			decidePolygonFate(segments, blocking, newP, lines, true, extraRoadLen, width, middleOffset);
 			intSec = intersection(f.p1 - tangent * extraRoadLen, f.p2 + tangent * extraRoadLen, inLine->line.p1, inLine->line.p2);
 			//return;
 		}
@@ -317,7 +316,7 @@ struct PolygonPoint {
 	FVector point;
 };
 
-TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> segments, float stdWidth, float extraLen, float extraRoadLen, float width) {
+TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments, TArray<FLine> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset) {
 
 	TArray<LinkedLine*> lines;
 	// get coherent polygons
@@ -332,14 +331,14 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> segments,
 		left->line.p1 = f.p1 + sideOffset - extraLength;
 		left->line.p2 = f.p2 + sideOffset + extraLength;
 		left->buildLeft = true;
-		decidePolygonFate(segments, left, lines, true, extraRoadLen, width);
+		decidePolygonFate(segments, blocking, left, lines, true, extraRoadLen, width, middleOffset);
 
 		if (f.width != 0.0f) {
 			LinkedLine* right = new LinkedLine();
 			right->line.p1 = f.p1 - sideOffset - extraLength;
 			right->line.p2 = f.p2 - sideOffset + extraLength;
 			right->buildLeft = false;
-			decidePolygonFate(segments, right, lines, true, extraRoadLen, width);
+			decidePolygonFate(segments, blocking, right, lines, true, extraRoadLen, width, middleOffset);
 		}
 
 
