@@ -62,6 +62,17 @@ FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 	return ret;
 }
 
+FVector intersection(FVector p1, FVector p2, FPolygon p) {
+	for (int i = 1; i < p.points.Num(); i++) {
+		FVector res = intersection(p1, p2, p.points[i - 1], p.points[i]);
+		if (res.X != 0.0f) {
+			return res;
+		}
+	}
+	return FVector(0.0f, 0.0f, 0.0f);
+}
+
+
 // returns true if colliding
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency) {
 	// assume rectangles
@@ -108,7 +119,7 @@ void invertAndParents(LinkedLine* line) {
 	TSet<LinkedLine*> taken;
 	while (line && !taken.Contains(line)) {
 		taken.Add(line);
-		//if (line->parent)
+		//if (line->parent && FVector::Dist(line->point, line->parent->point) < 10000)
 		//	line->point = line->parent->point;
 		//else
 			line->point = FVector(0.0f, 0.0f, 0.0f);
@@ -129,7 +140,7 @@ void invertAndChildren(LinkedLine* line) {
 	TSet<LinkedLine*> taken;
 	while (line && !taken.Contains(line)) {
 		taken.Add(line);
-		//if (line->child)
+		//if (line->child && FVector::Dist(line->point, line->child->point) < 10000)
 		//	line->point = line->child->point;
 		//else
 			line->point = FVector(0.0f, 0.0f, 0.0f);
@@ -175,15 +186,18 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 		tangent.Normalize();
 		FVector intSec = intersection(f.p1 - tangent*extraRoadLen, f.p2 + tangent*extraRoadLen, inLine->line.p1, inLine->line.p2);
 		int counter = 0;
-		while (intSec.X != 0.0f && counter++ < 5) {
+		if (intSec.X != 0.0f) {
 			if (!allowSplit) {
 				delete inLine;
 				return;
 			}
 
-			FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
+			FVector altTangent = FRotator(90, 90, 90).RotateVector(tangent);
 			LinkedLine* newP = new LinkedLine();
-			if (FVector::DistSquared(intSec, inLine->line.p1) > FVector::DistSquared(intSec + altTangent * middleOffset, inLine->line.p1)) {
+			float diff1 = FVector::DistSquared(intSec, inLine->line.p1) - FVector::DistSquared(intSec + altTangent * middleOffset, inLine->line.p1);
+			float diff2 = FVector::DistSquared(intSec, inLine->line.p2) - FVector::DistSquared(intSec + altTangent * middleOffset, inLine->line.p2);
+
+			if (diff1 > diff2) {
 				// 1 got closer, so use 1
 				newP->line.p1 = inLine->line.p1;
 				newP->line.p2 = intSec + altTangent * middleOffset;

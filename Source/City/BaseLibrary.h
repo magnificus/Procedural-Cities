@@ -130,6 +130,12 @@ struct FMetaPolygon : public FPolygon
 
 };
 
+struct FRoomPolygon : public FPolygon
+{
+	TSet<int32> windows;
+	TSet<int32> entrances;
+};
+
 
 
 
@@ -388,6 +394,8 @@ Calculate whether two lines intersect and where
 
 void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
 FVector intersection(FPolygon p1, FPolygon p2);
+FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
+FVector intersection(FVector p1, FVector p2, FPolygon p);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
 float randFloat();
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);

@@ -119,39 +119,110 @@ TArray<FLine> getInteriorPlan(FHousePolygon &f, FPolygon hole) {
 }
 
 
+struct twoInt {
+	int32 a;
+	int32 b;
+}
 
-
-TArray<FLine> getInteriorPlanGround(FHousePolygon &f, FPolygon hole){
+TArray<FRoomPolygon> getInteriorPlanGround(FHousePolygon &f, FPolygon hole){
 	TArray<FLine> lines;
 
 	TArray<FLine> inputLines;
 	TArray<FLine> blockingLines;
 
+	
+	TArray<FRoomPolygon> roomPols;
+
+	TArray<FLine> centerBlockers;
+
+	//for (int i = 1; i < hole.points.Num(); i++) {
+	//	FLine l{ hole.points[i - 1], hole.points[i], 0.0f };
+	//	centerBlockers.Add(l);
+	//}
+
+	//for (int i = 1; i < f.points.Num(); i++) {
+
+	//}
+
+	//for (int i = 1; i < hole.points.Num(); i++) {
+	//	FLine l{ hole.points[i - 1], hole.points[i], 0.0f };
+	//	lines.Add(l);
+	//	blockingLines.Add(l);
+	//}
 
 
 
-	// add corridors to shaft
-	for (int i : f.entrances) {
-		FVector middle = (f.points[i] - f.points[i - 1]) / 2 + f.points[i - 1];
-		FVector tan = hole.getCenter() - middle;
-		tan.Normalize();
-		FLine l { middle, hole.getCenter(), 300.0f };
-		inputLines.Add(l);
-		blockingLines.Add(l);
-	}
 
-	//// add shaft area
+	// add shaft area
 	//for (int i = 1; i < hole.points.Num(); i++) {
 	//	FLine l{ hole.points[i - 1], hole.points[i], 0.0f };
 	//	inputLines.Add(l);
-	//	//blockingLines.Add(l);
+	//	blockingLines.Add(l);
 	//}
 
-	// add the walls
-	for (int i = 1; i < f.points.Num(); i++) {
-		inputLines.Add(FLine{ f.points[i - 1], f.points[i], 0.0f });
+	//// add the walls
+	//for (int i = 1; i < f.points.Num(); i++) {
+	//	inputLines.Add(FLine{ f.points[i - 1], f.points[i], 0.0f });
+	//}
+
+	// add corridors to shaft
+	//for (int i : f.entrances) {
+	//	FVector middle = (f.points[i] - f.points[i - 1]) / 2 + f.points[i - 1];
+	//	FVector tan = hole.getCenter() - middle;
+	//	tan.Normalize();
+	//	FLine l{ middle, hole.getCenter(), 300.0f };
+	//	inputLines.Add(l);
+	//	blockingLines.Add(l);
+	//}
+
+	// add corridors from the hole
+	TArray<twoInt> connections;
+	for (int i = 0; i < hole.points.Num() - 1; i++) {
+		roomPols.Add(FRoomPolygon{});
+		connections.Add(twoInt{});
+	}
+	float corrWidth = 200;
+	for (int i = 1; i < hole.points.Num(); i++) {
+		FVector tangent = hole.points[i] - hole.points[i - 1];
+		float midPos = tangent.Size() / 2;
+		tangent.Normalize();
+		FVector altTangent = FRotator(0, 270, 0).RotateVector(tangent);
+		FVector firstAttach = hole.points[i- 1] + (midPos - corrWidth * 0.5) * tangent;
+		FVector sndAttach = FVector(0.0f, 0.0f, 0.0f);// intersection(firstAttach, firstAttach + altTangent * 100000, f);
+		int conn = 0;
+		for (int j = 1; j < f.points.Num(); j++) {
+			FVector res = intersection(firstAttach, firstAttach + altTangent * 100000, f.points[j - 1], f.points[j]);
+			if (res.X != 0.0f) {
+				sndAttach = res;
+				conn = j;
+				break;
+			}
+
+		}
+		connections[i - 1].b = conn;
+		roomPols[i - 1].points.Add(hole.points[i - 1]);
+		roomPols[i - 1].points.Add(firstAttach);
+		roomPols[i - 1].points.Add(sndAttach);
+
+
+		firstAttach = hole.points[i-1] + (midPos + corrWidth * 0.5) * tangent;
+		for (int j = 1; j < f.points.Num(); j++) {
+			FVector res = intersection(firstAttach, firstAttach + altTangent * 100000, f.points[j - 1], f.points[j]);
+			if (res.X != 0.0f) {
+				sndAttach = res;
+				conn = j;
+				break;
+			}
+
+		}
+		connections[i % (hole.points.Num() - 1)].a = conn;
+
+		roomPols[i % (hole.points.Num() - 1)].points.Add(firstAttach);
+		roomPols[i % (hole.points.Num() - 1)].points.Add(hole.points[i]);
+
 	}
 
+	// sew the roomPolygons together
 
 
 	//FVector tangent1 = hole.points[1] - hole.points[0];
@@ -163,14 +234,29 @@ TArray<FLine> getInteriorPlanGround(FHousePolygon &f, FPolygon hole){
 	//inputLines.Add(FLine{ hole.points[0], hole.points[1], 0.0f });
 	//inputLines.Add(FLine{ middle2, middle2 + tangent1, tangent2.Size() });
 
-	TArray<FMetaPolygon> pols = BaseLibrary::getSurroundingPolygons(inputLines, blockingLines, 1.0f, 10, 100, 100, 100);
+	//TArray<FMetaPolygon> pols = BaseLibrary::getSurroundingPolygons(inputLines, blockingLines, 1.0f, 100, 100, 50, 100);
 
-	for (FMetaPolygon p : pols) {
-		for (int i = 1; i < p.points.Num(); i++) {
-			lines.Add(FLine{ p.points[i - 1], p.points[i], 10 });
-		}
-	}
-	return lines;
+	//// these are the first drafts of the rooms
+
+	//float diffAllowed = 0.05f;
+	//float distAllowed = 100;
+	//for (FMetaPolygon &p : pols) {
+	//	FRoomPolygon p;
+	//	for (int i = 1; i < p.points.Num(); i++) {
+	//		for (int j = 1; j < f.points.Num(); j++) {
+	//			//bool isOnInterval = std::abs(FVector::Dist(f->start, closestPoint) + FVector::Dist(f->end, closestPoint) - FVector::Dist(f->start, f->end)) < 0.01;
+
+	//		}
+	//	}
+	//	roomPols.Add(p);
+	//}
+
+	//for (FMetaPolygon p : pols) {
+	//	for (int i = 1; i < p.points.Num(); i++) {
+	//		lines.Add(FLine{ p.points[i - 1], p.points[i], 10 });
+	//	}
+	//}
+	return roomPols;
 }
 
 // just the sides of the house with a hole for a single door
@@ -345,18 +431,19 @@ FPolygon getShaftHolePolygon(FHousePolygon f) {
 	FPolygon hole;
 	FVector center = f.getCenter();
 
-	float holeSize = 1500;
+	float holeSizeX = 1000;
+	float holeSizeY = 2000;
 
 	FVector tangent1 = f.points[1] - f.points[0];
 	tangent1.Normalize();
 	FVector tangent2 = FRotator(0, 90, 0).RotateVector(tangent1);
 
 
-	hole.points.Add(center + 0.5 * tangent1 * holeSize + 0.5 * tangent2 * holeSize);
-	hole.points.Add(center - 0.5 * tangent1 * holeSize + 0.5 * tangent2 * holeSize);
-	hole.points.Add(center - 0.5 * tangent1 * holeSize - 0.5 * tangent2 * holeSize);
-	hole.points.Add(center + 0.5 * tangent1 * holeSize - 0.5 * tangent2 * holeSize);
-	hole.points.Add(center + 0.5 * tangent1 * holeSize + 0.5 * tangent2 * holeSize);
+	hole.points.Add(center + 0.5 * tangent1 * holeSizeX + 0.5 * tangent2 * holeSizeY);
+	hole.points.Add(center - 0.5 * tangent1 * holeSizeX + 0.5 * tangent2 * holeSizeY);
+	hole.points.Add(center - 0.5 * tangent1 * holeSizeX - 0.5 * tangent2 * holeSizeY);
+	hole.points.Add(center + 0.5 * tangent1 * holeSizeX - 0.5 * tangent2 * holeSizeY);
+	hole.points.Add(center + 0.5 * tangent1 * holeSizeX + 0.5 * tangent2 * holeSizeY);
 
 	return hole;
 }
@@ -397,18 +484,29 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 	float wWidth = randFloat() * 500 + 500;
 	float wHeight = randFloat() * 400 + 200;
 
+
 	FPolygon hole = getShaftHolePolygon(f);
 
 	//toReturn.Append(getShaftSides(hole, 1, floorHeight * floors));
+	//FPolygon lessHole = 
 
-	TArray<FLine> floorLines = getInteriorPlanGround(f, hole);
-	for (FLine fL : floorLines) {
+	TArray<FRoomPolygon> roomPols = getInteriorPlanGround(f, hole);
+	for (FRoomPolygon rp : roomPols) {
 		FPolygon newP;
-		newP.points.Add(fL.p1 + FVector(0, 0, floorHeight));
-		newP.points.Add(fL.p1);
-		newP.points.Add(fL.p2);
-		newP.points.Add(fL.p2 + FVector(0, 0, floorHeight));
-		newP.points.Add(fL.p1 + FVector(0, 0, floorHeight));
+		for (int i = 1; i < rp.points.Num(); i++) {
+			FVector p1 = rp.points[i - 1];
+			FVector p2 = rp.points[i];
+			newP.points.Add(p1 + FVector(0, 0, floorHeight));
+			newP.points.Add(p1);
+			newP.points.Add(p2);
+			newP.points.Add(p2 + FVector(0, 0, floorHeight));
+			newP.points.Add(p1 + FVector(0, 0, floorHeight));
+		}
+		//newP.points.Add(fL.p1 + FVector(0, 0, floorHeight));
+		//newP.points.Add(fL.p1);
+		//newP.points.Add(fL.p2);
+		//newP.points.Add(fL.p2 + FVector(0, 0, floorHeight));
+		//newP.points.Add(fL.p1 + FVector(0, 0, floorHeight));
 
 		toReturn.Add(newP);
 	}
