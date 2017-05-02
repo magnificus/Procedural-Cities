@@ -192,7 +192,7 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 				return;
 			}
 
-			FVector altTangent = FRotator(90, 90, 90).RotateVector(tangent);
+			FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
 			LinkedLine* newP = new LinkedLine();
 			float diff1 = FVector::DistSquared(intSec, inLine->line.p1) - FVector::DistSquared(intSec + altTangent * middleOffset, inLine->line.p1);
 			float diff2 = FVector::DistSquared(intSec, inLine->line.p2) - FVector::DistSquared(intSec + altTangent * middleOffset, inLine->line.p2);

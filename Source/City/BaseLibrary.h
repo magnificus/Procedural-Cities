@@ -134,6 +134,7 @@ struct FRoomPolygon : public FPolygon
 {
 	TSet<int32> windows;
 	TSet<int32> entrances;
+	TSet<int32> toIgnore;
 };
 
 
@@ -274,7 +275,7 @@ struct FHousePolygon : public FMetaPolygon {
 		double area = getArea();
 		TArray<FHousePolygon> tot;
 
-		if (area < minArea || points.Num() < 3 || depth > 3) {
+		if (area < minArea || points.Num() < 3 || depth > 2) {
 			tot.Add(*this);
 			return tot;
 		}
