@@ -549,6 +549,9 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 		toReturn.Append(getFloorPolygonsWithHole(f, floorHeight*i, hole));
 		toReturn.Append(interiorPlanToPolygons(getInteriorPlan(f, hole, false), floorHeight*i, floorHeight));
 	}
+	FPolygon roof = f;
+	roof.offset(FVector(0, 0, floorHeight*floors));
+	toReturn.Add(roof);
 
 	return toReturn;
 	// we have the outline of the house, have to place levels, start with bottom & door
