@@ -137,29 +137,25 @@ struct FPolygon
 			FVector p1 = middle;
 			int split = 0;
 			FVector p2 = FVector(0.0f, 0.0f, 0.0f);
-			// find first intersecting line, if several, find the one which tangent is at greatest angle, makes sense if you think about it
-			float leastDot = 10000.0f;
 			FVector tangent = FRotator(0, buildLeft ? 270 : 90, 0).RotateVector(curr);
 			tangent.Normalize();
 			for (int i = 1; i < points.Num(); i++) {
 				if (i == longest) {
 					continue;
 				}
-				curr = intersection(middle, middle + tangent * 100000, points[i - 1], points[i]);
+				curr = intersection(middle, middle + tangent * 1000000, points[i - 1], points[i]);
 				if (curr.X != 0.0f) {
 					FVector tangent2 = points[i] - points[i - 1];
 					tangent2.Normalize();
-					float currDot = std::abs(FVector::DotProduct(tangent, tangent2));
-					if (currDot < leastDot) {
-						leastDot = currDot;
-						split = i;
-						p2 = curr;
-					}
+					split = i;
+					p2 = curr;
+					
 				}
 			}
 			if (p2.X == 0.0f) {
 				// cant split, no target, this shouldn't happen :/
 				return SplitStruct();
+
 			}
 
 			int min = longest;
@@ -201,6 +197,43 @@ struct FRoomPolygon : public FPolygon
 	TSet<int32> windows;
 	TSet<int32> entrances;
 	TSet<int32> toIgnore;
+
+
+	FRoomPolygon splitAlongMax() {
+		SplitStruct p = getSplitProposal(true);
+		if (p.p1.X == 0.0f) {
+			return FRoomPolygon();
+		}
+		return FRoomPolygon();
+	}
+
+	TArray<FRoomPolygon> recursiveSplit(float maxArea, float minArea, int depth) {
+		double area = getArea();
+		TArray<FRoomPolygon> tot;
+
+		if (area < minArea || points.Num() < 3 || depth > 3) {
+			tot.Add(*this);
+			return tot;
+		}
+		if (area > maxArea) {
+			FRoomPolygon newP = splitAlongMax();
+			//if (newP.points.Num() > 2) {
+			//	tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
+			//}
+			tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
+
+		}
+		else {
+			tot.Add(*this);
+		}
+		return tot;
+	}
+
+	TArray<FRoomPolygon> refine(float maxArea, float minArea) {
+
+		return recursiveSplit(maxArea, minArea, 0);
+	}
+
 };
 
 
@@ -232,49 +265,6 @@ struct FHousePolygon : public FMetaPolygon {
 
 
 	FHousePolygon splitAlongMax() {
-
-		//int longest = 1;
-
-		//float longestLen = 0;
-
-		//FVector curr;
-		//for (int i = 1; i < points.Num(); i++) {
-		//	curr = points[i] - points[i - 1];
-		//	if (curr.Size() > longestLen) {
-		//		longestLen = curr.Size();
-		//		longest = i;
-		//	}
-		//}
-
-		//FVector middle = (points[longest] - points[longest - 1]) / 2 + points[longest - 1];
-		//FVector p1 = middle;
-		//int split = 0;
-		//FVector p2 = FVector(0.0f, 0.0f, 0.0f);
-		//// find first intersecting line, if several, find the one which tangent is at greatest angle, makes sense if you think about it
-		//float leastDot = 10000.0f;
-		//FVector tangent = FRotator(0, buildLeft ? 270 : 90, 0).RotateVector(curr);
-		//tangent.Normalize();
-		//for (int i = 1; i < points.Num(); i++) {
-		//	if (i == longest) {
-		//		continue;
-		//	}
-		//	curr = intersection(middle, middle + tangent * 100000, points[i - 1], points[i]);
-		//	if (curr.X != 0.0f) {
-		//		FVector tangent2 = points[i] - points[i - 1];
-		//		tangent2.Normalize();
-		//		float currDot = std::abs(FVector::DotProduct(tangent, tangent2));
-		//		if (currDot < leastDot) {
-		//			leastDot = currDot;
-		//			split = i;
-		//			p2 = curr;
-		//		}
-		//	}
-		//}
-		//if (p2.X == 0.0f) {
-		//	// cant split, no target, this shouldn't happen :/
-		//	return FHousePolygon();
-		//}
-
 		SplitStruct p = getSplitProposal(buildLeft);
 		if (p.p1.X == 0.0f) {
 			return FHousePolygon();
@@ -285,20 +275,6 @@ struct FHousePolygon : public FMetaPolygon {
 		newP.buildLeft = buildLeft;
 		newP.population = population;
 		newP.type = type;
-
-		//int min = longest;
-		//int max = split;
-
-
-
-		//// rearrange if split comes before longest in the array
-		//if (longest > split) {
-		//	FVector temp = p1;
-		//	p1 = p2;
-		//	p2 = temp;
-		//	min = split;
-		//	max = longest;
-		//}
 		newP.points.Add(p.p1);
 		for (int i = p.min; i < p.max; i++) {
 			if (entrances.Contains(i)) {
@@ -312,25 +288,25 @@ struct FHousePolygon : public FMetaPolygon {
 			newP.points.Add(points[i]);
 		}
 
-		std::vector<int32> toRemove;
-		for (int32 i : entrances) {
-			if (i >= p.max)
-				toRemove.push_back(i);
-		}
-		for (int32 i : toRemove) {
-			entrances.Remove(i);
-			entrances.Add(i - (p.max - p.min) + 2);
-		}
+		//std::vector<int32> toRemove;
+		//for (int32 i : entrances) {
+		//	if (i >= p.max)
+		//		toRemove.push_back(i);
+		//}
+		//for (int32 i : toRemove) {
+		//	entrances.Remove(i);
+		//	entrances.Add(i - (p.max - p.min) + 2);
+		//}
 
-		toRemove.clear();
-		for (int32 i : windows) {
-			if (i > p.max)
-				toRemove.push_back(i);
-		}
-		for (int32 i : toRemove) {
-			windows.Remove(i);
-			windows.Add(i - (p.max - p.min) + 2);
-		}
+		//toRemove.clear();
+		//for (int32 i : windows) {
+		//	if (i > p.max)
+		//		toRemove.push_back(i);
+		//}
+		//for (int32 i : toRemove) {
+		//	windows.Remove(i);
+		//	windows.Add(i - (p.max - p.min) + 2);
+		//}
 
 		newP.points.Add(p.p2);
 		newP.points.Add(p.p1);
@@ -346,7 +322,7 @@ struct FHousePolygon : public FMetaPolygon {
 		double area = getArea();
 		TArray<FHousePolygon> tot;
 
-		if (area < minArea || points.Num() < 3 || depth > 2) {
+		if (area < minArea || points.Num() < 3 || depth > 3) {
 			tot.Add(*this);
 			return tot;
 		}
