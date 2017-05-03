@@ -176,7 +176,7 @@ struct FPolygon
 				max = longest;
 			}
 
-			return SplitStruct{min, max, p1, p2}:
+			return SplitStruct{ min, max, p1, p2 };
 	}
 
 
@@ -276,6 +276,9 @@ struct FHousePolygon : public FMetaPolygon {
 		//}
 
 		SplitStruct p = getSplitProposal(buildLeft);
+		if (p.p1.X == 0.0f) {
+			return FHousePolygon();
+		}
 
 		FHousePolygon newP;
 		newP.open = open;
@@ -333,8 +336,8 @@ struct FHousePolygon : public FMetaPolygon {
 		newP.points.Add(p.p1);
 		
 		points.RemoveAt(p.min, p.max - p.min);
-		points.EmplaceAt(min, p.p1);
-		points.EmplaceAt(min + 1, p.p2);
+		points.EmplaceAt(p.min, p.p1);
+		points.EmplaceAt(p.min + 1, p.p2);
 		return newP;
 
 	}
