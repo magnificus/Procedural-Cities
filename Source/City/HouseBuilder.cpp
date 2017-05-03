@@ -201,7 +201,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			}
 			connections[0].a = conn;
 			roomPols[0].points.EmplaceAt(0, sndAttach);
-			roomPols[0].entrances.Add(0);
+			roomPols[0].entrances.Add(1);
 			roomPols[0].points.EmplaceAt(1, firstAttach);
 			roomPols[0].points.EmplaceAt(2, hole.points[i]);
 
@@ -232,21 +232,24 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 
 		if (isIncreasing) {
 			for (int j = connections[i].b - 1 == -1 ? f.points.Num() - 1 : connections[i].b - 1; j != std::abs((connections[i].a - 1) % f.points.Num()); j = j == 0 ? f.points.Num() - 1 : j - 1) {
-				fp.points.Add(f.points[j]);
 				if (f.windows.Contains(j)) {
-					fp.windows.Add(j);
+					fp.windows.Add(fp.points.Num());
 				}
+				fp.points.Add(f.points[j]);
+
 
 			}
 		}
 		else {
 			for (int j = (connections[i].b) % f.points.Num(); j != (connections[i].a) % f.points.Num(); j++, j %= f.points.Num()) {
-				fp.points.Add(f.points[j]);
 				if (f.windows.Contains(j)) {
-					fp.windows.Add(j);
+					fp.windows.Add(fp.points.Num());
 				}
+				fp.points.Add(f.points[j]);
+
 			}
 		}
+		roomPols[i].windows.Add(roomPols[i].points.Num());
 		FVector first = roomPols[i].points[0];
 		roomPols[i].points.Add(first);
 	}
@@ -493,7 +496,7 @@ TArray<FPolygon> getShaftSides(FPolygon hole, int openSide, float height) {
 	return sides;
 }
 
-TArray<FPolygon> interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float currentHeight, float floorHeight) {
+TArray<FPolygon> interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float currentHeight, float floorHeight, float windowDensity, float windowHeight, float windowWidth, bool ground) {
 	TArray<FPolygon> toReturn;
 
 	for (FRoomPolygon rp : roomPols) {
@@ -501,19 +504,48 @@ TArray<FPolygon> interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float cur
 			if (rp.toIgnore.Contains(i)) {
 				continue;
 			}
+			FPolygon newP;
+			FVector p1 = rp.points[i - 1];
+			FVector p2 = rp.points[i];
+			newP.points.Add(p1 + FVector(0, 0, currentHeight + floorHeight));
+			newP.points.Add(p1 + FVector(0, 0, currentHeight));
+			newP.points.Add(p2 + FVector(0, 0, currentHeight));
+			newP.points.Add(p2 + FVector(0, 0, currentHeight + floorHeight));
+			newP.points.Add(p1 + FVector(0, 0, currentHeight + floorHeight));
 
 			if (rp.entrances.Contains(i)) {
 				toReturn.Append(getEntranceSide(rp.points[i - 1] + FVector(0, 0, currentHeight), rp.points[i] + FVector(0, 0, currentHeight), floorHeight , 400, 200));
 			}
+			else if (rp.windows.Contains(i) && !ground) {
+
+				FVector tangent = rp.points[i] - rp.points[i - 1];
+				float len = tangent.Size();
+				tangent.Normalize();
+
+				TArray<FPolygon> windows;
+				int spaces = FMath::FloorToInt(windowDensity * len) + 1;
+				float jumpLen = len / (float) spaces;
+
+				for (int j = 1; j < spaces; j++) {
+					FPolygon currWindow;
+					FVector p1 = rp.points[i - 1] + tangent * j * jumpLen + FVector(0, 0, currentHeight + 100 + windowHeight) - (tangent * windowWidth / 2);
+					FVector p2 = p1 - FVector(0, 0, windowHeight);
+					FVector p3 = p2 + tangent * windowWidth;
+					FVector p4 = p3 + FVector(0, 0, windowHeight);
+
+					currWindow.points.Add(p1);
+					currWindow.points.Add(p2);
+					currWindow.points.Add(p3);
+					currWindow.points.Add(p4);
+
+					windows.Add(currWindow);
+
+				}
+				TArray<FPolygon> pols = getSideWithHoles(newP, windows);
+				toReturn.Append(pols);
+
+			}
 			else {
-				FPolygon newP;
-				FVector p1 = rp.points[i - 1];
-				FVector p2 = rp.points[i];
-				newP.points.Add(p1 + FVector(0, 0, currentHeight + floorHeight));
-				newP.points.Add(p1 + FVector(0, 0, currentHeight));
-				newP.points.Add(p2 + FVector(0, 0, currentHeight));
-				newP.points.Add(p2 + FVector(0, 0, currentHeight + floorHeight));
-				newP.points.Add(p1 + FVector(0, 0, currentHeight + floorHeight));
 				toReturn.Add(newP);
 			}
 
@@ -544,10 +576,10 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 	//FPolygon lessHole = 
 
 	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true);
-	toReturn.Append(interiorPlanToPolygons(roomPols, 0, floorHeight));
+	toReturn.Append(interiorPlanToPolygons(roomPols, 0, floorHeight, 0.004, 400, 200, true));
 	for (int i = 1; i < floors; i++) {
 		toReturn.Append(getFloorPolygonsWithHole(f, floorHeight*i, hole));
-		toReturn.Append(interiorPlanToPolygons(getInteriorPlan(f, hole, false), floorHeight*i, floorHeight));
+		toReturn.Append(interiorPlanToPolygons(getInteriorPlan(f, hole, false), floorHeight*i, floorHeight, 0.003, 400, 200, false));
 	}
 	FPolygon roof = f;
 	roof.offset(FVector(0, 0, floorHeight*floors));
