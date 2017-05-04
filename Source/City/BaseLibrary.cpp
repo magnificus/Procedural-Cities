@@ -39,28 +39,56 @@ FVector intersection(FPolygon p1, FPolygon p2) {
 }
 
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
-	float x1 = p1.X, x2 = p2.X, x3 = p3.X, x4 = p4.X;
-	float y1 = p1.Y, y2 = p2.Y, y3 = p3.Y, y4 = p4.Y;
+	float p0_x = p1.X;
+	float p0_y = p1.Y;
+	float p1_x = p2.X;
+	float p1_y = p2.Y;
+	float p2_x = p3.X;
+	float p2_y = p3.Y;
+	float p3_x = p4.X;
+	float p3_y = p4.Y;
 
-	float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-	// If d is zero, there is no intersection
-	if (d == 0) return FVector{ 0.0f,0.0f,0.0f };
+	float s1_x, s1_y, s2_x, s2_y;
+	s1_x = p1_x - p0_x;     s1_y = p1_y - p0_y;
+	s2_x = p3_x - p2_x;     s2_y = p3_y - p2_y;
 
-	// Get the x and y
-	float pre = (x1*y2 - y1*x2), post = (x3*y4 - y3*x4);
-	float x = (pre * (x3 - x4) - (x1 - x2) * post) / d;
-	float y = (pre * (y3 - y4) - (y1 - y2) * post) / d;
+	float s, t;
+	s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
+	t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
 
-	// Check if the x and y coordinates are within both lines
-	if (x < std::min(x1, x2) || x > std::max(x1, x2) ||
-		x < std::min(x3, x4) || x > std::max(x3, x4)) return FVector{ 0.0f,0.0f,0.0f };
-	if (y < std::min(y1, y2) || y > std::max(y1, y2) ||
-		y < std::min(y3, y4) || y > std::max(y3, y4)) return FVector{ 0.0f,0.0f,0.0f };
+	if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
+	{
+		// Collision detected
+		return FVector(p0_x + (t * s1_x), p0_y + (t * s1_y), 0);
+	}
 
-	// Return the point of intersection
-	FVector ret{ x,y,0 };
-	return ret;
+	return FVector(0.0f, 0.0f, 0.0f); // No collision
 }
+
+
+//FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
+//	float x1 = p1.X, x2 = p2.X, x3 = p3.X, x4 = p4.X;
+//	float y1 = p1.Y, y2 = p2.Y, y3 = p3.Y, y4 = p4.Y;
+//
+//	float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+//	// If d is zero, there is no intersection
+//	if (d == 0) return FVector{ 0.0f,0.0f,0.0f };
+//
+//	// Get the x and y
+//	float pre = (x1*y2 - y1*x2), post = (x3*y4 - y3*x4);
+//	float x = (pre * (x3 - x4) - (x1 - x2) * post) / d;
+//	float y = (pre * (y3 - y4) - (y1 - y2) * post) / d;
+//
+//	// Check if the x and y coordinates are within both lines
+//	if (x < std::min(x1, x2) || x > std::max(x1, x2) ||
+//		x < std::min(x3, x4) || x > std::max(x3, x4)) return FVector{ 0.0f,0.0f,0.0f };
+//	if (y < std::min(y1, y2) || y > std::max(y1, y2) ||
+//		y < std::min(y3, y4) || y > std::max(y3, y4)) return FVector{ 0.0f,0.0f,0.0f };
+//
+//	// Return the point of intersection
+//	FVector ret{ x,y,0 };
+//	return ret;
+//}
 
 FVector intersection(FVector p1, FVector p2, FPolygon p) {
 	for (int i = 1; i < p.points.Num(); i++) {
@@ -396,14 +424,28 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 			taken.Add(curr);
 		}
 		if (curr->child && taken.Contains(curr->child)) {
+			// closed polygon since last point continues into first
 			FVector res = intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
 			if (res.X != 0.0f) {
 				f.points.RemoveAt(0);
 				f.points.EmplaceAt(0, res);
+				f.points.Add(res);
+			}
+			else {
+				FVector first = f.points[0];
+				f.points.Add(first);
 			}
 
+			if (FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) > 0.1f) {
+				UE_LOG(LogTemp, Log, TEXT("BEGINNING AND END NOT CONNECTED"), remaining.Num());
+			}
 			f.open = false;
+			f.checkOrientation();
 		}
+		else {
+			f.open = true;
+		}
+
 		polygons.Add(f);
 
 	}

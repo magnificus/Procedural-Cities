@@ -94,7 +94,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> segments);
 
-
+	//UFUNCTION(BlueprintCallable, Category = "Generation")
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

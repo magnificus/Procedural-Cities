@@ -32,10 +32,12 @@ bool testCollision(TArray<FPolygon> &polygons, FPolygon &pol) {
 TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others) {
 	TArray<FHousePolygon> housePolygons;
 
-	float maxArea = 4000.0f;
-	float minArea = 1000.0f;
+	float maxArea = 1000.0f;
+	float minArea = 5.0f;
 
 	if (!p.open) {
+
+
 		FHousePolygon original;
 		original.points = p.points;
 		original.buildLeft = p.buildLeft;
@@ -46,9 +48,14 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			original.entrances.Add(i);
 			original.windows.Add(i);
 		}
+		if (FVector::Dist(original.points[0], original.points[original.points.Num()-1]) > 0.1f)
+			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN PLOTBUILDER"));
+
+
 		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, minArea);
 		for (FHousePolygon r : refinedPolygons) {
-			r.height = randFloat() * (maxFloors - minFloors) + minFloors;
+			if (r.height != 50)
+				r.height = randFloat() * (maxFloors - minFloors) + minFloors;
 			float area = r.getArea();
 			UE_LOG(LogTemp, Log, TEXT("area of new polygon: %f"), area);
 

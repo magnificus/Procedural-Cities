@@ -59,14 +59,17 @@ struct FPolygon
 	// only cares about dimensions X and Y, not Z
 	double getArea() {
 
+	if (points.Num() < 1)
+		return 0.0;
+
 	double tot = 0;
-	FPolygon newP = *this;
+	//FPolygon newP = *this;
 
 	// this makes sure we dont overflow because of our location in the world
-	newP.offset(-(points[0]));
+	//newP.offset(-(points[0]));
 
 	for (int i = 0; i < points.Num() - 1; i++) {
-		tot += 0.0001*(newP.points[i].X * newP.points[i + 1].Y - newP.points[i].Y - newP.points[i+1].X);
+		tot += 0.0001*(points[i].X * points[i + 1].Y - points[i].Y * points[i+1].X);
 	}
 	tot /= 2;
 	return std::abs(tot);
@@ -75,13 +78,14 @@ struct FPolygon
 	//	FVector toAdd = points[0];
 	//	points.Add(toAdd);
 	//}
-	//	float area = 0;
-	//	int nPoints = points.Num();
-	//	for (int i = 0; i < nPoints - 2; i += 2)
-	//		area += (points[i + 1].X * (points[i + 2].Y - points[i].Y) + points[i + 1].Y * (points[i].X - points[i + 2].X)) * 0.000001;
-	//	// the last point binds together beginning and end
-	//	//area += points[nPoints - 1].X * (points[0].Y - points[nPoints - 2].Y) + points[nPoints - 1].Y * (points[nPoints - 2].X - points[0].X) * 0.00000001;
-	//	return area / 2;
+	//float area = 0;
+	//int nPoints = points.Num();
+	//for (int i = 0; i < nPoints - 2; i += 2)
+	//	area += (points[i + 1].X * (points[i + 2].Y - points[i].Y) + points[i + 1].Y * (points[i].X - points[i + 2].X)) * 0.000001;
+	// the last point binds together beginning and end
+	//area += points[nPoints - 1].X * (points[0].Y - points[nPoints - 2].Y) + points[nPoints - 1].Y * (points[nPoints - 2].X - points[0].X) * 0.00000001;
+
+	//return std::abs(area / 2);
 	}
 
 	void offset(FVector offset) {
@@ -97,7 +101,7 @@ struct FPolygon
 	// this method merges polygon sides when possible, and combines points
 	void decreaseEdges() {
 		float dirDiffAllowed = 0.07f;
-		float distDiffAllowed = 300;
+		float distDiffAllowed = 100;
 
 		for (int i = 1; i < points.Num(); i++) {
 			if (FVector::Dist(points[i - 1], points[i]) < distDiffAllowed) {
@@ -119,49 +123,60 @@ struct FPolygon
 		}
 	}
 
-	SplitStruct getSplitProposal(bool buildLeft) {
+	virtual SplitStruct getSplitProposal(bool buildLeft) {
+			
+			
+		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
+			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN SPLITSTRUCT, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
+		}
+
 			int longest = 1;
 
-			float longestLen = 0;
+			float longestLen = 0.0f;
 
 			FVector curr;
 			for (int i = 1; i < points.Num(); i++) {
-				curr = points[i] - points[i - 1];
-				if (curr.Size() > longestLen) {
-					longestLen = curr.Size();
+				float dist = FVector::DistSquared(points[i], points[i - 1]);
+				if (dist > longestLen) {
+					longestLen = dist;
 					longest = i;
 				}
 			}
+			curr = points[longest] - points[longest - 1];
+			curr.Normalize();
 
 			FVector middle = (points[longest] - points[longest - 1]) / 2 + points[longest - 1];
 			FVector p1 = middle;
 			int split = 0;
 			FVector p2 = FVector(0.0f, 0.0f, 0.0f);
-			FVector tangent = FRotator(0, buildLeft ? 270 : 90, 0).RotateVector(curr);
-			tangent.Normalize();
+			FVector tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(curr);
+			//tangent.Normalize();
 			for (int i = 1; i < points.Num(); i++) {
 				if (i == longest) {
 					continue;
 				}
 				curr = intersection(middle, middle + tangent * 1000000, points[i - 1], points[i]);
 				if (curr.X != 0.0f) {
-					FVector tangent2 = points[i] - points[i - 1];
-					tangent2.Normalize();
 					split = i;
 					p2 = curr;
 					
 				}
 			}
+
 			if (p2.X == 0.0f) {
+
+				UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT"));
 				// cant split, no target, this shouldn't happen but still does sometimes :/
-				return SplitStruct();
+				return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
+
+			}
+			else {
+				UE_LOG(LogTemp, Warning, TEXT("ABLE TO SPLIT"));
 
 			}
 
 			int min = longest;
 			int max = split;
-
-
 
 			// rearrange if split comes before longest in the array
 			if (longest > split) {
@@ -190,7 +205,20 @@ struct FMetaPolygon : public FPolygon
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool buildLeft;
 
+	void checkOrientation() {
+		FVector tangent = points[1] - points[0];
+		tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(tangent);
+		tangent.Normalize();
+		FVector middle = (points[1] - points[0]) / 2 + points[0];
+		for (int i = 2; i < points.Num(); i++) {
+			if (intersection(middle, middle + tangent * 100000, points[i - 1], points[i]).X != 0.0f)
+				return;
+		}
+		buildLeft = !buildLeft;
+	}
+
 };
+
 
 struct FRoomPolygon : public FPolygon
 {
@@ -198,27 +226,112 @@ struct FRoomPolygon : public FPolygon
 	TSet<int32> entrances;
 	TSet<int32> toIgnore;
 
-
 	FRoomPolygon splitAlongMax() {
+		return FRoomPolygon();
 		SplitStruct p = getSplitProposal(true);
 		if (p.p1.X == 0.0f) {
 			return FRoomPolygon();
 		}
-		return FRoomPolygon();
+		FRoomPolygon newP;
+
+		newP.points.Add(p.p1);
+
+		if (entrances.Contains(p.min)) {
+			newP.entrances.Add(newP.points.Num());
+		}
+		if (windows.Contains(p.min)) {
+			newP.windows.Add(newP.points.Num());
+		}
+		if (toIgnore.Contains(p.min)) {
+			newP.toIgnore.Add(newP.points.Num());
+		}
+		newP.points.Add(points[p.min]);
+
+		for (int i = p.min + 1; i < p.max; i++) {
+			if (entrances.Contains(i)) {
+				entrances.Remove(i);
+				newP.entrances.Add(newP.points.Num());
+			}
+			if (windows.Contains(i)) {
+				windows.Remove(i);
+				newP.windows.Add(newP.points.Num());
+			}
+			if (toIgnore.Contains(p.min)) {
+				toIgnore.Remove(i);
+				newP.toIgnore.Add(newP.points.Num());
+			}
+			newP.points.Add(points[i]);
+		}
+
+		//std::vector<int32> toRemove;
+		//for (int32 i : entrances) {
+		//	if (i > p.max)
+		//		toRemove.push_back(i);
+		//}
+		//for (int32 i : toRemove) {
+		//	entrances.Remove(i);
+		//	entrances.Add(i - (p.max - p.min) + 2);
+		//}
+		for (int32 &i : entrances) {
+			if (i > p.min)
+				i = i - (p.max - p.min) + 2;
+		}
+		for (int32 &i : windows) {
+			if (i > p.min)
+				i = i - (p.max - p.min) + 2;
+		}
+		for (int32 &i : toIgnore) {
+			if (i > p.min)
+				i = i - (p.max - p.min) + 2;
+		}
+
+
+		//toRemove.clear();
+		//for (int32 i : windows) {
+		//	if (i > p.max)
+		//		toRemove.push_back(i);
+		//}
+		//for (int32 i : toRemove) {
+		//	windows.Remove(i);
+		//	windows.Add(i - (p.max - p.min) + 2);
+		//}
+
+		newP.points.Add(p.p2);
+		// dont place the wall twice
+		newP.toIgnore.Add(newP.points.Num());
+		newP.points.Add(p.p1);
+
+		// entrance to next room
+		entrances.Add(p.min + 1);
+
+		points.RemoveAt(p.min, p.max - p.min);
+		points.EmplaceAt(p.min, p.p1);
+		points.EmplaceAt(p.min + 1, p.p2);
+
+
+		return newP;
 	}
 
 	TArray<FRoomPolygon> recursiveSplit(float maxArea, float minArea, int depth) {
 		double area = getArea();
+		UE_LOG(LogTemp, Warning, TEXT("area of new room: %f"), area);
 		TArray<FRoomPolygon> tot;
 
-		if (area < minArea || points.Num() < 3 || depth > 3) {
+		if (points.Num() < 3 || area < minArea) {
 			//tot.Add(*this);
 			return tot;
 		}
-		if (area > maxArea) {
+		else if (depth > 3) {
+			tot.Add(*this);
+			return tot;
+		}
+		else if (area > maxArea) {
 			FRoomPolygon newP = splitAlongMax();
-			newP.recursiveSplit(maxArea, minArea, depth + 1);
+			if (newP.points.Num() > 2) {
+				tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
+			}
 			tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
+
 		}
 		else {
 			tot.Add(*this);
@@ -260,10 +373,16 @@ struct FHousePolygon : public FMetaPolygon {
 		TSet<int32> windows;
 
 
-
 	FHousePolygon splitAlongMax() {
+
+
+		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
+			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN splitAlongMax, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
+		}
+
 		SplitStruct p = getSplitProposal(buildLeft);
 		if (p.p1.X == 0.0f) {
+			height = 50;
 			return FHousePolygon();
 		}
 
@@ -272,8 +391,21 @@ struct FHousePolygon : public FMetaPolygon {
 		newP.buildLeft = buildLeft;
 		newP.population = population;
 		newP.type = type;
+
+		FVector offset = p.p2 - p.p1;
+		offset = FRotator(0, 90, 0).RotateVector(offset);
+		offset.Normalize();
+
 		newP.points.Add(p.p1);
-		for (int i = p.min; i < p.max; i++) {
+		if (entrances.Contains(p.min)) {
+			newP.entrances.Add(newP.points.Num());
+		}
+		if (windows.Contains(p.min)) {
+			newP.windows.Add(newP.points.Num());
+		}
+		newP.points.Add(points[p.min]);
+
+		for (int i = p.min + 1; i < p.max; i++) {
 			if (entrances.Contains(i)) {
 				entrances.Remove(i);
 				newP.entrances.Add(newP.points.Num());
@@ -285,33 +417,33 @@ struct FHousePolygon : public FMetaPolygon {
 			newP.points.Add(points[i]);
 		}
 
-		//std::vector<int32> toRemove;
-		//for (int32 i : entrances) {
-		//	if (i > p.max)
-		//		toRemove.push_back(i);
-		//}
-		//for (int32 i : toRemove) {
-		//	entrances.Remove(i);
-		//	entrances.Add(i - (p.max - p.min) + 2);
-		//}
-		for (int32 &i : entrances) {
+		std::vector<int32> toRemove;
+		for (int32 i : entrances) {
 			if (i > p.min)
-				i = i - (p.max - p.min) + 2;
+				toRemove.push_back(i);
 		}
-		for (int32 &i : windows) {
-			if (i > p.min)
-				i = i - (p.max - p.min) + 2;
+		for (int32 i : toRemove) {
+			entrances.Remove(i);
+			entrances.Add(i - (p.max - p.min) + 2);
 		}
+		//for (int32 &i : entrances) {
+		//	if (i > p.min)
+		//		i = i - (p.max - p.min) + 2;
+		//}
+		//for (int32 &i : windows) {
+		//	if (i > p.min)
+		//		i = i - (p.max - p.min) + 2;
+		//}
 
-		//toRemove.clear();
-		//for (int32 i : windows) {
-		//	if (i > p.max)
-		//		toRemove.push_back(i);
-		//}
-		//for (int32 i : toRemove) {
-		//	windows.Remove(i);
-		//	windows.Add(i - (p.max - p.min) + 2);
-		//}
+		toRemove.clear();
+		for (int32 i : windows) {
+			if (i > p.min)
+				toRemove.push_back(i);
+		}
+		for (int32 i : toRemove) {
+			windows.Remove(i);
+			windows.Add(i - (p.max - p.min) + 2);
+		}
 
 		newP.points.Add(p.p2);
 		newP.points.Add(p.p1);
@@ -320,35 +452,23 @@ struct FHousePolygon : public FMetaPolygon {
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
 
-		//for (int32 &i : entrances) {
-		//	i += 1;
-		//}
-		//for (int32 &i : windows) {
-		//	i += 1;
-		//}
-
-		//std::vector<int> ints;
-		//for (int i : windows) {
-		//	ints.push_back(i);
-		//}
-		//for (int i : ints) {
-		//	windows.Remove
-		//}
-
 
 		return newP;
 
 	}
 
 	TArray<FHousePolygon> recursiveSplit(float maxArea, float minArea, int depth) {
+
 		double area = getArea();
+		//UE_LOG(LogTemp, Warning, TEXT("area of new house: %f"), area);
+
 		TArray<FHousePolygon> tot;
 
-		if (area < minArea) {
+		if (points.Num() < 3 || area <= minArea) {
 			//tot.Add(*this);
 			return tot;
 		}
-		else if (points.Num() < 3 || depth > 3) {
+		else if (depth > 3) {
 			tot.Add(*this);
 			return tot;
 		}
@@ -368,17 +488,20 @@ struct FHousePolygon : public FMetaPolygon {
 
 	TArray<FHousePolygon> refine(float maxArea, float minArea) {
 
-		//decreaseEdges();
+
+		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
+			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN refine, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
+		}
+
+		decreaseEdges();
 		TArray<FHousePolygon> toReturn;
 		if (!open) {
 			toReturn.Append(recursiveSplit(maxArea, minArea, 0));
 		}
 		else 
 			toReturn.Add(*this);
-
 		return toReturn;
 	}
-
 };
 
 
@@ -485,5 +608,6 @@ public:
 
 
 	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> &segments, TArray<FLine> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset);
+
 
 };

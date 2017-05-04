@@ -145,7 +145,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 		roomPols.Add(FRoomPolygon{});
 		connections.Add(twoInt{});
 	}
-	float corrWidth = 200;
+	float corrWidth = 300;
 	for (int i = 1; i < hole.points.Num(); i++) {
 		FVector tangent = hole.points[i] - hole.points[i - 1];
 		float midPos = tangent.Size() / 2;
@@ -550,14 +550,32 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 	//FPolygon lessHole = 
 
 	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true);
+
+	TArray<FRoomPolygon> refinedRooms;
+	for (FRoomPolygon p : roomPols) {
+		refinedRooms.Append(p.refine(10000, 0));
+	}
 	toReturn.Append(interiorPlanToPolygons(roomPols, 0, floorHeight, 0.004, 400, 200, true));
+	roomPols.Empty();
 	for (int i = 1; i < floors; i++) {
 		toReturn.Append(getFloorPolygonsWithHole(f, floorHeight*i, hole));
-		toReturn.Append(interiorPlanToPolygons(getInteriorPlan(f, hole, false), floorHeight*i, floorHeight, 0.003, 400, 200, false));
+
+		refinedRooms.Empty();
+		roomPols = getInteriorPlan(f, hole, false);
+		for (FRoomPolygon p : roomPols) {
+			refinedRooms.Append(p.refine(1000, 5));
+		}
+		toReturn.Append(interiorPlanToPolygons(roomPols, floorHeight*i, floorHeight, 0.003, 400, 200, false));
 	}
+
+
+
 	FPolygon roof = f;
 	roof.offset(FVector(0, 0, floorHeight*floors));
-	toReturn.Add(roof);
+	//toReturn.Add(roof);
+	FPolygon floor = f;
+	floor.offset(FVector(0, 0, 10));
+	toReturn.Add(floor);
 
 	return toReturn;
 	// we have the outline of the house, have to place levels, start with bottom & door
