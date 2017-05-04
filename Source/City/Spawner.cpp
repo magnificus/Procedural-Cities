@@ -121,11 +121,11 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 			current->time = 100000;
 			if (newE.X == 0) {
 				// the lines themselves are not colliding, its an edge case
-				FVector closest = NearestPointOnLine(f->p1, f->p2 - f->p1, current->segment->p2);
-				if (FVector::Dist(closest, current->segment->p2) < maxAttachDistance) {
-					current->segment->p2 = closest;
-					addVertices(current->segment);
-				}
+				//FVector closest = NearestPointOnLine(f->p1, f->p2 - f->p1, current->segment->p2);
+				//if (FVector::Dist(closest, current->segment->p2) < maxAttachDistance) {
+				//	current->segment->p2 = closest;
+				//	addVertices(current->segment);
+				//}
 				continue;
 			}
 			else {
@@ -314,22 +314,36 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	for (FRoadSegment* f2 : determinedSegments) {
 		if (f2->roadInFront)
 			continue;
-		FVector closestYet;
-		float closestD = 1000000000.0f;
 		FVector tangent = f2->p2 - f2->p1;
 		tangent.Normalize();
-		//f2->p2 = ()
-		//for (FRoadSegment* f : determinedSegments) {
-		//	if (f == f2)
-		//		continue;
+		f2->p2 += tangent*maxAttachDistance;
+		addVertices(f2);
+		bool foundCollision = false;
+		for (FRoadSegment* f : determinedSegments) {
+			if (f == f2)
+				continue;
+			FVector res = intersection(f2->p1, f2->p2, f->p1, f->p2);
+			if (res.X != 0.0f) {
+				FVector tangent2 = res - f2->p1;
+				tangent2.Normalize();
+				float len = FVector::Dist(res, f2->p2);
+				f2->p2 += (len - standardWidth / 2) * tangent2;
+				f2->p2 = res;
+				addVertices(f2);
+				f2->roadInFront = true;
+				foundCollision = true;
+				break;
+			}
 
 
-		//}
-
+		}
+		if (!foundCollision) {
+			f2->p2 -= tangent*maxAttachDistance;
+			addVertices(f2);
+		}
 
 
 	}
-
 
 
 	TArray<int> keys;
@@ -370,7 +384,7 @@ TArray<FPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FLine> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 900, 900, 500, 100);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 500, 500, 200, 100);
 }
 
 // Called when the game starts or when spawned
@@ -386,21 +400,3 @@ void ASpawner::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-
-//void ASpawner::buildPlots(TArray<FPolygon> polygons) {
-//	for (FPolygon p : polygons) {
-//			// one house per segment
-//			FActorSpawnParameters spawnInfo;
-//			APlotBuilder* pb = GetWorld()->SpawnActor<APlotBuilder>(FVector(0,0,0), FRotator(0, 0, 0), spawnInfo);
-//			FPlotPolygon ph;
-//			ph.f = p;
-//			//pb->pl
-//			ph.population = 1;
-//
-//			pb->BuildPlot(ph);
-//			plots.Add(pb);
-//			//fh.
-//			//h->placeHouse()
-//		
-//	}
-//}

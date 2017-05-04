@@ -76,6 +76,8 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 
 		int next = 1;
 		FVector currPos = p.points[0];
+		FVector prev1;
+		FVector prev2;
 		while (next < p.points.Num()) {
 			if (FVector::Dist(p.points[next], currPos) < minLen) {
 				p.points[next];
