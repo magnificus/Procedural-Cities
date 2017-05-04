@@ -82,7 +82,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 	tangent1.Normalize();
 	FVector tangent2 = FRotator(0, 90, 0).RotateVector(tangent1);
 
-	current->segment->p2 += tangent1 * maxAttachDistance;
+	//current->segment->p2 += tangent1 * maxAttachDistance;
 	addVertices(current->segment);
 	TArray<FVector> vert1;
 	vert1.Add(current->segment->v1);
@@ -90,7 +90,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 	vert1.Add(current->segment->v3);
 	vert1.Add(current->segment->v4);
 
-	bool hadCollision = false;
+	//bool hadCollision = false;
 	for (FRoadSegment* f : segments){
 
 		TArray<FVector> tangents;
@@ -116,7 +116,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		vert2.Add(f->v4);
 
 		if (testCollision(tangents, vert1, vert2, collisionLeniency)) {
-			hadCollision = true;
+			//hadCollision = true;
 			FVector newE = intersection(current->segment->p1, current->segment->p2, f->p1, f->p2);
 			current->time = 100000;
 			if (newE.X == 0) {
@@ -155,10 +155,10 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 
 
 	}
-	if (!hadCollision) {
-		current->segment->p2 -= maxAttachDistance*tangent1;
-		addVertices(current->segment);
-	}
+	//if (!hadCollision) {
+	//	current->segment->p2 -= maxAttachDistance*tangent1;
+	//	addVertices(current->segment);
+	//}
 
 	return true;
 	
@@ -311,36 +311,24 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 
 
-	//for (FRoadSegment* f2 : determinedSegments) {
-	//	//if (f2->roadInFront)
-	//	//	continue;
-	//	FVector closestYet;
-	//	float closestD = 1000000000.0f;
-	//	for (FRoadSegment* f : determinedSegments) {
-	//		if (f == f2)
-	//			continue;
+	for (FRoadSegment* f2 : determinedSegments) {
+		if (f2->roadInFront)
+			continue;
+		FVector closestYet;
+		float closestD = 1000000000.0f;
+		FVector tangent = f2->p2 - f2->p1;
+		tangent.Normalize();
+		//f2->p2 = ()
+		//for (FRoadSegment* f : determinedSegments) {
+		//	if (f == f2)
+		//		continue;
 
-	//		FVector closestPoint = NearestPointOnLine(f->start, f->end - f->start, f2->end);
-	//		bool isOnInterval = std::abs(FVector::Dist(f->start, closestPoint) + FVector::Dist(f->end, closestPoint) - FVector::Dist(f->start, f->end)) < 0.01f;
-	//		if (!isOnInterval) {
-	//			closestPoint = FVector::DistSquared(f->start, f2->end) < FVector::DistSquared(f->end, f2->end) ? f->start : f->end;
-	//		}
-	//		if (FVector::Dist(closestPoint, f2->end) < closestD) {
-	//			closestYet = closestPoint;
-	//			closestD = FVector::Dist(closestPoint, f2->end);
-	//		//break;
-	//		}
-	//	}
 
-	//	if (closestD < maxAttachDistance){
-	//		UE_LOG(LogTemp, Warning, TEXT("attaching road to road ahead"));
-	//		f2->end = closestYet;
-	//		addVertices(f2);
-	//	}
+		//}
 
 
 
-	//}
+	}
 
 
 

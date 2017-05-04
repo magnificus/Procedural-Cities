@@ -65,31 +65,6 @@ FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 	return FVector(0.0f, 0.0f, 0.0f); // No collision
 }
 
-
-//FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
-//	float x1 = p1.X, x2 = p2.X, x3 = p3.X, x4 = p4.X;
-//	float y1 = p1.Y, y2 = p2.Y, y3 = p3.Y, y4 = p4.Y;
-//
-//	float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-//	// If d is zero, there is no intersection
-//	if (d == 0) return FVector{ 0.0f,0.0f,0.0f };
-//
-//	// Get the x and y
-//	float pre = (x1*y2 - y1*x2), post = (x3*y4 - y3*x4);
-//	float x = (pre * (x3 - x4) - (x1 - x2) * post) / d;
-//	float y = (pre * (y3 - y4) - (y1 - y2) * post) / d;
-//
-//	// Check if the x and y coordinates are within both lines
-//	if (x < std::min(x1, x2) || x > std::max(x1, x2) ||
-//		x < std::min(x3, x4) || x > std::max(x3, x4)) return FVector{ 0.0f,0.0f,0.0f };
-//	if (y < std::min(y1, y2) || y > std::max(y1, y2) ||
-//		y < std::min(y3, y4) || y > std::max(y3, y4)) return FVector{ 0.0f,0.0f,0.0f };
-//
-//	// Return the point of intersection
-//	FVector ret{ x,y,0 };
-//	return ret;
-//}
-
 FVector intersection(FVector p1, FVector p2, FPolygon p) {
 	for (int i = 1; i < p.points.Num(); i++) {
 		FVector res = intersection(p1, p2, p.points[i - 1], p.points[i]);
@@ -382,14 +357,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 			right->buildLeft = false;
 			decidePolygonFate(segments, blocking, right, lines, true, extraRoadLen, width, middleOffset);
 		}
-
-
-		//if (!f.roadInFront) {
-		//	LinkedLine* inFront = new LinkedLine();
-		//	inFront->line.p1 = f.end + sideOffset*1.5;
-		//	inFront->line.p2 = f.end - sideOffset*1.5;
-		//	decidePolygonFate(segments, inFront, lines, false, 0);
-		//}
 	}
 
 	TSet<LinkedLine*> remaining;

@@ -555,7 +555,7 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 	for (FRoomPolygon p : roomPols) {
 		refinedRooms.Append(p.refine(10000, 0));
 	}
-	toReturn.Append(interiorPlanToPolygons(roomPols, 0, floorHeight, 0.004, 400, 200, true));
+	toReturn.Append(interiorPlanToPolygons(refinedRooms, 0, floorHeight, 0.004, 400, 200, true));
 	roomPols.Empty();
 	for (int i = 1; i < floors; i++) {
 		toReturn.Append(getFloorPolygonsWithHole(f, floorHeight*i, hole));
@@ -565,7 +565,7 @@ TArray<FPolygon> AHouseBuilder::getHousePolygons(FHousePolygon f, int floors, fl
 		for (FRoomPolygon p : roomPols) {
 			refinedRooms.Append(p.refine(1000, 5));
 		}
-		toReturn.Append(interiorPlanToPolygons(roomPols, floorHeight*i, floorHeight, 0.003, 400, 200, false));
+		toReturn.Append(interiorPlanToPolygons(refinedRooms, floorHeight*i, floorHeight, 0.003, 400, 200, false));
 	}
 
 

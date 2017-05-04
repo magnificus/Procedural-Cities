@@ -63,29 +63,12 @@ struct FPolygon
 		return 0.0;
 
 	double tot = 0;
-	//FPolygon newP = *this;
-
-	// this makes sure we dont overflow because of our location in the world
-	//newP.offset(-(points[0]));
 
 	for (int i = 0; i < points.Num() - 1; i++) {
 		tot += 0.0001*(points[i].X * points[i + 1].Y - points[i].Y * points[i+1].X);
 	}
 	tot /= 2;
 	return std::abs(tot);
-	// must be even
-	//if (points.Num() % 2 != 0) {
-	//	FVector toAdd = points[0];
-	//	points.Add(toAdd);
-	//}
-	//float area = 0;
-	//int nPoints = points.Num();
-	//for (int i = 0; i < nPoints - 2; i += 2)
-	//	area += (points[i + 1].X * (points[i + 2].Y - points[i].Y) + points[i + 1].Y * (points[i].X - points[i + 2].X)) * 0.000001;
-	// the last point binds together beginning and end
-	//area += points[nPoints - 1].X * (points[0].Y - points[nPoints - 2].Y) + points[nPoints - 1].Y * (points[nPoints - 2].X - points[0].X) * 0.00000001;
-
-	//return std::abs(area / 2);
 	}
 
 	void offset(FVector offset) {
@@ -227,8 +210,8 @@ struct FRoomPolygon : public FPolygon
 	TSet<int32> toIgnore;
 
 	FRoomPolygon splitAlongMax() {
-		return FRoomPolygon();
-		SplitStruct p = getSplitProposal(true);
+		//return FRoomPolygon();
+		SplitStruct p = getSplitProposal(false);
 		if (p.p1.X == 0.0f) {
 			return FRoomPolygon();
 		}
@@ -263,38 +246,37 @@ struct FRoomPolygon : public FPolygon
 			newP.points.Add(points[i]);
 		}
 
-		//std::vector<int32> toRemove;
-		//for (int32 i : entrances) {
-		//	if (i > p.max)
-		//		toRemove.push_back(i);
-		//}
-		//for (int32 i : toRemove) {
-		//	entrances.Remove(i);
-		//	entrances.Add(i - (p.max - p.min) + 2);
-		//}
-		for (int32 &i : entrances) {
-			if (i > p.min)
-				i = i - (p.max - p.min) + 2;
+		std::vector<int32> toRemove;
+		for (int32 i : entrances) {
+			if (i > p.max)
+				toRemove.push_back(i);
 		}
-		for (int32 &i : windows) {
-			if (i > p.min)
-				i = i - (p.max - p.min) + 2;
+		for (int32 i : toRemove) {
+			entrances.Remove(i);
+			entrances.Add(i - (p.max - p.min) + 2);
 		}
-		for (int32 &i : toIgnore) {
-			if (i > p.min)
-				i = i - (p.max - p.min) + 2;
+
+		toRemove.clear();
+		for (int32 i : windows) {
+			if (i > p.max)
+				toRemove.push_back(i);
+		}
+		for (int32 i : toRemove) {
+			windows.Remove(i);
+			windows.Add(i - (p.max - p.min) + 2);
 		}
 
 
-		//toRemove.clear();
-		//for (int32 i : windows) {
-		//	if (i > p.max)
-		//		toRemove.push_back(i);
-		//}
-		//for (int32 i : toRemove) {
-		//	windows.Remove(i);
-		//	windows.Add(i - (p.max - p.min) + 2);
-		//}
+		toRemove.clear();
+		for (int32 i : toIgnore) {
+			if (i > p.max)
+				toRemove.push_back(i);
+		}
+		for (int32 i : toRemove) {
+			toIgnore.Remove(i);
+			toIgnore.Add(i - (p.max - p.min) + 2);
+		}
+
 
 		newP.points.Add(p.p2);
 		// dont place the wall twice
@@ -314,7 +296,7 @@ struct FRoomPolygon : public FPolygon
 
 	TArray<FRoomPolygon> recursiveSplit(float maxArea, float minArea, int depth) {
 		double area = getArea();
-		UE_LOG(LogTemp, Warning, TEXT("area of new room: %f"), area);
+		//UE_LOG(LogTemp, Warning, TEXT("area of new room: %f"), area);
 		TArray<FRoomPolygon> tot;
 
 		if (points.Num() < 3 || area < minArea) {

@@ -32,8 +32,8 @@ bool testCollision(TArray<FPolygon> &polygons, FPolygon &pol) {
 TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others) {
 	TArray<FHousePolygon> housePolygons;
 
-	float maxArea = 1000.0f;
-	float minArea = 5.0f;
+	float maxArea = 8000.0f;
+	float minArea = 100.0f;
 
 	if (!p.open) {
 
@@ -68,11 +68,11 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 	else {
 		// wander along the line and place adjacent houses on the curve
 
-		float minLen = 3000;
-		float minWidth = 3000;
+		float minLen = 2000;
+		float minWidth = 2000;
 
-		float maxLen = 9000;
-		float maxWidth = 9000;
+		float maxLen = 8000;
+		float maxWidth = 8000;
 
 		int next = 1;
 		FVector currPos = p.points[0];
