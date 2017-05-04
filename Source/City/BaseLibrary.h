@@ -153,7 +153,7 @@ struct FPolygon
 				}
 			}
 			if (p2.X == 0.0f) {
-				// cant split, no target, this shouldn't happen :/
+				// cant split, no target, this shouldn't happen but still does sometimes :/
 				return SplitStruct();
 
 			}
@@ -212,16 +212,13 @@ struct FRoomPolygon : public FPolygon
 		TArray<FRoomPolygon> tot;
 
 		if (area < minArea || points.Num() < 3 || depth > 3) {
-			tot.Add(*this);
+			//tot.Add(*this);
 			return tot;
 		}
 		if (area > maxArea) {
 			FRoomPolygon newP = splitAlongMax();
-			//if (newP.points.Num() > 2) {
-			//	tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
-			//}
+			newP.recursiveSplit(maxArea, minArea, depth + 1);
 			tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
-
 		}
 		else {
 			tot.Add(*this);
@@ -290,13 +287,21 @@ struct FHousePolygon : public FMetaPolygon {
 
 		//std::vector<int32> toRemove;
 		//for (int32 i : entrances) {
-		//	if (i >= p.max)
+		//	if (i > p.max)
 		//		toRemove.push_back(i);
 		//}
 		//for (int32 i : toRemove) {
 		//	entrances.Remove(i);
 		//	entrances.Add(i - (p.max - p.min) + 2);
 		//}
+		for (int32 &i : entrances) {
+			if (i > p.min)
+				i = i - (p.max - p.min) + 2;
+		}
+		for (int32 &i : windows) {
+			if (i > p.min)
+				i = i - (p.max - p.min) + 2;
+		}
 
 		//toRemove.clear();
 		//for (int32 i : windows) {
@@ -314,6 +319,23 @@ struct FHousePolygon : public FMetaPolygon {
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
+
+		//for (int32 &i : entrances) {
+		//	i += 1;
+		//}
+		//for (int32 &i : windows) {
+		//	i += 1;
+		//}
+
+		//std::vector<int> ints;
+		//for (int i : windows) {
+		//	ints.push_back(i);
+		//}
+		//for (int i : ints) {
+		//	windows.Remove
+		//}
+
+
 		return newP;
 
 	}
@@ -322,15 +344,19 @@ struct FHousePolygon : public FMetaPolygon {
 		double area = getArea();
 		TArray<FHousePolygon> tot;
 
-		if (area < minArea || points.Num() < 3 || depth > 3) {
+		if (area < minArea) {
+			//tot.Add(*this);
+			return tot;
+		}
+		else if (points.Num() < 3 || depth > 3) {
 			tot.Add(*this);
 			return tot;
 		}
-		if (area > maxArea) {
+		else if (area > maxArea) {
 			FHousePolygon newP = splitAlongMax();
-				//if (newP.points.Num() > 2) {
-				//	tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
-				//}
+			if (newP.points.Num() > 2) {
+				tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
+			}
 			tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
 
 		}

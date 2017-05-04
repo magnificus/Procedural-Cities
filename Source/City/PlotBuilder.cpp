@@ -32,8 +32,8 @@ bool testCollision(TArray<FPolygon> &polygons, FPolygon &pol) {
 TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others) {
 	TArray<FHousePolygon> housePolygons;
 
-	float maxArea = 1500.0f;
-	float minArea = 50.0f;
+	float maxArea = 4000.0f;
+	float minArea = 1000.0f;
 
 	if (!p.open) {
 		FHousePolygon original;

@@ -418,12 +418,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 	}
 
 
-
-	// split polygons into habitable blocks
-
-	TArray<FMetaPolygon> refinedPolygons;
-
-
 	for (LinkedLine* l : lines) {
 		delete (l);
 	}
