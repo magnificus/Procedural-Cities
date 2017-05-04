@@ -76,12 +76,14 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 
 		int next = 1;
 		FVector currPos = p.points[0];
-		FVector prev1;
-		FVector prev2;
+		FVector prev1 = FVector(0.0f, 0.0f, 0.0f);
+		FVector prevTan = FVector(0.0f, 0.0f, 0.0f);
 		while (next < p.points.Num()) {
 			if (FVector::Dist(p.points[next], currPos) < minLen) {
-				p.points[next];
+				currPos = p.points[next];
 				next++;
+				prev1 = FVector(0.0f, 0.0f, 0.0f);
+				prevTan = FVector(0.0f, 0.0f, 0.0f);
 				continue;
 			}
 			FHousePolygon fh;
@@ -92,11 +94,18 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			FPolygon pol;
 			float len = std::min(FVector::Dist(p.points[next], currPos), randFloat()*(maxLen - minLen) + minLen);
 			float width = randFloat()*(maxWidth - minWidth) + minWidth;
-			pol.points.Add(currPos + width*tangent2);
-			pol.points.Add(currPos);
+			if (prev1.X != 0.0f) {
+				pol.points.Add(prev1 + prevTan * width);
+				pol.points.Add(prev1 );
+			}
+			else {
+				pol.points.Add(currPos + width*tangent2);
+				pol.points.Add(currPos);
+			}
 			pol.points.Add(currPos + len*tangent1);
 			pol.points.Add(currPos + len*tangent1 + width*tangent2);
-			pol.points.Add(currPos + width*tangent2);
+			FVector first = pol.points[0];
+			pol.points.Add(first);
 
 			fh.entrances.Add(2);
 			fh.windows.Add(2);
@@ -109,14 +118,19 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 				fh.housePosition = pol.getCenter();
 				others.Add(fh);
 				housePolygons.Add(fh);
+				FVector tangent = pol.points[2] - pol.points[1];
+				tangent.Normalize();
+				prev1 = pol.points[2] + tangent;
+				prevTan = pol.points[3] - pol.points[2];
+				prevTan.Normalize();
 			}
 
 			currPos += len*tangent1;
-			if (FVector::DistSquared(currPos, p.points[next]) < 20000) {
-				currPos = p.points[next];
-				next++;
+			//if (FVector::DistSquared(currPos, p.points[next]) < 20000) {
+			//	currPos = p.points[next];
+			//	next++;
 
-			}
+			//}
 
 		}
 
