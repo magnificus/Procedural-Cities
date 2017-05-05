@@ -6,6 +6,26 @@
 #include "BaseLibrary.h"
 #include "RoomBuilder.generated.h"
 
+USTRUCT(BlueprintType)
+struct FMeshInfo {
+
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMesh *mesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector location;
+};
+
+struct RoomInfo {
+	TArray<FRoomPolygon> rooms;
+	TArray<FMeshInfo> meshes;
+
+	float beginning;
+	float height;
+	//TArray<FPolygon> windows;
+
+};
 UCLASS()
 class CITY_API ARoomBuilder : public AActor
 {
@@ -23,6 +43,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	static TArray<FPolygon> buildRoom(FRoomPolygon);
+	static RoomInfo buildRoom(FRoomPolygon, RoomType type, int floor, float beginning, float height);
 	
 };

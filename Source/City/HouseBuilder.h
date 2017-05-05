@@ -5,15 +5,26 @@
 #include "GameFramework/Actor.h"
 //#include "PlotBuilder.h"
 #include "BaseLibrary.h"
+#include "RoomBuilder.h"
 #include "HouseBuilder.generated.h"
 
 
+
+
+USTRUCT(BlueprintType)
+struct FHouseInfo {
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FPolygon> polygons;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FMeshInfo> meshes;
+};
 
 UCLASS()
 class CITY_API AHouseBuilder : public AActor
 {
 	GENERATED_BODY()
-	TArray<USplineMeshComponent*> splineComponents;
 
 public:	
 	// Sets default values for this actor's properties
@@ -27,8 +38,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 		TArray<FPolygon> getHousePolygons(FHousePolygon f, int floors, float floorHeight);
 
-	//UPROPERTY(VisibleAnywhere, Category = Materials)
-	//	UProceduralMeshComponent * mesh;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

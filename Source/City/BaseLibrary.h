@@ -21,6 +21,15 @@ enum class RoadType : uint8
 	secondary UMETA(DisplayName = "Secondary Road")
 };
 
+UENUM(BlueprintType)
+enum class RoomType : uint8
+{
+	office 	UMETA(DisplayName = "Office"),
+	apartment UMETA(DisplayName = "Apartment"),
+	store UMETA(DisplayName = "Store")
+};
+
+
 
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 
@@ -111,6 +120,8 @@ struct FPolygon
 			
 		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
 			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN SPLITSTRUCT, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
+			FVector first = points[0];
+			points.Add(first);
 		}
 
 			int longest = 1;
@@ -151,10 +162,6 @@ struct FPolygon
 				UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT"));
 				// cant split, no target, this shouldn't happen but still does sometimes :/
 				return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
-
-			}
-			else {
-				UE_LOG(LogTemp, Warning, TEXT("ABLE TO SPLIT"));
 
 			}
 
@@ -209,6 +216,8 @@ struct FRoomPolygon : public FPolygon
 	TSet<int32> entrances;
 	TSet<int32> toIgnore;
 
+	bool canRefine = true;
+
 	FRoomPolygon splitAlongMax() {
 		//return FRoomPolygon();
 		SplitStruct p = getSplitProposal(false);
@@ -216,7 +225,6 @@ struct FRoomPolygon : public FPolygon
 			return FRoomPolygon();
 		}
 		FRoomPolygon newP;
-
 		newP.points.Add(p.p1);
 
 		if (entrances.Contains(p.min)) {
@@ -239,16 +247,27 @@ struct FRoomPolygon : public FPolygon
 				windows.Remove(i);
 				newP.windows.Add(newP.points.Num());
 			}
-			if (toIgnore.Contains(p.min)) {
+			if (toIgnore.Contains(i)) {
 				toIgnore.Remove(i);
 				newP.toIgnore.Add(newP.points.Num());
 			}
 			newP.points.Add(points[i]);
 		}
+		if (entrances.Contains(p.max)) {
+			newP.entrances.Add(newP.points.Num());
+		}
+		if (windows.Contains(p.max)) {
+			newP.windows.Add(newP.points.Num());
+		}
+		if (toIgnore.Contains(p.max)) {
+			newP.toIgnore.Add(newP.points.Num());
+		}
+
+
 
 		std::vector<int32> toRemove;
 		for (int32 i : entrances) {
-			if (i > p.max)
+			if (i >= p.max)
 				toRemove.push_back(i);
 		}
 		for (int32 i : toRemove) {
@@ -258,7 +277,7 @@ struct FRoomPolygon : public FPolygon
 
 		toRemove.clear();
 		for (int32 i : windows) {
-			if (i > p.max)
+			if (i >= p.max)
 				toRemove.push_back(i);
 		}
 		for (int32 i : toRemove) {
@@ -269,7 +288,7 @@ struct FRoomPolygon : public FPolygon
 
 		toRemove.clear();
 		for (int32 i : toIgnore) {
-			if (i > p.max)
+			if (i >= p.max)
 				toRemove.push_back(i);
 		}
 		for (int32 i : toRemove) {
@@ -289,6 +308,17 @@ struct FRoomPolygon : public FPolygon
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
+		//if (windows.Contains(p.max)) {
+		//	windows.Add(p.min + 2);
+		//}
+		//if (FVector::Dist(points[points.Num() - 1], points[0]) > 0.1f) {
+		//	FVector first = points[0];
+		//	points.Add(first);
+		//}
+
+		//for (int i = 1; i < points.Num(); i++) {
+		//	windows.Add(i);
+		//}
 
 
 		return newP;
@@ -322,8 +352,8 @@ struct FRoomPolygon : public FPolygon
 	}
 
 	TArray<FRoomPolygon> refine(float maxArea, float minArea) {
-
 		return recursiveSplit(maxArea, minArea, 0);
+
 	}
 
 };
@@ -347,7 +377,7 @@ struct FHousePolygon : public FMetaPolygon {
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float population;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int type;
+	RoomType type;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TSet<int32> entrances;
@@ -399,6 +429,13 @@ struct FHousePolygon : public FMetaPolygon {
 			newP.points.Add(points[i]);
 		}
 
+		if (entrances.Contains(p.max)) {
+			newP.entrances.Add(newP.points.Num());
+		}
+		if (windows.Contains(p.max)) {
+			newP.windows.Add(newP.points.Num());
+		}
+
 		std::vector<int32> toRemove;
 		for (int32 i : entrances) {
 			if (i > p.min)
@@ -408,14 +445,7 @@ struct FHousePolygon : public FMetaPolygon {
 			entrances.Remove(i);
 			entrances.Add(i - (p.max - p.min) + 2);
 		}
-		//for (int32 &i : entrances) {
-		//	if (i > p.min)
-		//		i = i - (p.max - p.min) + 2;
-		//}
-		//for (int32 &i : windows) {
-		//	if (i > p.min)
-		//		i = i - (p.max - p.min) + 2;
-		//}
+
 
 		toRemove.clear();
 		for (int32 i : windows) {
@@ -552,7 +582,7 @@ struct FPlotPolygon : public FMetaPolygon{
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float population;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int type;
+	RoomType type;
 
 };
 

@@ -33,7 +33,7 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 	TArray<FHousePolygon> housePolygons;
 
 	float maxArea = 8000.0f;
-	float minArea = 100.0f;
+	float minArea = 800.0f;
 
 	if (!p.open) {
 
@@ -54,8 +54,7 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 
 		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, minArea);
 		for (FHousePolygon r : refinedPolygons) {
-			if (r.height != 50)
-				r.height = randFloat() * (maxFloors - minFloors) + minFloors;
+			r.height = randFloat() * (maxFloors - minFloors) + minFloors;
 			float area = r.getArea();
 			UE_LOG(LogTemp, Log, TEXT("area of new polygon: %f"), area);
 
@@ -107,15 +106,20 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			FVector first = pol.points[0];
 			pol.points.Add(first);
 
-			fh.entrances.Add(2);
-			fh.windows.Add(2);
-			fh.windows.Add(4);
+
+			//fh.windows.Add(2);
+			//fh.windows.Add(4);
 
 			if (!testCollision(others, pol)) {
 				fh.points = pol.points;
 				fh.population = 1.0;
 				fh.height = randFloat() * (maxFloors - minFloors) + minFloors;
 				fh.housePosition = pol.getCenter();
+
+				fh.entrances.Add(2);
+				for (int i = 1; i < fh.points.Num(); i++) {
+					fh.windows.Add(i);
+				}
 				others.Add(fh);
 				housePolygons.Add(fh);
 				FVector tangent = pol.points[2] - pol.points[1];
@@ -123,7 +127,9 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 				prev1 = pol.points[2] + tangent;
 				prevTan = pol.points[3] - pol.points[2];
 				prevTan.Normalize();
+
 			}
+
 
 			currPos += len*tangent1;
 			//if (FVector::DistSquared(currPos, p.points[next]) < 20000) {
