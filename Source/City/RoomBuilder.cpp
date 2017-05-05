@@ -34,7 +34,7 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon r2, float beginning, float 
 	FVector center = r2.getCenter() + FVector(0, 0, beginning);
 	meshes.Add(FMeshInfo{"office_meeting_table", FTransform(dir.Rotation(), center, FVector(1.0, 1.0, 1.0))});
 	float offsetLen = 100;
-	for (int i = 0; i < 4; i+=2) {
+	for (int i = 1; i < 4; i+=2) {
 		FRotator curr = FRotator(0, 90 * i, 0);
 		FVector chairPos = curr.Vector() * offsetLen + center;
 		meshes.Add(FMeshInfo{ "office_meeting_chair", FTransform(curr, chairPos, FVector(1.0, 1.0, 1.0)) });
