@@ -308,17 +308,6 @@ struct FRoomPolygon : public FPolygon
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
-		//if (windows.Contains(p.max)) {
-		//	windows.Add(p.min + 2);
-		//}
-		//if (FVector::Dist(points[points.Num() - 1], points[0]) > 0.1f) {
-		//	FVector first = points[0];
-		//	points.Add(first);
-		//}
-
-		//for (int i = 1; i < points.Num(); i++) {
-		//	windows.Add(i);
-		//}
 
 
 		return newP;
@@ -354,6 +343,10 @@ struct FRoomPolygon : public FPolygon
 	TArray<FRoomPolygon> refine(float maxArea, float minArea) {
 		return recursiveSplit(maxArea, minArea, 0);
 
+	}
+
+	FVector getRoomDirection() {
+		return FVector(0.0f, 0.0f, 0.0f);
 	}
 
 };

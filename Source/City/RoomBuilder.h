@@ -12,9 +12,9 @@ struct FMeshInfo {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UStaticMesh *mesh;
+	FString description;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector location;
+	FTransform transform;
 };
 
 struct RoomInfo {

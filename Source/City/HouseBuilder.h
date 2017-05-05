@@ -36,7 +36,7 @@ public:
 	UStaticMesh* meshPolygon;
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-		TArray<FPolygon> getHousePolygons(FHousePolygon f, int floors, float floorHeight);
+		FHouseInfo getHouseInfo(FHousePolygon f, int floors, float floorHeight);
 
 protected:
 	// Called when the game starts or when spawned
