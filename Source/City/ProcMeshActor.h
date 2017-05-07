@@ -25,6 +25,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	void buildPolygons(TArray<FPolygon> pols, FVector offset);
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		UMaterial* mat;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		float texScaleMultiplier = 1.0f;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
