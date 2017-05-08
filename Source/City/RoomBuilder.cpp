@@ -239,7 +239,8 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon &r2 , float height) {
 		TArray<int32> acceptablePlaces;
 
 		for (int i = 1; i < r2.points.Num(); i++) {
-			acceptablePlaces.Add(i);
+			if (FVector::Dist(r2.points[i], r2.points[i-1]) > 1000)
+				acceptablePlaces.Add(i);
 		}
 		for (int i : r2.windows) {
 			acceptablePlaces.Remove(i);
@@ -255,7 +256,7 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon &r2 , float height) {
 			int place = acceptablePlaces[random];
 			FVector dir2 = (r2.points[place] - r2.points[place - 1]) / 2;
 			dir2.Normalize();
-			FVector dir3 = FRotator(0, 90, 0).RotateVector(dir2);
+			FVector dir3 = FRotator(0, 270, 0).RotateVector(dir2);
 			dir3.Normalize();
 			FRotator curr = dir3.Rotation();
 			FVector pos = r2.points[place - 1] + dir2 * bookShelfLen * 2 + dir3 * bookShelfWidth * 2;
@@ -269,7 +270,8 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon &r2 , float height) {
 		TArray<int32> acceptablePlaces;
 
 		for (int i = 1; i < r2.points.Num(); i++) {
-			acceptablePlaces.Add(i);
+			if (FVector::Dist(r2.points[i], r2.points[i - 1]) > 1000)
+				acceptablePlaces.Add(i);
 		}
 		for (int i : r2.entrances) {
 			acceptablePlaces.Remove(i);
@@ -286,7 +288,7 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon &r2 , float height) {
 			FVector middle = (r2.points[place] - r2.points[place - 1]) / 2 + r2.points[place - 1] + FVector(0, 0, 200);
 			FVector dir2 = (r2.points[place] - r2.points[place - 1]);
 			dir2.Normalize();
-			FRotator curr = FRotator(0, 180, 0).RotateVector(dir2).Rotation();
+			FRotator curr = FRotator(0, 90, 0).RotateVector(dir2).Rotation();
 			meshes.Add(FMeshInfo{ "office_whiteboard", FTransform(curr, middle + FRotator(0, 270, 0).RotateVector(dir2) * 15, FVector(1.0, 1.0, 1.0)) });
 
 			r2.windows.Remove(place);

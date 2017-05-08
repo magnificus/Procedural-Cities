@@ -10,7 +10,7 @@ struct FPolygon;
 AHouseBuilder::AHouseBuilder()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 }
 
@@ -321,7 +321,18 @@ FPolygon getShaftHolePolygon(FHousePolygon f) {
 
 // changes the shape of the house
 void makeInteresting(FHousePolygon &f) {
+	//if (randFloat() < 0.1f) {
+	//	f.points.RemoveAt((randFloat() * f.points.Num() - 1) + 1);
+	//}
+	//else
+		if (randFloat() < 0.1f) {
+		// turn a side inwards
+		int place = (randFloat() * (f.points.Num() - 1)) + 1;
+		FVector tangent = f.points[place] - f.points[place - 1];
+		float len = tangent.Size() / 3;
+		tangent.Normalize();
 
+	}
 }
 
 
@@ -356,6 +367,10 @@ void addStairInfo(FRoomInfo &info, float height, FPolygon &hole) {
 		sides.Add(side);
 	}
 	info.pols.Append(sides);
+
+}
+
+void buildRoof(FRoomInfo &info, FPolygon pol) {
 
 }
 
@@ -402,6 +417,8 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	FPolygon roof = f;
 	roof.offset(FVector(0, 0, floorHeight*floors));
 	toReturn.pols.Add(roof);
+
+	buildRoof(toReturn, roof);
 	FPolygon floor = f;
 	floor.offset(FVector(0, 0, 50));
 	toReturn.pols.Add(floor);

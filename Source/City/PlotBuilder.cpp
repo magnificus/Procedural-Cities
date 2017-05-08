@@ -9,7 +9,7 @@
 APlotBuilder::APlotBuilder()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 // Called when the game starts or when spawned
@@ -175,70 +175,8 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p) {
 			polygon.points.Add(last);
 
 		}
-
-
-	//}
 	return polygon;
 }
-
-//TArray<FHousePolygon> APlotBuilder::getHousePolygons(FPlotPolygon p) {
-//	TArray<FHousePolygon> housePolygons;
-//
-//	if (!p.open) {
-//		FHousePolygon fh;
-//		fh.points = p.points;
-//		fh.population = p.population;
-//		fh.type = p.type;
-//		FVector center = p.getCenter();
-//		fh.housePosition = center;
-//		fh.height = randFloat() * (maxFloors - minFloors) + minFloors;
-//		float area = p.getArea();
-//		UE_LOG(LogTemp, Log, TEXT("area of new polygon: %f"), area);
-//
-//		//if (area > minArea) {
-//			housePolygons.Add(fh);
-//		//}
-//	}
-//	else {
-//		// TODO fix open polygon houses
-//		// just have to make sure the buildings overlap each other or the outsides of the plot
-//		TArray<FPolygon> placed;
-//		placed.Add(p);
-//		for (int i = 1; i < p.points.Num(); i++) {
-//			// one house per segment
-//			FHousePolygon fh;
-//			FVector toRotate = p.points[i] - p.points[i - 1];
-//			if (toRotate.Size() < 5000)
-//				continue;
-//
-//			toRotate.Normalize();
-//			FVector tangent = FRotator(0, p.buildLeft ? 90 : 270, 0).RotateVector(toRotate);
-//
-//			FPolygon pol;
-//			float offset = (randFloat() * 12000 + 2000);
-//			pol.points.Add(p.points[i - 1] + tangent *10);
-//			pol.points.Add(p.points[i] + tangent *10);
-//			pol.points.Add(p.points[i] + tangent * offset);
-//			pol.points.Add(p.points[i - 1] + tangent * offset);
-//			pol.points.Add(p.points[i - 1] + tangent * 10);
-//			FVector center = p.getCenter();
-//
-//
-//			if (!testCollision(placed, pol)) {
-//				fh.points = pol.points;
-//				fh.population = 1.0;
-//				fh.height = randFloat() * (maxFloors - minFloors) + minFloors;
-//				fh.housePosition = center;
-//				placed.Add(pol);
-//				housePolygons.Add(fh);
-//			}
-//		}
-//	}
-//	return housePolygons;
-//
-//	
-//}
-
 
 
 // Called every frame

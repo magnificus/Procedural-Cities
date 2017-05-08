@@ -379,6 +379,50 @@ struct FHousePolygon : public FMetaPolygon {
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TSet<int32> windows;
 
+	void removePoint(int place) {
+		std::vector<int> toRemove;
+		for (int i : windows) {
+			if (i > place) {
+				toRemove.push_back(i);
+			}
+		}
+		for (int i : toRemove) {
+			windows.Remove(i);
+			windows.Add(i - 1);
+		}
+		toRemove.clear();
+		for (int i : entrances) {
+			if (i > place) {
+				toRemove.push_back(i);
+			}
+		}
+		for (int i : toRemove) {
+			entrances.Remove(i);
+			entrances.Add(i - 1);
+		}
+	}
+	void addPoint(int place) {
+		std::vector<int> toRemove;
+		for (int i : windows) {
+			if (i > place) {
+				toRemove.push_back(i);
+			}
+		}
+		for (int i : toRemove) {
+			windows.Remove(i);
+			windows.Add(i + 1);
+		}
+		toRemove.clear();
+		for (int i : entrances) {
+			if (i > place) {
+				toRemove.push_back(i);
+			}
+		}
+		for (int i : toRemove) {
+			entrances.Remove(i);
+			entrances.Add(i + 1);
+		}
+	}
 
 	FHousePolygon splitAlongMax() {
 
