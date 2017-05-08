@@ -14,106 +14,7 @@ AHouseBuilder::AHouseBuilder()
 
 }
 
-/*
-holes are assumed to be of a certain structure, just four points upper left -> lower left -> lower right -> upper right, no window is allowed to overlap another
-0---3
-|	|
-1---2
-*/
-//TArray<FPolygon> getSideWithHoles(FPolygon outer, TArray<FPolygon> holes) {
-//
-//	TArray<FPolygon> polygons;
-//	FVector start = outer.points[1];
-//	FVector end = outer.points[2];
-//
-//	// sort holes according to dist to starting point so that they can be applied in order
-//	holes.Sort([start](const FPolygon &p1, const FPolygon &p2) {
-//		return FVector::DistSquared(p1.points[1], start) < FVector::DistSquared(p2.points[1], start);
-//	});
-//	if (holes.Num() > 0) {
-//
-//		FVector sideTangent = outer.points[1] - outer.points[0];
-//
-//		FVector attach1 = outer.points[0];
-//		FVector attach2 = (holes[0].points[0] - outer.points[0]).ProjectOnTo(sideTangent) + outer.points[0];
-//		FVector attach3 = (holes[0].points[1] - outer.points[0]).ProjectOnTo(sideTangent) + outer.points[0];
-//		FVector attach4 = outer.points[1];
-//
-//		FVector tangentUp = outer.points[3] - outer.points[0];
-//		FVector tangentDown = outer.points[2] - outer.points[1];
-//		//tangentUp.Normalize();
-//		//tangentDown.Normalize();
-//
-//		int count = 0;
-//		for (FPolygon p : holes) {
-//			//UE_LOG(LogTemp, Warning, TEXT("attach1 %s, %i"), *attach1.ToString(), count++);
-//			FPolygon p1 = FPolygon();
-//			p1.points.Add(attach1);
-//			p1.points.Add(p.points[3]);
-//
-//			p1.points.Add((p.points[3] - outer.points[0]).ProjectOnTo(tangentUp) + outer.points[0]);
-//
-//			FPolygon p2 = FPolygon();
-//			p2.points.Add(attach1);
-//			p2.points.Add(attach2);
-//			p2.points.Add(p.points[3]);
-//
-//			FPolygon p3 = FPolygon();
-//			p3.points.Add(attach2);
-//			p3.points.Add(p.points[1]);
-//			p3.points.Add(p.points[0]);
-//
-//			FPolygon p4 = FPolygon();
-//			p4.points.Add(attach2);
-//			p4.points.Add(attach3);
-//			p4.points.Add(p.points[1]);
-//
-//			FPolygon p5 = FPolygon();
-//			p5.points.Add(attach3);
-//			p5.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
-//			p5.points.Add(p.points[2]);
-//
-//			FPolygon p6 = FPolygon();
-//			p6.points.Add(attach3);
-//			p6.points.Add(attach4);
-//			p6.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
-//
-//			polygons.Add(p1);
-//			polygons.Add(p2);
-//			polygons.Add(p3);
-//			polygons.Add(p4);
-//			polygons.Add(p5);
-//			polygons.Add(p6);
-//
-//			attach1 = p1.points[2];
-//			attach2 = p1.points[1];
-//			attach3 = p5.points[2];
-//			attach4 = p5.points[1];
-//		}
-//		// attach to end of outer
-//		//UE_LOG(LogTemp, Warning, TEXT("attach1 %s, %i"), *attach1.ToString(), count++);
-//
-//		FPolygon p7;
-//		p7.points.Add(attach1);
-//		p7.points.Add(attach4);
-//		p7.points.Add(outer.points[2]);
-//
-//		FPolygon p8;
-//		p8.points.Add(attach1);
-//		p8.points.Add(outer.points[2]);
-//		p8.points.Add(outer.points[3]);
-//
-//		polygons.Add(p7);
-//		polygons.Add(p8);
-//	}
-//	else {
-//		polygons.Add(outer);
-//	}
-//
-//
-//
-//	return polygons;
-//}
+
 
 
 
@@ -442,67 +343,6 @@ TArray<FPolygon> getShaftSides(FPolygon hole, int openSide, float height) {
 }
 
 
-//
-//TArray<FPolygon> interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float currentHeight, float floorHeight, float windowDensity, float windowHeight, float windowWidth) {
-//	TArray<FPolygon> toReturn;
-//
-//	for (FRoomPolygon rp : roomPols) {
-//		for (int i = 1; i < rp.points.Num(); i++) {
-//			if (rp.toIgnore.Contains(i)) {
-//				continue;
-//			}
-//			FPolygon newP;
-//			FVector p1 = rp.points[i - 1];
-//			FVector p2 = rp.points[i];
-//			newP.points.Add(p1 + FVector(0, 0, currentHeight + floorHeight));
-//			newP.points.Add(p1 + FVector(0, 0, currentHeight));
-//			newP.points.Add(p2 + FVector(0, 0, currentHeight));
-//			newP.points.Add(p2 + FVector(0, 0, currentHeight + floorHeight));
-//			newP.points.Add(p1 + FVector(0, 0, currentHeight + floorHeight));
-//
-//			if (rp.entrances.Contains(i)) {
-//				toReturn.Append(getEntranceSide(rp.points[i - 1] + FVector(0, 0, currentHeight), rp.points[i] + FVector(0, 0, currentHeight), floorHeight , 300, 180));
-//			}
-//			else if (rp.windows.Contains(i)) {
-//
-//				FVector tangent = rp.points[i] - rp.points[i - 1];
-//				float len = tangent.Size();
-//				tangent.Normalize();
-//
-//				TArray<FPolygon> windows;
-//				int spaces = FMath::FloorToInt(windowDensity * len) + 1;
-//				float jumpLen = len / (float) spaces;
-//
-//				for (int j = 1; j < spaces; j++) {
-//					FPolygon currWindow;
-//					FVector pw1 = rp.points[i - 1] + tangent * j * jumpLen + FVector(0, 0, currentHeight + 50 + windowHeight) - (tangent * windowWidth / 2);
-//					FVector pw2 = pw1 - FVector(0, 0, windowHeight);
-//					FVector pw3 = pw2 + tangent * windowWidth;
-//					FVector pw4 = pw3 + FVector(0, 0, windowHeight);
-//
-//					currWindow.points.Add(pw1);
-//					currWindow.points.Add(pw2);
-//					currWindow.points.Add(pw3);
-//					currWindow.points.Add(pw4);
-//
-//					windows.Add(currWindow);
-//
-//				}
-//				TArray<FPolygon> pols = getSideWithHoles(newP, windows);
-//				toReturn.Append(pols);
-//
-//			}
-//			else {
-//				toReturn.Add(newP);
-//			}
-//
-//		}
-//
-//	}
-//	return toReturn;
-//
-//}
-
 void addStairInfo(FRoomInfo &info, float height, FPolygon &hole) {
 	float distFromCorners = 300;
 	TArray<FPolygon> sides;
@@ -541,7 +381,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 
 	
 	for (FRoomPolygon p : roomPols) {
-		FRoomInfo newR = ARoomBuilder::buildRoom(p, RoomType::office, 0, 0, floorHeight);
+		FRoomInfo newR = ARoomBuilder::buildRoom(p, RoomType::office, 0, floorHeight, 0.005, 250, 150);
 		toReturn.pols.Append(newR.pols);
 		toReturn.meshes.Append(newR.meshes);
 	}
@@ -549,8 +389,10 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 		toReturn.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i, hole));
 
 		roomPols = getInteriorPlan(f, hole, false, 300);
-		for (FRoomPolygon p : roomPols) {
-			FRoomInfo newR = ARoomBuilder::buildRoom(p, RoomType::office, 1, floorHeight*i, floorHeight);
+		for (FRoomPolygon &p : roomPols) {
+			//p.offset(FVector(0, 0, floorHeight*i));
+			FRoomInfo newR = ARoomBuilder::buildRoom(p, RoomType::office, 1, floorHeight, 0.005, 250, 150);
+			newR.offset(FVector(0, 0, floorHeight*i));
 			toReturn.pols.Append(newR.pols);
 			toReturn.meshes.Append(newR.meshes);
 		}
@@ -561,10 +403,9 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	roof.offset(FVector(0, 0, floorHeight*floors));
 	toReturn.pols.Add(roof);
 	FPolygon floor = f;
-	floor.offset(FVector(0, 0, 10));
+	floor.offset(FVector(0, 0, 50));
 	toReturn.pols.Add(floor);
 	return toReturn;
-	// we have the outline of the house, have to place levels, start with bottom & door
 
 
 

@@ -97,7 +97,7 @@ bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<F
 
 
 float randFloat() {
-	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX - 100);
 }
 
 

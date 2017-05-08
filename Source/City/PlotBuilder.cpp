@@ -164,9 +164,9 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p) {
 			polygon.points.Add(p.points[0] + offset);
 			//polygon.points.Add(p.points[0] + offset);
 
-			FVector tangent = p.points[2] - p.points[1];
+			tangent = p.points[2] - p.points[1];
 			tangent.Normalize();
-			FVector offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
+			offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
 			polygon.points.Add(p.points[1] + offset);
 		}
 		else {

@@ -28,6 +28,15 @@ struct FRoomInfo {
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FMeshInfo> meshes;
 
+
+
+	void offset(FVector offset) {
+		for(FPolygon &p : pols)
+			p.offset(offset);
+		for (FMeshInfo &f : meshes)
+			f.transform.SetTranslation(f.transform.GetTranslation() + offset);
+	}
+
 	//float beginning;
 	//float height;
 
@@ -45,7 +54,7 @@ public:
 	// Sets default values for this actor's properties
 	ARoomBuilder();
 
-	static TArray<FPolygon> interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float currentHeight, float floorHeight, float windowDensity, float windowHeight, float windowWidth);
+	static TArray<FPolygon> interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth);
 
 
 protected:
@@ -56,8 +65,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	static FRoomInfo buildOffice(FRoomPolygon f, int floor, float beginning, float height);
-	static FRoomInfo buildRoom(FRoomPolygon, RoomType type, int floor, float beginning, float height);
+	static FRoomInfo buildOffice(FRoomPolygon f, int floor, float height, float density, float windowHeight, float windowWidth);
+	static FRoomInfo buildRoom(FRoomPolygon f, RoomType type, int floor, float height, float density, float windowHeight, float windowWidth);
 	static TArray<FPolygon> getSideWithHoles(FPolygon outer, TArray<FPolygon> holes);
 	
 };

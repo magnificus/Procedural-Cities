@@ -26,6 +26,13 @@ void ARoomBuilder::Tick(float DeltaTime)
 
 }
 
+/*
+holes are assumed to be of a certain structure, just four points upper left -> lower left -> lower right -> upper right, no window is allowed to overlap another or WEIRD things happen
+0---3
+|	|
+1---2
+*/
+
 TArray<FPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon> holes) {
 
 	TArray<FPolygon> polygons;
@@ -149,7 +156,7 @@ TArray<FPolygon> getEntranceSide(FVector p1, FVector p2, float floorHeight, floa
 }
 
 
-TArray<FPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float currentHeight, float floorHeight, float windowDensity, float windowHeight, float windowWidth) {
+TArray<FPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth) {
 	TArray<FPolygon> toReturn;
 
 	for (FRoomPolygon rp : roomPols) {
@@ -160,14 +167,14 @@ TArray<FPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygon> roomP
 			FPolygon newP;
 			FVector p1 = rp.points[i - 1];
 			FVector p2 = rp.points[i];
-			newP.points.Add(p1 + FVector(0, 0, currentHeight + floorHeight));
-			newP.points.Add(p1 + FVector(0, 0, currentHeight));
-			newP.points.Add(p2 + FVector(0, 0, currentHeight));
-			newP.points.Add(p2 + FVector(0, 0, currentHeight + floorHeight));
-			newP.points.Add(p1 + FVector(0, 0, currentHeight + floorHeight));
+			newP.points.Add(p1 + FVector(0, 0, floorHeight));
+			newP.points.Add(p1 + FVector(0, 0, 0));
+			newP.points.Add(p2 + FVector(0, 0, 0));
+			newP.points.Add(p2 + FVector(0, 0, floorHeight));
+			newP.points.Add(p1 + FVector(0, 0, floorHeight));
 
 			if (rp.entrances.Contains(i)) {
-				toReturn.Append(getEntranceSide(rp.points[i - 1] + FVector(0, 0, currentHeight), rp.points[i] + FVector(0, 0, currentHeight), floorHeight, 300, 180));
+				toReturn.Append(getEntranceSide(rp.points[i - 1] , rp.points[i], floorHeight, 300, 180));
 			}
 			else if (rp.windows.Contains(i)) {
 
@@ -181,7 +188,7 @@ TArray<FPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygon> roomP
 
 				for (int j = 1; j < spaces; j++) {
 					FPolygon currWindow;
-					FVector pw1 = rp.points[i - 1] + tangent * j * jumpLen + FVector(0, 0, currentHeight + 50 + windowHeight) - (tangent * windowWidth / 2);
+					FVector pw1 = rp.points[i - 1] + tangent * j * jumpLen + FVector(0, 0, 50 + windowHeight) - (tangent * windowWidth / 2);
 					FVector pw2 = pw1 - FVector(0, 0, windowHeight);
 					FVector pw3 = pw2 + tangent * windowWidth;
 					FVector pw4 = pw3 + FVector(0, 0, windowHeight);
@@ -210,62 +217,130 @@ TArray<FPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygon> roomP
 }
 
 
-static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon r2, float beginning, float height) {
+static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon &r2 , float height) {
 	TArray<FMeshInfo> meshes;
 
 	FVector dir = r2.getRoomDirection();
-	FVector center = r2.getCenter() + FVector(0, 0, beginning);
+	FVector center = r2.getCenter();
 	meshes.Add(FMeshInfo{"office_meeting_table", FTransform(dir.Rotation(), center, FVector(1.0, 1.0, 1.0))});
 	float offsetLen = 100;
-	for (int i = 1; i < 4; i+=2) {
+	for (int i = 0; i < 4; i++) {
 		FRotator curr = FRotator(0, 90 * i, 0);
 		FVector chairPos = curr.Vector() * offsetLen + center;
-		meshes.Add(FMeshInfo{ "office_meeting_chair", FTransform(curr, chairPos, FVector(1.0, 1.0, 1.0)) });
+		meshes.Add(FMeshInfo{ "office_meeting_chair", FTransform(curr.GetInverse(), chairPos, FVector(1.0, 1.0, 1.0)) });
+	}
+
+	if (randFloat() < 0.5) {
+		//FVector corner = FMath::FloorToInt(randFloat());
+		// add book shelf in corner of room
+
+		float bookShelfLen = 100;
+		float bookShelfWidth = 30;
+		TArray<int32> acceptablePlaces;
+
+		for (int i = 1; i < r2.points.Num(); i++) {
+			acceptablePlaces.Add(i);
+		}
+		for (int i : r2.windows) {
+			acceptablePlaces.Remove(i);
+		}
+		for (int i : r2.toIgnore) {
+			acceptablePlaces.Remove(i);
+		}
+		if (acceptablePlaces.Num() > 0) {
+			int random = FMath::FloorToInt(randFloat() * acceptablePlaces.Num());
+			if (random == acceptablePlaces.Num()) {
+				random--;
+			}
+			int place = acceptablePlaces[random];
+			FVector dir2 = (r2.points[place] - r2.points[place - 1]) / 2;
+			dir2.Normalize();
+			FVector dir3 = FRotator(0, 90, 0).RotateVector(dir2);
+			dir3.Normalize();
+			FRotator curr = dir3.Rotation();
+			FVector pos = r2.points[place - 1] + dir2 * bookShelfLen * 2 + dir3 * bookShelfWidth * 2;
+			meshes.Add(FMeshInfo{ "office_shelf", FTransform(curr, pos, FVector(1.0, 1.0, 1.0)) });
+
+		}
+	}
+
+	if (randFloat() < 0.5) {
+		// add whiteboard
+		TArray<int32> acceptablePlaces;
+
+		for (int i = 1; i < r2.points.Num(); i++) {
+			acceptablePlaces.Add(i);
+		}
+		for (int i : r2.entrances) {
+			acceptablePlaces.Remove(i);
+		}
+		for (int i : r2.toIgnore) {
+			acceptablePlaces.Remove(i);
+		}
+		if (acceptablePlaces.Num() > 0) {
+			int random = FMath::FloorToInt(randFloat() * acceptablePlaces.Num());
+			if (random == acceptablePlaces.Num()) {
+				random--;
+			}
+			int place = acceptablePlaces[random];
+			FVector middle = (r2.points[place] - r2.points[place - 1]) / 2 + r2.points[place - 1] + FVector(0, 0, 200);
+			FVector dir2 = (r2.points[place] - r2.points[place - 1]);
+			dir2.Normalize();
+			FRotator curr = FRotator(0, 180, 0).RotateVector(dir2).Rotation();
+			meshes.Add(FMeshInfo{ "office_whiteboard", FTransform(curr, middle + FRotator(0, 270, 0).RotateVector(dir2) * 15, FVector(1.0, 1.0, 1.0)) });
+
+			r2.windows.Remove(place);
+		}
 	}
 
 
 	return meshes;
 }
 
-FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon f, int floor, float beginning, float height) {
+static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon r2, float height) {
+	TArray<FMeshInfo> meshes;
+
+	// build cubicles
+	return meshes;
+}
+
+FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon f, int floor, float height, float density, float windowHeight, float windowWidth) {
 
 	float meetingRoomProb = 0.2;
 	float workingRoomProb = 0.5;
 
 
 	FRoomInfo r;
-	//r.beginning = beginning;
-	//r.height = height;
 	TArray<FRoomPolygon> roomPols = f.refine(200, 0);
-	for (FRoomPolygon r2 : roomPols) {
+	for (FRoomPolygon &r2 : roomPols) {
 		//r.meshes.Add(FMeshInfo{ "bazinga", r2.getCenter() + FVector(0, 0, beginning)});
-		r.meshes.Add(FMeshInfo{ "office_lamp", FTransform(r2.getCenter() + FVector(0, 0, beginning + height - 45))});
+		r.meshes.Add(FMeshInfo{ "office_lamp", FTransform(r2.getCenter() + FVector(0, 0, height - 25))});
 		if (randFloat() < meetingRoomProb) {
-			r.meshes.Append(getMeetingRoom(r2, beginning, height));
+			r.meshes.Append(getMeetingRoom(r2, height));
 		}
 		else if (randFloat() < workingRoomProb) {
-
+			r.meshes.Append(getWorkingRoom(r2, height));
 		}
 
 	}
-	r.pols.Append(interiorPlanToPolygons(roomPols, beginning, height, 0.004, 200, 300));
+	r.pols.Append(interiorPlanToPolygons(roomPols, height, density, windowHeight, windowWidth));
 
 	return r;
 }
 
 
-FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon f, RoomType type, int floor, float beginning, float height) {
+FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon f, RoomType type, int floor, float height, float density, float windowHeight, float windowWidth) {
 	if (!f.canRefine) {
 		FRoomInfo r;
 		//r.beginning = beginning;
 		//r.height = height;
 		TArray<FRoomPolygon> pols;
 		pols.Add(f);
-		r.pols = interiorPlanToPolygons(pols, beginning, height, 0, 0, 0);
+		r.pols = interiorPlanToPolygons(pols, height, 0, 0, 0);
 		return r;
 	}
 	switch (type) {
-	case RoomType::office: return buildOffice(f, floor, beginning, height);
+	case RoomType::office: return buildOffice(f, floor, height, 0.005, 250, 150);
 	}
 	return FRoomInfo();
 }

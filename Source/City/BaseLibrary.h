@@ -345,6 +345,8 @@ struct FRoomPolygon : public FPolygon
 
 	}
 
+
+
 	FVector getRoomDirection() {
 		return FVector(0.0f, 0.0f, 0.0f);
 	}
