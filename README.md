@@ -11,13 +11,17 @@ TODO:
    * living apartments
    * stores
    * cafes
-   
-* population heatmap
-* heightmap
+
+* heatmaps
+ * population heatmap
+ * heightmap
+ * building type heatmap
+ * road type heatmap
 * optimize interior load - in
 * trees, vegetation
-* optimize sidewalks
-*<strike>proper polygon splits</strike>
+* <strike>optimize sidewalks</strike>
+* add details to sidewalks
+* <strike>proper polygon splits</strike>
 * make building shapes more interesting
 * add detail to buildings
 * make buildings with several "levels" with different roomPolygons.
