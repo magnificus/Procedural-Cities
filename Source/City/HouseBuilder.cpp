@@ -159,52 +159,13 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 	for (int i = 2; i < corners.points.Num(); i+=2) {
 		corners.toIgnore.Add(i);
 	}
+	corners.reverse();
 	roomPols.Add(corners);
 
 	return roomPols;
 }
 
 
-// just the sides of the house with a hole for a single door
-//TArray<FPolygon> getGroundPolygons(FHousePolygon f, float floorHeight, float doorHeight, float doorWidth) {
-//
-//	TArray<FPolygon> polygons;
-//
-//	for (int i = 1; i < f.points.Num(); i++) {
-//		if (f.entrances.Contains(i)) {
-//			FVector side = f.points[i] - f.points[i - 1];
-//			float sideLen = side.Size();
-//			side.Normalize();
-//			float distToDoor = (sideLen - doorWidth) / 2;
-//			TArray<FPolygon> holes;
-//			FPolygon doorPolygon;
-//			doorPolygon.points.Add(f.points[i - 1] + side*distToDoor + FVector(0, 0, doorHeight));
-//			doorPolygon.points.Add(f.points[i - 1] + side*distToDoor);// + FVector(0, 0, 100));
-//			doorPolygon.points.Add(f.points[i] - side*distToDoor);// + FVector(0, 0, 100));
-//			doorPolygon.points.Add(f.points[i] - side*distToDoor + FVector(0, 0, doorHeight));
-//			holes.Add(doorPolygon);
-//
-//			FMaterialPolygon outer;
-//			outer.points.Add(f.points[i - 1] + FVector(0, 0, floorHeight));
-//			outer.points.Add(f.points[i - 1] + FVector(0, 0, 0));
-//			outer.points.Add(f.points[i] + FVector(0, 0, 0));
-//			outer.points.Add(f.points[i] + FVector(0, 0, floorHeight));
-//			polygons.Append(ARoomBuilder::getSideWithHoles(outer, holes));
-//		}
-//		else {
-//			FPolygon newP;
-//			newP.points.Add(f.points[i - 1] + FVector(0, 0, floorHeight));
-//			newP.points.Add(f.points[i - 1]);
-//			newP.points.Add(f.points[i]);
-//			newP.points.Add(f.points[i] + FVector(0, 0, floorHeight));
-//			polygons.Add(newP);
-//		}
-//
-//
-//	}
-//
-//	return polygons;
-//}
 
 // ugly method for finding direction of polygon
 bool increasing(std::vector<int> nbrs) {
@@ -253,9 +214,10 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FHousePolygon f, float floorBe
 			if (next < 0) {
 				next += hole.points.Num();
 			}
-			newP.points.Add(hole.points[prev]);
 			newP.points.Add(f.points[i]);
+			newP.points.Add(hole.points[prev]);
 			newP.points.Add(hole.points[next]);
+
 			newP.type = PolygonType::floor;
 			polygons.Add(newP);
 			prev = next;
@@ -271,9 +233,9 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FHousePolygon f, float floorBe
 			next += hole.points.Num();
 		}
 
-		newP.points.Add(hole.points[prev]);
-		newP.points.Add(f.points[0]);
 		newP.points.Add(hole.points[next]);
+		newP.points.Add(f.points[0]);
+		newP.points.Add(hole.points[prev]);
 		newP.type = PolygonType::floor;
 		polygons.Add(newP);
 		prev = next;
@@ -337,7 +299,9 @@ void makeInteresting(FHousePolygon &f) {
 
 	}
 	else if (randFloat() < 0.1f) {
-		// make sides more irregular by moving parts of it
+		// make sides more irregular by moving parts of it inwards
+		int place = (randFloat() * (f.points.Num() - 1)) + 1;
+
 	}
 }
 
@@ -447,6 +411,32 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	floor.offset(FVector(0, 0, 30));
 	floor.type = PolygonType::floor;
 	toReturn.pols.Add(floor);
+
+	TArray<FMaterialPolygon> otherSides;
+	for (FMaterialPolygon p : toReturn.pols) {
+		FMaterialPolygon other = p;
+		//other.reverse();
+		p.offset(p.getDirection() * 20);
+		otherSides.Add(p);
+		for (int i = 1; i < p.points.Num(); i++) {
+			FMaterialPolygon newP1;
+			newP1.type = p.type;
+			newP1.points.Add(p.points[i - 1]);
+			newP1.points.Add(p.points[i]);
+			newP1.points.Add(other.points[i - 1]);
+			otherSides.Add(newP1);
+
+			FMaterialPolygon newP2;
+			newP2.type = p.type;
+			newP2.points.Add(other.points[i - 1]);
+			newP2.points.Add(other.points[i]);
+			newP2.points.Add(p.points[i]);
+			otherSides.Add(newP2);
+
+		}
+	}
+
+	toReturn.pols.Append(otherSides);
 	return toReturn;
 
 

@@ -8,6 +8,7 @@
 #include "GameFramework/Actor.h"
 #include "Components/SplineMeshComponent.h"
 #include "City.h"
+#include "Algo/Reverse.h"
 #include "BaseLibrary.generated.h"
 /**
  * 
@@ -67,10 +68,6 @@ struct FPolygon
 			center += ((points[i] - points[i - 1])/2 + points[i-1])*len;
 			totLen += len;
 		}
-		//for (FVector f : points) {
-		//	center += f;
-		//}
-		//center /= points.Num
 		center /= totLen;
 		return center;
 	}
@@ -123,6 +120,17 @@ struct FPolygon
 				i--;
 			}
 		}
+	}
+
+	// assumes at least 3 points in polygon
+	FVector getDirection() {
+		FVector res = FVector::CrossProduct(points[1] - points[0], points[2] - points[0]);
+		res.Normalize();
+		return res;
+	}
+
+	void reverse() {
+		Algo::Reverse(points);
 	}
 
 	virtual SplitStruct getSplitProposal(bool buildLeft) {
@@ -199,6 +207,7 @@ struct FMaterialPolygon : public FPolygon {
 	GENERATED_USTRUCT_BODY();
 
 	PolygonType type = PolygonType::exterior;
+	float width = 0;
 };
 
 
@@ -670,9 +679,6 @@ FVector intersection(FVector p1, FVector p2, FPolygon p);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
 float randFloat();
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
-//FVector project()
-
-//FVector getCenter(FPolygon p);
 
 class CITY_API BaseLibrary
 {

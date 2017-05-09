@@ -10,17 +10,6 @@
 
 
 
-
-//USTRUCT(BlueprintType)
-//struct FHouseInfo {
-//	GENERATED_USTRUCT_BODY();
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	TArray<FPolygon> polygons;
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	TArray<FMeshInfo> meshes;
-//};
-
 UCLASS()
 class CITY_API AHouseBuilder : public AActor
 {

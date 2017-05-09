@@ -74,6 +74,8 @@ AProcMeshActor::AProcMeshActor()
 	//mesh->CreateMeshSection_LinearColor(1, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
 }
 
+
+
 void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProceduralMeshComponent* mesh, UMaterialInterface *mat) {
 	if (pols.Num() == 0) {
 		return;
@@ -96,23 +98,12 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 
 
 		FVector origin = pol.points[0];
-		UV.Add(FVector2D(0, 0));
-		UV.Add(FVector2D(10, 0));
-		UV.Add(FVector2D(0, 10));
-
-		//vertexColors.Add(FColor(0.75, 0.75, 0.75, 1.0));
-		//vertexColors.Add(FColor(0.75, 0.75, 0.75, 1.0));
-		//vertexColors.Add(FColor(0.75, 0.75, 0.75, 1.0));
-
-		//tangents.Add(FProcMeshTangent(0, 1, 0));
-		//tangents.Add(FProcMeshTangent(0, 1, 0));
-		//tangents.Add(FProcMeshTangent(0, 1, 0));
 
 		for (FVector f : pol.points) {
 			vertices.Add(f + offset);
 			float x = FVector::DotProduct(e1, f - origin);
 			float y = FVector::DotProduct(e2, f - origin);
-			//UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
+			UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
 		}
 
 		//FVector middle = pol.getCenter();
@@ -138,10 +129,6 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	//mesh->MarkRenderStateDirty();
 	mesh->SetMaterial(1, mat);
 	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, true);
-
-
-
-
 }
 
 // uses fan triangulation, doesn't work with convex shapes, builds faces in both directions

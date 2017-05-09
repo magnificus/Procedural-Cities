@@ -132,11 +132,6 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 
 
 			currPos += len*tangent1;
-			//if (FVector::DistSquared(currPos, p.points[next]) < 20000) {
-			//	currPos = p.points[next];
-			//	next++;
-
-			//}
 
 		}
 
