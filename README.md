@@ -4,17 +4,21 @@ TODO:
 * fix open polygon house placement
 * interiors
   * ground level details
-  * room subdivision
+  * <strike>room subdivision</strike>
   * windows
   * types
    * offices
    * living apartments
+   * stores
+   * cafes
    
 * population heatmap
 * heightmap
 * optimize interior load - in
 * trees, vegetation
 * optimize sidewalks
-* proper polygon splits (plots)
+*<strike>proper polygon splits</strike>
 * make building shapes more interesting
 * add detail to buildings
+* make buildings with several "levels" with different roomPolygons.
+* window mesh details
