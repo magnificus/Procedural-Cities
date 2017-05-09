@@ -23,7 +23,7 @@ struct FRoomInfo {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FPolygon> pols;
+	TArray<FMaterialPolygon> pols;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FMeshInfo> meshes;
@@ -54,7 +54,7 @@ public:
 	// Sets default values for this actor's properties
 	ARoomBuilder();
 
-	static TArray<FPolygon> interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth);
+	static TArray<FMaterialPolygon> interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth);
 
 
 protected:
@@ -67,6 +67,6 @@ public:
 
 	static FRoomInfo buildOffice(FRoomPolygon f, int floor, float height, float density, float windowHeight, float windowWidth);
 	static FRoomInfo buildRoom(FRoomPolygon f, RoomType type, int floor, float height, float density, float windowHeight, float windowWidth);
-	static TArray<FPolygon> getSideWithHoles(FPolygon outer, TArray<FPolygon> holes);
+	static TArray<FMaterialPolygon> getSideWithHoles(FMaterialPolygon outer, TArray<FPolygon> holes);
 	
 };

@@ -23,11 +23,19 @@ public:
 	void buildWall(FVector p1, FVector p2, FVector p3, FVector p4);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void buildPolygons(TArray<FPolygon> pols, FVector offset);
+	void buildPolygons(TArray<FMaterialPolygon> pols, FVector offset);
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
-		UMaterial* mat;
+		UMaterial* exteriorMat;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		UMaterial* windowMat;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		UMaterial* interiorMat;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		UMaterial* floorMat;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		UMaterial* roofMat;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		float texScaleMultiplier = 1.0f;
@@ -41,8 +49,19 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	UPROPERTY(VisibleAnywhere, Category = Materials)
-	UProceduralMeshComponent * mesh;
+	void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProceduralMeshComponent* mesh, UMaterialInterface *mat);
+
+	UPROPERTY(VisibleAnywhere, Category = Meshes)
+	UProceduralMeshComponent * exteriorMesh;
+	UPROPERTY(VisibleAnywhere, Category = Meshes)
+	UProceduralMeshComponent * interiorMesh;
+	UPROPERTY(VisibleAnywhere, Category = Meshes)
+	UProceduralMeshComponent * windowMesh;
+	UPROPERTY(VisibleAnywhere, Category = Meshes)
+	UProceduralMeshComponent * floorMesh;
+	UPROPERTY(VisibleAnywhere, Category = Meshes)
+	UProceduralMeshComponent * roofMesh;
+
 	int currIndex = 1;
 	
 	

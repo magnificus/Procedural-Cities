@@ -9,8 +9,13 @@ AProcMeshActor::AProcMeshActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-	mesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("GeneratedMesh"));
-	RootComponent = mesh;
+	exteriorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("exteriorMesh"));
+	interiorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("interiorMesh"));
+	windowMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("windowMesh"));
+	floorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("floorMesh"));
+	roofMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("roofMesh"));
+
+	RootComponent = exteriorMesh;
 	/**
 	*	Create/replace a section for this procedural mesh component.
 	*	@param	SectionIndex		Index of the section to create or replace.
@@ -59,13 +64,20 @@ AProcMeshActor::AProcMeshActor()
 
 
 	//mesh->SetMaterial(1, mat);
+	//exteriorMesh->SetMaterial(1, exteriorMat);
+	//interiorMesh->SetMaterial(1, interiorMat);
+	//windowMesh->SetMaterial(1, windowMat);
+	//floorMesh->SetMaterial(1, floorMat);
+	//roofMesh->SetMaterial(1, roofMat);
 
 
 	//mesh->CreateMeshSection_LinearColor(1, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
 }
 
-// uses fan triangulation, doesn't work with convex shapes, builds faces in both directions
-void AProcMeshActor::buildPolygons(TArray<FPolygon> pols, FVector offset) {
+void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProceduralMeshComponent* mesh, UMaterialInterface *mat) {
+	if (pols.Num() == 0) {
+		return;
+	}
 	TArray<FVector> vertices;
 	TArray<int32> triangles;
 	TArray<FVector2D> UV;
@@ -84,9 +96,9 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> pols, FVector offset) {
 
 
 		FVector origin = pol.points[0];
-		//UV.Add(FVector2D(0, 0));
-		//UV.Add(FVector2D(10, 0));
-		//UV.Add(FVector2D(0, 10));
+		UV.Add(FVector2D(0, 0));
+		UV.Add(FVector2D(10, 0));
+		UV.Add(FVector2D(0, 10));
 
 		//vertexColors.Add(FColor(0.75, 0.75, 0.75, 1.0));
 		//vertexColors.Add(FColor(0.75, 0.75, 0.75, 1.0));
@@ -100,7 +112,7 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> pols, FVector offset) {
 			vertices.Add(f + offset);
 			float x = FVector::DotProduct(e1, f - origin);
 			float y = FVector::DotProduct(e2, f - origin);
-			UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
+			//UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
 		}
 
 		//FVector middle = pol.getCenter();
@@ -123,15 +135,50 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> pols, FVector offset) {
 
 	TArray<FVector> normals;
 
+	//mesh->MarkRenderStateDirty();
 	mesh->SetMaterial(1, mat);
-	mesh->MarkRenderStateDirty();
-	mesh->CreateMeshSection(currIndex++, vertices, triangles, normals, UV, vertexColors, tangents, true);
+	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, true);
 
-	//mesh->SetMaterial(1, mat);
 
 
 
 }
+
+// uses fan triangulation, doesn't work with convex shapes, builds faces in both directions
+void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset) {
+
+	TArray<FPolygon> exterior;
+	TArray<FPolygon> interior;
+	TArray<FPolygon> windows;
+	TArray<FPolygon> floors;
+	TArray<FPolygon> roofs;
+	for (FMaterialPolygon &p : pols) {
+		switch (p.type) {
+		case PolygonType::exterior:
+			exterior.Add(p);
+			break;
+		case PolygonType::interior:
+			interior.Add(p);
+			break;
+		case PolygonType::window:
+			windows.Add(p);
+			break;
+		case PolygonType::floor:
+			floors.Add(p);
+			break;
+		case PolygonType::roof:
+			roofs.Add(p);
+			break;
+		}
+	}
+	buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
+	buildPolygons(interior, offset, interiorMesh, interiorMat);
+	buildPolygons(windows, offset, windowMesh, windowMat);
+	buildPolygons(floors, offset, floorMesh, floorMat);
+	buildPolygons(roofs, offset, roofMesh, roofMat);
+	
+}
+
 
 void AProcMeshActor::buildTriangle(FVector p1, FVector p2, FVector p3) {
 	// 4 faces for a wall, two triangles in each direction
@@ -155,7 +202,7 @@ void AProcMeshActor::buildTriangle(FVector p1, FVector p2, FVector p3) {
 	TArray<FLinearColor> vertexColors;
 	TArray<FProcMeshTangent> tangents;
 
-	mesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
+	exteriorMesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
 
 }
 
@@ -191,7 +238,7 @@ void AProcMeshActor::buildWall(FVector p1, FVector p2, FVector p3, FVector p4) {
 	TArray<FLinearColor> vertexColors;
 	TArray<FProcMeshTangent> tangents;
 
-	mesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
+	exteriorMesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
 
 }
 

@@ -33,9 +33,9 @@ holes are assumed to be of a certain structure, just four points upper left -> l
 1---2
 */
 
-TArray<FPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon> holes) {
+TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FMaterialPolygon outer, TArray<FPolygon> holes) {
 
-	TArray<FPolygon> polygons;
+	TArray<FMaterialPolygon> polygons;
 	FVector start = outer.points[1];
 	FVector end = outer.points[2];
 
@@ -60,33 +60,33 @@ TArray<FPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon>
 		int count = 0;
 		for (FPolygon p : holes) {
 			//UE_LOG(LogTemp, Warning, TEXT("attach1 %s, %i"), *attach1.ToString(), count++);
-			FPolygon p1 = FPolygon();
+			FMaterialPolygon p1 = FMaterialPolygon();
 			p1.points.Add(attach1);
 			p1.points.Add(p.points[3]);
 
 			p1.points.Add((p.points[3] - outer.points[0]).ProjectOnTo(tangentUp) + outer.points[0]);
 
-			FPolygon p2 = FPolygon();
+			FMaterialPolygon p2 = FMaterialPolygon();
 			p2.points.Add(attach1);
 			p2.points.Add(attach2);
 			p2.points.Add(p.points[3]);
 
-			FPolygon p3 = FPolygon();
+			FMaterialPolygon p3 = FMaterialPolygon();
 			p3.points.Add(attach2);
 			p3.points.Add(p.points[1]);
 			p3.points.Add(p.points[0]);
 
-			FPolygon p4 = FPolygon();
+			FMaterialPolygon p4 = FMaterialPolygon();
 			p4.points.Add(attach2);
 			p4.points.Add(attach3);
 			p4.points.Add(p.points[1]);
 
-			FPolygon p5 = FPolygon();
+			FMaterialPolygon p5 = FMaterialPolygon();
 			p5.points.Add(attach3);
 			p5.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
 			p5.points.Add(p.points[2]);
 
-			FPolygon p6 = FPolygon();
+			FMaterialPolygon p6 = FMaterialPolygon();
 			p6.points.Add(attach3);
 			p6.points.Add(attach4);
 			p6.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
@@ -106,12 +106,12 @@ TArray<FPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon>
 		// attach to end of outer
 		//UE_LOG(LogTemp, Warning, TEXT("attach1 %s, %i"), *attach1.ToString(), count++);
 
-		FPolygon p7;
+		FMaterialPolygon p7;
 		p7.points.Add(attach1);
 		p7.points.Add(attach4);
 		p7.points.Add(outer.points[2]);
 
-		FPolygon p8;
+		FMaterialPolygon p8;
 		p8.points.Add(attach1);
 		p8.points.Add(outer.points[2]);
 		p8.points.Add(outer.points[3]);
@@ -129,8 +129,8 @@ TArray<FPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon>
 }
 
 
-TArray<FPolygon> getEntranceSide(FVector p1, FVector p2, float floorHeight, float doorHeight, float doorWidth) {
-	TArray<FPolygon> polygons;
+TArray<FMaterialPolygon> getEntranceSide(FVector p1, FVector p2, float floorHeight, float doorHeight, float doorWidth) {
+	TArray<FMaterialPolygon> polygons;
 
 
 	FVector side = p2 - p1;
@@ -138,14 +138,14 @@ TArray<FPolygon> getEntranceSide(FVector p1, FVector p2, float floorHeight, floa
 	side.Normalize();
 	float distToDoor = (sideLen - doorWidth) / 2;
 	TArray<FPolygon> holes;
-	FPolygon doorPolygon;
+	FMaterialPolygon doorPolygon;
 	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
 	doorPolygon.points.Add(p1 + side*distToDoor);// + FVector(0, 0, 100));
 	doorPolygon.points.Add(p2 - side*distToDoor);// + FVector(0, 0, 100));
 	doorPolygon.points.Add(p2 - side*distToDoor + FVector(0, 0, doorHeight));
 	holes.Add(doorPolygon);
 
-	FPolygon outer;
+	FMaterialPolygon outer;
 	outer.points.Add(p1 + FVector(0, 0, floorHeight));
 	outer.points.Add(p1 + FVector(0, 0, 0));
 	outer.points.Add(p2 + FVector(0, 0, 0));
@@ -156,15 +156,16 @@ TArray<FPolygon> getEntranceSide(FVector p1, FVector p2, float floorHeight, floa
 }
 
 
-TArray<FPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth) {
-	TArray<FPolygon> toReturn;
+TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth) {
+	TArray<FMaterialPolygon> toReturn;
 
 	for (FRoomPolygon rp : roomPols) {
 		for (int i = 1; i < rp.points.Num(); i++) {
 			if (rp.toIgnore.Contains(i)) {
 				continue;
 			}
-			FPolygon newP;
+			FMaterialPolygon newP;
+			newP.type = PolygonType::exterior;
 			FVector p1 = rp.points[i - 1];
 			FVector p2 = rp.points[i];
 			newP.points.Add(p1 + FVector(0, 0, floorHeight));
@@ -197,11 +198,17 @@ TArray<FPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygon> roomP
 					currWindow.points.Add(pw2);
 					currWindow.points.Add(pw3);
 					currWindow.points.Add(pw4);
-
+					//currWindow.type = PolygonType::window;
 					windows.Add(currWindow);
 
 				}
-				TArray<FPolygon> pols = getSideWithHoles(newP, windows);
+				TArray<FMaterialPolygon> pols = getSideWithHoles(newP, windows);
+				for (FPolygon p : windows) {
+					FMaterialPolygon win;
+					win.points = p.points;
+					win.type = PolygonType::window;
+					toReturn.Add(win);
+				}
 				toReturn.Append(pols);
 
 			}
@@ -222,11 +229,11 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon &r2 , float height) {
 
 	FVector dir = r2.getRoomDirection();
 	FVector center = r2.getCenter();
-	meshes.Add(FMeshInfo{"office_meeting_table", FTransform(dir.Rotation(), center, FVector(1.0, 1.0, 1.0))});
+	meshes.Add(FMeshInfo{"office_meeting_table", FTransform(dir.Rotation(), center + FVector(0, 0, 2), FVector(1.0, 1.0, 1.0))});
 	float offsetLen = 100;
-	for (int i = 0; i < 4; i++) {
+	for (int i = 1; i < 4; i+=2) {
 		FRotator curr = FRotator(0, 90 * i, 0);
-		FVector chairPos = curr.Vector() * offsetLen + center;
+		FVector chairPos = curr.Vector() * offsetLen + center + FVector(0, 0, 2);
 		meshes.Add(FMeshInfo{ "office_meeting_chair", FTransform(curr.GetInverse(), chairPos, FVector(1.0, 1.0, 1.0)) });
 	}
 

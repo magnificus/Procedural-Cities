@@ -29,6 +29,16 @@ enum class RoomType : uint8
 	store UMETA(DisplayName = "Store")
 };
 
+UENUM(BlueprintType)
+enum class PolygonType : uint8
+{
+	interior 	UMETA(DisplayName = "Interior"),
+	exterior UMETA(DisplayName = "Exterior"),
+	floor UMETA(DisplayName = "Floor"),
+	window UMETA(DisplayName = "Window"),
+	roof UMETA(DisplayName = "Roof")
+};
+
 
 
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
@@ -160,7 +170,7 @@ struct FPolygon
 			if (p2.X == 0.0f) {
 
 				UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT"));
-				// cant split, no target, this shouldn't happen but still does sometimes :/
+				// cant split, no target, this shouldn't happen unless the polygons are poorly constructed
 				return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
 
 			}
@@ -182,6 +192,15 @@ struct FPolygon
 
 
 };
+
+
+USTRUCT(BlueprintType)
+struct FMaterialPolygon : public FPolygon {
+	GENERATED_USTRUCT_BODY();
+
+	PolygonType type = PolygonType::exterior;
+};
+
 
 USTRUCT(BlueprintType)
 struct FMetaPolygon : public FPolygon
@@ -400,8 +419,9 @@ struct FHousePolygon : public FMetaPolygon {
 			entrances.Remove(i);
 			entrances.Add(i - 1);
 		}
+		points.RemoveAt(place);
 	}
-	void addPoint(int place) {
+	void addPoint(int place, FVector point) {
 		std::vector<int> toRemove;
 		for (int i : windows) {
 			if (i > place) {
@@ -422,6 +442,7 @@ struct FHousePolygon : public FMetaPolygon {
 			entrances.Remove(i);
 			entrances.Add(i + 1);
 		}
+		points.EmplaceAt(place, point);
 	}
 
 	FHousePolygon splitAlongMax() {
@@ -581,6 +602,8 @@ struct FRoadSegment : public FLine
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector beginTangent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FVector endTangent = FVector(0.0f, 0.0f, 0.0f);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		RoadType type;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
