@@ -296,7 +296,7 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon &r2 , float height) {
 			FVector dir2 = (r2.points[place] - r2.points[place - 1]);
 			dir2.Normalize();
 			FRotator curr = FRotator(0, 90, 0).RotateVector(dir2).Rotation();
-			meshes.Add(FMeshInfo{ "office_whiteboard", FTransform(curr, middle + FRotator(0, 270, 0).RotateVector(dir2) * 15, FVector(1.0, 1.0, 1.0)) });
+			meshes.Add(FMeshInfo{ "office_whiteboard", FTransform(curr, middle + FRotator(0, 270, 0).RotateVector(dir2) * 35, FVector(1.0, 1.0, 1.0)) });
 
 			r2.windows.Remove(place);
 		}
@@ -323,7 +323,7 @@ FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon f, int floor, float height, flo
 	TArray<FRoomPolygon> roomPols = f.refine(200, 0);
 	for (FRoomPolygon &r2 : roomPols) {
 		//r.meshes.Add(FMeshInfo{ "bazinga", r2.getCenter() + FVector(0, 0, beginning)});
-		r.meshes.Add(FMeshInfo{ "office_lamp", FTransform(r2.getCenter() + FVector(0, 0, height - 25))});
+		r.meshes.Add(FMeshInfo{ "office_lamp", FTransform(r2.getCenter() + FVector(0, 0, height - 45))});
 		if (randFloat() < meetingRoomProb) {
 			r.meshes.Append(getMeetingRoom(r2, height));
 		}

@@ -69,7 +69,14 @@ class CITY_API ASpawner : public AActor
 		USplineMeshComponent* PathSpline;
 
 	TArray<USplineMeshComponent*> splineComponents;
-	TArray<APlotBuilder*> plots;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
+		float	offsetSize = 500;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
+		int32	minFloors = 3;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
+		int32	maxFloors = 15;
 		
 public:	
 	// Sets default values for this actor's properties

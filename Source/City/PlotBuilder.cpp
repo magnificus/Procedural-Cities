@@ -29,10 +29,10 @@ bool testCollision(TArray<FPolygon> &polygons, FPolygon &pol) {
 	return false;
 }
 
-TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others) {
+TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int maxFloors, int minFloors) {
 	TArray<FHousePolygon> housePolygons;
 
-	float maxArea = 8000.0f;
+	float maxArea = 10000.0f;
 	float minArea = 800.0f;
 
 	if (!p.open) {
@@ -140,7 +140,7 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 
 }
 
-FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p) {
+FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
 	FPolygon polygon;
 	//if (!p.open) {
 		FVector center = p.getCenter();

@@ -126,7 +126,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				float len = FVector::Dist(newE, current->segment->p2);
 				current->segment->p2 += (len - standardWidth / 2) * tangent;
 				current->segment->p2 = newE;
-				addVertices(current->segment);
+				//addVertices(current->segment);
 				current->segment->roadInFront = true;
 
 				FVector naturalTangent = current->segment->p2 - current->segment->p1;
@@ -134,6 +134,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				FVector pot1 = FRotator(0, 90, 0).RotateVector(f->p2 - f->p1);
 				FVector pot2 = FRotator(0, 270, 0).RotateVector(f->p2 - f->p1);
 				current->segment->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
+				addVertices(current->segment);
 				// new road cant be too short
 				if (FVector::Dist(current->segment->p1, current->segment->p2) < primaryStepLength.Size() / 6) {
 					return false;
@@ -189,7 +190,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	FVector startOffset = newRoadL->firstDegreeRot.RotateVector(FVector(standardWidth*previous->segment->width / 2, 0, 0));
 	newRoad->p1 = /*prevSeg->end - (standardWidth * (prevSeg->end - prevSeg->start).Normalize()/2) + startOffset; */prevSeg->p1 + (prevSeg->p2 - prevSeg->p1) / 2 + startOffset;
 	newRoad->p2 = newRoad->p1 + newRoadL->firstDegreeRot.RotateVector(stepLength);
-	newRoad->beginTangent = newRoad->p2 - newRoad->p1;
+	newRoad->beginTangent = FRotator(0, left ? 90 : 270, 0).RotateVector(previous->segment->p2 - previous->segment->p1); //->p2 - newRoad->p1;
 	newRoad->beginTangent.Normalize();
 	newRoad->width = width;
 	newRoad->type = newType;
@@ -311,15 +312,15 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		addVertices(f2);
 		bool foundCollision = false;
 		for (FRoadSegment* f : determinedSegments) {
-			if (f == f2)
+			if (f == f2 || FVector::Dist(f->p2, f2->p1) < 400)
 				continue;
 			FVector res = intersection(f2->p1, f2->p2, f->p1, f->p2);
 			if (res.X != 0.0f) {
 				FVector tangent2 = res - f2->p1;
 				tangent2.Normalize();
-				float len = FVector::Dist(res, f2->p2);
-				f2->p2 += (len - standardWidth / 2) * tangent2;
-				f2->p2 = res;
+				float len = FVector::Dist(res, f2->p1);
+				f2->p2 = f2->p1 + (len - standardWidth / 2) * tangent2;
+				//f2->p2 = res;
 
 				FVector naturalTangent = f2->p2 - f2->p1;
 				naturalTangent.Normalize();

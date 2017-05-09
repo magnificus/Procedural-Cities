@@ -246,22 +246,6 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FHousePolygon f, float floorBe
 
 }
 
-//TArray<FMaterialPolygon> getFloorPolygons(FHousePolygon &f, float floorBegin, float floorHeight, FPolygon hole) {
-//	TArray<FMaterialPolygon> polygons;
-//
-//
-//	polygons.Append(getFloorPolygonsWithHole(f, floorBegin, hole));
-//	for (int i = 1; i < f.points.Num(); i++) {
-//		FMaterialPolygon outer;
-//		outer.points.Add(f.points[i - 1] + FVector(0, 0, floorHeight + floorBegin));
-//		outer.points.Add(f.points[i - 1] + FVector(0, 0, floorBegin));
-//		outer.points.Add(f.points[i] + FVector(0, 0, floorBegin));
-//		outer.points.Add(f.points[i] + FVector(0, 0, floorHeight + floorBegin));
-//
-//
-//	}
-//	return polygons;
-//}
 
 FPolygon getShaftHolePolygon(FHousePolygon f) {
 	FPolygon hole;
@@ -290,17 +274,37 @@ void makeInteresting(FHousePolygon &f) {
 		f.removePoint((randFloat() * f.points.Num() - 1) + 1);
 		//f.points.RemoveAt((randFloat() * f.points.Num() - 1) + 1);
 	}
-	else if (randFloat() < 0.1f) {
+	if (randFloat() < 0.1f) {
+		float len = 5000;
 		// turn a side inwards into a U
-		int place = (randFloat() * (f.points.Num() - 1)) + 1;
+		int place = (randFloat() * (f.points.Num() - 2)) + 2;
 		FVector tangent = f.points[place] - f.points[place - 1];
-		float len = tangent.Size() / 3;
+		float lenSide = tangent.Size();
 		tangent.Normalize();
+		FVector dir = FRotator(0, f.buildLeft ? 90 : 270, 0).RotateVector(tangent);
+		FVector first = f.points[place - 1] + tangent * lenSide / 3;
+		FVector first2 = first + dir * len;
+		FVector snd = f.points[place - 1] + tangent * lenSide / (3/2) ;
+		FVector snd2 = snd + dir * len;
+		f.addPoint(place, first);
+		f.addPoint(place + 1, first2);
+		f.addPoint(place + 2, snd2);
+		f.addPoint(place + 3, snd);
 
 	}
-	else if (randFloat() < 0.1f) {
-		// make sides more irregular by moving parts of it inwards
-		int place = (randFloat() * (f.points.Num() - 1)) + 1;
+	if (randFloat() < 0.1f) {
+		float len = 500;
+		// make sides more irregular by moving parts of it inwards (two points)
+		int place = (randFloat() * (f.points.Num() - 2)) + 2;
+		FVector tangent = f.points[place] - f.points[place - 1];
+		tangent.Normalize();
+		FVector dir = FRotator(0, f.buildLeft ? 90 : 270, 0).RotateVector(tangent);
+		FVector first = f.points[place - 1] + dir * len;
+		FVector snd = f.points[place] + dir * len;
+		f.removePoint(place - 1);
+		f.removePoint(place - 1);
+		f.addPoint(place - 1, first);
+		f.addPoint(place, snd);
 
 	}
 }

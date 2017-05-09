@@ -452,6 +452,9 @@ struct FHousePolygon : public FMetaPolygon {
 			entrances.Add(i + 1);
 		}
 		points.EmplaceAt(place, point);
+		if (windows.Contains(place - 1) || windows.Contains(place + 1)) {
+			windows.Add(place);
+		}
 	}
 
 	FHousePolygon splitAlongMax() {

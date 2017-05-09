@@ -20,14 +20,8 @@ public:
 	AHouseBuilder();
 
 
-
-	TArray<UStaticMeshComponent*> meshesArray;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
-		USplineMeshComponent* base;
-	UStaticMesh* meshPolygon;
-
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-		FRoomInfo getHouseInfo(FHousePolygon f, int floors, float floorHeight);
+	static FRoomInfo getHouseInfo(FHousePolygon f, int floors, float floorHeight);
 
 protected:
 	// Called when the game starts or when spawned
