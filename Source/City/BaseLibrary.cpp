@@ -26,7 +26,17 @@ void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, 
 	max = std::max(max, res);
 }
 
-FVector intersection(FPolygon p1, FPolygon p2) {
+FVector intersection(FPolygon &p1, TArray<FPolygon> &p2) {
+	for (FPolygon &f : p2) {
+		FVector res = intersection(p1, f);
+		if (res.X != 0.0f) {
+			return res;
+		}
+	}
+	return FVector(0.0f, 0.0f, 0.0f);
+}
+
+FVector intersection(FPolygon &p1, FPolygon &p2) {
 	for (int i = 1; i < p1.points.Num(); i++) {
 		for (int j = 1; j < p2.points.Num(); j++) {
 			FVector res = intersection(p1.points[i - 1], p1.points[i], p2.points[j - 1], p2.points[j]);

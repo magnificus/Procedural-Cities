@@ -3,8 +3,9 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "BaseLibrary.h"
+#include "MeshPolygonReference.h"
 #include "RoomBuilder.generated.h"
+
 
 USTRUCT(BlueprintType)
 struct FMeshInfo {
@@ -36,14 +37,6 @@ struct FRoomInfo {
 		for (FMeshInfo &f : meshes)
 			f.transform.SetTranslation(f.transform.GetTranslation() + offset);
 	}
-
-	//float beginning;
-	//float height;
-
-	//void Add(FRoomInfo r) {
-	//	pols.Append(r.pols);
-	//	pols.Append(r.meshes);
-	//}
 };
 UCLASS()
 class CITY_API ARoomBuilder : public AActor
@@ -56,7 +49,7 @@ public:
 
 	static TArray<FMaterialPolygon> interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth);
 
-
+	float areaScale = 1.0f;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -66,6 +59,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	static FRoomInfo buildOffice(FRoomPolygon f, int floor, float height, float density, float windowHeight, float windowWidth);
+	static FRoomInfo buildApartment(FRoomPolygon f, int floor, float height, float density, float windowHeight, float windowWidth);
 	static FRoomInfo buildRoom(FRoomPolygon f, RoomType type, int floor, float height, float density, float windowHeight, float windowWidth);
 	static TArray<FMaterialPolygon> getSideWithHoles(FMaterialPolygon outer, TArray<FPolygon> holes);
 	

@@ -55,8 +55,10 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, minArea);
 		for (FHousePolygon r : refinedPolygons) {
 			r.height = randFloat() * (maxFloors - minFloors) + minFloors;
+			r.type = randFloat() < 0.5 ? RoomType::office : RoomType::apartment;
+
 			float area = r.getArea();
-			UE_LOG(LogTemp, Log, TEXT("area of new polygon: %f"), area);
+			UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
 
 			//if (area > minArea) {
 			housePolygons.Add(r);
@@ -115,6 +117,7 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 				fh.population = 1.0;
 				fh.height = randFloat() * (maxFloors - minFloors) + minFloors;
 				fh.housePosition = pol.getCenter();
+				fh.type = randFloat() < 0.5 ? RoomType::office : RoomType::apartment;
 
 				fh.entrances.Add(2);
 				for (int i = 1; i < fh.points.Num(); i++) {

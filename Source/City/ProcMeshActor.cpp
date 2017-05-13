@@ -128,7 +128,7 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 
 	//mesh->MarkRenderStateDirty();
 	mesh->SetMaterial(1, mat);
-	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, true);
+	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
 }
 
 // uses fan triangulation, doesn't work with convex shapes, builds faces in both directions
@@ -225,7 +225,7 @@ void AProcMeshActor::buildWall(FVector p1, FVector p2, FVector p3, FVector p4) {
 	TArray<FLinearColor> vertexColors;
 	TArray<FProcMeshTangent> tangents;
 
-	exteriorMesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
+	exteriorMesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, true);
 
 }
 

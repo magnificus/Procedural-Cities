@@ -384,7 +384,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 
 	
 	for (FRoomPolygon p : roomPols) {
-		FRoomInfo newR = ARoomBuilder::buildRoom(p, RoomType::office, 0, floorHeight, 0.005, 250, 150);
+		FRoomInfo newR = ARoomBuilder::buildRoom(p, f.type, 0, floorHeight, 0.005, 250, 150);
 		newR.offset(FVector(0, 0, 30));
 		toReturn.pols.Append(newR.pols);
 		toReturn.meshes.Append(newR.meshes);
@@ -395,7 +395,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 		roomPols = getInteriorPlan(f, hole, false, 300);
 		for (FRoomPolygon &p : roomPols) {
 			//p.offset(FVector(0, 0, floorHeight*i));
-			FRoomInfo newR = ARoomBuilder::buildRoom(p, RoomType::office, 1, floorHeight, 0.005, 250, 150);
+			FRoomInfo newR = ARoomBuilder::buildRoom(p, f.type, 1, floorHeight, 0.005, 250, 150);
 			newR.offset(FVector(0, 0, floorHeight*i));
 			toReturn.pols.Append(newR.pols);
 			toReturn.meshes.Append(newR.meshes);
@@ -407,7 +407,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	roof.points = f.points;
 	roof.offset(FVector(0, 0, floorHeight*floors));
 	roof.type = PolygonType::roof;
-	toReturn.pols.Add(roof);
+	//toReturn.pols.Add(roof);
 
 	//buildRoof(toReturn, roof);
 	FMaterialPolygon floor;

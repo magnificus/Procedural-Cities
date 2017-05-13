@@ -51,6 +51,22 @@ struct SplitStruct {
 	FVector p2;
 };
 
+static FVector middle(FVector p1, FVector p2) {
+	return (p2 - p1) * 0.5 + p1;
+}
+
+static TArray<int32> getIntList(int32 min, int32 max) {
+	TArray<int32> ints;
+	for (int32 i = min; i < max; i++) {
+		ints.Add(i);
+	}
+	return ints;
+}
+
+static FVector getNormal(FVector p1, FVector p2, bool left) {
+	return FRotator(0, left ? 90 : 270, 0).RotateVector(p2 - p1);
+}
+
 USTRUCT(BlueprintType)
 struct FPolygon
 {
@@ -75,7 +91,7 @@ struct FPolygon
 	// only cares about dimensions X and Y, not Z
 	double getArea() {
 
-	if (points.Num() < 1)
+	if (points.Num() < 3)
 		return 0.0;
 
 	double tot = 0;
@@ -133,9 +149,11 @@ struct FPolygon
 		Algo::Reverse(points);
 	}
 
-	virtual SplitStruct getSplitProposal(bool buildLeft) {
+	SplitStruct getSplitProposal(bool buildLeft, float approxRatio) {
 			
-			
+		if (points.Num() < 3) {
+			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
+		}
 		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
 			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN SPLITSTRUCT, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
 			FVector first = points[0];
@@ -157,7 +175,7 @@ struct FPolygon
 			curr = points[longest] - points[longest - 1];
 			curr.Normalize();
 
-			FVector middle = (points[longest] - points[longest - 1]) / 2 + points[longest - 1];
+			FVector middle = (points[longest] - points[longest - 1]) * approxRatio + points[longest - 1];
 			FVector p1 = middle;
 			int split = 0;
 			FVector p2 = FVector(0.0f, 0.0f, 0.0f);
@@ -175,8 +193,7 @@ struct FPolygon
 				}
 			}
 
-			if (p2.X == 0.0f) {
-
+			if (p2.X == 0.0f || p1.X == 0.0f) {
 				UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT"));
 				// cant split, no target, this shouldn't happen unless the polygons are poorly constructed
 				return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
@@ -237,6 +254,33 @@ struct FMetaPolygon : public FPolygon
 
 };
 
+UENUM(BlueprintType)
+enum class SubRoomType : uint8
+{
+	meeting UMETA(DisplayName = "Meeting Room"),
+	work UMETA(DisplayName = "Work Room"),
+	bath  UMETA(DisplayName = "Bathroom"),
+	empty  UMETA(DisplayName = "Empty"),
+	corridor UMETA(DisplayName = "Corridor"),
+	bed UMETA(DisplayName = "Bedroom"),
+	kitchen UMETA(DisplayName = "Kitchen"),
+	living UMETA(DIsplayName = "Living Room")
+
+};
+
+
+struct RoomSpecification {
+	float minArea;
+	float maxArea;
+	SubRoomType type;
+};
+
+struct RoomBlueprint {
+	TArray<RoomSpecification> needed;
+	TArray<RoomSpecification> optional;
+};
+
+//static getOfficeSpecifications
 
 struct FRoomPolygon : public FPolygon
 {
@@ -245,10 +289,15 @@ struct FRoomPolygon : public FPolygon
 	TSet<int32> toIgnore;
 
 	bool canRefine = true;
+	SubRoomType type = SubRoomType::empty;
 
-	FRoomPolygon splitAlongMax() {
-		//return FRoomPolygon();
-		SplitStruct p = getSplitProposal(false);
+	//bool operator==(const FRoomPolygon& rhs)
+	//{
+	//	return points == rhs.points && windows == rhs.windows;
+	//}
+
+	FRoomPolygon splitAlongMax(float approxRatio) {
+		SplitStruct p = getSplitProposal(false, approxRatio);
 		if (p.p1.X == 0.0f) {
 			return FRoomPolygon();
 		}
@@ -350,12 +399,12 @@ struct FRoomPolygon : public FPolygon
 			//tot.Add(*this);
 			return tot;
 		}
-		else if (depth > 3) {
-			tot.Add(*this);
-			return tot;
-		}
+		//else if (depth > 3) {
+		//	tot.Add(*this);
+		//	return tot;
+		//}
 		else if (area > maxArea) {
-			FRoomPolygon newP = splitAlongMax();
+			FRoomPolygon newP = splitAlongMax(0.5);
 			if (newP.points.Num() > 2) {
 				tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
 			}
@@ -368,10 +417,90 @@ struct FRoomPolygon : public FPolygon
 		return tot;
 	}
 
+
+	TArray<FRoomPolygon> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon> &remaining, bool repeating) {
+		TArray<FRoomPolygon> toReturn;
+
+		float area;
+		float minPctSplit = 0.3f;
+		bool couldPlace = false;
+		int c1 = 0;
+		do {
+			couldPlace = false;
+			for (RoomSpecification r : specs) {
+				bool found = false;
+				bool smaller = false;
+				for (int i = 0; i < remaining.Num(); i++) {
+					FRoomPolygon *p = &remaining[i];
+					area = p->getArea();
+					smaller = smaller || (area > r.maxArea);
+					if (area <= r.maxArea && area >= r.minArea) {
+						// found fitting room
+						p->type = r.type;
+						toReturn.Add(*p);
+						remaining.RemoveAt(i);
+						found = true;
+						couldPlace = true;
+						break;
+					}
+				}
+				if (!found && smaller) {
+					// could not find a fitting room since all remaining are too big, cut them down to size
+					FRoomPolygon *target = nullptr;
+					int targetNum = 0;
+					float scale = 0.0f;
+					for (int i = 0; i < remaining.Num(); i++) {
+						target = &remaining[i];
+						targetNum = i;
+						scale = r.maxArea / target->getArea();
+						if (scale < 1.0f) {
+							break;
+						}
+					}
+					//FRoomPolygon &target = remaining[0];
+					while (scale < minPctSplit) {
+						FRoomPolygon newP = target->splitAlongMax(0.5);
+						remaining.Add(newP);
+						scale = r.maxArea / target->getArea();
+					}
+					if (target->getArea() <= r.maxArea && target->getArea() >= r.minArea) {
+						target->type = r.type;
+						toReturn.Add(*target);
+						remaining.RemoveAt(targetNum);
+						//couldPlace = true;
+
+					}
+					else {
+						float ideal = (r.maxArea - r.minArea) / 2 + r.minArea;
+						FRoomPolygon newR = target->splitAlongMax(scale);
+						newR.type = r.type;
+						toReturn.Add(newR);
+					}
+					couldPlace = true;
+				}
+			}
+		} while (repeating && couldPlace && c1++ < 5);
+		return toReturn;
+	}
+
+	TArray<FRoomPolygon> getRooms(RoomBlueprint blueprint) {
+		TArray<FRoomPolygon> rooms;
+		TArray<FRoomPolygon> remaining;
+		remaining.Add(*this);
+
+		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false));
+		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true));
+		for (FRoomPolygon &p : remaining) {
+			rooms.Add(p);
+		}
+		return rooms;
+	}
+
+
 	TArray<FRoomPolygon> refine(float maxArea, float minArea) {
 		return recursiveSplit(maxArea, minArea, 0);
-
 	}
+
 
 
 
@@ -464,7 +593,7 @@ struct FHousePolygon : public FMetaPolygon {
 			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN splitAlongMax, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
 		}
 
-		SplitStruct p = getSplitProposal(buildLeft);
+		SplitStruct p = getSplitProposal(buildLeft, 0.5);
 		if (p.p1.X == 0.0f) {
 			height = 50;
 			return FHousePolygon();
@@ -676,7 +805,8 @@ Calculate whether two lines intersect and where
 
 
 void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
-FVector intersection(FPolygon p1, FPolygon p2);
+FVector intersection(FPolygon &p1, TArray<FPolygon> &p2);
+FVector intersection(FPolygon &p1, FPolygon &p2);
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 FVector intersection(FVector p1, FVector p2, FPolygon p);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
