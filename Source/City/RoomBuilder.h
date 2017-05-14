@@ -58,8 +58,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	static FRoomInfo buildOffice(FRoomPolygon f, int floor, float height, float density, float windowHeight, float windowWidth);
-	static FRoomInfo buildApartment(FRoomPolygon f, int floor, float height, float density, float windowHeight, float windowWidth);
+	static FRoomInfo buildOffice(FRoomPolygon &f, int floor, float height, float density, float windowHeight, float windowWidth);
+	static FRoomInfo buildApartment(FRoomPolygon &f, int floor, float height, float density, float windowHeight, float windowWidth);
 	static FRoomInfo buildRoom(FRoomPolygon f, RoomType type, int floor, float height, float density, float windowHeight, float windowWidth);
 	static TArray<FMaterialPolygon> getSideWithHoles(FMaterialPolygon outer, TArray<FPolygon> holes);
 	

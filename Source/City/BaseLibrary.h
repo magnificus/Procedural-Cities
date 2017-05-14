@@ -70,10 +70,9 @@ static FVector getNormal(FVector p1, FVector p2, bool left) {
 USTRUCT(BlueprintType)
 struct FPolygon
 {
-	//GENERATED_BODY();
 	GENERATED_USTRUCT_BODY();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite)
 		TArray<FVector> points;
 
 	FVector getCenter() {
@@ -97,7 +96,11 @@ struct FPolygon
 	double tot = 0;
 
 	for (int i = 0; i < points.Num() - 1; i++) {
-		tot += 0.0001*(points[i].X * points[i + 1].Y - points[i].Y * points[i+1].X);
+		if (!points.IsValidIndex(i) || !points.IsValidIndex(i+1)) {
+			return 0.0f;
+		}
+		tot += 0.0001*(points[i].X * points[i + 1].Y);
+		tot -= 0.0001*(points[i].Y * points[i+1].X);
 	}
 	tot /= 2;
 	return std::abs(tot);
@@ -116,7 +119,7 @@ struct FPolygon
 	// this method merges polygon sides when possible, and combines points
 	void decreaseEdges() {
 		float dirDiffAllowed = 0.07f;
-		float distDiffAllowed = 100;
+		float distDiffAllowed = 200;
 
 		for (int i = 1; i < points.Num(); i++) {
 			if (FVector::Dist(points[i - 1], points[i]) < distDiffAllowed) {
@@ -181,12 +184,14 @@ struct FPolygon
 			FVector p2 = FVector(0.0f, 0.0f, 0.0f);
 			FVector tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(curr);
 			//tangent.Normalize();
+			float closest = 10000000.0f;
 			for (int i = 1; i < points.Num(); i++) {
 				if (i == longest) {
 					continue;
 				}
-				curr = intersection(middle, middle + tangent * 1000000, points[i - 1], points[i]);
-				if (curr.X != 0.0f) {
+				curr = intersection(middle, middle + tangent * 100000, points[i - 1], points[i]);
+				if (curr.X != 0.0f && FVector::Dist(curr, middle) < closest) {
+					closest = FVector::Dist(curr, middle);
 					split = i;
 					p2 = curr;
 					
@@ -264,7 +269,8 @@ enum class SubRoomType : uint8
 	corridor UMETA(DisplayName = "Corridor"),
 	bed UMETA(DisplayName = "Bedroom"),
 	kitchen UMETA(DisplayName = "Kitchen"),
-	living UMETA(DIsplayName = "Living Room")
+	living UMETA(DIsplayName = "Living Room"),
+	closet UMETA(DIsplayName = "Closet")
 
 };
 
@@ -386,7 +392,11 @@ struct FRoomPolygon : public FPolygon
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
 
-
+		if (FVector::DistSquared(points[0], points[points.Num() - 1]) > 100) {
+			UE_LOG(LogTemp, Warning, TEXT("RESULTING SELF NOT CONNECTED"));
+			FVector first = points[0];
+			points.Add(first);
+		}
 		return newP;
 	}
 
@@ -422,7 +432,7 @@ struct FRoomPolygon : public FPolygon
 		TArray<FRoomPolygon> toReturn;
 
 		float area;
-		float minPctSplit = 0.3f;
+		float minPctSplit = 0.25f;
 		bool couldPlace = false;
 		int c1 = 0;
 		do {
@@ -431,52 +441,56 @@ struct FRoomPolygon : public FPolygon
 				bool found = false;
 				bool smaller = false;
 				for (int i = 0; i < remaining.Num(); i++) {
-					FRoomPolygon *p = &remaining[i];
-					area = p->getArea();
+					FRoomPolygon &p = remaining[i];
+					area = p.getArea();
 					smaller = smaller || (area > r.maxArea);
 					if (area <= r.maxArea && area >= r.minArea) {
 						// found fitting room
-						p->type = r.type;
-						toReturn.Add(*p);
+						p.type = r.type;
+						toReturn.Add(p);
 						remaining.RemoveAt(i);
 						found = true;
 						couldPlace = true;
 						break;
 					}
 				}
+				// could not find a fitting room since all remaining are too big, cut them down to size
 				if (!found && smaller) {
-					// could not find a fitting room since all remaining are too big, cut them down to size
-					FRoomPolygon *target = nullptr;
+					FRoomPolygon target;
 					int targetNum = 0;
 					float scale = 0.0f;
 					for (int i = 0; i < remaining.Num(); i++) {
-						target = &remaining[i];
+						target = remaining[i];
 						targetNum = i;
-						scale = r.maxArea / target->getArea();
+						scale = r.minArea / target.getArea();
 						if (scale < 1.0f) {
 							break;
 						}
 					}
+					remaining.RemoveAt(targetNum);
 					//FRoomPolygon &target = remaining[0];
 					while (scale < minPctSplit) {
-						FRoomPolygon newP = target->splitAlongMax(0.5);
+						FRoomPolygon newP = target.splitAlongMax(0.4);
 						remaining.Add(newP);
-						scale = r.maxArea / target->getArea();
+						scale = r.minArea / target.getArea();
+
 					}
-					if (target->getArea() <= r.maxArea && target->getArea() >= r.minArea) {
-						target->type = r.type;
-						toReturn.Add(*target);
-						remaining.RemoveAt(targetNum);
-						//couldPlace = true;
+					if (target.getArea() <= r.maxArea && target.getArea() >= r.minArea) {
+						target.type = r.type;
+						toReturn.Add(target);
+						//remaining.RemoveAt(targetNum);
 
 					}
 					else {
 						float ideal = (r.maxArea - r.minArea) / 2 + r.minArea;
-						FRoomPolygon newR = target->splitAlongMax(scale);
+						FRoomPolygon newR = target.splitAlongMax(r.minArea / target.getArea());
 						newR.type = r.type;
 						toReturn.Add(newR);
+						remaining.Add(target);
+
 					}
 					couldPlace = true;
+
 				}
 			}
 		} while (repeating && couldPlace && c1++ < 5);
@@ -505,7 +519,10 @@ struct FRoomPolygon : public FPolygon
 
 
 	FVector getRoomDirection() {
-		return FVector(0.0f, 0.0f, 0.0f);
+		if (points.Num() < 3) {
+			return FVector(0.0f, 0.0f, 0.0f);
+		}
+		return getNormal(points[1], points[0], true);
 	}
 
 };

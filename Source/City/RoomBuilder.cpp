@@ -332,19 +332,22 @@ RoomBlueprint getOfficeBlueprint(float areaScale) {
 
 RoomBlueprint getApartmentBlueprint(float areaScale) {
 	TArray<RoomSpecification> needed;
-	RoomSpecification kitchen{50*areaScale, 100*areaScale, SubRoomType::kitchen};
-	RoomSpecification bathroom{50*areaScale, 70*areaScale, SubRoomType::bath };
-	RoomSpecification bedroom{40*areaScale, 150*areaScale, SubRoomType::bed };
-	RoomSpecification living{50 * areaScale, 200 * areaScale, SubRoomType::living };
+	RoomSpecification kitchen{40*areaScale, 90*areaScale, SubRoomType::kitchen};
+	RoomSpecification bathroom{30*areaScale, 60*areaScale, SubRoomType::bath };
+	RoomSpecification bedroom{30*areaScale, 90*areaScale, SubRoomType::bed };
+	RoomSpecification living{100 * areaScale, 150 * areaScale, SubRoomType::living };
+	RoomSpecification closet{ 10 * areaScale, 40 * areaScale, SubRoomType::closet };
+
 
 	needed.Add(kitchen);
 	needed.Add(bathroom);
 	needed.Add(bedroom);
 
 	TArray<RoomSpecification> optional;
-	optional.Add(bedroom);
 	optional.Add(living);
 	optional.Add(bathroom);
+	optional.Add(bedroom);
+	optional.Add(closet);
 	optional.Add(bedroom);
 
 	return RoomBlueprint{ needed, optional };
@@ -352,7 +355,7 @@ RoomBlueprint getApartmentBlueprint(float areaScale) {
 
 }
 
-FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon f, int floor, float height, float density, float windowHeight, float windowWidth) {
+FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon &f, int floor, float height, float density, float windowHeight, float windowWidth) {
 
 	FRoomInfo r;
 	TArray<FRoomPolygon> roomPols = f.getRooms(getOfficeBlueprint(1.0f));
@@ -390,10 +393,66 @@ void removeAllButOne(TSet<int32> &entries) {
 
 }
 
-static TArray<FMeshInfo> getLivingRoom(FRoomPolygon &r2) {
+static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon &r2, TArray<FPolygon> &placed) {
 	TArray<FMeshInfo> meshes;
 
+
+	FVector center = r2.getCenter();
+	FVector rot = r2.getRoomDirection();
+	rot.Normalize();
+	FVector tan = FRotator(0, 90, 0).RotateVector(rot);
+	tan.Normalize();
+	float extraChairHeight = 30;
+	FMeshInfo table{ "large_table", FTransform(rot.Rotation() , center, FVector(1.0f, 1.0f, 1.0f)) };
+	FVector c1 = center - rot * 70 + tan * 150;
+	FVector c2 = center + rot * 70 + tan * 150;
+	FVector c3 = center - rot * 70 - tan * 150;
+	FVector c4 = center + rot * 70 - tan * 150;
+	FMeshInfo chair1{ "chair", FTransform(rot.Rotation(), c1 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) };
+	FMeshInfo chair2{ "chair", FTransform(rot.Rotation(), c2 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) };
+	FMeshInfo chair3{ "chair", FTransform(FRotator(0, 180, 0) + rot.Rotation(), c3 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) };
+	FMeshInfo chair4{ "chair", FTransform(FRotator(0, 180, 0) + rot.Rotation(), c4 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) };
+
+	meshes.Add(table);
+	meshes.Add(chair1);
+	meshes.Add(chair2);
+	meshes.Add(chair3);
+	meshes.Add(chair4);
+
+	return meshes;
+
+}
+
+static TArray<FMeshInfo> getLivingRoom(FRoomPolygon &r2) {
+	TArray<FMeshInfo> meshes;
+	
+	TArray<FPolygon> placed;
+	placed.Add(r2);
+	meshes.Append(potentiallyGetTableAndChairs(r2, placed));
 	// add maybe sofa and stuff? lamps?
+	return meshes;
+}
+
+static TArray<FMeshInfo> getBathRoom(FRoomPolygon &r2) {
+	TArray<FMeshInfo> meshes;
+	
+	r2.windows.Empty();
+	r2.entrances.Empty();
+	r2.toIgnore.Empty();
+	TArray<FPolygon> placed;
+	placed.Add(r2);
+	auto ints = getIntList(1, r2.points.Num());
+
+	int place = ints[ints.Num() == 1 ? 0 : FMath::Rand() % (ints.Num() - 1) + 1];
+	FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
+	FVector tangent = r2.points[place] - r2.points[place - 1];
+	tangent.Normalize();
+	dir.Normalize();
+	FVector origin = middle(r2.points[place - 1], r2.points[place]);
+	FVector pos = origin + dir * 90;
+	FRotator rot = dir.Rotation();
+	FMeshInfo bed{ "toilet", FTransform(rot + FRotator(0, 0, 10), pos, FVector(1.0f, 1.0f, 1.0f)) };
+	meshes.Add(bed);
 	return meshes;
 }
 
@@ -403,7 +462,7 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon &r2) {
 	placed.Add(r2);
 
 	// can only have one entrance
-	removeAllButOne(r2.entrances);
+	//removeAllButOne(r2.entrances);
 
 	auto ints = getIntList(1, r2.points.Num());
 
@@ -415,23 +474,23 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon &r2) {
 	}
 	if (ints.Num() > 0) {
 		int place = ints[ints.Num() == 1 ? 0 : FMath::Rand() % (ints.Num() - 1) + 1];
-		FVector origin = middle(r2.points[place - 1], r2.points[place]);
 		FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
 		FVector tangent = r2.points[place] - r2.points[place - 1];
 		tangent.Normalize();
 		dir.Normalize();
-		FVector pos = origin + dir * 260;
+		FVector origin = r2.points[place - 1] + tangent * 120;
+		FVector pos = origin + dir * 180;
 		FRotator rot = dir.Rotation();
 		FPolygon bedP = MeshPolygonReference::getBedPolygon(pos, rot);
-		FVector res = intersection(bedP, placed);
-		//if (res.X != 0.0f) {
-			placed.Add(bedP);
-			FMeshInfo bed{ "bed", FTransform(rot + FRotator(0, 270, 0), pos + FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
-			meshes.Add(bed);
+		placed.Add(bedP);
+		FMeshInfo bed{ "bed", FTransform(rot + FRotator(0, 270, 0), pos + FVector(0, 0, 30), FVector(1.0f, 1.0f, 1.0f)) };
+		meshes.Add(bed);
 
+		//for (FVector p : bedP.points) {
+		//	meshes.Add(FMeshInfo{ "visualizer", FTransform(p) });
 		//}
-		pos += tangent * 225;
-		FMeshInfo table{ "small_table", FTransform(rot , pos - FVector(0, 0, 100), FVector(1.0f, 1.0f, 1.0f)) };
+		pos += tangent * 150 - dir * 70;
+		FMeshInfo table{ "small_table", FTransform(rot , pos - FVector(0, 0, 70), FVector(1.0f, 1.0f, 1.0f)) };
 		meshes.Add(table);
 
 
@@ -442,18 +501,39 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon &r2) {
 	return meshes;
 }
 
-FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon f, int floor, float height, float density, float windowHeight, float windowWidth) {
+FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon &f, int floor, float height, float density, float windowHeight, float windowWidth) {
 
 	FRoomInfo r;
 	TArray<FRoomPolygon> roomPols = f.getRooms(getApartmentBlueprint(1.0f));
+
+
 	for (FRoomPolygon &r2 : roomPols) {
+		//for (int i : r2.entrances) {
+		//	FVector doorPos = middle(r2.points[i], r2.points[i - 1]);
+		//	FVector dir1 = getNormal(r2.points[i], r2.points[i - 1], true);
+		//	dir1.Normalize();
+		//	FVector dir2 = r2.points[i] - r2.points[i - 1];
+		//	dir2.Normalize();
+		//	r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + FVector(0, 0, 0) - dir2 * 90 + dir1 * 75 , FVector(1.0f, 1.0f, 1.0f)) });
+		//}
+
 		r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2.getCenter() + FVector(0, 0, height - 45)) });
 		switch (r2.type) {
 		case SubRoomType::living: r.meshes.Append(getLivingRoom(r2));
 			break;
 		case SubRoomType::bed: r.meshes.Append(getBedRoom(r2));
 			break;
+		case SubRoomType::closet:
+			break;
+		case SubRoomType::corridor:
+			break;
+		case SubRoomType::kitchen:
+			break;
+		case SubRoomType::bath: r.meshes.Append(getBathRoom(r2));
+			break;
+
 		}
+
 
 	}
 	r.pols = interiorPlanToPolygons(roomPols, height, density, windowHeight, windowWidth);
@@ -474,7 +554,7 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon f, RoomType type, int floor, floa
 	}
 	switch (type) {
 	case RoomType::office: return buildOffice(f, floor, height, 0.005, 250, 150);
-	case RoomType::apartment: return buildApartment(f, floor, height, 0.005, 250, 150);
+	case RoomType::apartment: return buildApartment(f, floor, height, 0.002, 200, 100);
 	}
 	return FRoomInfo();
 }

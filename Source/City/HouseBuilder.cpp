@@ -103,14 +103,14 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			}
 			connections[0].a = conn;
 			roomPols[0].points.EmplaceAt(0, sndAttach);
-			roomPols[0].entrances.Add(1);
+			//roomPols[0].entrances.Add(1);
 			roomPols[0].points.EmplaceAt(1, firstAttach);
 			roomPols[0].points.EmplaceAt(2, hole.points[i]);
 		}
 		else {
 			connections[i].a = conn;
 			roomPols[i].points.Add(sndAttach);
-			roomPols[i].entrances.Add(roomPols[i].points.Num());
+			//roomPols[i].entrances.Add(roomPols[i].points.Num());
 			roomPols[i].points.Add(firstAttach);
 			roomPols[i].points.Add(hole.points[i]);
 		}
@@ -389,18 +389,18 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 		toReturn.pols.Append(newR.pols);
 		toReturn.meshes.Append(newR.meshes);
 	}
-	for (int i = 1; i < floors; i++) {
-		toReturn.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i, hole));
+	//for (int i = 1; i < floors; i++) {
+	//	toReturn.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i, hole));
 
-		roomPols = getInteriorPlan(f, hole, false, 300);
-		for (FRoomPolygon &p : roomPols) {
-			//p.offset(FVector(0, 0, floorHeight*i));
-			FRoomInfo newR = ARoomBuilder::buildRoom(p, f.type, 1, floorHeight, 0.005, 250, 150);
-			newR.offset(FVector(0, 0, floorHeight*i));
-			toReturn.pols.Append(newR.pols);
-			toReturn.meshes.Append(newR.meshes);
-		}
-	}
+	//	roomPols = getInteriorPlan(f, hole, false, 300);
+	//	for (FRoomPolygon &p : roomPols) {
+	//		//p.offset(FVector(0, 0, floorHeight*i));
+	//		FRoomInfo newR = ARoomBuilder::buildRoom(p, f.type, 1, floorHeight, 0.005, 250, 150);
+	//		newR.offset(FVector(0, 0, floorHeight*i));
+	//		toReturn.pols.Append(newR.pols);
+	//		toReturn.meshes.Append(newR.meshes);
+	//	}
+	//}
 
 
 	FMaterialPolygon roof;

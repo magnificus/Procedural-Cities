@@ -10,10 +10,10 @@ MeshPolygonReference::MeshPolygonReference()
 FPolygon MeshPolygonReference::getBedPolygon(FVector origin, FRotator dir) {
 	// 288 451
 	FPolygon bed;
-	bed.points.Add(origin + dir.RotateVector(FVector(-144, 0, 0)));
-	bed.points.Add(origin + dir.RotateVector(FVector(144, 0, 0)));
-	bed.points.Add(origin + dir.RotateVector(FVector(144, 225, 0)));
-	bed.points.Add(origin + dir.RotateVector(FVector(-144, 225, 0)));
+	bed.points.Add(origin + dir.RotateVector(FVector(-135, -86, 0)));
+	bed.points.Add(origin + dir.RotateVector(FVector(135, -86, 0)));
+	bed.points.Add(origin + dir.RotateVector(FVector(135, 86, 0)));
+	bed.points.Add(origin + dir.RotateVector(FVector(-135, 86, 0)));
 	return bed;
 }
 MeshPolygonReference::~MeshPolygonReference()
