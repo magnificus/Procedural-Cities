@@ -77,6 +77,9 @@ class CITY_API ASpawner : public AActor
 		int32	minFloors = 3;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
 		int32	maxFloors = 15;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = rooms, meta = (AllowPrivateAccess = "true"))
+		float maxRoomSize = 200;
 		
 public:	
 	// Sets default values for this actor's properties

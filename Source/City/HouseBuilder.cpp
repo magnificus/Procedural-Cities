@@ -34,7 +34,7 @@ bool increasing(TArray<twoInt> ints) {
 }
 
 // this function returns all of the first grade Room Polygons, these can later be expanded upon when finalizing the room in RoomBuilder
-TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth){
+TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth, float maxRoomArea){
 	TArray<FLine> lines;
 	
 	TArray<FRoomPolygon> roomPols;
@@ -74,6 +74,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 		roomPols[i - 1].points.Add(hole.points[i-1]);
 		roomPols[i - 1].points.Add(firstAttach);
 		roomPols[i - 1].entrances.Add(roomPols[i - 1].points.Num());
+		roomPols[i - 1].nonDuplicatingEntrances.Add(roomPols[i - 1].points.Num());
 		roomPols[i - 1].points.Add(sndAttach);
 
 
@@ -100,17 +101,20 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			for (int32 j : toRemove) {
 				roomPols[0].entrances.Remove(j);
 				roomPols[0].entrances.Add(j + 3);
+				roomPols[0].nonDuplicatingEntrances.Add(j + 3);
 			}
 			connections[0].a = conn;
 			roomPols[0].points.EmplaceAt(0, sndAttach);
-			//roomPols[0].entrances.Add(1);
+			roomPols[0].entrances.Add(1);
+			roomPols[0].nonDuplicatingEntrances.Add(1);
 			roomPols[0].points.EmplaceAt(1, firstAttach);
 			roomPols[0].points.EmplaceAt(2, hole.points[i]);
 		}
 		else {
 			connections[i].a = conn;
 			roomPols[i].points.Add(sndAttach);
-			//roomPols[i].entrances.Add(roomPols[i].points.Num());
+			roomPols[i].entrances.Add(roomPols[i].points.Num());
+			roomPols[i].nonDuplicatingEntrances.Add(roomPols[i].points.Num());
 			roomPols[i].points.Add(firstAttach);
 			roomPols[i].points.Add(hole.points[i]);
 		}
@@ -159,6 +163,15 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 	for (int i = 2; i < corners.points.Num(); i+=2) {
 		corners.toIgnore.Add(i);
 	}
+
+	TArray<FRoomPolygon> extra;
+	for (FRoomPolygon &p : roomPols) {
+		if (p.getArea() > maxRoomArea) {
+			extra.Add(p.splitAlongMax(0.5, false));
+		}
+	}
+	roomPols.Append(extra);
+
 	corners.reverse();
 	roomPols.Add(corners);
 
@@ -362,7 +375,7 @@ void buildRoof(FRoomInfo &info, FPolygon pol) {
 	}
 }
 
-FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHeight)
+FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHeight, float maxRoomArea)
 {
 	if (f.points.Num() < 3) {
 		return FRoomInfo();
@@ -380,7 +393,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 
 
 	FPolygon hole = getShaftHolePolygon(f);
-	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, 300);
+	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, 300, maxRoomArea);
 
 	
 	for (FRoomPolygon p : roomPols) {

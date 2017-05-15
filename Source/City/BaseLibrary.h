@@ -67,6 +67,22 @@ static FVector getNormal(FVector p1, FVector p2, bool left) {
 	return FRotator(0, left ? 90 : 270, 0).RotateVector(p2 - p1);
 }
 
+static void removeAllButOne(TSet<int32> &entries) {
+	TArray<int> numbers;
+	if (entries.Num() < 2) {
+		return;
+	}
+	for (int32 i : entries) {
+		numbers.Add(i);
+	}
+	int place = FMath::Rand() % numbers.Num();
+	numbers.RemoveAt(place);
+	for (int32 i : numbers) {
+		entries.Remove(i);
+	}
+}
+
+
 USTRUCT(BlueprintType)
 struct FPolygon
 {
@@ -269,8 +285,9 @@ enum class SubRoomType : uint8
 	corridor UMETA(DisplayName = "Corridor"),
 	bed UMETA(DisplayName = "Bedroom"),
 	kitchen UMETA(DisplayName = "Kitchen"),
-	living UMETA(DIsplayName = "Living Room"),
-	closet UMETA(DIsplayName = "Closet")
+	living UMETA(DisplayName = "Living Room"),
+	closet UMETA(DisplayName = "Closet"),
+	hallway UMETA(DisplayName = "Hallway")
 
 };
 
@@ -292,6 +309,7 @@ struct FRoomPolygon : public FPolygon
 {
 	TSet<int32> windows;
 	TSet<int32> entrances;
+	TSet<int32> nonDuplicatingEntrances;
 	TSet<int32> toIgnore;
 
 	bool canRefine = true;
@@ -302,7 +320,7 @@ struct FRoomPolygon : public FPolygon
 	//	return points == rhs.points && windows == rhs.windows;
 	//}
 
-	FRoomPolygon splitAlongMax(float approxRatio) {
+	FRoomPolygon splitAlongMax(float approxRatio, bool entranceBetween) {
 		SplitStruct p = getSplitProposal(false, approxRatio);
 		if (p.p1.X == 0.0f) {
 			return FRoomPolygon();
@@ -310,7 +328,7 @@ struct FRoomPolygon : public FPolygon
 		FRoomPolygon newP;
 		newP.points.Add(p.p1);
 
-		if (entrances.Contains(p.min)) {
+		if (entrances.Contains(p.min) && !nonDuplicatingEntrances.Contains(p.min)) {
 			newP.entrances.Add(newP.points.Num());
 		}
 		if (windows.Contains(p.min)) {
@@ -336,7 +354,7 @@ struct FRoomPolygon : public FPolygon
 			}
 			newP.points.Add(points[i]);
 		}
-		if (entrances.Contains(p.max)) {
+		if (entrances.Contains(p.max) && !nonDuplicatingEntrances.Contains(p.max)) {
 			newP.entrances.Add(newP.points.Num());
 		}
 		if (windows.Contains(p.max)) {
@@ -386,7 +404,8 @@ struct FRoomPolygon : public FPolygon
 		newP.points.Add(p.p1);
 
 		// entrance to next room
-		entrances.Add(p.min + 1);
+		if (entranceBetween)
+			entrances.Add(p.min + 1);
 
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
@@ -400,32 +419,32 @@ struct FRoomPolygon : public FPolygon
 		return newP;
 	}
 
-	TArray<FRoomPolygon> recursiveSplit(float maxArea, float minArea, int depth) {
-		double area = getArea();
-		//UE_LOG(LogTemp, Warning, TEXT("area of new room: %f"), area);
-		TArray<FRoomPolygon> tot;
+	//TArray<FRoomPolygon> recursiveSplit(float maxArea, float minArea, int depth) {
+	//	double area = getArea();
+	//	//UE_LOG(LogTemp, Warning, TEXT("area of new room: %f"), area);
+	//	TArray<FRoomPolygon> tot;
 
-		if (points.Num() < 3 || area < minArea) {
-			//tot.Add(*this);
-			return tot;
-		}
-		//else if (depth > 3) {
-		//	tot.Add(*this);
-		//	return tot;
-		//}
-		else if (area > maxArea) {
-			FRoomPolygon newP = splitAlongMax(0.5);
-			if (newP.points.Num() > 2) {
-				tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
-			}
-			tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
+	//	if (points.Num() < 3 || area < minArea) {
+	//		//tot.Add(*this);
+	//		return tot;
+	//	}
+	//	//else if (depth > 3) {
+	//	//	tot.Add(*this);
+	//	//	return tot;
+	//	//}
+	//	else if (area > maxArea) {
+	//		FRoomPolygon newP = splitAlongMax(0.5, true);
+	//		if (newP.points.Num() > 2) {
+	//			tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
+	//		}
+	//		tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
 
-		}
-		else {
-			tot.Add(*this);
-		}
-		return tot;
-	}
+	//	}
+	//	else {
+	//		tot.Add(*this);
+	//	}
+	//	return tot;
+	//}
 
 
 	TArray<FRoomPolygon> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon> &remaining, bool repeating) {
@@ -444,7 +463,7 @@ struct FRoomPolygon : public FPolygon
 					FRoomPolygon &p = remaining[i];
 					area = p.getArea();
 					smaller = smaller || (area > r.maxArea);
-					if (area <= r.maxArea && area >= r.minArea) {
+					if (area <= r.maxArea && area >= r.minArea && p.type != SubRoomType::hallway) {
 						// found fitting room
 						p.type = r.type;
 						toReturn.Add(p);
@@ -468,22 +487,20 @@ struct FRoomPolygon : public FPolygon
 						}
 					}
 					remaining.RemoveAt(targetNum);
-					//FRoomPolygon &target = remaining[0];
 					while (scale < minPctSplit) {
-						FRoomPolygon newP = target.splitAlongMax(0.4);
+						FRoomPolygon newP = target.splitAlongMax(0.4, true);
 						remaining.Add(newP);
 						scale = r.minArea / target.getArea();
 
 					}
-					if (target.getArea() <= r.maxArea && target.getArea() >= r.minArea) {
+					if (target.getArea() <= r.maxArea && target.getArea() >= r.minArea && target.type != SubRoomType::hallway) {
 						target.type = r.type;
 						toReturn.Add(target);
-						//remaining.RemoveAt(targetNum);
 
 					}
 					else {
 						float ideal = (r.maxArea - r.minArea) / 2 + r.minArea;
-						FRoomPolygon newR = target.splitAlongMax(r.minArea / target.getArea());
+						FRoomPolygon newR = target.splitAlongMax(r.minArea / target.getArea(), true);
 						newR.type = r.type;
 						toReturn.Add(newR);
 						remaining.Add(target);
@@ -501,6 +518,8 @@ struct FRoomPolygon : public FPolygon
 		TArray<FRoomPolygon> rooms;
 		TArray<FRoomPolygon> remaining;
 		remaining.Add(*this);
+		remaining[0].type = SubRoomType::hallway;
+		removeAllButOne(remaining[0].entrances);
 
 		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false));
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true));
@@ -511,9 +530,9 @@ struct FRoomPolygon : public FPolygon
 	}
 
 
-	TArray<FRoomPolygon> refine(float maxArea, float minArea) {
-		return recursiveSplit(maxArea, minArea, 0);
-	}
+	//TArray<FRoomPolygon> refine(float maxArea, float minArea) {
+	//	return recursiveSplit(maxArea, minArea, 0);
+	//}
 
 
 

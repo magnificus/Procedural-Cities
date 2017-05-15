@@ -376,22 +376,7 @@ FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon &f, int floor, float height, fl
 	return r;
 }
 
-void removeAllButOne(TSet<int32> &entries) {
-	TArray<int> numbers;
-	if (entries.Num() < 2) {
-		return;
-	}
-	for (int32 i : entries) {
-		numbers.Add(i);
-	}
-	int place = FMath::Rand() % numbers.Num();
-	numbers.RemoveAt(place);
-	for (int32 i : numbers) {
-		entries.Remove(i);
-	}
 
-
-}
 
 static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon &r2, TArray<FPolygon> &placed) {
 	TArray<FMeshInfo> meshes;
@@ -437,8 +422,8 @@ static TArray<FMeshInfo> getBathRoom(FRoomPolygon &r2) {
 	TArray<FMeshInfo> meshes;
 	
 	r2.windows.Empty();
-	r2.entrances.Empty();
-	r2.toIgnore.Empty();
+	//r2.entrances.Empty();
+	//r2.toIgnore.Empty();
 	TArray<FPolygon> placed;
 	placed.Add(r2);
 	auto ints = getIntList(1, r2.points.Num());
