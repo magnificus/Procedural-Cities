@@ -106,6 +106,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			connections[0].a = conn;
 			roomPols[0].points.EmplaceAt(0, sndAttach);
 			roomPols[0].entrances.Add(1);
+			roomPols[0].linkTo = 1;
 			roomPols[0].nonDuplicatingEntrances.Add(1);
 			roomPols[0].points.EmplaceAt(1, firstAttach);
 			roomPols[0].points.EmplaceAt(2, hole.points[i]);
@@ -114,6 +115,8 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			connections[i].a = conn;
 			roomPols[i].points.Add(sndAttach);
 			roomPols[i].entrances.Add(roomPols[i].points.Num());
+			roomPols[i].linkTo = roomPols[i].points.Num();
+
 			roomPols[i].nonDuplicatingEntrances.Add(roomPols[i].points.Num());
 			roomPols[i].points.Add(firstAttach);
 			roomPols[i].points.Add(hole.points[i]);
@@ -408,7 +411,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	//	roomPols = getInteriorPlan(f, hole, false, 300);
 	//	for (FRoomPolygon &p : roomPols) {
 	//		//p.offset(FVector(0, 0, floorHeight*i));
-	//		FRoomInfo newR = ARoomBuilder::buildRoom(p, f.type, 1, floorHeight, 0.005, 250, 150);
+	//		FRoomInfo newR = ARoomBuilder::buildRoom(p, f.type, 1, floorHeight, 0.005, 250, 150, maxRoomArea);
 	//		newR.offset(FVector(0, 0, floorHeight*i));
 	//		toReturn.pols.Append(newR.pols);
 	//		toReturn.meshes.Append(newR.meshes);
@@ -431,7 +434,11 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 
 	TArray<FMaterialPolygon> otherSides;
 	for (FMaterialPolygon p : toReturn.pols) {
+		if (p.getDirection().X < 0) {
+			p.reverse();
+		}
 		FMaterialPolygon other = p;
+
 		//other.reverse();
 		p.offset(p.getDirection() * 20);
 		otherSides.Add(p);

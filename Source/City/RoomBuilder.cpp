@@ -421,7 +421,7 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon &r2) {
 static TArray<FMeshInfo> getBathRoom(FRoomPolygon &r2) {
 	TArray<FMeshInfo> meshes;
 	
-	r2.windows.Empty();
+	//r2.windows.Empty();
 	//r2.entrances.Empty();
 	//r2.toIgnore.Empty();
 	TArray<FPolygon> placed;
@@ -436,7 +436,7 @@ static TArray<FMeshInfo> getBathRoom(FRoomPolygon &r2) {
 	FVector origin = middle(r2.points[place - 1], r2.points[place]);
 	FVector pos = origin + dir * 90;
 	FRotator rot = dir.Rotation();
-	FMeshInfo bed{ "toilet", FTransform(rot + FRotator(0, 0, 10), pos, FVector(1.0f, 1.0f, 1.0f)) };
+	FMeshInfo bed{ "toilet", FTransform(rot, pos + FVector(0, 10, 0), FVector(1.0f, 1.0f, 1.0f)) };
 	meshes.Add(bed);
 	return meshes;
 }
