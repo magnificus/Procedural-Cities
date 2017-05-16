@@ -333,7 +333,6 @@ struct FRoomPolygon : public FPolygon
 	TSet<int32> entrances;
 	TSet<int32> nonDuplicatingEntrances;
 	TSet<int32> toIgnore;
-	TSet<int32> cantCut;
 	int32 linkTo = -1;
 
 	bool canRefine = true;
@@ -420,35 +419,24 @@ struct FRoomPolygon : public FPolygon
 			toIgnore.Add(i - (p.max - p.min) + 2);
 		}
 
-		toRemove.clear();
-		for (int32 i : cantCut) {
-			if (i >= p.max)
-				toRemove.push_back(i);
-		}
-		for (int32 i : toRemove) {
-			cantCut.Remove(i);
-			cantCut.Add(i - (p.max - p.min) + 2);
-		}
-
 		if (linkTo > p.min) {
 			linkTo = linkTo - (p.max - p.min) + 2;
 		}
 
 
 		newP.linkTo = newP.points.Num();
-		newP.cantCut.Add(newP.points.Num());
-		cantCut.Add(newP.points.Num());
 		newP.points.Add(p.p2);
-		// dont place the wall twice
 		//if (approxRatio < 0.5) {
 		//	newP.toIgnore.Add(newP.points.Num());
-		//	// entrance to next room
 		//	if (entranceBetween)
 		//		entrances.Add(p.min + 1);
 		//}
 		//else {
+
+		// dont place the wall twice
 		toIgnore.Add(p.min+1);
-		if (entranceBetween) {
+		//	// entrance to next room
+		if (entranceBetween && ((!entrances.Contains(p.min) && !entrances.Contains(p.min+2) || nonDuplicatingEntrances.Contains(p.min) || nonDuplicatingEntrances.Contains(p.min+2)))) {
 			newP.entrances.Add(newP.points.Num());
 		}
 		//}
@@ -511,8 +499,9 @@ struct FRoomPolygon : public FPolygon
 						}
 					}
 					remaining.RemoveAt(targetNum);
-					while (scale < minPctSplit) {
-						FRoomPolygon newP = target.splitAlongMax(0.4, true);
+					int count = 0;
+					while (scale < minPctSplit && count++ < 5) {
+						FRoomPolygon newP = target.splitAlongMax(0.3, true);
 						if (target.nonDuplicatingEntrances.Num() > 0) {
 							FRoomPolygon temp = target;
 							target = newP;
