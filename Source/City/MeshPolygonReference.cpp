@@ -16,6 +16,17 @@ FPolygon MeshPolygonReference::getBedPolygon(FVector origin, FRotator dir) {
 	bed.points.Add(origin + dir.RotateVector(FVector(-135, 86, 0)));
 	return bed;
 }
+
+FPolygon MeshPolygonReference::getShelfPolygon(FVector origin, FRotator dir) {
+	// 180 60
+	FPolygon shelf;
+	shelf.points.Add(origin + dir.RotateVector(FVector(-135, -86, 0)));
+	shelf.points.Add(origin + dir.RotateVector(FVector(135, -86, 0)));
+	shelf.points.Add(origin + dir.RotateVector(FVector(135, 86, 0)));
+	shelf.points.Add(origin + dir.RotateVector(FVector(-135, 86, 0)));
+	return shelf;
+}
+
 MeshPolygonReference::~MeshPolygonReference()
 {
 }

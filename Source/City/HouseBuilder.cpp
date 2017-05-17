@@ -405,18 +405,18 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 		toReturn.pols.Append(newR.pols);
 		toReturn.meshes.Append(newR.meshes);
 	}
-	//for (int i = 1; i < floors; i++) {
-	//	toReturn.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i, hole));
+	for (int i = 1; i < floors; i++) {
+		toReturn.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i, hole));
 
-	//	roomPols = getInteriorPlan(f, hole, false, 300);
-	//	for (FRoomPolygon &p : roomPols) {
-	//		//p.offset(FVector(0, 0, floorHeight*i));
-	//		FRoomInfo newR = ARoomBuilder::buildRoom(p, f.type, 1, floorHeight, 0.005, 250, 150, maxRoomArea);
-	//		newR.offset(FVector(0, 0, floorHeight*i));
-	//		toReturn.pols.Append(newR.pols);
-	//		toReturn.meshes.Append(newR.meshes);
-	//	}
-	//}
+		roomPols = getInteriorPlan(f, hole, false, 300, 500);
+		for (FRoomPolygon &p : roomPols) {
+			//p.offset(FVector(0, 0, floorHeight*i));
+			FRoomInfo newR = ARoomBuilder::buildRoom(p, f.type, 1, floorHeight, 0.005, 250, 150);
+			newR.offset(FVector(0, 0, floorHeight*i));
+			toReturn.pols.Append(newR.pols);
+			toReturn.meshes.Append(newR.meshes);
+		}
+	}
 
 
 	FMaterialPolygon roof;
@@ -433,15 +433,14 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	toReturn.pols.Add(floor);
 
 	TArray<FMaterialPolygon> otherSides;
-	for (FMaterialPolygon p : toReturn.pols) {
+	for (FMaterialPolygon &p : toReturn.pols) {
 		if (p.getDirection().X < 0) {
 			p.reverse();
 		}
 		FMaterialPolygon other = p;
 
-		//other.reverse();
-		p.offset(p.getDirection() * 20);
-		otherSides.Add(p);
+		other.offset(p.getDirection() * 20);
+		otherSides.Add(other);
 		for (int i = 1; i < p.points.Num(); i++) {
 			FMaterialPolygon newP1;
 			newP1.type = p.type;
@@ -458,6 +457,22 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 			otherSides.Add(newP2);
 
 		}
+
+		FMaterialPolygon newP1;
+		newP1.type = p.type;
+		newP1.points.Add(p.points[p.points.Num()-1]);
+		newP1.points.Add(p.points[0]);
+		newP1.points.Add(other.points[p.points.Num() - 1]);
+		otherSides.Add(newP1);
+
+		FMaterialPolygon newP2;
+		newP2.type = p.type;
+		newP2.points.Add(other.points[p.points.Num() - 1]);
+		newP2.points.Add(other.points[0]);
+		newP2.points.Add(p.points[0]);
+		otherSides.Add(newP2);
+
+
 	}
 
 	toReturn.pols.Append(otherSides);

@@ -13,6 +13,7 @@ class CITY_API MeshPolygonReference
 public:
 	MeshPolygonReference();
 	static FPolygon getBedPolygon(FVector origin, FRotator dir);
+	static FPolygon getShelfPolygon(FVector origin, FRotator dir);
 
 	~MeshPolygonReference();
 };

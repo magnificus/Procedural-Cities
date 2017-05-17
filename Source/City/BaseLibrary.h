@@ -501,7 +501,7 @@ struct FRoomPolygon : public FPolygon
 					remaining.RemoveAt(targetNum);
 					int count = 0;
 					while (scale < minPctSplit && count++ < 5) {
-						FRoomPolygon newP = target.splitAlongMax(0.3, true);
+						FRoomPolygon newP = target.splitAlongMax(0.6, true);
 						if (target.nonDuplicatingEntrances.Num() > 0) {
 							FRoomPolygon temp = target;
 							target = newP;
