@@ -106,7 +106,6 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			connections[0].a = conn;
 			roomPols[0].points.EmplaceAt(0, sndAttach);
 			roomPols[0].entrances.Add(1);
-			roomPols[0].linkTo = 1;
 			roomPols[0].nonDuplicatingEntrances.Add(1);
 			roomPols[0].points.EmplaceAt(1, firstAttach);
 			roomPols[0].points.EmplaceAt(2, hole.points[i]);
@@ -115,8 +114,6 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			connections[i].a = conn;
 			roomPols[i].points.Add(sndAttach);
 			roomPols[i].entrances.Add(roomPols[i].points.Num());
-			roomPols[i].linkTo = roomPols[i].points.Num();
-
 			roomPols[i].nonDuplicatingEntrances.Add(roomPols[i].points.Num());
 			roomPols[i].points.Add(firstAttach);
 			roomPols[i].points.Add(hole.points[i]);
@@ -170,7 +167,9 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 	TArray<FRoomPolygon> extra;
 	for (FRoomPolygon &p : roomPols) {
 		if (p.getArea() > maxRoomArea) {
-			extra.Add(p.splitAlongMax(0.5, false));
+			FRoomPolygon* newP = p.splitAlongMax(0.5, false);
+			extra.Add(*newP);
+			delete(newP);
 		}
 	}
 	roomPols.Append(extra);

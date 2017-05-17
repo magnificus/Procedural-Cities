@@ -549,40 +549,6 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon &r2) {
 		if (attemptPlaceShelf(r2, placed, meshes, i, false))
 			break;
 	}
-
-	//bool hasPlaced = false;
-	//for (int i = 1; i < r2.points.Num(); i++) {
-	//	if (r2.windows.Contains(i) || r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
-	//		continue;
-	//	}
-	//	int place = i;
-	//	FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
-	//	FVector tangent = r2.points[place] - r2.points[place - 1];
-	//	tangent.Normalize();
-	//	dir.Normalize();
-	//	FVector origin = r2.points[place - 1] + tangent * 50;
-	//	FVector pos = origin + dir * 10;
-	//	FRotator rot = dir.Rotation();
-	//	FPolygon shelfP = MeshPolygonReference::getShelfPolygon(pos, rot);
-	//	FVector res = intersection(shelfP, placed);
-	//	if (res.X == 0.0f) {
-	//		placed.Add(shelfP);
-	//		FMeshInfo shelf{ "shelf", FTransform(rot , pos, FVector(1.0f, 1.0f, 1.0f)) };
-	//		meshes.Add(shelf);
-	//		hasPlaced = true;
-	//		break;
-	//	}
-	//	
-	//}
-
-
-
-
-
-	//for (FVector p : bedP.points) {
-	//	meshes.Add(FMeshInfo{ "visualizer", FTransform(p) });
-	//}
-
 	return meshes;
 }
 
@@ -619,6 +585,8 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon &f, int floor, float height,
 			break;
 		case SubRoomType::bath: r.meshes.Append(getBathRoom(r2));
 			r.meshes.Add(FMeshInfo{ "room_bathroom", FTransform(r2.getCenter()) });
+			break;
+		case SubRoomType::hallway: 	r.meshes.Add(FMeshInfo{ "room_hallway", FTransform(r2.getCenter()) });
 			break;
 
 		}

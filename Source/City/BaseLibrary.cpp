@@ -427,7 +427,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 
 	}
 
-	// these roads generally shouldn't exist, so this is mainly to highlight errors
+	// these roads shouldn't exist, so this is mainly to highlight errors
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon f = polygons[i];
 		if (f.points.Num() < 3) {

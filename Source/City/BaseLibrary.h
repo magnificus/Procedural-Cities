@@ -105,20 +105,13 @@ struct FPolygon
 
 	// only cares about dimensions X and Y, not Z
 	double getArea() {
-
-	if (points.Num() < 3)
-		return 0.0;
-
 	double tot = 0;
 
 	for (int i = 0; i < points.Num() - 1; i++) {
-		if (!points.IsValidIndex(i) || !points.IsValidIndex(i+1)) {
-			return 0.0f;
-		}
 		tot += 0.0001*(points[i].X * points[i + 1].Y);
 		tot -= 0.0001*(points[i].Y * points[i+1].X);
 	}
-	tot /= 2;
+	tot *= 0.5;
 	return std::abs(tot);
 	}
 
@@ -313,6 +306,10 @@ static bool splitableType(SubRoomType type) {
 	return true;
 }
 
+static bool isOnLine(FVector point, FVector p1, FVector p2) {
+	return std::abs(FVector::Dist(point, p1) + FVector::Dist(point, p2) - FVector::Dist(p1, p2)) < 1.0f;
+}
+
 
 struct RoomSpecification {
 	float minArea;
@@ -327,63 +324,132 @@ struct RoomBlueprint {
 
 //static getOfficeSpecifications
 
+
+
+
 struct FRoomPolygon : public FPolygon
 {
 	TSet<int32> windows;
 	TSet<int32> entrances;
 	TSet<int32> nonDuplicatingEntrances;
 	TSet<int32> toIgnore;
-	int32 linkTo = -1;
+	TMap<int32, TArray<FRoomPolygon*>> passiveConnections;
+	TMap<FRoomPolygon*, int32> activeConnections;
 
 	bool canRefine = true;
 	SubRoomType type = SubRoomType::empty;
 
-	FRoomPolygon splitAlongMax(float approxRatio, bool entranceBetween) {
+	void updatePassiveConnections(SplitStruct &p, bool first, FRoomPolygon* newP) {
+		TArray<FRoomPolygon*> toRemove;
+
+		TArray<FRoomPolygon*> childPassive;
+		for (FRoomPolygon* p1 : passiveConnections[first ? p.min : p.max]) {
+			int loc = p1->activeConnections[this];
+			// this is the entrance, we're not allowed to place a wall that collides with this, try to fit newP on the other side of the entrance if possible, making it a single-entry room
+			FVector point = middle(p1->points[loc], p1->points[loc - 1]);
+			float dist = FVector::Dist(point, first ? p.p1 : p.p2);
+			if (dist < 100) {
+				FVector tangent1 = points[p.min] - points[p.min - 1];
+				tangent1.Normalize();
+				FVector tangent2 = points[p.max] - points[p.max - 1];
+				tangent2.Normalize();
+				float toMove = FVector::Dist(first ? p.p1 : p.p2, point - (first ? tangent1 : tangent2)* 100);
+				p.p1 -= toMove * tangent1;
+				p.p2 -= toMove * tangent2;
+				// our child is now free from our master, while we're still slaves
+			}
+			else {
+				// new cut doesn't interfere overlap with the entrance, now to see who gets it
+				if (first && isOnLine(point, points[p.min - 1], p.p1) || !first && !isOnLine(point, points[p.max-1], p.p2)) {
+					// i got it, no change
+				}
+				else {
+					// my child got it
+					childPassive.Add(p1);
+					p1->activeConnections.Remove(this);
+					p1->activeConnections.Add(newP, loc);
+					toRemove.Add(p1);
+				}
+			}
+		}
+		if (childPassive.Num() > 0)
+			newP->passiveConnections.Add(newP->points.Num(), childPassive);
+
+		for (FRoomPolygon* t : toRemove) {
+			passiveConnections[first ? p.min : p.max].Remove(t);
+		}
+	}
+
+
+	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween) {
 		SplitStruct p = getSplitProposal(false, approxRatio);
 		if (p.p1.X == 0.0f) {
-			return FRoomPolygon();
+			return NULL;
 		}
-		FRoomPolygon newP;
-		newP.points.Add(p.p1);
+		FRoomPolygon* newP = new FRoomPolygon();
+		newP->points.Add(p.p1);
 
 
 		if (entrances.Contains(p.min) && !nonDuplicatingEntrances.Contains(p.min)) {
-			newP.entrances.Add(newP.points.Num());
+			// potentially add responsibility of child 
+			//newP.entrances.Add(newP.points.Num());
 		}
 		if (windows.Contains(p.min)) {
-			newP.windows.Add(newP.points.Num());
+			newP->windows.Add(newP->points.Num());
 		}
 		if (toIgnore.Contains(p.min)) {
-			newP.toIgnore.Add(newP.points.Num());
+			if (passiveConnections.Contains(p.min)) {
+				updatePassiveConnections(p, true, newP);
+			}
+			newP->toIgnore.Add(newP->points.Num());
 		}
-		newP.points.Add(points[p.min]);
+		newP->points.Add(points[p.min]);
 
 		for (int i = p.min + 1; i < p.max; i++) {
 			if (entrances.Contains(i)) {
 				entrances.Remove(i);
 				if (nonDuplicatingEntrances.Contains(i)) {
-					newP.nonDuplicatingEntrances.Add(newP.points.Num());
+					newP->nonDuplicatingEntrances.Add(newP->points.Num());
 				}
-				newP.entrances.Add(newP.points.Num());
+				newP->entrances.Add(newP->points.Num());
+				for (int i = 0; i < points.Num(); i++) {
+					//if (activeConnections.Find(i))
+				}
 			}
 			if (windows.Contains(i)) {
 				windows.Remove(i);
-				newP.windows.Add(newP.points.Num());
+				newP->windows.Add(newP->points.Num());
 			}
 			if (toIgnore.Contains(i)) {
 				toIgnore.Remove(i);
-				newP.toIgnore.Add(newP.points.Num());
+				newP->toIgnore.Add(newP->points.Num());
+				if (passiveConnections.Contains(i)) {
+					TArray<FRoomPolygon*> pols = passiveConnections[i];
+					newP->passiveConnections.Add(newP->points.Num(), pols);
+					for (FRoomPolygon *p : pols) {
+						p->activeConnections.Remove(this);
+						p->activeConnections.Add(newP, newP->points.Num());
+					}
+					passiveConnections.Remove(i);
+				}
 			}
-			newP.points.Add(points[i]);
+			newP->points.Add(points[i]);
 		}
+
+		//TMap<int32, TArray<FRoomPolygon*>> passiveConnections;
+		//TMap<FRoomPolygon*, int32> activeConnections;
+
 		if (entrances.Contains(p.max) && !nonDuplicatingEntrances.Contains(p.max)) {
-			newP.entrances.Add(newP.points.Num());
+			//newP.entrances.Add(newP.points.Num());
 		}
 		if (windows.Contains(p.max)) {
-			newP.windows.Add(newP.points.Num());
+			newP->windows.Add(newP->points.Num());
 		}
 		if (toIgnore.Contains(p.max)) {
-			newP.toIgnore.Add(newP.points.Num());
+			newP->toIgnore.Add(newP->points.Num());
+			if (passiveConnections.Contains(p.max)) {
+				updatePassiveConnections(p, false, newP);
+			}
 		}
 
 
@@ -419,29 +485,21 @@ struct FRoomPolygon : public FPolygon
 			toIgnore.Add(i - (p.max - p.min) + 2);
 		}
 
-		if (linkTo > p.min) {
-			linkTo = linkTo - (p.max - p.min) + 2;
-		}
-
-
-		newP.linkTo = newP.points.Num();
-		newP.points.Add(p.p2);
-		//if (approxRatio < 0.5) {
-		//	newP.toIgnore.Add(newP.points.Num());
-		//	if (entranceBetween)
-		//		entrances.Add(p.min + 1);
-		//}
-		//else {
+		newP->points.Add(p.p2);
 
 		// dont place the wall twice
 		toIgnore.Add(p.min+1);
 		//	// entrance to next room
 		if (entranceBetween && ((!entrances.Contains(p.min) && !entrances.Contains(p.min+2) || nonDuplicatingEntrances.Contains(p.min) || nonDuplicatingEntrances.Contains(p.min+2)))) {
-			newP.entrances.Add(newP.points.Num());
+			TArray<FRoomPolygon*> passive;
+			passive.Add(newP);
+			passiveConnections.Add(p.min + 1, passive);
+			newP->entrances.Add(newP->points.Num());
+			newP->activeConnections.Add(this, newP->points.Num());
 		}
 		//}
 
-		newP.points.Add(p.p1);
+		newP->points.Add(p.p1);
 
 
 		points.RemoveAt(p.min, p.max - p.min);
@@ -459,9 +517,8 @@ struct FRoomPolygon : public FPolygon
 
 
 
-	TArray<FRoomPolygon> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon> &remaining, bool repeating) {
-		TArray<FRoomPolygon> toReturn;
-
+	TArray<FRoomPolygon*> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon*> &remaining, bool repeating) {
+		TArray<FRoomPolygon*> toReturn;
 		float area;
 		float minPctSplit = 0.25f;
 		bool couldPlace = false;
@@ -472,12 +529,12 @@ struct FRoomPolygon : public FPolygon
 				bool found = false;
 				bool smaller = false;
 				for (int i = 0; i < remaining.Num(); i++) {
-					FRoomPolygon &p = remaining[i];
-					area = p.getArea();
+					FRoomPolygon *p = remaining[i];
+					area = p->getArea();
 					smaller = smaller || (area > r.maxArea);
-					if (area <= r.maxArea && area >= r.minArea && p.type != SubRoomType::hallway) {
+					if (area <= r.maxArea && area >= r.minArea && p->type != SubRoomType::hallway) {
 						// found fitting room
-						p.type = r.type;
+						p->type = r.type;
 						toReturn.Add(p);
 						remaining.RemoveAt(i);
 						found = true;
@@ -487,52 +544,54 @@ struct FRoomPolygon : public FPolygon
 				}
 				// could not find a fitting room since all remaining are too big, cut them down to size
 				if (!found && smaller) {
-					FRoomPolygon target;
+					FRoomPolygon *target = remaining[0];
 					int targetNum = 0;
 					float scale = 0.0f;
 					for (int i = 0; i < remaining.Num(); i++) {
 						target = remaining[i];
 						targetNum = i;
-						scale = r.minArea / target.getArea();
+						scale = r.minArea / target->getArea();
 						if (scale < 1.0f) {
 							break;
 						}
 					}
-					remaining.RemoveAt(targetNum);
+					//remaining.RemoveAt(targetNum);
 					int count = 0;
 					while (scale < minPctSplit && count++ < 5) {
-						FRoomPolygon newP = target.splitAlongMax(0.6, true);
-						if (target.nonDuplicatingEntrances.Num() > 0) {
-							FRoomPolygon temp = target;
+						FRoomPolygon* newP = target->splitAlongMax(0.6, true);
+						if (target->nonDuplicatingEntrances.Num() > 0) {
+							FRoomPolygon *temp = target;
 							target = newP;
-							newP = temp;
+							newP = target;
 						}
-						if (target.nonDuplicatingEntrances.Num() > 0) {
-							target.type = SubRoomType::hallway;
+						if (target->nonDuplicatingEntrances.Num() > 0) {
+							target->type = SubRoomType::hallway;
 						}
-						if (newP.nonDuplicatingEntrances.Num() > 0) {
-							newP.type = SubRoomType::hallway;
+						if (newP->nonDuplicatingEntrances.Num() > 0) {
+							newP->type = SubRoomType::hallway;
 						}
 						remaining.EmplaceAt(0, newP);
-						scale = r.minArea / target.getArea();
+						scale = r.minArea / target->getArea();
 
 					}
-					if (target.getArea() <= r.maxArea && target.getArea() >= r.minArea && target.type != SubRoomType::hallway) {
-						target.type = r.type;
+					if (target->getArea() <= r.maxArea && target->getArea() >= r.minArea && target->type != SubRoomType::hallway) {
+						target->type = r.type;
+						remaining.RemoveAt(targetNum);
 						toReturn.Add(target);
 					}
 					else {
 						float ideal = (r.maxArea - r.minArea) / 2 + r.minArea;
-						FRoomPolygon newP = target.splitAlongMax(r.minArea / target.getArea(), true);
-						if (newP.nonDuplicatingEntrances.Num() > 0) {
-							newP.type = SubRoomType::hallway;
-							FRoomPolygon temp = target;
+						FRoomPolygon* newP = target->splitAlongMax(r.minArea / target->getArea(), true);
+						if (newP->nonDuplicatingEntrances.Num() > 0) {
+							newP->type = SubRoomType::hallway;
+							FRoomPolygon *temp = target;
 							target = newP;
-							newP = temp;
+							newP = target;
+
 						}
-						newP.type = r.type;
+						newP->type = r.type;
 						toReturn.Add(newP);
-						remaining.EmplaceAt(0, target);
+						//remaining.EmplaceAt(0, target);
 
 					}
 					couldPlace = true;
@@ -540,22 +599,50 @@ struct FRoomPolygon : public FPolygon
 				}
 			}
 		} while (repeating && couldPlace && c1++ < 5);
+
 		return toReturn;
+
+
+	}
+
+	// post placement part of algorithm
+	void postFit(TArray<FRoomPolygon> &rooms) {
+		for (FRoomPolygon &p : rooms) {
+			if (!splitableType(p.type) && p.entrances.Num() + p.toIgnore.Num() > 1) {
+				p.type = SubRoomType::corridor;
+			}
+		}
 	}
 
 	TArray<FRoomPolygon> getRooms(RoomBlueprint blueprint) {
-		TArray<FRoomPolygon> rooms;
-		TArray<FRoomPolygon> remaining;
-		remaining.Add(*this);
-		remaining[0].type = SubRoomType::hallway;
-		removeAllButOne(remaining[0].entrances);
+		TArray<FRoomPolygon*> rooms;
+		TArray<FRoomPolygon*> remaining;
+		FRoomPolygon* thisP = new FRoomPolygon();
+		*thisP = *this;
+		thisP->type = SubRoomType::hallway;
+		remaining.Add(thisP);
+		//removeAllButOne(remaining[0].entrances);
 
 		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false));
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true));
-		for (FRoomPolygon &p : remaining) {
+
+		//postFit(rooms);
+		for (FRoomPolygon *p : remaining) {
+			//for (int i = 0; i < p.points.Num(); i++) {
+			//	p.toIgnore.Add(i);
+			//}
 			rooms.Add(p);
 		}
-		return rooms;
+		TArray<FRoomPolygon> toReturn;
+		for (FRoomPolygon *p : rooms) {
+			toReturn.Add(*p);
+		}
+		for (FRoomPolygon *p : rooms) {
+			//	delete p;
+		}
+
+
+		return toReturn;
 	}
 
 
