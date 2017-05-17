@@ -333,7 +333,7 @@ struct FRoomPolygon : public FPolygon
 	TSet<int32> entrances;
 	TSet<int32> nonDuplicatingEntrances;
 	TSet<int32> toIgnore;
-	TMap<int32, TArray<FRoomPolygon*>> passiveConnections;
+	TMap<int32, TSet<FRoomPolygon*>> passiveConnections;
 	TMap<FRoomPolygon*, int32> activeConnections;
 
 	bool canRefine = true;
@@ -342,7 +342,7 @@ struct FRoomPolygon : public FPolygon
 	void updatePassiveConnections(SplitStruct &p, bool first, FRoomPolygon* newP) {
 		TArray<FRoomPolygon*> toRemove;
 
-		TArray<FRoomPolygon*> childPassive;
+		TSet<FRoomPolygon*> childPassive;
 		for (FRoomPolygon* p1 : passiveConnections[first ? p.min : p.max]) {
 			int loc = p1->activeConnections[this];
 			// this is the entrance, we're not allowed to place a wall that collides with this, try to fit newP on the other side of the entrance if possible, making it a single-entry room
@@ -412,9 +412,20 @@ struct FRoomPolygon : public FPolygon
 					newP->nonDuplicatingEntrances.Add(newP->points.Num());
 				}
 				newP->entrances.Add(newP->points.Num());
-				for (int i = 0; i < points.Num(); i++) {
-					//if (activeConnections.Find(i))
+
+				auto res = activeConnections.FindKey(i);
+				if (res != nullptr) {
+					FRoomPolygon *p1 = *res;
+					for (int j = 1; j < p1->points.Num(); j++) {
+						if (p1->passiveConnections.Contains(j) && p1->passiveConnections[j].Contains(this)) {
+							p1->passiveConnections[j].Remove(this);
+							p1->passiveConnections[j].Add(newP);
+							newP->activeConnections.Add(newP, j);
+							break;
+						}
+					}
 				}
+
 			}
 			if (windows.Contains(i)) {
 				windows.Remove(i);
@@ -424,11 +435,11 @@ struct FRoomPolygon : public FPolygon
 				toIgnore.Remove(i);
 				newP->toIgnore.Add(newP->points.Num());
 				if (passiveConnections.Contains(i)) {
-					TArray<FRoomPolygon*> pols = passiveConnections[i];
+					TSet<FRoomPolygon*> pols = passiveConnections[i];
 					newP->passiveConnections.Add(newP->points.Num(), pols);
-					for (FRoomPolygon *p : pols) {
-						p->activeConnections.Remove(this);
-						p->activeConnections.Add(newP, newP->points.Num());
+					for (FRoomPolygon *p1 : pols) {
+						p1->activeConnections.Remove(this);
+						p1->activeConnections.Add(newP, newP->points.Num());
 					}
 					passiveConnections.Remove(i);
 				}
@@ -475,7 +486,15 @@ struct FRoomPolygon : public FPolygon
 		}
 
 
-		toRemove.clear();
+		//toRemove.clear();
+		//TSet<int32> newList;
+		//for (int32 i : toIgnore) {
+		//	if (i >= p.max)
+		//		newList.Add(i - (p.max - p.min) + 2);
+		//	else
+		//		newList.Add(i);
+		//}
+		//toIgnore = newList;
 		for (int32 i : toIgnore) {
 			if (i >= p.max)
 				toRemove.push_back(i);
@@ -485,13 +504,31 @@ struct FRoomPolygon : public FPolygon
 			toIgnore.Add(i - (p.max - p.min) + 2);
 		}
 
+		TMap<FRoomPolygon*, int32> newActive;
+		for (auto &pair : activeConnections) {
+			if (pair.Value > p.min) {
+				newActive.Add(pair.Key, pair.Value - (p.max - p.min) + 2);
+			}
+			else {
+				newActive.Add(pair.Key, pair.Value);
+			}
+		}
+		activeConnections = newActive;
+			//for (int i = 0; i < pair.Key->points.Num(); i++) {
+
+				//TSet<FRoomPolygon*> pols = pair.Key->passiveConnections[i];
+				//if (pair.Key->passiveConnections.Contains(i) && pair.Key->passiveConnections[i].Contains(this)) {
+				//	pair.Key->passiveConnections[i].Remove(this);
+				//}
+			//}	
+
 		newP->points.Add(p.p2);
 
 		// dont place the wall twice
 		toIgnore.Add(p.min+1);
 		//	// entrance to next room
 		if (entranceBetween && ((!entrances.Contains(p.min) && !entrances.Contains(p.min+2) || nonDuplicatingEntrances.Contains(p.min) || nonDuplicatingEntrances.Contains(p.min+2)))) {
-			TArray<FRoomPolygon*> passive;
+			TSet<FRoomPolygon*> passive;
 			passive.Add(newP);
 			passiveConnections.Add(p.min + 1, passive);
 			newP->entrances.Add(newP->points.Num());
