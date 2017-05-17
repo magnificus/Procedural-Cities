@@ -434,9 +434,9 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 
 	TArray<FMaterialPolygon> otherSides;
 	for (FMaterialPolygon &p : toReturn.pols) {
-		if (p.getDirection().X < 0) {
-			p.reverse();
-		}
+		//if (p.getDirection().X < 0) {
+		//	p.reverse();
+		//}
 		FMaterialPolygon other = p;
 
 		other.offset(p.getDirection() * 20);

@@ -14,6 +14,6 @@ public:
 	MeshPolygonReference();
 	static FPolygon getBedPolygon(FVector origin, FRotator dir);
 	static FPolygon getShelfPolygon(FVector origin, FRotator dir);
-
+	static FPolygon getSmallTablePolygon(FVector origin, FRotator dir);
 	~MeshPolygonReference();
 };

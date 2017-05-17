@@ -481,11 +481,45 @@ static TArray<FMeshInfo> getBathRoom(FRoomPolygon &r2) {
 	return meshes;
 }
 
+bool attemptPlaceShelf(FRoomPolygon &r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, float offset, bool shallContinue) {
+	bool found = false;
+	for (int i = 1; i < r2.points.Num(); i++) {
+		if (r2.windows.Contains(i) || r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
+			continue;
+		}
+		int place = i;
+		FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
+		FVector tangent = r2.points[place] - r2.points[place - 1];
+		tangent.Normalize();
+		dir.Normalize();
+		FVector origin = r2.points[place - 1] + tangent * offset;
+		FVector pos = origin + dir * 10;
+		FRotator rot = dir.Rotation();
+		FPolygon shelfP = MeshPolygonReference::getShelfPolygon(pos, rot);
+		FVector res = intersection(shelfP, placed);
+		if (res.X == 0.0f) {
+			placed.Add(shelfP);
+			FMeshInfo shelf{ "shelf", FTransform(rot , pos, FVector(1.0f, 1.0f, 1.0f))};
+			meshes.Add(shelf);
+			found = true;
+			if (!shallContinue)
+				return true;
+		}
+
+	}
+	return found;
+}
+
 static TArray<FMeshInfo> getBedRoom(FRoomPolygon &r2) {
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 	placed.Add(r2);
-	placed.Append(getBlockingVolumes(r2, 200, 100));
+	placed.Append(getBlockingVolumes(r2, 200, 200));
+	//for (FPolygon p : placed) {
+	//	for (FVector f : p.points) {
+	//		meshes.Add(FMeshInfo{ "visualizer", FTransform(f) });
+	//	}
+	//}
 
 	for (int i = 1; i < r2.points.Num(); i++) {
 		if (r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
@@ -501,35 +535,45 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon &r2) {
 		FRotator rot = dir.Rotation();
 		FPolygon bedP = MeshPolygonReference::getBedPolygon(pos, rot);
 		placed.Add(bedP);
-		FMeshInfo bed{ "bed", FTransform(rot + FRotator(0, 270, 0), pos + FVector(0, 0, 30), FVector(1.0f, 1.0f, 1.0f)) };
+		FMeshInfo bed{ "bed", FTransform(rot + FRotator(0, 270, 0), pos + FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
 		meshes.Add(bed);
 		pos += tangent * 150 - dir * 70;
-		FMeshInfo table{ "small_table", FTransform(rot , pos - FVector(0, 0, 70), FVector(1.0f, 1.0f, 1.0f)) };
+		FPolygon smallTableP = MeshPolygonReference::getSmallTablePolygon(pos, rot);
+		placed.Add(smallTableP);
+		FMeshInfo table{ "small_table", FTransform(rot , pos - FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
 		meshes.Add(table);
 		break;
 	}
 
-	for (int i = 1; i < r2.points.Num(); i++) {
-		if (r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
-			continue;
-		}
-		int place = i;
-		FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
-		FVector tangent = r2.points[place] - r2.points[place - 1];
-		tangent.Normalize();
-		dir.Normalize();
-		FVector origin = r2.points[place - 1] + tangent * 120;
-		FVector pos = origin + dir * 180;
-		FRotator rot = dir.Rotation();
-		FPolygon bedP = MeshPolygonReference::getShelfPolygon(pos, rot);
-		placed.Add(bedP);
-		FMeshInfo bed{ "bed", FTransform(rot + FRotator(0, 270, 0), pos + FVector(0, 0, 30), FVector(1.0f, 1.0f, 1.0f)) };
-		meshes.Add(bed);
-		pos += tangent * 150 - dir * 70;
-		FMeshInfo table{ "small_table", FTransform(rot , pos - FVector(0, 0, 70), FVector(1.0f, 1.0f, 1.0f)) };
-		meshes.Add(table);
-		break;
+	for (int i = 10; i < 200; i += 100) {
+		if (attemptPlaceShelf(r2, placed, meshes, i, false))
+			break;
 	}
+
+	//bool hasPlaced = false;
+	//for (int i = 1; i < r2.points.Num(); i++) {
+	//	if (r2.windows.Contains(i) || r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
+	//		continue;
+	//	}
+	//	int place = i;
+	//	FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
+	//	FVector tangent = r2.points[place] - r2.points[place - 1];
+	//	tangent.Normalize();
+	//	dir.Normalize();
+	//	FVector origin = r2.points[place - 1] + tangent * 50;
+	//	FVector pos = origin + dir * 10;
+	//	FRotator rot = dir.Rotation();
+	//	FPolygon shelfP = MeshPolygonReference::getShelfPolygon(pos, rot);
+	//	FVector res = intersection(shelfP, placed);
+	//	if (res.X == 0.0f) {
+	//		placed.Add(shelfP);
+	//		FMeshInfo shelf{ "shelf", FTransform(rot , pos, FVector(1.0f, 1.0f, 1.0f)) };
+	//		meshes.Add(shelf);
+	//		hasPlaced = true;
+	//		break;
+	//	}
+	//	
+	//}
 
 
 
@@ -599,7 +643,7 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon f, RoomType type, int floor, floa
 	}
 	switch (type) {
 	case RoomType::office: return buildOffice(f, floor, height, 0.005, 250, 150);
-	case RoomType::apartment: return buildApartment(f, floor, height, 0.002, 200, 100);
+	case RoomType::apartment: return buildApartment(f, floor, height, 0.002, 200, 200);
 	}
 	return FRoomInfo();
 }
