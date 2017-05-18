@@ -93,7 +93,6 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			corners.points.Add(sndAttach);
 
 		if (i == (hole.points.Num() - 1)) {
-
 			TArray<int32> toRemove;
 			for (int32 j : roomPols[0].entrances) {
 				toRemove.Add(j);
@@ -114,7 +113,6 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			connections[i].a = conn;
 			roomPols[i].points.Add(sndAttach);
 			roomPols[i].entrances.Add(roomPols[i].points.Num());
-			roomPols[i].nonDuplicatingEntrances.Add(roomPols[i].points.Num());
 			roomPols[i].points.Add(firstAttach);
 			roomPols[i].points.Add(hole.points[i]);
 		}

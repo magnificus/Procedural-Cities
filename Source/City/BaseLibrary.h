@@ -329,38 +329,54 @@ struct RoomBlueprint {
 
 struct FRoomPolygon : public FPolygon
 {
+	// sides of the polygon where windows are allowed
 	TSet<int32> windows;
+	// sides of the polygon with entrances from my end
 	TSet<int32> entrances;
+	// sides of the polygon with entrances that cannot be duplicated to other rooms when i split
+	// a subset of entrances where the entrance is not in the middle but in a specified position
+	TMap<int32, FVector> specificEntrances;
 	TSet<int32> nonDuplicatingEntrances;
+	// sides of the polygon that are "taken care of" by another polygon, so this polygon doesn't have to draw them
 	TSet<int32> toIgnore;
+	// members of toIgnore that correspond to an entrance from the neighboring polygon
 	TMap<int32, TSet<FRoomPolygon*>> passiveConnections;
+	// pointers to recievers of entrances from my end
 	TMap<FRoomPolygon*, int32> activeConnections;
 
 	bool canRefine = true;
 	SubRoomType type = SubRoomType::empty;
 
-	void updatePassiveConnections(SplitStruct &p, bool first, FRoomPolygon* newP) {
+	void updateConnections(int num, FVector &inPoint, FRoomPolygon* newP, bool first, int passiveNum) {
 		TArray<FRoomPolygon*> toRemove;
 
 		TSet<FRoomPolygon*> childPassive;
-		for (FRoomPolygon* p1 : passiveConnections[first ? p.min : p.max]) {
+
+		// move collisions to the left
+		if (specificEntrances.Contains(num)) {
+			if (FVector::Dist(inPoint, specificEntrances[num]) < 100) {
+				FVector tangent = points[num] - points[num - 1];
+				tangent.Normalize();
+				float toMove = FVector::Dist(inPoint, specificEntrances[num] - tangent * 100);
+				inPoint -= toMove * tangent;
+			}
+		}
+
+		for (FRoomPolygon* p1 : passiveConnections[num]) {
 			int loc = p1->activeConnections[this];
 			// this is the entrance, we're not allowed to place a wall that collides with this, try to fit newP on the other side of the entrance if possible, making it a single-entry room
-			FVector point = middle(p1->points[loc], p1->points[loc - 1]);
-			float dist = FVector::Dist(point, first ? p.p1 : p.p2);
+			FVector point = p1->specificEntrances[loc]; //middle(p1->points[loc], p1->points[loc - 1]);
+			float dist = FVector::Dist(point, inPoint);
 			if (dist < 100) {
-				FVector tangent1 = points[p.min] - points[p.min - 1];
-				tangent1.Normalize();
-				FVector tangent2 = points[p.max] - points[p.max - 1];
-				tangent2.Normalize();
-				float toMove = FVector::Dist(first ? p.p1 : p.p2, point - (first ? tangent1 : tangent2)* 100);
-				p.p1 -= toMove * tangent1;
-				p.p2 -= toMove * tangent2;
-				// our child is now free from our master, while we're still slaves
+				FVector tangent = points[num] - points[num - 1];
+				tangent.Normalize();
+				float toMove = FVector::Dist(inPoint, point - tangent * 100);
+				inPoint -= toMove * tangent;
+				// our child is now free from our master, but we're still slaves
 			}
 			else {
 				// new cut doesn't interfere overlap with the entrance, now to see who gets it
-				if (first && isOnLine(point, points[p.min - 1], p.p1) || !first && !isOnLine(point, points[p.max-1], p.p2)) {
+				if (first && isOnLine(point, points[num - 1], inPoint) || !first && !isOnLine(point, points[num - 1], inPoint)) {
 					// i got it, no change
 				}
 				else {
@@ -369,15 +385,15 @@ struct FRoomPolygon : public FPolygon
 					p1->activeConnections.Remove(this);
 					p1->activeConnections.Add(newP, loc);
 					toRemove.Add(p1);
-					toIgnore.Remove(first ? p.min : p.max);
+					toIgnore.Remove(num);
 				}
 			}
 		}
 		if (childPassive.Num() > 0)
-			newP->passiveConnections.Add(newP->points.Num(), childPassive);
+			newP->passiveConnections.Add(passiveNum, childPassive);
 
 		for (FRoomPolygon* t : toRemove) {
-			passiveConnections[first ? p.min : p.max].Remove(t);
+			passiveConnections[num].Remove(t);
 		}
 	}
 
@@ -388,123 +404,171 @@ struct FRoomPolygon : public FPolygon
 			return NULL;
 		}
 		FRoomPolygon* newP = new FRoomPolygon();
-		newP->points.Add(p.p1);
 
 
 		if (entrances.Contains(p.min) && !nonDuplicatingEntrances.Contains(p.min)) {
-			// potentially add responsibility of child 
-			//newP.entrances.Add(newP.points.Num());
+			// potentially add responsibility of child
+			//FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(points[p.min], points[p.min - 1]);
+			//if (!isOnLine(entrancePoint, p.p1, points[p.min])) {
+			//	newP->specificEntrances.Add(1, entrancePoint);
+			//	newP->entrances.Add(1);
+			//	TArray<FRoomPolygon*> toRemove;
+			//	for (auto &pair : activeConnections) {
+			//		if (pair.Value == p.min) {
+			//			for (auto &pair2 : pair.Key->passiveConnections) {
+			//				if (pair2.Value.Contains(this)) {
+			//					pair.Key->passiveConnections[pair2.Key].Add(newP);
+			//					pair.Key->passiveConnections[pair2.Key].Remove(this);
+			//					break;
+			//				}
+			//			}
+			//			newP->activeConnections.Add(pair.Key, 1);
+			//			toRemove.Add(pair.Key);
+			//			break;
+			//		}
+			//	}
+			//	specificEntrances.Remove(p.min);
+			//	entrances.Remove(p.min);
+			//	for (FRoomPolygon* p2 : toRemove) {
+			//		activeConnections.Remove(p2);
+			//	}
+			//}
+
 		}
+
+
 		if (windows.Contains(p.min)) {
-			newP->windows.Add(newP->points.Num());
+			newP->windows.Add(1);
 		}
+
+		//updateConnections(p.min, p.p1, newP, true, 1);
+
 		if (toIgnore.Contains(p.min)) {
-			if (passiveConnections.Contains(p.min)) {
-				updatePassiveConnections(p, true, newP);
-			}
-			newP->toIgnore.Add(newP->points.Num());
+			
+			newP->toIgnore.Add(1);
 		}
+		newP->points.Add(p.p1);
+
 		newP->points.Add(points[p.min]);
 
 		for (int i = p.min + 1; i < p.max; i++) {
-			if (entrances.Contains(i)) {
-				entrances.Remove(i);
-				if (nonDuplicatingEntrances.Contains(i)) {
-					newP->nonDuplicatingEntrances.Add(newP->points.Num());
-				}
-				newP->entrances.Add(newP->points.Num());
+			//if (entrances.Contains(i)) {
+			//	if (nonDuplicatingEntrances.Contains(i)) {
+			//		newP->nonDuplicatingEntrances.Add(newP->points.Num());
+			//	}
+			//	newP->specificEntrances.Add(newP->points.Num(), specificEntrances.Contains(i) ? specificEntrances[i] : middle(points[i], points[i-1]));
+			//	newP->entrances.Add(newP->points.Num());
 
-				auto res = activeConnections.FindKey(i);
-				if (res != nullptr) {
-					FRoomPolygon *p1 = *res;
-					for (int j = 1; j < p1->points.Num(); j++) {
-						if (p1->passiveConnections.Contains(j) && p1->passiveConnections[j].Contains(this)) {
-							activeConnections.Remove(p1);
-							p1->passiveConnections[j].Remove(this);
-							p1->passiveConnections[j].Add(newP);
-							newP->activeConnections.Add(newP, j);
-							break;
-						}
-					}
-				}
+			//	entrances.Remove(i);
+			//	specificEntrances.Remove(i);
 
-			}
-			if (windows.Contains(i)) {
-				windows.Remove(i);
-				newP->windows.Add(newP->points.Num());
-			}
-			if (toIgnore.Contains(i)) {
-				toIgnore.Remove(i);
-				newP->toIgnore.Add(newP->points.Num());
-				if (passiveConnections.Contains(i)) {
-					TSet<FRoomPolygon*> &pols = passiveConnections[i];
-					newP->passiveConnections.Add(newP->points.Num(), pols);
-					passiveConnections.Remove(i);
-					for (FRoomPolygon *p1 : pols) {
-						p1->activeConnections.Add(newP, p1->activeConnections[this]);
-						p1->activeConnections.Remove(this);
-					}
-				}
-			}
+			//	auto res = activeConnections.FindKey(i);
+			//	if (res != nullptr) {
+			//		FRoomPolygon *p1 = *res;
+			//		for (int j = 1; j < p1->points.Num(); j++) {
+			//			if (p1->passiveConnections.Contains(j) && p1->passiveConnections[j].Contains(this)) {
+			//				activeConnections.Remove(p1);
+			//				p1->passiveConnections[j].Remove(this);
+			//				p1->passiveConnections[j].Add(newP);
+			//				newP->activeConnections.Add(p1, newP->points.Num());
+			//				break;
+			//			}
+			//		}
+			//	}
+
+			//}
+			//if (windows.Contains(i)) {
+			//	windows.Remove(i);
+			//	newP->windows.Add(newP->points.Num());
+			//}
+			//if (toIgnore.Contains(i)) {
+			//	toIgnore.Remove(i);
+			//	newP->toIgnore.Add(newP->points.Num());
+			//	if (passiveConnections.Contains(i)) {
+			//		TSet<FRoomPolygon*> pols = passiveConnections[i];
+			//		newP->passiveConnections.Add(newP->points.Num(), pols);
+			//		passiveConnections.Remove(i);
+			//		for (FRoomPolygon *p1 : pols) {
+			//			p1->activeConnections.Add(newP, p1->activeConnections[this]);
+			//			p1->activeConnections.Remove(this);
+			//		}
+			//	}
+			//}
 			newP->points.Add(points[i]);
 		}
 
-		//TMap<int32, TArray<FRoomPolygon*>> passiveConnections;
-		//TMap<FRoomPolygon*, int32> activeConnections;
-
 		if (entrances.Contains(p.max) && !nonDuplicatingEntrances.Contains(p.max)) {
-			//newP.entrances.Add(newP.points.Num());
+			FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(points[p.max], points[p.max - 1]);
+			if (!isOnLine(entrancePoint, p.p2, points[p.max])) {
+				newP->specificEntrances.Add(newP->points.Num(), entrancePoint);
+				newP->entrances.Add(newP->points.Num());
+				TArray<FRoomPolygon*> toRemove;
+				for (auto &pair : activeConnections) {
+					if (pair.Value == p.max) {
+						for (auto &pair2 : pair.Key->passiveConnections) {
+							if (pair2.Value.Contains(this)) {
+								pair.Key->passiveConnections[pair2.Key].Add(newP);
+								pair.Key->passiveConnections[pair2.Key].Remove(this);
+								break;
+							}
+						}
+						newP->activeConnections.Add(pair.Key, newP->points.Num());
+						toRemove.Add(pair.Key);
+						break;
+					}
+				}
+				specificEntrances.Remove(p.max);
+				entrances.Remove(p.max);
+				for (FRoomPolygon* p2 : toRemove) {
+					activeConnections.Remove(p2);
+				}
+			}
 		}
 		if (windows.Contains(p.max)) {
 			newP->windows.Add(newP->points.Num());
 		}
+
+		updateConnections(p.max, p.p2, newP, false, newP->points.Num());
+
 		if (toIgnore.Contains(p.max)) {
 			newP->toIgnore.Add(newP->points.Num());
-			if (passiveConnections.Contains(p.max)) {
-				updatePassiveConnections(p, false, newP);
+		}
+
+
+
+		TSet<int32> newList;
+		TMap<int32, FVector> newSpecificList;
+		for (int32 i : entrances) {
+			if (i >= p.max){
+				newList.Add(i - (p.max - p.min) + 2);
+				newSpecificList.Add(i - (p.max - p.min) + 2, specificEntrances[i]);
+			}
+			else {
+				newList.Add(i);
+				newSpecificList.Add(i, specificEntrances.Contains(i) ? specificEntrances[i] : middle(points[i], points[i-1]));
 			}
 		}
+		entrances = newList;
+		specificEntrances = newSpecificList;
 
-
-
-		std::vector<int32> toRemove;
-		for (int32 i : entrances) {
-			if (i >= p.max)
-				toRemove.push_back(i);
-		}
-		for (int32 i : toRemove) {
-			entrances.Remove(i);
-			entrances.Add(i - (p.max - p.min) + 2);
-		}
-
-		toRemove.clear();
+		newList.Empty();
 		for (int32 i : windows) {
 			if (i >= p.max)
-				toRemove.push_back(i);
+				newList.Add(i - (p.max - p.min) + 2);
+			else
+				newList.Add(i);
 		}
-		for (int32 i : toRemove) {
-			windows.Remove(i);
-			windows.Add(i - (p.max - p.min) + 2);
-		}
+		windows = newList;
 
 
-		toRemove.clear();
-		//TSet<int32> newList;
-		//for (int32 i : toIgnore) {
-		//	if (i >= p.max)
-		//		newList.Add(i - (p.max - p.min) + 2);
-		//	else
-		//		newList.Add(i);
-		//}
-		//toIgnore = newList;
+		newList.Empty();
 		for (int32 i : toIgnore) {
 			if (i >= p.max)
-				toRemove.push_back(i);
+				newList.Add(i - (p.max - p.min) + 2);
+			else
+				newList.Add(i);
 		}
-		for (int32 i : toRemove) {
-			toIgnore.Remove(i);
-			toIgnore.Add(i - (p.max - p.min) + 2);
-		}
+		toIgnore = newList;
 
 		TMap<FRoomPolygon*, int32> newActive;
 		for (auto &pair : activeConnections) {
@@ -516,15 +580,28 @@ struct FRoomPolygon : public FPolygon
 			}
 		}
 		activeConnections = newActive;
+
+		TMap<int32, TSet<FRoomPolygon*> > newPassive;
+		for (auto &pair : passiveConnections) {
+			if (pair.Key >= p.max) {
+				newPassive.Add(pair.Key - (p.max - p.min) + 2, pair.Value );
+			}
+			else {
+				newPassive.Add(pair.Key, pair.Value);
+			}
+		}
+		passiveConnections = newPassive;
+
 		newP->points.Add(p.p2);
 
 		// dont place the wall twice
 		toIgnore.Add(p.min+1);
 		//	// entrance to next room
-		if (entranceBetween && ((!entrances.Contains(p.min) && !entrances.Contains(p.min+2) || nonDuplicatingEntrances.Contains(p.min) || nonDuplicatingEntrances.Contains(p.min+2)))) {
-			TSet<FRoomPolygon*> passive;
+		if (entranceBetween){ //&& ((!entrances.Contains(p.min) && !entrances.Contains(p.min+2) || nonDuplicatingEntrances.Contains(p.min) || nonDuplicatingEntrances.Contains(p.min+2)))) {
+			TSet<FRoomPolygon*> passive = newP->passiveConnections.Contains(newP->points.Num()) ? newP->passiveConnections[newP->points.Num()] : TSet<FRoomPolygon*>();
 			passive.Add(newP);
 			passiveConnections.Add(p.min + 1, passive);
+			newP->specificEntrances.Add(newP->points.Num(), middle(p.p1, p.p2));
 			newP->entrances.Add(newP->points.Num());
 			newP->activeConnections.Add(this, newP->points.Num());
 		}
@@ -532,16 +609,12 @@ struct FRoomPolygon : public FPolygon
 
 		newP->points.Add(p.p1);
 
+		//toIgnore.Empty();
+		//newP->toIgnore.Empty();
 
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
-
-		if (FVector::DistSquared(points[0], points[points.Num() - 1]) > 100) {
-			UE_LOG(LogTemp, Warning, TEXT("RESULTING SELF NOT CONNECTED"));
-			FVector first = points[0];
-			points.Add(first);
-		}
 		return newP;
 	}
 
@@ -563,7 +636,7 @@ struct FRoomPolygon : public FPolygon
 					FRoomPolygon *p = remaining[i];
 					area = p->getArea();
 					smaller = smaller || (area > r.maxArea);
-					if (area <= r.maxArea && area >= r.minArea && p->type != SubRoomType::hallway) {
+					if (area <= r.maxArea && area >= r.minArea){// && p->type != SubRoomType::hallway) {
 						// found fitting room
 						p->type = r.type;
 						toReturn.Add(p);
@@ -589,23 +662,26 @@ struct FRoomPolygon : public FPolygon
 					//remaining.RemoveAt(targetNum);
 					int count = 0;
 					while (scale < minPctSplit && count++ < 5) {
-						FRoomPolygon* newP = target->splitAlongMax(0.5, true);
-						if (target->nonDuplicatingEntrances.Num() > 0) {
-							FRoomPolygon *temp = target;
-							target = newP;
-							newP = target;
+						FRoomPolygon* newP = target->splitAlongMax(0.6, true);
+						if (newP == nullptr) {
+							break;
 						}
-						if (target->nonDuplicatingEntrances.Num() > 0) {
-							target->type = SubRoomType::hallway;
-						}
-						if (newP->nonDuplicatingEntrances.Num() > 0) {
-							newP->type = SubRoomType::hallway;
-						}
+						//if (target->nonDuplicatingEntrances.Num() > 0) {
+						//	FRoomPolygon *temp = target;
+						//	target = newP;
+						//	newP = target;
+						//}
+						//if (target->nonDuplicatingEntrances.Num() > 0) {
+						//	target->type = SubRoomType::hallway;
+						//}
+						//if (newP->nonDuplicatingEntrances.Num() > 0) {
+						//	newP->type = SubRoomType::hallway;
+						//}
 						remaining.EmplaceAt(0, newP);
 						scale = r.minArea / target->getArea();
 
 					}
-					if (target->getArea() <= r.maxArea && target->getArea() >= r.minArea && target->type != SubRoomType::hallway) {
+					if (target->getArea() <= r.maxArea && target->getArea() >= r.minArea){// && target->type != SubRoomType::hallway) {
 						target->type = r.type;
 						remaining.RemoveAt(targetNum);
 						toReturn.Add(target);
@@ -614,16 +690,15 @@ struct FRoomPolygon : public FPolygon
 						float ideal = (r.maxArea - r.minArea) / 2 + r.minArea;
 						FRoomPolygon* newP = target->splitAlongMax(r.minArea / target->getArea(), true);
 						if (newP == nullptr) {
-							couldPlace = true;
-							break;
+							continue;
 						}
-						if (newP->nonDuplicatingEntrances.Num() > 0) {
-							newP->type = SubRoomType::hallway;
-							FRoomPolygon *temp = target;
-							target = newP;
-							newP = target;
+						//if (newP->nonDuplicatingEntrances.Num() > 0) {
+						//	newP->type = SubRoomType::hallway;
+						//	FRoomPolygon *temp = target;
+						//	target = newP;
+						//	newP = target;
 
-						}
+						//}
 						newP->type = r.type;
 						toReturn.Add(newP);
 						//remaining.EmplaceAt(0, target);
