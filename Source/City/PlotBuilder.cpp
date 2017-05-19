@@ -19,15 +19,15 @@ void APlotBuilder::BeginPlay()
 	
 }
 
-bool testCollision(TArray<FPolygon> &polygons, FPolygon &pol) {
-
-	for (FPolygon p2 : polygons) {
-		FVector res = intersection(pol, p2);
-		if (res.X != 0.0f)
-			return true;
-	}
-	return false;
-}
+//bool testCollision(TArray<FPolygon> &polygons, FPolygon &pol) {
+//
+//	for (FPolygon p2 : polygons) {
+//		FVector res = intersection(pol, p2);
+//		if (res.X != 0.0f)
+//			return true;
+//	}
+//	return false;
+//}
 
 TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int maxFloors, int minFloors) {
 	TArray<FHousePolygon> housePolygons;
@@ -112,7 +112,7 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			//fh.windows.Add(2);
 			//fh.windows.Add(4);
 
-			if (!testCollision(others, pol)) {
+			if (!testCollision(pol, others, 500)) {
 				fh.points = pol.points;
 				fh.population = 1.0;
 				fh.height = randFloat() * (maxFloors - minFloors) + minFloors;

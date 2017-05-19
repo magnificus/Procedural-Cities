@@ -75,7 +75,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 		roomPols[i - 1].points.Add(firstAttach);
 		roomPols[i - 1].entrances.Add(roomPols[i - 1].points.Num());
 		//roomPols[i - 1].specificEntrances.Add(roomPols[i - 1].points.Num(), middle(firstAttach, sndAttach));
-		roomPols[i - 1].nonDuplicatingEntrances.Add(roomPols[i - 1].points.Num());
+		//roomPols[i - 1].nonDuplicatingEntrances.Add(roomPols[i - 1].points.Num());
 		roomPols[i - 1].points.Add(sndAttach);
 
 
@@ -101,13 +101,13 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			for (int32 j : toRemove) {
 				roomPols[0].entrances.Remove(j);
 				roomPols[0].entrances.Add(j + 3);
-				roomPols[0].nonDuplicatingEntrances.Add(j + 3);
+				//roomPols[0].nonDuplicatingEntrances.Add(j + 3);
 			}
 			connections[0].a = conn;
 			roomPols[0].points.EmplaceAt(0, sndAttach);
 			roomPols[0].entrances.Add(1);
 			//roomPols[0].specificEntrances.Add(1, middle(firstAttach, sndAttach));
-			roomPols[0].nonDuplicatingEntrances.Add(1);
+			//roomPols[0].nonDuplicatingEntrances.Add(1);
 			roomPols[0].points.EmplaceAt(1, firstAttach);
 			roomPols[0].points.EmplaceAt(2, hole.points[i]);
 		}
@@ -474,7 +474,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 
 	}
 
-	//toReturn.pols.Append(otherSides);
+	toReturn.pols.Append(otherSides);
 	return toReturn;
 
 

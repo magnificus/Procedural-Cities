@@ -456,7 +456,7 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon &r2) {
 static TArray<FMeshInfo> getBathRoom(FRoomPolygon &r2) {
 	TArray<FMeshInfo> meshes;
 	
-	//r2.windows.Empty();
+	r2.windows.Empty();
 	//r2.entrances.Empty();
 	//r2.toIgnore.Empty();
 	TArray<FPolygon> placed;
@@ -495,8 +495,8 @@ bool attemptPlaceShelf(FRoomPolygon &r2, TArray<FPolygon> &placed, TArray<FMeshI
 		FVector pos = origin + dir * 10;
 		FRotator rot = dir.Rotation();
 		FPolygon shelfP = MeshPolygonReference::getShelfPolygon(pos, rot);
-		FVector res = intersection(shelfP, placed);
-		if (res.X == 0.0f) {
+		
+		if (!testCollision(shelfP, placed, 0)) {
 			placed.Add(shelfP);
 			FMeshInfo shelf{ "shelf", FTransform(rot , pos, FVector(1.0f, 1.0f, 1.0f))};
 			meshes.Add(shelf);

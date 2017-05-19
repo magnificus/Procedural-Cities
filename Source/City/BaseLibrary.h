@@ -41,7 +41,6 @@ enum class PolygonType : uint8
 };
 
 
-
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 
 struct SplitStruct {
@@ -408,7 +407,7 @@ struct FRoomPolygon : public FPolygon
 		}
 		FRoomPolygon* newP = new FRoomPolygon();
 
-		if (entrances.Contains(p.min) && !nonDuplicatingEntrances.Contains(p.min)) {
+		if (entrances.Contains(p.min)){// && !nonDuplicatingEntrances.Contains(p.min)) {
 			// potentially add responsibility of child
 			FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(p.p1, points[p.min]);
 			if (!isOnLine(entrancePoint, p.p1, points[p.min])) {
@@ -457,12 +456,12 @@ struct FRoomPolygon : public FPolygon
 
 		for (int i = p.min + 1; i < p.max; i++) {
 			if (entrances.Contains(i)) {
-				if (nonDuplicatingEntrances.Contains(i)) {
-					newP->nonDuplicatingEntrances.Add(newP->points.Num());
-				}
-				else {
+				//if (nonDuplicatingEntrances.Contains(i)) {
+				//	newP->nonDuplicatingEntrances.Add(newP->points.Num());
+				//}
+				//else {
 					newP->specificEntrances.Add(newP->points.Num(), specificEntrances.Contains(i) ? specificEntrances[i] : middle(points[i], points[i - 1]));
-				}
+				//}
 				newP->entrances.Add(newP->points.Num());
 
 				entrances.Remove(i);
@@ -511,7 +510,7 @@ struct FRoomPolygon : public FPolygon
 			newP->points.Add(points[i]);
 		}
 
-		if (entrances.Contains(p.max) && !nonDuplicatingEntrances.Contains(p.max)) {
+		if (entrances.Contains(p.max)){// && !nonDuplicatingEntrances.Contains(p.max)) {
 			FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max - 1]);
 			if (!isOnLine(entrancePoint, p.p2, points[p.max])) {
 				newP->specificEntrances.Add(newP->points.Num(), entrancePoint);
@@ -645,7 +644,7 @@ struct FRoomPolygon : public FPolygon
 	TArray<FRoomPolygon*> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon*> &remaining, bool repeating) {
 		TArray<FRoomPolygon*> toReturn;
 		float area;
-		float minPctSplit = 0.3f;
+		float minPctSplit = 0.25f;
 		bool couldPlace = false;
 		int c1 = 0;
 		do {
@@ -683,21 +682,11 @@ struct FRoomPolygon : public FPolygon
 					remaining.RemoveAt(targetNum);
 					int count = 0;
 					while (scale < minPctSplit && count++ < 5) {
-						FRoomPolygon* newP = target->splitAlongMax(0.5, true);
+						FRoomPolygon* newP = target->splitAlongMax(0.6, true);
 						if (newP == nullptr) {
 							break;
 						}
-						//if (target->nonDuplicatingEntrances.Num() > 0) {
-						//	FRoomPolygon *temp = target;
-						//	target = newP;
-						//	newP = target;
-						//}
-						//if (target->nonDuplicatingEntrances.Num() > 0) {
-						//	target->type = SubRoomType::hallway;
-						//}
-						//if (newP->nonDuplicatingEntrances.Num() > 0) {
-						//	newP->type = SubRoomType::hallway;
-						//}
+						//if (newP->nonDuplicatingEntrances)
 						remaining.EmplaceAt(0, newP);
 						scale = r.minArea / target->getArea();
 
@@ -713,13 +702,6 @@ struct FRoomPolygon : public FPolygon
 						if (newP == nullptr) {
 							continue;
 						}
-						//if (newP->nonDuplicatingEntrances.Num() > 0) {
-						//	newP->type = SubRoomType::hallway;
-						//	FRoomPolygon *temp = target;
-						//	target = newP;
-						//	newP = target;
-
-						//}
 						newP->type = r.type;
 						toReturn.Add(newP);
 						remaining.EmplaceAt(0, target);
@@ -736,20 +718,29 @@ struct FRoomPolygon : public FPolygon
 
 	}
 
-	// post placement part of algorithm
-	void postFit(TArray<FRoomPolygon> &rooms, TArray<RoomSpecification> neededRooms){
+	int getTotalConnections() {
+		int totPassive = 0;
+		for (auto &list : passiveConnections) {
+			totPassive += list.Value.Num();
+		}
+		return activeConnections.Num() + totPassive;
+	}
 
-		TSet<RoomSpecification> foundRooms;
-		for (FRoomPolygon &p : rooms) {
-			if (!splitableType(p.type) && p.entrances.Num() + p.toIgnore.Num() > 1) {
-				p.type = SubRoomType::corridor;
+
+	// post placement part of algorithm
+	void postFit(TArray<FRoomPolygon*> &rooms, TArray<RoomSpecification> neededRooms){
+
+		TSet<SubRoomType> foundRooms;
+		for (FRoomPolygon *p : rooms) {
+			if (!splitableType(p->type) && p->getTotalConnections() > 1) {
+				p->type = SubRoomType::corridor;
 			}
 			else {
-				foundRooms.Add(p.type);
+				foundRooms.Add(p->type);
 			}
 		}
 		for (RoomSpecification r : neededRooms) {
-
+			
 		}
 	}
 
@@ -765,7 +756,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false));
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true));
 
-		postFit(rooms);
+		//postFit(rooms, blueprint.needed);
 		TArray<FRoomPolygon> toReturn;
 		for (FRoomPolygon *p : remaining) {
 			//for (int i = 0; i < p.points.Num(); i++) {
@@ -1091,11 +1082,15 @@ Calculate whether two lines intersect and where
 */
 
 
-void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
-FVector intersection(FPolygon &p1, TArray<FPolygon> &p2);
-FVector intersection(FPolygon &p1, FPolygon &p2);
+void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points);
+
+//void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
+//FVector intersection(FPolygon &p1, TArray<FPolygon> &p2);
+//FVector intersection(FPolygon &p1, FPolygon &p2);
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 FVector intersection(FVector p1, FVector p2, FPolygon p);
+bool testCollision(FPolygon &, TArray<FPolygon> &, float leniency);
+bool testCollision(FPolygon &, FPolygon &, float leniency);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
 float randFloat();
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);

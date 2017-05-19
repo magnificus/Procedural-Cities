@@ -11,42 +11,55 @@ BaseLibrary::~BaseLibrary()
 {
 }
 
-void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4) {
-	float res = FVector::DotProduct(tangent, v1);
-	min = res;
-	max = res;
-	res = FVector::DotProduct(tangent, v2);
-	min = std::min(min, res);
-	max = std::max(max, res);
-	res = FVector::DotProduct(tangent, v3);
-	min = std::min(min, res);
-	max = std::max(max, res);
-	res = FVector::DotProduct(tangent, v4);
-	min = std::min(min, res);
-	max = std::max(max, res);
+void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points) {
+	min = FVector::DotProduct(tangent, points[0]);
+	max = FVector::DotProduct(tangent, points[0]);
+
+	for (int i = 1; i < points.Num(); i++) {
+		float res = FVector::DotProduct(tangent, points[i]);
+		min = std::min(min, res);
+		max = std::max(max, res);
+	}
 }
 
-FVector intersection(FPolygon &p1, TArray<FPolygon> &p2) {
-	for (FPolygon &f : p2) {
-		FVector res = intersection(p1, f);
-		if (res.X != 0.0f) {
-			return res;
-		}
-	}
-	return FVector(0.0f, 0.0f, 0.0f);
-}
 
-FVector intersection(FPolygon &p1, FPolygon &p2) {
-	for (int i = 1; i < p1.points.Num(); i++) {
-		for (int j = 1; j < p2.points.Num(); j++) {
-			FVector res = intersection(p1.points[i - 1], p1.points[i], p2.points[j - 1], p2.points[j]);
-			if (res.X != 0.0f) {
-				return res;
-			}
-		}
-	}
-	return FVector(0.0f, 0.0f, 0.0f);
-}
+
+//void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4) {
+//	float res = FVector::DotProduct(tangent, v1);
+//	min = res;
+//	max = res;
+//	res = FVector::DotProduct(tangent, v2);
+//	min = std::min(min, res);
+//	max = std::max(max, res);
+//	res = FVector::DotProduct(tangent, v3);
+//	min = std::min(min, res);
+//	max = std::max(max, res);
+//	res = FVector::DotProduct(tangent, v4);
+//	min = std::min(min, res);
+//	max = std::max(max, res);
+//}
+
+//FVector intersection(FPolygon &p1, TArray<FPolygon> &p2) {
+//	for (FPolygon &f : p2) {
+//		FVector res = intersection(p1, f);
+//		if (res.X != 0.0f) {
+//			return res;
+//		}
+//	}
+//	return FVector(0.0f, 0.0f, 0.0f);
+//}
+
+//FVector intersection(FPolygon &p1, FPolygon &p2) {
+//	for (int i = 1; i < p1.points.Num(); i++) {
+//		for (int j = 1; j < p2.points.Num(); j++) {
+//			FVector res = intersection(p1.points[i - 1], p1.points[i], p2.points[j - 1], p2.points[j]);
+//			if (res.X != 0.0f) {
+//				return res;
+//			}
+//		}
+//	}
+//	return FVector(0.0f, 0.0f, 0.0f);
+//}
 
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 	float p0_x = p1.X;
@@ -86,17 +99,53 @@ FVector intersection(FVector p1, FVector p2, FPolygon p) {
 }
 
 
+
+bool testAxis(FVector axis, FPolygon &p1, FPolygon &p2, float leniency) {
+	float min1 = 0;
+	float max1 = 0;
+	float min2 = 0;
+	float max2 = 0;
+
+	getMinMax(min1, max1, axis, p1.points);
+	getMinMax(min2, max2, axis, p2.points);
+	if (std::max(min1, min2) >= std::min(max1, max2) - leniency) {
+		return false;
+	}
+	return true;
+}
+
+bool testCollision(FPolygon &p1, FPolygon &p2, float leniency) {
+	for (int i = 1; i < p1.points.Num(); i++) {
+		if (!testAxis(FRotator(0, 270, 0).RotateVector(p1.points[i] - p1.points[i-1]), p1, p2, leniency)) {
+			return false;
+		}
+	}
+	for (int i = 1; i < p2.points.Num(); i++) {
+		if (!testAxis(FRotator(0, 270, 0).RotateVector(p2.points[i] - p2.points[i-1]), p1, p2, leniency)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool testCollision(FPolygon &in, TArray<FPolygon> &others, float leniency) {
+	for (FPolygon &other : others) {
+		if (testCollision(other, in, leniency)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 // returns true if colliding
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency) {
-	// assume rectangles
 	float min1;
 	float max1;
 	float min2;
 	float max2;
-
 	for (FVector t : tangents) {
-		getMinMax(min1, max1, t, vertices1[0], vertices1[1], vertices1[2], vertices1[3]);
-		getMinMax(min2, max2, t, vertices2[0], vertices2[1], vertices2[2], vertices2[3]);
+		getMinMax(min1, max1, t, vertices1);
+		getMinMax(min2, max2, t, vertices2);
 		if (std::max(min1, min2) >= (std::min(max1, max2) - collisionLeniency)) {
 			return false;
 		}
