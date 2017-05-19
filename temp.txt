@@ -1,0 +1,312 @@
+diff --git a/.vs/City/v14/.suo b/.vs/City/v14/.suo
+index e761e77..b3af92e 100644
+Binary files a/.vs/City/v14/.suo and b/.vs/City/v14/.suo differ
+diff --git a/Source/City/BaseLibrary.cpp b/Source/City/BaseLibrary.cpp
+index d43ea21..4dbccdf 100644
+--- a/Source/City/BaseLibrary.cpp
++++ b/Source/City/BaseLibrary.cpp
+@@ -427,7 +427,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
+ 
+ 	}
+ 
+-	// these roads generally shouldn't exist, so this is mainly to highlight errors
++	// these roads shouldn't exist, so this is mainly to highlight errors
+ 	for (int i = 0; i < polygons.Num(); i++) {
+ 		FMetaPolygon f = polygons[i];
+ 		if (f.points.Num() < 3) {
+diff --git a/Source/City/BaseLibrary.h b/Source/City/BaseLibrary.h
+index cca1ff0..15a7d9a 100644
+--- a/Source/City/BaseLibrary.h
++++ b/Source/City/BaseLibrary.h
+@@ -105,20 +105,13 @@ struct FPolygon
+ 
+ 	// only cares about dimensions X and Y, not Z
+ 	double getArea() {
+-
+-	if (points.Num() < 3)
+-		return 0.0;
+-
+ 	double tot = 0;
+ 
+ 	for (int i = 0; i < points.Num() - 1; i++) {
+-		if (!points.IsValidIndex(i) || !points.IsValidIndex(i+1)) {
+-			return 0.0f;
+-		}
+ 		tot += 0.0001*(points[i].X * points[i + 1].Y);
+ 		tot -= 0.0001*(points[i].Y * points[i+1].X);
+ 	}
+-	tot /= 2;
++	tot *= 0.5;
+ 	return std::abs(tot);
+ 	}
+ 
+@@ -313,6 +306,10 @@ static bool splitableType(SubRoomType type) {
+ 	return true;
+ }
+ 
++static bool isOnLine(FVector point, FVector p1, FVector p2) {
++	return std::abs(FVector::Dist(point, p1) + FVector::Dist(point, p2) - FVector::Dist(p1, p2)) < 1.0f;
++}
++
+ 
+ struct RoomSpecification {
+ 	float minArea;
+@@ -327,17 +324,66 @@ struct RoomBlueprint {
+ 
+ //static getOfficeSpecifications
+ 
++
++
++
+ struct FRoomPolygon : public FPolygon
+ {
+ 	TSet<int32> windows;
+ 	TSet<int32> entrances;
+ 	TSet<int32> nonDuplicatingEntrances;
+ 	TSet<int32> toIgnore;
+-	int32 linkTo = -1;
++	TMap<int32, TArray<FRoomPolygon*>> passiveConnections;
++	TMap<FRoomPolygon*, int32> activeConnections;
+ 
+ 	bool canRefine = true;
+ 	SubRoomType type = SubRoomType::empty;
+ 
++	void updatePassiveConnections(SplitStruct &p, bool first, FRoomPolygon &newP) {
++		TArray<FRoomPolygon*> toRemove;
++
++		TArray<FRoomPolygon*> childPassive;
++		for (FRoomPolygon* p1 : passiveConnections[first ? p.min : p.max]) {
++			FVector temp = p1->points[0];
++			UE_LOG(LogTemp, Warning, TEXT("%s"), *temp.ToString());
++			continue;
++			int loc = p1->activeConnections[this];
++			// this is the entrance, we're not allowed to place a wall that collides with this, try to fit newP on the other side of the entrance if possible, making it a single-entry room
++			FVector point = middle(p1->points[loc], p1->points[loc - 1]);
++			float dist = FVector::Dist(point, first ? p.p1 : p.p2);
++			if (dist < 100) {
++				FVector tangent1 = points[p.min] - points[p.min - 1];
++				tangent1.Normalize();
++				FVector tangent2 = points[p.max] - points[p.max - 1];
++				tangent2.Normalize();
++				float toMove = FVector::Dist(first ? p.p1 : p.p2, point - (first ? tangent1 : tangent2)* 100);
++				p.p1 -= toMove * tangent1;
++				p.p2 -= toMove * tangent2;
++				// our child is now free from our master, while we're still slaves
++			}
++			else {
++				// new cut doesn't interfere overlap with the entrance, now to see who gets it
++				if (first && isOnLine(point, points[p.min - 1], p.p1) || !first && !isOnLine(point, points[p.max-1], p.p2)) {
++					// i got it, no change
++				}
++				else {
++					// my child got it
++					childPassive.Add(p1);
++					p1->activeConnections.Remove(this);
++					p1->activeConnections.Add(&newP, loc);
++					toRemove.Add(p1);
++				}
++			}
++		}
++		if (childPassive.Num() > 0)
++			newP.passiveConnections.Add(newP.points.Num(), childPassive);
++
++		for (FRoomPolygon* t : toRemove) {
++			passiveConnections[first ? p.min : p.max].Remove(t);
++		}
++	}
++
++
+ 	FRoomPolygon splitAlongMax(float approxRatio, bool entranceBetween) {
+ 		SplitStruct p = getSplitProposal(false, approxRatio);
+ 		if (p.p1.X == 0.0f) {
+@@ -348,12 +394,16 @@ struct FRoomPolygon : public FPolygon
+ 
+ 
+ 		if (entrances.Contains(p.min) && !nonDuplicatingEntrances.Contains(p.min)) {
++			// potentially add responsibility of child 
+ 			newP.entrances.Add(newP.points.Num());
+ 		}
+ 		if (windows.Contains(p.min)) {
+ 			newP.windows.Add(newP.points.Num());
+ 		}
+ 		if (toIgnore.Contains(p.min)) {
++			if (passiveConnections.Contains(p.min)) {
++				updatePassiveConnections(p, true, newP);
++			}
+ 			newP.toIgnore.Add(newP.points.Num());
+ 		}
+ 		newP.points.Add(points[p.min]);
+@@ -384,6 +434,9 @@ struct FRoomPolygon : public FPolygon
+ 		}
+ 		if (toIgnore.Contains(p.max)) {
+ 			newP.toIgnore.Add(newP.points.Num());
++			if (passiveConnections.Contains(p.max)) {
++				updatePassiveConnections(p, false, newP);
++			}
+ 		}
+ 
+ 
+@@ -419,25 +472,17 @@ struct FRoomPolygon : public FPolygon
+ 			toIgnore.Add(i - (p.max - p.min) + 2);
+ 		}
+ 
+-		if (linkTo > p.min) {
+-			linkTo = linkTo - (p.max - p.min) + 2;
+-		}
+-
+-
+-		newP.linkTo = newP.points.Num();
+ 		newP.points.Add(p.p2);
+-		//if (approxRatio < 0.5) {
+-		//	newP.toIgnore.Add(newP.points.Num());
+-		//	if (entranceBetween)
+-		//		entrances.Add(p.min + 1);
+-		//}
+-		//else {
+ 
+ 		// dont place the wall twice
+ 		toIgnore.Add(p.min+1);
+ 		//	// entrance to next room
+ 		if (entranceBetween && ((!entrances.Contains(p.min) && !entrances.Contains(p.min+2) || nonDuplicatingEntrances.Contains(p.min) || nonDuplicatingEntrances.Contains(p.min+2)))) {
++			TArray<FRoomPolygon*> passive;
++			passive.Add(&newP);
++			passiveConnections.Add(p.min + 1, passive);
+ 			newP.entrances.Add(newP.points.Num());
++			newP.activeConnections.Add(this, newP.points.Num());
+ 		}
+ 		//}
+ 
+@@ -461,7 +506,6 @@ struct FRoomPolygon : public FPolygon
+ 
+ 	TArray<FRoomPolygon> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon> &remaining, bool repeating) {
+ 		TArray<FRoomPolygon> toReturn;
+-
+ 		float area;
+ 		float minPctSplit = 0.25f;
+ 		bool couldPlace = false;
+@@ -503,7 +547,7 @@ struct FRoomPolygon : public FPolygon
+ 					while (scale < minPctSplit && count++ < 5) {
+ 						FRoomPolygon newP = target.splitAlongMax(0.6, true);
+ 						if (target.nonDuplicatingEntrances.Num() > 0) {
+-							FRoomPolygon temp = target;
++							FRoomPolygon &temp = target;
+ 							target = newP;
+ 							newP = temp;
+ 						}
+@@ -526,7 +570,7 @@ struct FRoomPolygon : public FPolygon
+ 						FRoomPolygon newP = target.splitAlongMax(r.minArea / target.getArea(), true);
+ 						if (newP.nonDuplicatingEntrances.Num() > 0) {
+ 							newP.type = SubRoomType::hallway;
+-							FRoomPolygon temp = target;
++							FRoomPolygon &temp = target;
+ 							target = newP;
+ 							newP = temp;
+ 						}
+@@ -540,9 +584,19 @@ struct FRoomPolygon : public FPolygon
+ 				}
+ 			}
+ 		} while (repeating && couldPlace && c1++ < 5);
++
+ 		return toReturn;
+ 	}
+ 
++	// post placement part of algorithm
++	void postFit(TArray<FRoomPolygon> &rooms) {
++		for (FRoomPolygon &p : rooms) {
++			if (!splitableType(p.type) && p.entrances.Num() + p.toIgnore.Num() > 1) {
++				p.type = SubRoomType::corridor;
++			}
++		}
++	}
++
+ 	TArray<FRoomPolygon> getRooms(RoomBlueprint blueprint) {
+ 		TArray<FRoomPolygon> rooms;
+ 		TArray<FRoomPolygon> remaining;
+@@ -552,7 +606,12 @@ struct FRoomPolygon : public FPolygon
+ 
+ 		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false));
+ 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true));
++
++		//postFit(rooms);
+ 		for (FRoomPolygon &p : remaining) {
++			//for (int i = 0; i < p.points.Num(); i++) {
++			//	p.toIgnore.Add(i);
++			//}
+ 			rooms.Add(p);
+ 		}
+ 		return rooms;
+diff --git a/Source/City/HouseBuilder.cpp b/Source/City/HouseBuilder.cpp
+index e8956ac..86e884b 100644
+--- a/Source/City/HouseBuilder.cpp
++++ b/Source/City/HouseBuilder.cpp
+@@ -106,7 +106,6 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
+ 			connections[0].a = conn;
+ 			roomPols[0].points.EmplaceAt(0, sndAttach);
+ 			roomPols[0].entrances.Add(1);
+-			roomPols[0].linkTo = 1;
+ 			roomPols[0].nonDuplicatingEntrances.Add(1);
+ 			roomPols[0].points.EmplaceAt(1, firstAttach);
+ 			roomPols[0].points.EmplaceAt(2, hole.points[i]);
+@@ -115,8 +114,6 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
+ 			connections[i].a = conn;
+ 			roomPols[i].points.Add(sndAttach);
+ 			roomPols[i].entrances.Add(roomPols[i].points.Num());
+-			roomPols[i].linkTo = roomPols[i].points.Num();
+-
+ 			roomPols[i].nonDuplicatingEntrances.Add(roomPols[i].points.Num());
+ 			roomPols[i].points.Add(firstAttach);
+ 			roomPols[i].points.Add(hole.points[i]);
+diff --git a/Source/City/RoomBuilder.cpp b/Source/City/RoomBuilder.cpp
+index 1150ed1..d7a2d58 100644
+--- a/Source/City/RoomBuilder.cpp
++++ b/Source/City/RoomBuilder.cpp
+@@ -549,40 +549,6 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon &r2) {
+ 		if (attemptPlaceShelf(r2, placed, meshes, i, false))
+ 			break;
+ 	}
+-
+-	//bool hasPlaced = false;
+-	//for (int i = 1; i < r2.points.Num(); i++) {
+-	//	if (r2.windows.Contains(i) || r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
+-	//		continue;
+-	//	}
+-	//	int place = i;
+-	//	FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
+-	//	FVector tangent = r2.points[place] - r2.points[place - 1];
+-	//	tangent.Normalize();
+-	//	dir.Normalize();
+-	//	FVector origin = r2.points[place - 1] + tangent * 50;
+-	//	FVector pos = origin + dir * 10;
+-	//	FRotator rot = dir.Rotation();
+-	//	FPolygon shelfP = MeshPolygonReference::getShelfPolygon(pos, rot);
+-	//	FVector res = intersection(shelfP, placed);
+-	//	if (res.X == 0.0f) {
+-	//		placed.Add(shelfP);
+-	//		FMeshInfo shelf{ "shelf", FTransform(rot , pos, FVector(1.0f, 1.0f, 1.0f)) };
+-	//		meshes.Add(shelf);
+-	//		hasPlaced = true;
+-	//		break;
+-	//	}
+-	//	
+-	//}
+-
+-
+-
+-
+-
+-	//for (FVector p : bedP.points) {
+-	//	meshes.Add(FMeshInfo{ "visualizer", FTransform(p) });
+-	//}
+-
+ 	return meshes;
+ }
+ 
+@@ -620,6 +586,8 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon &f, int floor, float height,
+ 		case SubRoomType::bath: r.meshes.Append(getBathRoom(r2));
+ 			r.meshes.Add(FMeshInfo{ "room_bathroom", FTransform(r2.getCenter()) });
+ 			break;
++		case SubRoomType::hallway: 	r.meshes.Add(FMeshInfo{ "room_hallway", FTransform(r2.getCenter()) });
++			break;
+ 
+ 		}
+ 

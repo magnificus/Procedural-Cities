@@ -379,35 +379,35 @@ FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon &f, int floor, float height, fl
 TArray<FPolygon> getBlockingVolumes(FRoomPolygon &r2, float entranceWidth, float blockingLength) {
 	TArray<FPolygon> blocking;
 	blocking.Add(r2);
-	//for (int i : r2.entrances) {
-	//	//
-	//	FPolygon entranceBlock;
-	//	FVector inMiddle = middle(r2.points[i], r2.points[i - 1]);
-	//	FVector tangent = r2.points[i] - r2.points[i - 1];
-	//	tangent.Normalize();
-	//	FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
-	//	entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
-	//	entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 - altTangent*blockingLength);
-	//	entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 - altTangent*blockingLength);
-	//	entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 + altTangent*blockingLength);
-	//	entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
-	//	blocking.Add(entranceBlock);
+	for (int i : r2.entrances) {
+		//
+		FPolygon entranceBlock;
+		FVector inMiddle = middle(r2.points[i], r2.points[i - 1]);
+		FVector tangent = r2.points[i] - r2.points[i - 1];
+		tangent.Normalize();
+		FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
+		entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
+		entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 - altTangent*blockingLength);
+		entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 - altTangent*blockingLength);
+		entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 + altTangent*blockingLength);
+		entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
+		blocking.Add(entranceBlock);
 
-	//}
+	}
 
-	//for (int i : r2.toIgnore) {
-	//	FPolygon entranceBlock;
-	//	FVector tangent = r2.points[i] - r2.points[i - 1];
-	//	tangent.Normalize();
-	//	FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
-	//	entranceBlock.points.Add(r2.points[i-1] + altTangent*blockingLength);
-	//	entranceBlock.points.Add(r2.points[i - 1] - altTangent*blockingLength);
-	//	entranceBlock.points.Add(r2.points[i] - altTangent*blockingLength);
-	//	entranceBlock.points.Add(r2.points[i] + altTangent*blockingLength);
-	//	entranceBlock.points.Add(r2.points[i - 1] + altTangent*blockingLength);
-	//	blocking.Add(entranceBlock);
+	for (int i : r2.toIgnore) {
+		FPolygon entranceBlock;
+		FVector tangent = r2.points[i] - r2.points[i - 1];
+		tangent.Normalize();
+		FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
+		entranceBlock.points.Add(r2.points[i-1] + altTangent*blockingLength);
+		entranceBlock.points.Add(r2.points[i - 1] - altTangent*blockingLength);
+		entranceBlock.points.Add(r2.points[i] - altTangent*blockingLength);
+		entranceBlock.points.Add(r2.points[i] + altTangent*blockingLength);
+		entranceBlock.points.Add(r2.points[i - 1] + altTangent*blockingLength);
+		blocking.Add(entranceBlock);
 
-	//}
+	}
 
 	return blocking;
 }
