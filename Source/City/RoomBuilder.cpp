@@ -609,7 +609,7 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon f, RoomType type, int floor, floa
 		return r;
 	}
 	switch (type) {
-	case RoomType::office: return buildOffice(f, floor, height, 0.005, 250, 150);
+	case RoomType::office: return buildOffice(f, floor, height, 0.005, 270, 170);
 	case RoomType::apartment: return buildApartment(f, floor, height, 0.002, 200, 200);
 	}
 	return FRoomInfo();

@@ -306,7 +306,7 @@ static bool splitableType(SubRoomType type) {
 }
 
 static bool isOnLine(FVector point, FVector p1, FVector p2) {
-	return std::abs(FVector::Dist(point, p1) + FVector::Dist(point, p2) - FVector::Dist(p1, p2)) < 1.0f;
+	return std::abs(FVector::Dist(point, p1) + FVector::Dist(point, p2) - FVector::Dist(p1, p2)) < 5.0f;
 }
 
 
@@ -353,6 +353,7 @@ struct FRoomPolygon : public FPolygon
 
 		// move collisions to the left
 		if (specificEntrances.Contains(num)) {
+			//FVector entrancePoint = specificEntrances.Contains(num) ? specificEntrances[num] : middle(points[num], points[num - 1]);
 			if (FVector::Dist(inPoint, specificEntrances[num]) < 100) {
 				FVector tangent = points[num] - points[num - 1];
 				tangent.Normalize();
@@ -409,9 +410,10 @@ struct FRoomPolygon : public FPolygon
 
 		if (entrances.Contains(p.min)){// && !nonDuplicatingEntrances.Contains(p.min)) {
 			// potentially add responsibility of child
-			FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(p.p1, points[p.min]);
-			if (!isOnLine(entrancePoint, p.p1, points[p.min])) {
-				newP->specificEntrances.Add(1, entrancePoint);
+			FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(p.p1, points[p.min-1]);
+			if (isOnLine(entrancePoint, p.p1, points[p.min])) {
+				if (specificEntrances.Contains(p.min))
+					newP->specificEntrances.Add(1, entrancePoint);
 				newP->entrances.Add(1);
 				TArray<FRoomPolygon*> toRemove;
 				for (auto &pair : activeConnections) {
@@ -460,7 +462,8 @@ struct FRoomPolygon : public FPolygon
 				//	newP->nonDuplicatingEntrances.Add(newP->points.Num());
 				//}
 				//else {
-					newP->specificEntrances.Add(newP->points.Num(), specificEntrances.Contains(i) ? specificEntrances[i] : middle(points[i], points[i - 1]));
+				if (specificEntrances.Contains(i))
+					newP->specificEntrances.Add(newP->points.Num(), specificEntrances[i]);
 				//}
 				newP->entrances.Add(newP->points.Num());
 
@@ -511,9 +514,11 @@ struct FRoomPolygon : public FPolygon
 		}
 
 		if (entrances.Contains(p.max)){// && !nonDuplicatingEntrances.Contains(p.max)) {
-			FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max - 1]);
-			if (!isOnLine(entrancePoint, p.p2, points[p.max])) {
-				newP->specificEntrances.Add(newP->points.Num(), entrancePoint);
+			FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max]);
+			if (isOnLine(entrancePoint, p.p2, points[p.max-1])) {
+				if (specificEntrances.Contains(p.max))
+					newP->specificEntrances.Add(newP->points.Num(), entrancePoint);
+
 				newP->entrances.Add(newP->points.Num());
 				TArray<FRoomPolygon*> toRemove;
 				for (auto &pair : activeConnections) {
@@ -558,14 +563,16 @@ struct FRoomPolygon : public FPolygon
 					newNonDuplicating.Add(i - (p.max - p.min) + 2);
 				}
 				newList.Add(i - (p.max - p.min) + 2);
-				newSpecificList.Add(i - (p.max - p.min) + 2, specificEntrances.Contains(i) ? specificEntrances[i] : middle(points[i], points[i - 1]));
+				if (specificEntrances.Contains(i))
+					newSpecificList.Add(i - (p.max - p.min) + 2, specificEntrances[i]);
 			}
 			else {
 				if (nonDuplicatingEntrances.Contains(i)) {
 					newNonDuplicating.Add(i);
 				}
 				newList.Add(i);
-				newSpecificList.Add(i, specificEntrances.Contains(i) ? specificEntrances[i] : middle(points[i], points[i-1]));
+				if (specificEntrances.Contains(i))
+					newSpecificList.Add(i, specificEntrances[i]);
 			}
 		}
 		entrances = newList;
@@ -756,7 +763,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false));
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true));
 
-		//postFit(rooms, blueprint.needed);
+		postFit(rooms, blueprint.needed);
 		TArray<FRoomPolygon> toReturn;
 		for (FRoomPolygon *p : remaining) {
 			//for (int i = 0; i < p.points.Num(); i++) {
