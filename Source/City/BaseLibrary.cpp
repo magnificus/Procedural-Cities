@@ -12,6 +12,9 @@ BaseLibrary::~BaseLibrary()
 }
 
 void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points) {
+	if (points.Num() == 0)
+		return;
+
 	min = FVector::DotProduct(tangent, points[0]);
 	max = FVector::DotProduct(tangent, points[0]);
 
@@ -39,27 +42,27 @@ void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points) 
 //	max = std::max(max, res);
 //}
 
-//FVector intersection(FPolygon &p1, TArray<FPolygon> &p2) {
-//	for (FPolygon &f : p2) {
-//		FVector res = intersection(p1, f);
-//		if (res.X != 0.0f) {
-//			return res;
-//		}
-//	}
-//	return FVector(0.0f, 0.0f, 0.0f);
-//}
+FVector intersection(FPolygon &p1, TArray<FPolygon> &p2) {
+	for (FPolygon &f : p2) {
+		FVector res = intersection(p1, f);
+		if (res.X != 0.0f) {
+			return res;
+		}
+	}
+	return FVector(0.0f, 0.0f, 0.0f);
+}
 
-//FVector intersection(FPolygon &p1, FPolygon &p2) {
-//	for (int i = 1; i < p1.points.Num(); i++) {
-//		for (int j = 1; j < p2.points.Num(); j++) {
-//			FVector res = intersection(p1.points[i - 1], p1.points[i], p2.points[j - 1], p2.points[j]);
-//			if (res.X != 0.0f) {
-//				return res;
-//			}
-//		}
-//	}
-//	return FVector(0.0f, 0.0f, 0.0f);
-//}
+FVector intersection(FPolygon &p1, FPolygon &p2) {
+	for (int i = 1; i < p1.points.Num(); i++) {
+		for (int j = 1; j < p2.points.Num(); j++) {
+			FVector res = intersection(p1.points[i - 1], p1.points[i], p2.points[j - 1], p2.points[j]);
+			if (res.X != 0.0f) {
+				return res;
+			}
+		}
+	}
+	return FVector(0.0f, 0.0f, 0.0f);
+}
 
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 	float p0_x = p1.X;
@@ -128,13 +131,13 @@ bool testCollision(FPolygon &p1, FPolygon &p2, float leniency) {
 	return true;
 }
 
-bool testCollision(FPolygon &in, TArray<FPolygon> &others, float leniency) {
+bool testCollision(FPolygon &in, TArray<FPolygon> &others, float leniency, FPolygon &surrounding) {
 	for (FPolygon &other : others) {
 		if (testCollision(other, in, leniency)) {
 			return true;
 		}
 	}
-	return false;
+	return intersection(in, surrounding).X != 0.0f;
 }
 
 // returns true if colliding

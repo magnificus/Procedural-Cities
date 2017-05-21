@@ -223,6 +223,71 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 
 }
 
+//
+//bool attemptPlaceShelf(FRoomPolygon &r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, float offset, bool shallContinue) {
+//	bool found = false;
+//	for (int i = 1; i < r2.points.Num(); i++) {
+//		if (r2.windows.Contains(i) || r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
+//			continue;
+//		}
+//		int place = i;
+//		FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
+//		FVector tangent = r2.points[place] - r2.points[place - 1];
+//		tangent.Normalize();
+//		dir.Normalize();
+//		FVector origin = r2.points[place - 1] + tangent * offset;
+//		FVector pos = origin + dir * 10;
+//		FRotator rot = dir.Rotation();
+//		FPolygon shelfP = MeshPolygonReference::getShelfPolygon(pos, rot);
+//
+//		if (!testCollision(shelfP, placed, 0)) {
+//			placed.Add(shelfP);
+//			FMeshInfo shelf{ "shelf", FTransform(rot , pos, FVector(1.0f, 1.0f, 1.0f)) };
+//			meshes.Add(shelf);
+//			found = true;
+//			if (!shallContinue)
+//				return true;
+//		}
+//
+//	}
+//	return found;
+//}
+
+bool attemptPlace(FRoomPolygon &r2, MeshType meshType, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, float verticalOffset, bool windowAllowed, int testsPerSide, FString string, bool visualize, FRotator offsetRot) {
+	for (int i = 1; i < r2.points.Num(); i++) {
+		if (r2.windows.Contains(i) && !windowAllowed) {
+			continue;
+		}
+		int place = i;
+		for (int j = 0; j < testsPerSide; j++) {
+			FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
+			FVector tangent = r2.points[place] - r2.points[place - 1];
+			float sideLen = tangent.Size();
+			tangent.Normalize();
+			dir.Normalize();
+			FVector origin = r2.points[place - 1] + tangent * (FMath::FRand() * (sideLen - 100.0f) + 100.0f);
+			FVector pos = origin + dir * verticalOffset;
+			FRotator rot = dir.Rotation() + offsetRot;
+			FPolygon pol = MeshPolygonReference::getAppropriatePolygon(meshType, pos, rot);
+			if (!testCollision(pol, placed, 0, r2)) {
+				placed.Add(pol);
+				meshes.Add(FMeshInfo{ string, FTransform(rot, pos, FVector(1.0f, 1.0f, 1.0f)) });
+				if (visualize) {
+					for (FVector f : pol.points) {
+						meshes.Add(FMeshInfo{ "visualizer", FTransform(f) });
+
+					}
+				}
+				return true;
+			}
+		}
+
+
+	}
+	return false;
+}
+
+
 
 static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon &r2) {
 	TArray<FMeshInfo> meshes;
@@ -447,8 +512,9 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon &r2) {
 	TArray<FMeshInfo> meshes;
 	
 	TArray<FPolygon> placed;
-	placed.Add(r2);
+	//placed.Add(r2);
 	meshes.Append(potentiallyGetTableAndChairs(r2, placed));
+	attemptPlace(r2, MeshType::shelf_upper_large, placed, meshes, 0, false, 1, "shelf_upper_large", true, FRotator(0, 0, 0));
 	// add maybe sofa and stuff? lamps?
 	return meshes;
 }
@@ -461,64 +527,34 @@ static TArray<FMeshInfo> getBathRoom(FRoomPolygon &r2) {
 	//r2.toIgnore.Empty();
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	for (int i = 1; i < r2.points.Num(); i++) {
-		if (r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
-			continue;
-		}
-		int place = i;
-		FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
-		FVector tangent = r2.points[place] - r2.points[place - 1];
-		tangent.Normalize();
-		dir.Normalize();
-		FVector origin = middle(r2.points[place - 1], r2.points[place]);
-		FVector pos = origin + dir * 90;
-		FRotator rot = dir.Rotation();
-		FMeshInfo toilet{ "toilet", FTransform(rot, pos + FVector(0, 10, 0), FVector(1.0f, 1.0f, 1.0f)) };
-		meshes.Add(toilet);
-		break;
-	}
+	//placed.Add(r2);
+	attemptPlace(r2, MeshType::toilet, placed, meshes, 90, false, 2, "toilet", true, FRotator(0, 270, 0));
+	attemptPlace(r2, MeshType::sink, placed, meshes, 90, false, 2, "sink", true, FRotator(0, 180, 0));
+	//for (int i = 1; i < r2.points.Num(); i++) {
+	//	if (r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
+	//		continue;
+	//	}
+	//	int place = i;
+	//	FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
+	//	FVector tangent = r2.points[place] - r2.points[place - 1];
+	//	tangent.Normalize();
+	//	dir.Normalize();
+	//	FVector origin = middle(r2.points[place - 1], r2.points[place]);
+	//	FVector pos = origin + dir * 90;
+	//	FRotator rot = dir.Rotation();
+	//	FMeshInfo toilet{ "toilet", FTransform(rot, pos + FVector(0, 10, 0), FVector(1.0f, 1.0f, 1.0f)) };
+	//	meshes.Add(toilet);
+	//	break;
+	//}
 	return meshes;
 }
 
-bool attemptPlaceShelf(FRoomPolygon &r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, float offset, bool shallContinue) {
-	bool found = false;
-	for (int i = 1; i < r2.points.Num(); i++) {
-		if (r2.windows.Contains(i) || r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
-			continue;
-		}
-		int place = i;
-		FVector dir = getNormal(r2.points[place], r2.points[place - 1], true);
-		FVector tangent = r2.points[place] - r2.points[place - 1];
-		tangent.Normalize();
-		dir.Normalize();
-		FVector origin = r2.points[place - 1] + tangent * offset;
-		FVector pos = origin + dir * 10;
-		FRotator rot = dir.Rotation();
-		FPolygon shelfP = MeshPolygonReference::getShelfPolygon(pos, rot);
-		
-		if (!testCollision(shelfP, placed, 0)) {
-			placed.Add(shelfP);
-			FMeshInfo shelf{ "shelf", FTransform(rot , pos, FVector(1.0f, 1.0f, 1.0f))};
-			meshes.Add(shelf);
-			found = true;
-			if (!shallContinue)
-				return true;
-		}
-
-	}
-	return found;
-}
 
 static TArray<FMeshInfo> getBedRoom(FRoomPolygon &r2) {
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
-	placed.Add(r2);
+	//placed.Add(r2);
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	//for (FPolygon p : placed) {
-	//	for (FVector f : p.points) {
-	//		meshes.Add(FMeshInfo{ "visualizer", FTransform(f) });
-	//	}
-	//}
 
 	for (int i = 1; i < r2.points.Num(); i++) {
 		if (r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
@@ -533,21 +569,23 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon &r2) {
 		FVector pos = origin + dir * 180;
 		FRotator rot = dir.Rotation();
 		FPolygon bedP = MeshPolygonReference::getBedPolygon(pos, rot);
+		//if (testCollision(bedP, placed, 0)) {
+		//	continue;
+		//}
 		placed.Add(bedP);
 		FMeshInfo bed{ "bed", FTransform(rot + FRotator(0, 270, 0), pos + FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
 		meshes.Add(bed);
 		pos += tangent * 150 - dir * 70;
 		FPolygon smallTableP = MeshPolygonReference::getSmallTablePolygon(pos, rot);
-		placed.Add(smallTableP);
-		FMeshInfo table{ "small_table", FTransform(rot , pos - FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
-		meshes.Add(table);
+		if (!testCollision(smallTableP, placed, 0, r2)) {
+			placed.Add(smallTableP);
+			FMeshInfo table{ "small_table", FTransform(rot , pos - FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
+			meshes.Add(table);
+		}
 		break;
 	}
 
-	for (int i = 10; i < 200; i += 100) {
-		if (attemptPlaceShelf(r2, placed, meshes, i, false))
-			break;
-	}
+	attemptPlace(r2, MeshType::shelf, placed, meshes, 40.0f, true, 2, "shelf", true, FRotator(0, 90, 0));
 	return meshes;
 }
 
@@ -570,8 +608,10 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon &f, int floor, float height,
 		r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2.getCenter() + FVector(0, 0, height - 45)) });
 		switch (r2.type) {
 		case SubRoomType::living: r.meshes.Append(getLivingRoom(r2));
+			r.meshes.Add(FMeshInfo{ "room_living", FTransform(r2.getCenter()) });
 			break;
 		case SubRoomType::bed: r.meshes.Append(getBedRoom(r2));
+			r.meshes.Add(FMeshInfo{ "room_bed", FTransform(r2.getCenter()) });
 			break;
 		case SubRoomType::closet:
 			r.meshes.Add(FMeshInfo{ "room_closet", FTransform(r2.getCenter()) });

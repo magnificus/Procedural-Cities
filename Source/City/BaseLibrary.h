@@ -730,7 +730,7 @@ struct FRoomPolygon : public FPolygon
 		for (auto &list : passiveConnections) {
 			totPassive += list.Value.Num();
 		}
-		return activeConnections.Num() + totPassive;
+		return entrances.Num()	 + totPassive;
 	}
 
 
@@ -758,7 +758,7 @@ struct FRoomPolygon : public FPolygon
 		*thisP = *this;
 		thisP->type = SubRoomType::hallway;
 		remaining.Add(thisP);
-		//removeAllButOne(remaining[0].entrances);
+		removeAllButOne(remaining[0]->entrances);
 
 		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false));
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true));
@@ -1092,11 +1092,11 @@ Calculate whether two lines intersect and where
 void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points);
 
 //void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
-//FVector intersection(FPolygon &p1, TArray<FPolygon> &p2);
-//FVector intersection(FPolygon &p1, FPolygon &p2);
+FVector intersection(FPolygon &p1, TArray<FPolygon> &p2);
+FVector intersection(FPolygon &p1, FPolygon &p2);
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 FVector intersection(FVector p1, FVector p2, FPolygon p);
-bool testCollision(FPolygon &, TArray<FPolygon> &, float leniency);
+bool testCollision(FPolygon &, TArray<FPolygon> &, float leniency, FPolygon &);
 bool testCollision(FPolygon &, FPolygon &, float leniency);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
 float randFloat();

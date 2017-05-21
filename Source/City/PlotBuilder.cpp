@@ -19,15 +19,6 @@ void APlotBuilder::BeginPlay()
 	
 }
 
-//bool testCollision(TArray<FPolygon> &polygons, FPolygon &pol) {
-//
-//	for (FPolygon p2 : polygons) {
-//		FVector res = intersection(pol, p2);
-//		if (res.X != 0.0f)
-//			return true;
-//	}
-//	return false;
-//}
 
 TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int maxFloors, int minFloors) {
 	TArray<FHousePolygon> housePolygons;
@@ -69,8 +60,8 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 	else {
 		// wander along the line and place adjacent houses on the curve
 
-		float minLen = 2000;
-		float minWidth = 2000;
+		float minLen = 3500;
+		float minWidth = 3500;
 
 		float maxLen = 8000;
 		float maxWidth = 8000;
@@ -111,8 +102,8 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 
 			//fh.windows.Add(2);
 			//fh.windows.Add(4);
-
-			if (!testCollision(pol, others, 500)) {
+			FPolygon tmp;
+ 			if (!testCollision(pol, others, 500, tmp)) {
 				fh.points = pol.points;
 				fh.population = 1.0;
 				fh.height = randFloat() * (maxFloors - minFloors) + minFloors;
