@@ -175,7 +175,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 			newP.points.Add(p1 + FVector(0, 0, floorHeight));
 
 			if (rp.entrances.Contains(i)) {
-				toReturn.Append(getEntranceSide(rp.points[i - 1] , rp.points[i], floorHeight, 300, 180, rp.specificEntrances.Contains(i) ? rp.specificEntrances[i] : middle(rp.points[i-1], rp.points[i])));
+				toReturn.Append(getEntranceSide(rp.points[i - 1] , rp.points[i], floorHeight, 297, 137, rp.specificEntrances.Contains(i) ? rp.specificEntrances[i] : middle(rp.points[i-1], rp.points[i])));
 			}
 			else if (rp.windows.Contains(i)) {
 
@@ -253,7 +253,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 //	return found;
 //}
 
-bool attemptPlace(FRoomPolygon &r2, MeshType meshType, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, float verticalOffset, bool windowAllowed, int testsPerSide, FString string, bool visualize, FRotator offsetRot) {
+bool attemptPlace(FRoomPolygon &r2, MeshType meshType, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, float verticalOffset, bool windowAllowed, int testsPerSide, FString string, bool visualize, FRotator offsetRot, FVector offsetPos) {
 	for (int i = 1; i < r2.points.Num(); i++) {
 		if (r2.windows.Contains(i) && !windowAllowed) {
 			continue;
@@ -267,11 +267,11 @@ bool attemptPlace(FRoomPolygon &r2, MeshType meshType, TArray<FPolygon> &placed,
 			dir.Normalize();
 			FVector origin = r2.points[place - 1] + tangent * (FMath::FRand() * (sideLen - 100.0f) + 100.0f);
 			FVector pos = origin + dir * verticalOffset;
-			FRotator rot = dir.Rotation() + offsetRot;
+			FRotator rot = dir.Rotation();// +offsetRot;
 			FPolygon pol = MeshPolygonReference::getAppropriatePolygon(meshType, pos, rot);
 			if (!testCollision(pol, placed, 0, r2)) {
 				placed.Add(pol);
-				meshes.Add(FMeshInfo{ string, FTransform(rot, pos, FVector(1.0f, 1.0f, 1.0f)) });
+				meshes.Add(FMeshInfo{ string, FTransform(rot + offsetRot, pos + offsetPos, FVector(1.0f, 1.0f, 1.0f)) });
 				if (visualize) {
 					for (FVector f : pol.points) {
 						meshes.Add(FMeshInfo{ "visualizer", FTransform(f) });
@@ -443,11 +443,11 @@ FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon &f, int floor, float height, fl
 
 TArray<FPolygon> getBlockingVolumes(FRoomPolygon &r2, float entranceWidth, float blockingLength) {
 	TArray<FPolygon> blocking;
-	blocking.Add(r2);
 	for (int i : r2.entrances) {
 		//
 		FPolygon entranceBlock;
-		FVector inMiddle = middle(r2.points[i], r2.points[i - 1]);
+
+		FVector inMiddle = r2.specificEntrances.Contains(i) ? r2.specificEntrances[i] : middle(r2.points[i], r2.points[i-1]);
 		FVector tangent = r2.points[i] - r2.points[i - 1];
 		tangent.Normalize();
 		FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
@@ -460,19 +460,23 @@ TArray<FPolygon> getBlockingVolumes(FRoomPolygon &r2, float entranceWidth, float
 
 	}
 
-	for (int i : r2.toIgnore) {
-		FPolygon entranceBlock;
-		FVector tangent = r2.points[i] - r2.points[i - 1];
-		tangent.Normalize();
-		FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
-		entranceBlock.points.Add(r2.points[i-1] + altTangent*blockingLength);
-		entranceBlock.points.Add(r2.points[i - 1] - altTangent*blockingLength);
-		entranceBlock.points.Add(r2.points[i] - altTangent*blockingLength);
-		entranceBlock.points.Add(r2.points[i] + altTangent*blockingLength);
-		entranceBlock.points.Add(r2.points[i - 1] + altTangent*blockingLength);
-		blocking.Add(entranceBlock);
+	//for (auto &pair : r2.passiveConnections) {
+	//	pair.
+	//}
 
-	}
+	//for (int i : r2.toIgnore) {
+	//	FPolygon entranceBlock;
+	//	FVector tangent = r2.points[i] - r2.points[i - 1];
+	//	tangent.Normalize();
+	//	FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
+	//	entranceBlock.points.Add(r2.points[i-1] + altTangent*blockingLength);
+	//	entranceBlock.points.Add(r2.points[i - 1] - altTangent*blockingLength);
+	//	entranceBlock.points.Add(r2.points[i] - altTangent*blockingLength);
+	//	entranceBlock.points.Add(r2.points[i] + altTangent*blockingLength);
+	//	entranceBlock.points.Add(r2.points[i - 1] + altTangent*blockingLength);
+	//	blocking.Add(entranceBlock);
+
+	//}
 
 	return blocking;
 }
@@ -514,7 +518,7 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon &r2) {
 	TArray<FPolygon> placed;
 	//placed.Add(r2);
 	meshes.Append(potentiallyGetTableAndChairs(r2, placed));
-	attemptPlace(r2, MeshType::shelf_upper_large, placed, meshes, 0, false, 1, "shelf_upper_large", true, FRotator(0, 0, 0));
+	attemptPlace(r2, MeshType::shelf_upper_large, placed, meshes, 100.0f, false, 1, "shelf_upper_large", false, FRotator(0, 270, 0), FVector(0, 0, 200));
 	// add maybe sofa and stuff? lamps?
 	return meshes;
 }
@@ -528,8 +532,8 @@ static TArray<FMeshInfo> getBathRoom(FRoomPolygon &r2) {
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 100));
 	//placed.Add(r2);
-	attemptPlace(r2, MeshType::toilet, placed, meshes, 90, false, 2, "toilet", true, FRotator(0, 270, 0));
-	attemptPlace(r2, MeshType::sink, placed, meshes, 90, false, 2, "sink", true, FRotator(0, 180, 0));
+	attemptPlace(r2, MeshType::toilet, placed, meshes, 70, false, 2, "toilet", false, FRotator(0, 270, 0), FVector());
+	attemptPlace(r2, MeshType::sink, placed, meshes, 70, false, 2, "sink", false, FRotator(0, 180, 0), FVector());
 	//for (int i = 1; i < r2.points.Num(); i++) {
 	//	if (r2.entrances.Contains(i) || r2.toIgnore.Contains(i)) {
 	//		continue;
@@ -585,7 +589,7 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon &r2) {
 		break;
 	}
 
-	attemptPlace(r2, MeshType::shelf, placed, meshes, 40.0f, true, 2, "shelf", true, FRotator(0, 90, 0));
+	attemptPlace(r2, MeshType::shelf, placed, meshes, 40.0f, false, 2, "shelf", false, FRotator(0, 270, 0), FVector());
 	return meshes;
 }
 
@@ -602,7 +606,8 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon &f, int floor, float height,
 			dir1.Normalize();
 			FVector dir2 = r2.points[i] - r2.points[i - 1];
 			dir2.Normalize();
-			r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + FVector(0, 0, 0) - dir2 * 90 + dir1 * 75 , FVector(1.0f, 1.0f, 1.0f)) });
+			r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
+			r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
 		}
 
 		r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2.getCenter() + FVector(0, 0, height - 45)) });

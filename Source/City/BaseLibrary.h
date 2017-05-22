@@ -775,7 +775,10 @@ struct FRoomPolygon : public FPolygon
 			toReturn.Add(*p);
 		}
 		for (FRoomPolygon *p : rooms) {
-			//	delete p;
+			delete p;
+		}
+		for (FRoomPolygon *p : remaining) {
+			delete p;
 		}
 
 

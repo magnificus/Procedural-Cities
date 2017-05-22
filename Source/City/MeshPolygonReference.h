@@ -34,6 +34,10 @@ public:
 	static FPolygon getSmallTablePolygon(FVector origin, FRotator dir);
 	static FPolygon getToiletPolygon(FVector origin, FRotator dir);
 	static FPolygon getSinkPolygon(FVector origin, FRotator dir);
+	static FPolygon getShelfUpperLarge(FVector origin, FRotator dir);
+
+	static FPolygon getStairPolygon(FVector origin, FRotator dir);
+
 
 	~MeshPolygonReference();
 };

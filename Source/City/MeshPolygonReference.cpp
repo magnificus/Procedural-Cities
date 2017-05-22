@@ -15,6 +15,7 @@ FPolygon MeshPolygonReference::getAppropriatePolygon(MeshType m, FVector origin,
 	case MeshType::shelf: return getShelfPolygon(origin, dir);
 	case MeshType::toilet: return getToiletPolygon(origin, dir);
 	case MeshType::sink: return getSinkPolygon(origin, dir);
+	case MeshType::shelf_upper_large: return getShelfUpperLarge(origin, dir);
 	}
 	return FPolygon();
 }
@@ -26,6 +27,7 @@ FPolygon MeshPolygonReference::getBedPolygon(FVector origin, FRotator dir) {
 	bed.points.Add(origin + dir.RotateVector(FVector(135, -86, 0)));
 	bed.points.Add(origin + dir.RotateVector(FVector(135, 86, 0)));
 	bed.points.Add(origin + dir.RotateVector(FVector(-135, 86, 0)));
+	bed.points.Add(origin + dir.RotateVector(FVector(-135, -86, 0)));
 	return bed;
 }
 
@@ -37,6 +39,7 @@ FPolygon MeshPolygonReference::getShelfPolygon(FVector origin, FRotator dir) {
 	shelf.points.Add(origin + dir.RotateVector(FVector(90, -30, 0)));
 	shelf.points.Add(origin + dir.RotateVector(FVector(90, 30, 0)));
 	shelf.points.Add(origin + dir.RotateVector(FVector(270, 30, 0)));
+	shelf.points.Add(origin + dir.RotateVector(FVector(270, -30, 0)));
 	return shelf;
 }
 
@@ -47,6 +50,7 @@ FPolygon MeshPolygonReference::getSmallTablePolygon(FVector origin, FRotator dir
 	table.points.Add(origin + dir.RotateVector(FVector(-51, -47, 0)));
 	table.points.Add(origin + dir.RotateVector(FVector(-51, 47, 0)));
 	table.points.Add(origin + dir.RotateVector(FVector(51, 47, 0)));
+	table.points.Add(origin + dir.RotateVector(FVector(51, -47, 0)));
 	return table;
 }
 
@@ -57,6 +61,7 @@ FPolygon MeshPolygonReference::getToiletPolygon(FVector origin, FRotator dir) {
 	pol.points.Add(origin + dir.RotateVector(FVector(-36, -64, 0)));
 	pol.points.Add(origin + dir.RotateVector(FVector(-36, 64, 0)));
 	pol.points.Add(origin + dir.RotateVector(FVector(36, 64, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(36, -64, 0)));
 	return pol;
 }
 
@@ -67,6 +72,22 @@ FPolygon MeshPolygonReference::getSinkPolygon(FVector origin, FRotator dir) {
 	pol.points.Add(origin + dir.RotateVector(FVector(-60, -90, 0)));
 	pol.points.Add(origin + dir.RotateVector(FVector(-60, 90, 0)));
 	pol.points.Add(origin + dir.RotateVector(FVector(60, 90, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(60, -90, 0)));
+	return pol;
+}
+
+FPolygon MeshPolygonReference::getShelfUpperLarge(FVector origin, FRotator dir) {
+	FPolygon shelfUpper;
+	return shelfUpper;
+}
+
+FPolygon MeshPolygonReference::getStairPolygon(FVector origin, FRotator dir) {
+	FPolygon pol;
+	pol.points.Add(origin + dir.RotateVector(FVector(187, -213, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(-187, -213, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(-187, 213, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(187, 213, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(187, -213, 0)));
 	return pol;
 }
 
