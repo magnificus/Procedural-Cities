@@ -362,7 +362,13 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 
 static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	TArray<FMeshInfo> meshes;
+	TArray<FPolygon> placed;
 
+	int target = 1;
+	FVector start = middle(r2->points[target], r2->points[target - 1]);
+	//FVector end = 
+	//FVector end = ;
+	//for (int i = 0; i < )
 	// build cubicles
 	return meshes;
 }
@@ -586,8 +592,18 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
+	attemptPlace(r2, placed, meshes, 10, false, 5, "kitchen", false, FRotator(0, 90, 0), FVector(0, 0, 0), map);
 	attemptPlace(r2, placed, meshes, 80, false, 5, "fridge", false, FRotator(0, 90, 0), FVector(0, 0, 0), map);
 	attemptPlace(r2, placed, meshes, 85, false, 5, "oven", false, FRotator(0, 270, 0), FVector(0, 0, 0), map);
+	return meshes;
+}
+
+static TArray<FMeshInfo> getCorridor(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	TArray<FMeshInfo> meshes;
+	TArray<FPolygon> placed;
+
+	placed.Append(getBlockingVolumes(r2, 200, 100));
+	//attemptPlace(r2, placed, meshes, 10, false, 5, "wardrobe", false, FRotator(0, 90, 0), FVector(0, 0, 0), map);
 	return meshes;
 }
 
@@ -620,6 +636,7 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 			r.meshes.Add(FMeshInfo{ "room_closet", FTransform(r2->getCenter()) });
 			break;
 		case SubRoomType::corridor:
+			r.meshes.Append(getCorridor(r2, map));
 			r.meshes.Add(FMeshInfo{ "room_corridor", FTransform(r2->getCenter()) });
 			break;
 		case SubRoomType::kitchen:
