@@ -6,8 +6,8 @@
 //#include "PlotBuilder.h"
 #include "BaseLibrary.h"
 #include "RoomBuilder.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "HouseBuilder.generated.h"
-
 
 
 UCLASS()
@@ -19,9 +19,12 @@ public:
 	// Sets default values for this actor's properties
 	AHouseBuilder();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+	TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map;
+
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	static FRoomInfo getHouseInfo(FHousePolygon f, int floors, float floorHeight, float maxRoomArea);
+	FRoomInfo getHouseInfo(FHousePolygon f, int floors, float floorHeight, float maxRoomArea);
 
 protected:
 	// Called when the game starts or when spawned
@@ -30,6 +33,9 @@ protected:
 	//virtual void BeginDestroy() override;
 
 public:	
+
+	//static TMap<FString, UHierarchicalInstancedStaticMeshComponent*> mapStatic;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

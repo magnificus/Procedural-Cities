@@ -12,6 +12,7 @@ AHouseBuilder::AHouseBuilder()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	//mapStatic = map;
 }
 
 
@@ -395,7 +396,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 
 	
 	for (FRoomPolygon p : roomPols) {
-		FRoomInfo newR = ARoomBuilder::buildRoom(p, f.type, 0, floorHeight, 0.005, 250, 150);
+		FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 0, floorHeight, 0.005, 250, 150, map);
 		newR.offset(FVector(0, 0, 30));
 		toReturn.pols.Append(newR.pols);
 		toReturn.meshes.Append(newR.meshes);
@@ -425,14 +426,23 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	for (int i = 1; i < floors; i++) {
 		//holeP.offset(FVector(0, 0, floorHeight));
 		//stair[0].offset(FVector(0, 0, floorHeight));
-		toReturn.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i + 1, hole));
-		toReturn.pols.Append(getFloorPolygonsWithHole(hole, floorHeight*i, stairPol));
+		TArray<FMaterialPolygon> temp = getFloorPolygonsWithHole(f, floorHeight*i + 1, hole);
+		temp.Append(getFloorPolygonsWithHole(hole, floorHeight*i, stairPol));
+
+		for (FPolygon &f : temp) {
+			if (FVector::DotProduct(f.getDirection(), FVector(1.0f, 1.0f, 1.0f)) > 0.0f) {
+				f.reverse();
+			}
+		}
+		toReturn.pols.Append(temp);
+
+		toReturn.pols.Append(temp);
 		toReturn.meshes.Add(FMeshInfo{ "office_lamp", FTransform(hole.getCenter() + FVector(0, 0, floorHeight*(i+1) - 45)) }); // lamp between stair and elevator
 		toReturn.meshes.Add(FMeshInfo{ "stair", FTransform(rot.Rotation(), stairPos + FVector(0, 0, floorHeight * (i-1)), FVector(1.0f, 1.0f, 1.0f))});
 		roomPols = getInteriorPlan(f, hole, false, 300, 500);
 		for (FRoomPolygon &p : roomPols) {
 			//p.offset(FVector(0, 0, floorHeight*i));
-			FRoomInfo newR = ARoomBuilder::buildRoom(p, f.type, 1, floorHeight, 0.005, 250, 150);
+			FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, 0.005, 250, 150, map);
 			newR.offset(FVector(0, 0, floorHeight*i));
 			toReturn.pols.Append(newR.pols);
 			toReturn.meshes.Append(newR.meshes);
@@ -468,9 +478,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 
 	TArray<FMaterialPolygon> otherSides;
 	for (FMaterialPolygon &p : toReturn.pols) {
-		//if (p.getDirection().X < 0) {
-		//	p.reverse();
-		//}
+
 		FMaterialPolygon other = p;
 
 		other.offset(p.getDirection() * 20);

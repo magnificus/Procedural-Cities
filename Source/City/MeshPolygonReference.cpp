@@ -16,6 +16,8 @@ FPolygon MeshPolygonReference::getAppropriatePolygon(MeshType m, FVector origin,
 	case MeshType::toilet: return getToiletPolygon(origin, dir);
 	case MeshType::sink: return getSinkPolygon(origin, dir);
 	case MeshType::shelf_upper_large: return getShelfUpperLarge(origin, dir);
+	case MeshType::fridge: return getFridge(origin, dir);
+	case MeshType::hanger: return getHanger(origin, dir);
 	}
 	return FPolygon();
 }
@@ -83,11 +85,32 @@ FPolygon MeshPolygonReference::getShelfUpperLarge(FVector origin, FRotator dir) 
 
 FPolygon MeshPolygonReference::getStairPolygon(FVector origin, FRotator dir) {
 	FPolygon pol;
-	pol.points.Add(origin + dir.RotateVector(FVector(187, -213, 0)));
-	pol.points.Add(origin + dir.RotateVector(FVector(-187, -213, 0)));
-	pol.points.Add(origin + dir.RotateVector(FVector(-187, 213, 0)));
-	pol.points.Add(origin + dir.RotateVector(FVector(187, 213, 0)));
-	pol.points.Add(origin + dir.RotateVector(FVector(187, -213, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(190, -213, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(-190, -213, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(-190, 213, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(190, 213, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(190, -213, 0)));
+	return pol;
+}
+
+FPolygon MeshPolygonReference::getHanger(FVector origin, FRotator dir) {
+	FPolygon pol;
+	pol.points.Add(origin + dir.RotateVector(FVector(33, -33, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(-33, -33, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(-33, 33, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(33, 33, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(33, -33, 0)));
+	return pol;
+}
+
+
+FPolygon MeshPolygonReference::getFridge(FVector origin, FRotator dir) {
+	FPolygon pol;
+	pol.points.Add(origin + dir.RotateVector(FVector(35, -40, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(-35, -40, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(-35, 40, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(35, 40, 0)));
+	pol.points.Add(origin + dir.RotateVector(FVector(35, -40, 0)));
 	return pol;
 }
 

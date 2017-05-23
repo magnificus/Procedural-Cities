@@ -734,24 +734,105 @@ struct FRoomPolygon : public FPolygon
 	}
 
 
-	// post placement part of algorithm
-	void postFit(TArray<FRoomPolygon*> &rooms, TArray<RoomSpecification> neededRooms){
+	// post placement part of algorithm, makes sure the required rooms are there BY ANY MEANS NECCESARY
+	void postFit(TArray<FRoomPolygon*> &rooms, TArray<RoomSpecification> neededRooms, TArray<RoomSpecification> optionalRooms){
 
-		TSet<SubRoomType> foundRooms;
+		if (neededRooms.Num() > rooms.Num()) {
+			return;
+		}
+		//TMap<RoomSpecification, int32> required;
+		TMap<SubRoomType, int32> need;
+		for (RoomSpecification r : neededRooms) {
+			if (need.Contains(r.type))
+				need[r.type] ++;
+			else
+				need.Add(r.type, 1);
+		}
 		for (FRoomPolygon *p : rooms) {
-			if (!splitableType(p->type) && p->getTotalConnections() > 1) {
+			if (p->entrances.Num() > p->specificEntrances.Num()) {
+				p->type = SubRoomType::hallway;
+			}
+			else if (!splitableType(p->type) && p->getTotalConnections() > 1) {
 				p->type = SubRoomType::corridor;
 			}
-			else {
-				foundRooms.Add(p->type);
+			if (need.Contains(p->type))
+				need[p->type] --;
+		}
+
+		TArray<SubRoomType> remaining;
+		for (auto &spec : need) {
+			for (int i = 0; i < spec.Value; i++) {
+				remaining.Add(spec.Key);
 			}
 		}
-		for (RoomSpecification r : neededRooms) {
-			
+
+		while (remaining.Num() > 0) {
+			SubRoomType current = remaining[remaining.Num() - 1];
+
+			bool found = false;
+			for (FRoomPolygon *p : rooms) {
+				// first pick non-needed rooms
+				if (!need.Contains(p->type) && (splitableType(current) || p->getTotalConnections() < 2)) {
+					p->type = current;
+					found = true;
+					break;
+				}
+			}
+			if (found) {
+				remaining.RemoveAt(remaining.Num() - 1);
+				need[current] --;
+				continue;
+			}
+			else {
+				if (!splitableType(current)) {
+					// consider picking rooms that already contains an essential room
+					for (FRoomPolygon *p : rooms) {
+						if (p->getTotalConnections() < 2) {
+							SubRoomType prevType = p->type;
+							remaining.RemoveAt(remaining.Num() - 1);
+							need[current]--;
+							if (++need[prevType] > 0) {
+								remaining.Add(prevType);
+							}
+							p->type = current;
+							found = true;
+							break;
+						}
+					}
+					// if this fails, there are no possible places for this room, TODO create a new room somewhere
+					need[current] --;
+					remaining.RemoveAt(remaining.Num() - 1);
+				}
+				else {
+					// if this fails, there are no possible places for this room, TODO create a new room somewhere
+					need[current] --;
+					remaining.RemoveAt(remaining.Num() - 1);
+				}
+
+			}
+
 		}
+		//for (RoomSpecification r : neededRooms) {
+		//	if (!foundRooms.Contains(r.type)) {
+		//		// needed room isn't here, need to fit this somewhere else
+		//		bool found = false;
+		//		for (FRoomPolygon *p : rooms) {
+		//			if (p->type == SubRoomType::corridor && (splitableType(r.type) || p->getTotalConnections() < 2)) {
+		//				p->type = r.type;
+		//				found = true;
+		//				break;
+		//			}
+		//		}
+		//		if (found)
+		//			continue;
+		//		for (FRoomPolygon *p : rooms) {
+
+		//		}
+		//	}
+		//}
 	}
 
-	TArray<FRoomPolygon> getRooms(RoomBlueprint blueprint) {
+	TArray<FRoomPolygon*> getRooms(RoomBlueprint blueprint) {
 		TArray<FRoomPolygon*> rooms;
 		TArray<FRoomPolygon*> remaining;
 		FRoomPolygon* thisP = new FRoomPolygon();
@@ -763,26 +844,20 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false));
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true));
 
-		postFit(rooms, blueprint.needed);
-		TArray<FRoomPolygon> toReturn;
-		for (FRoomPolygon *p : remaining) {
-			//for (int i = 0; i < p.points.Num(); i++) {
-			//	p.toIgnore.Add(i);
-			//}
-			toReturn.Add(*p);
+		//TArray<FRoomPolygon> toReturn;
+		rooms.Append(remaining);
+		TArray<SubRoomType> neededTypes;
+		for (auto &a : blueprint.needed) {
+			neededTypes.Add(a.type);
 		}
-		for (FRoomPolygon *p : rooms) {
-			toReturn.Add(*p);
-		}
-		for (FRoomPolygon *p : rooms) {
-			delete p;
-		}
-		for (FRoomPolygon *p : remaining) {
-			delete p;
-		}
+		postFit(rooms, blueprint.needed, blueprint.optional);
+		//for (FRoomPolygon *p : rooms) {
+		//	toReturn.Add(*p);
+		//}
 
 
-		return toReturn;
+
+		return rooms;
 	}
 
 

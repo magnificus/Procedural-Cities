@@ -17,7 +17,10 @@ enum class MeshType : uint8
 	fridge UMETA(DisplayName = "Fridge"),
 	chair UMETA(DisplayName = "Chair"),
 	sink UMETA(DisplayName = "Sink"),
-	shelf_upper_large UMETA(DisplayName = "Large Upper Shelf")
+	shelf_upper_large UMETA(DisplayName = "Large Upper Shelf"),
+	hanger UMETA(DisplayName = "Hanger"),
+	oven UMETA(DisplayName = "Oven"),
+	wardrobe UMETA(DisplayName = "Wardrobe")
 	//shelf UMETA(DisplayName = "shelf"),
 	//shelf UMETA(DisplayName = "shelf"),
 
@@ -35,6 +38,9 @@ public:
 	static FPolygon getToiletPolygon(FVector origin, FRotator dir);
 	static FPolygon getSinkPolygon(FVector origin, FRotator dir);
 	static FPolygon getShelfUpperLarge(FVector origin, FRotator dir);
+	static FPolygon getHanger(FVector origin, FRotator dir);
+	static FPolygon getFridge(FVector origin, FRotator dir);
+	static FPolygon getOven(FVector origin, FRotator dir);
 
 	static FPolygon getStairPolygon(FVector origin, FRotator dir);
 

@@ -4,6 +4,7 @@
 
 #include "GameFramework/Actor.h"
 #include "MeshPolygonReference.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "RoomBuilder.generated.h"
 
 
@@ -11,6 +12,7 @@ USTRUCT(BlueprintType)
 struct FMeshInfo {
 
 	GENERATED_USTRUCT_BODY();
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString description;
@@ -47,7 +49,7 @@ public:
 	// Sets default values for this actor's properties
 	ARoomBuilder();
 
-	static TArray<FMaterialPolygon> interiorPlanToPolygons(TArray<FRoomPolygon> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth);
+	static TArray<FMaterialPolygon> interiorPlanToPolygons(TArray<FRoomPolygon*> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth);
 
 	float areaScale = 1.0f;
 protected:
@@ -58,9 +60,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	static FRoomInfo buildOffice(FRoomPolygon &f, int floor, float height, float density, float windowHeight, float windowWidth);
-	static FRoomInfo buildApartment(FRoomPolygon &f, int floor, float height, float density, float windowHeight, float windowWidth);
-	static FRoomInfo buildRoom(FRoomPolygon f, RoomType type, int floor, float height, float density, float windowHeight, float windowWidth);
+	static FRoomInfo buildOffice(FRoomPolygon *f, int floor, float height, float density, float windowHeight, float windowWidth,TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map);
+	static FRoomInfo buildApartment(FRoomPolygon *f, int floor, float height, float density, float windowHeight, float windowWidth,TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map);
+	static FRoomInfo buildRoom(FRoomPolygon *f, RoomType type, int floor, float height, float density, float windowHeight, float windowWidth, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map);
 	static TArray<FMaterialPolygon> getSideWithHoles(FMaterialPolygon outer, TArray<FPolygon> holes);
 	
 };
