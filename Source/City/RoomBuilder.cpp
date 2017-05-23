@@ -529,7 +529,7 @@ static TArray<FMeshInfo> getBathRoom(FRoomPolygon *r2, TMap<FString, UHierarchic
 	//}
 	placed.Append(blocking);
 	attemptPlace(r2, placed, meshes, 80, false, 5, "toilet", false, FRotator(0, 270, 0), FVector(0, 0, 0), map);
-	//attemptPlace(r2, placed, meshes, 80, false, 5, "sink", false, FRotator(0, 180, 0), FVector(0, 0, 0), map);
+	attemptPlace(r2, placed, meshes, 80, false, 5, "sink", false, FRotator(0, 180, 0), FVector(0, 0, 0), map);
 	return meshes;
 }
 
@@ -577,7 +577,7 @@ static TArray<FMeshInfo> getHallWay(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 
-	//attemptPlace(r2, placed, meshes, 50, true, 1, "hanger", false, FRotator(0, 0, 0), FVector(0, 0, 0), map);
+	attemptPlace(r2, placed, meshes, 70, true, 1, "hanger", false, FRotator(0, 0, 0), FVector(0, 0, 0), map);
 	return meshes;
 }
 
@@ -586,9 +586,8 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	attemptPlace(r2, placed, meshes, 70, false, 5, "fridge", false, FRotator(0, 90, 0), FVector(0, 0, 0), map);
+	attemptPlace(r2, placed, meshes, 80, false, 5, "fridge", false, FRotator(0, 90, 0), FVector(0, 0, 0), map);
 	attemptPlace(r2, placed, meshes, 85, false, 5, "oven", false, FRotator(0, 270, 0), FVector(0, 0, 0), map);
-	//attemptPlace(r2, MeshType::hanger, placed, meshes, 150, true, 1, "hanger", true, FRotator(0, 0, 0), FVector(0, 0, 0));
 	return meshes;
 }
 
