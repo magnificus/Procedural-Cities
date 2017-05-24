@@ -570,16 +570,18 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchica
 		FMeshInfo bed{ "bed", FTransform(rot + FRotator(0, 270, 0), pos + FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
 		meshes.Add(bed);
 		pos += tangent * 150 - dir * 70;
-		FPolygon smallTableP = MeshPolygonReference::getSmallTablePolygon(pos, rot);
-		if (!testCollision(smallTableP, placed, 0, *r2)) {
-			placed.Add(smallTableP);
-			FMeshInfo table{ "small_table", FTransform(rot , pos - FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
-			meshes.Add(table);
-		}
+		//FPolygon smallTableP = MeshPolygonReference::getSmallTablePolygon(pos, rot);
+		//if (!testCollision(smallTableP, placed, 0, *r2)) {
+		//	placed.Add(smallTableP);
+		//	FMeshInfo table{ "small_table", FTransform(rot , pos - FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
+		//	meshes.Add(table);
+		//}
 		break;
 	}
+	attemptPlace(r2, placed, meshes, 100, true, 2, "small_table", false, FRotator(0, 0, 0), FVector(0, 0, -50), map);
+	attemptPlace(r2, placed, meshes, 50.0f, false, 2, "shelf", false, FRotator(0, 270, 0), FVector(0, 0, 0), map);
+	attemptPlace(r2, placed, meshes, 50, false, 2, "wardrobe", false, FRotator(0, 0, 0), FVector(0, 0, 0), map);
 
-	attemptPlace(r2, placed, meshes, 20.0f, false, 2, "shelf", false, FRotator(0, 270, 0), FVector(0, 0, 0), map);
 	return meshes;
 }
 
@@ -607,7 +609,9 @@ static TArray<FMeshInfo> getCorridor(FRoomPolygon *r2, TMap<FString, UHierarchic
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	//attemptPlace(r2, placed, meshes, 10, false, 5, "wardrobe", false, FRotator(0, 90, 0), FVector(0, 0, 0), map);
+	attemptPlace(r2, placed, meshes, 50, false, 5, "wardrobe", false, FRotator(0, 0, 0), FVector(0, 0, 0), map);
+	//attemptPlace(r2, placed, meshes, 40, false, 5, "wardrobe", false, FRotator(0, 0, 0), FVector(0, 0, 0), map);
+
 	return meshes;
 }
 
