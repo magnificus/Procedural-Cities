@@ -132,10 +132,14 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FMaterialPolygon outer, 
 FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
 	FVector min;
 	FVector max;
-	map[name]->GetLocalBounds(min, max);
+	FPolygon pol;
+
+	if (map.Contains(name))
+		map[name]->GetLocalBounds(min, max);
+	else
+		return pol;
 	//UE_LOG(LogTemp, Warning, TEXT("box: %s, %s"), *min.ToString(), *max.ToString());
 
-	FPolygon pol;
 	pol.points.Add(rot.RotateVector(FVector(min.X, min.Y, 0.0f)) + pos);
 	pol.points.Add(rot.RotateVector(FVector(max.X, min.Y, 0.0f)) + pos);
 	pol.points.Add(rot.RotateVector(FVector(max.X, max.Y, 0.0f)) + pos);
@@ -592,7 +596,7 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	attemptPlace(r2, placed, meshes, 10, false, 5, "kitchen", false, FRotator(0, 90, 0), FVector(0, 0, 0), map);
+	attemptPlace(r2, placed, meshes, 50, false, 5, "kitchen", false, FRotator(0, 90, 0), FVector(0, 0, 0), map);
 	attemptPlace(r2, placed, meshes, 80, false, 5, "fridge", false, FRotator(0, 90, 0), FVector(0, 0, 0), map);
 	attemptPlace(r2, placed, meshes, 85, false, 5, "oven", false, FRotator(0, 270, 0), FVector(0, 0, 0), map);
 	return meshes;

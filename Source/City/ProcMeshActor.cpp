@@ -91,20 +91,24 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	for (FPolygon pol : pols) {
 
 		// UVS are found by getting the coordinates of points on the plane which they span up
-		FVector e1 = pol.points[1] - pol.points[0];
+		FVector e1 = pol.points[1] - pol.points[0];//FVector(1.0, 0.0, 0.0); 
+		e1.Normalize();
 		FVector n = FVector::CrossProduct(e1, pol.points[2] - pol.points[0]);
 		FVector e2 = FVector::CrossProduct(e1, n);
+		e2.Normalize();
 
 
-
-		FVector origin = pol.points[0];
+		FVector origin = FVector(0, 0, 0);//pol.points[0];
 
 		for (FVector f : pol.points) {
 			vertices.Add(f + offset);
-			float x = FVector::DotProduct(e1, f - origin);
-			float y = FVector::DotProduct(e2, f - origin);
+			float y = FVector::DotProduct(e1, f - origin);
+			float x = FVector::DotProduct(e2, f - origin);
 			UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
 		}
+		//UV.Add(FVector2D(0, 0));
+		//UV.Add(FVector2D(10* texScaleMultiplier, 0));
+		//UV.Add(FVector2D(0, 10* texScaleMultiplier	));
 
 		//FVector middle = pol.getCenter();
 
@@ -113,9 +117,9 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 			triangles.Add(i - 1 + current);
 			triangles.Add(i + current);
 
-			triangles.Add(i + current);
-			triangles.Add(i - 1 + current);
-			triangles.Add(0 + current);
+			//triangles.Add(i + current);
+			//triangles.Add(i - 1 + current);
+			//triangles.Add(current);
 
 		}
 
