@@ -833,24 +833,6 @@ struct FRoomPolygon : public FPolygon
 			}
 
 		}
-		//for (RoomSpecification r : neededRooms) {
-		//	if (!foundRooms.Contains(r.type)) {
-		//		// needed room isn't here, need to fit this somewhere else
-		//		bool found = false;
-		//		for (FRoomPolygon *p : rooms) {
-		//			if (p->type == SubRoomType::corridor && (splitableType(r.type) || p->getTotalConnections() < 2)) {
-		//				p->type = r.type;
-		//				found = true;
-		//				break;
-		//			}
-		//		}
-		//		if (found)
-		//			continue;
-		//		for (FRoomPolygon *p : rooms) {
-
-		//		}
-		//	}
-		//}
 	}
 
 	TArray<FRoomPolygon*> getRooms(RoomBlueprint blueprint) {

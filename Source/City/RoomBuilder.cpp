@@ -471,7 +471,7 @@ RoomBlueprint getApartmentBlueprint(float areaScale) {
 
 
 
-static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon *r2, TArray<FPolygon> &placed) {
+static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon *r2, TArray<FPolygon> &placed, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	TArray<FMeshInfo> meshes;
 
 
@@ -486,16 +486,30 @@ static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon *r2, TArray<F
 	FVector c2 = center + rot * 70 + tan * 150;
 	FVector c3 = center - rot * 70 - tan * 150;
 	FVector c4 = center + rot * 70 - tan * 150;
-	FMeshInfo chair1{ "chair", FTransform(rot.Rotation(), c1 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) };
-	FMeshInfo chair2{ "chair", FTransform(rot.Rotation(), c2 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) };
-	FMeshInfo chair3{ "chair", FTransform(FRotator(0, 180, 0) + rot.Rotation(), c3 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) };
-	FMeshInfo chair4{ "chair", FTransform(FRotator(0, 180, 0) + rot.Rotation(), c4 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) };
-
-	meshes.Add(table);
-	meshes.Add(chair1);
-	meshes.Add(chair2);
-	meshes.Add(chair3);
-	meshes.Add(chair4);
+	FPolygon c1P = getPolygon(rot.Rotation(), c1 + FVector(0, 0, extraChairHeight), "chair", map);
+	FPolygon c2P = getPolygon(rot.Rotation(), c2 + FVector(0, 0, extraChairHeight), "chair", map);
+	FPolygon c3P = getPolygon(FRotator(0, 180, 0) + rot.Rotation(), c3 + FVector(0, 0, extraChairHeight), "chair", map);
+	FPolygon c4P = getPolygon(FRotator(0, 180, 0) + rot.Rotation(), c4 + FVector(0, 0, extraChairHeight), "chair", map);
+	FPolygon tableP = getPolygon(rot.Rotation(), center, "large_table", map);
+	
+	if (!testCollision(tableP, placed, 0, *r2)) {
+		meshes.Add(table);
+	}
+	else {
+		return meshes;
+	}
+	if (!testCollision(c1P, placed, 0, *r2)) {
+		meshes.Add({"chair", FTransform(rot.Rotation(), c1 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
+	}
+	if (!testCollision(c2P, placed, 0, *r2)) {
+		meshes.Add({ "chair", FTransform(rot.Rotation(), c2 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
+	}
+	if (!testCollision(c3P, placed, 0, *r2)) {
+		meshes.Add({ "chair", FTransform(rot.Rotation() + FRotator(0, 180, 0), c3 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
+	}
+	if (!testCollision(c4P, placed, 0, *r2)) {
+		meshes.Add({ "chair", FTransform(rot.Rotation() + FRotator(0, 180, 0), c4 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
+	}
 
 	return meshes;
 
@@ -506,8 +520,7 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon *r2, TMap<FString, UHierarch
 	
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	meshes.Append(potentiallyGetTableAndChairs(r2, placed));
-	attemptPlace(r2, placed, meshes, 45.0f, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
+
 	// add maybe sofa and stuff? lamps?
 	return meshes;
 }
@@ -594,9 +607,11 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	attemptPlace(r2, placed, meshes, 50, false, 5, "kitchen", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
-	attemptPlace(r2, placed, meshes, 80, false, 5, "fridge", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
-	attemptPlace(r2, placed, meshes, 85, false, 5, "oven", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
+	attemptPlace(r2, placed, meshes, 50, false, 3, "kitchen", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
+	meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
+	attemptPlace(r2, placed, meshes, 45.0f, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
+	attemptPlace(r2, placed, meshes, 80, false, 3, "fridge", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
+	attemptPlace(r2, placed, meshes, 85, false, 3, "oven", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	return meshes;
 }
 

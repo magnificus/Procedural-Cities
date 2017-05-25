@@ -309,38 +309,38 @@ void makeInteresting(FHousePolygon &f) {
 		//f.points.RemoveAt((randFloat() * f.points.Num() - 1) + 1);
 	}
 	if (randFloat() < 0.1f) {
-		float len = 5000;
+		float depth = 5000;
 		// turn a side inwards into a U
 		int place = (randFloat() * (f.points.Num() - 2)) + 2;
 		FVector tangent = f.points[place] - f.points[place - 1];
 		float lenSide = tangent.Size();
 		tangent.Normalize();
-		FVector dir = FRotator(0, f.buildLeft ? 90 : 270, 0).RotateVector(tangent);
+		FVector dir = FRotator(0, f.buildLeft ? 270 : 90, 0).RotateVector(tangent);
 		FVector first = f.points[place - 1] + tangent * lenSide / 3;
-		FVector first2 = first + dir * len;
+		FVector first2 = first + dir * depth;
 		FVector snd = f.points[place - 1] + tangent * lenSide / (3/2) ;
-		FVector snd2 = snd + dir * len;
+		FVector snd2 = snd + dir * depth;
 		f.addPoint(place, first);
 		f.addPoint(place + 1, first2);
 		f.addPoint(place + 2, snd2);
 		f.addPoint(place + 3, snd);
 
 	}
-	if (randFloat() < 0.1f) {
-		float len = 500;
-		// make sides more irregular by moving parts of it inwards (two points)
-		int place = (randFloat() * (f.points.Num() - 2)) + 2;
-		FVector tangent = f.points[place] - f.points[place - 1];
-		tangent.Normalize();
-		FVector dir = FRotator(0, f.buildLeft ? 90 : 270, 0).RotateVector(tangent);
-		FVector first = f.points[place - 1] + dir * len;
-		FVector snd = f.points[place] + dir * len;
-		f.removePoint(place - 1);
-		f.removePoint(place - 1);
-		f.addPoint(place - 1, first);
-		f.addPoint(place, snd);
+	//if (randFloat() < 0.1f) {
+	//	float len = 500;
+	//	// make sides more irregular by moving parts of it inwards (two points)
+	//	int place = (randFloat() * (f.points.Num() - 2)) + 2;
+	//	FVector tangent = f.points[place] - f.points[place - 1];
+	//	tangent.Normalize();
+	//	FVector dir = FRotator(0, f.buildLeft ? 90 : 270, 0).RotateVector(tangent);
+	//	FVector first = f.points[place - 1] + dir * len;
+	//	FVector snd = f.points[place] + dir * len;
+	//	f.removePoint(place - 1);
+	//	f.removePoint(place - 1);
+	//	f.addPoint(place - 1, first);
+	//	f.addPoint(place, snd);
 
-	}
+	//}
 }
 
 
@@ -454,9 +454,9 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 		TArray<FMaterialPolygon> temp = getFloorPolygonsWithHole(f, floorHeight*i + 1, hole, true);
 		temp.Append(getFloorPolygonsWithHole(hole, floorHeight*i, stairPol, false));
 
-		for (FPolygon &f : temp) {
+		for (FPolygon &f2 : temp) {
 			if (FVector::DotProduct(f.getDirection(), FVector(1.0f, 1.0f, 1.0f)) > 0.0f) {
-				f.reverse();
+				f2.reverse();
 			}
 
 		}
