@@ -23,7 +23,7 @@ void APlotBuilder::BeginPlay()
 TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int maxFloors, int minFloors) {
 	TArray<FHousePolygon> housePolygons;
 
-	float maxArea = 10000.0f;
+	float maxArea = 6000.0f;
 	float minArea = 800.0f;
 
 	if (!p.open) {
@@ -63,8 +63,8 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 		float minLen = 3500;
 		float minWidth = 3500;
 
-		float maxLen = 8000;
-		float maxWidth = 8000;
+		float maxLen = 6000;
+		float maxWidth = 6000;
 
 		int next = 1;
 		FVector currPos = p.points[0];

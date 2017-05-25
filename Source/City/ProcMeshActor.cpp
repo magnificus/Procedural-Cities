@@ -12,6 +12,7 @@ AProcMeshActor::AProcMeshActor()
 	exteriorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("exteriorMesh"));
 	interiorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("interiorMesh"));
 	windowMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("windowMesh"));
+	occlusionWindowMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("occlusionWindowMesh"));
 	floorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("floorMesh"));
 	roofMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("roofMesh"));
 
@@ -143,6 +144,7 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	TArray<FPolygon> exterior;
 	TArray<FPolygon> interior;
 	TArray<FPolygon> windows;
+	TArray<FPolygon> occlusionWindows;
 	TArray<FPolygon> floors;
 	TArray<FPolygon> roofs;
 	for (FMaterialPolygon &p : pols) {
@@ -162,6 +164,9 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 		case PolygonType::roof:
 			roofs.Add(p);
 			break;
+		case PolygonType::occlusionWindow:
+			occlusionWindows.Add(p);
+			break;
 		}
 	}
 	buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
@@ -169,6 +174,7 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	buildPolygons(windows, offset, windowMesh, windowMat);
 	buildPolygons(floors, offset, floorMesh, floorMat);
 	buildPolygons(roofs, offset, roofMesh, roofMat);
+	buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
 	
 }
 

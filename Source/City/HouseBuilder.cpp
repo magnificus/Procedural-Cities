@@ -76,6 +76,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 		roomPols[i - 1].points.Add(firstAttach);
 		roomPols[i - 1].entrances.Add(roomPols[i - 1].points.Num());
 		roomPols[i - 1].points.Add(sndAttach);
+		//roomPols[i - 1].exteriorWalls.Add(roomPols[i - 1].points.Num());
 
 
 
@@ -130,6 +131,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 				if (f.windows.Contains(j+1)) {
 					fp.windows.Add(fp.points.Num());
 				}
+				fp.exteriorWalls.Add(fp.points.Num());
 				fp.points.Add(f.points[j]);
 
 
@@ -140,12 +142,15 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 				if (f.windows.Contains(j)) {
 					fp.windows.Add(fp.points.Num());
 				}
+				fp.exteriorWalls.Add(fp.points.Num());
 				fp.points.Add(f.points[j]);
 
 			}
 		}
-		if (f.windows.Contains(connections[i].a))
+		if (f.windows.Contains(connections[i].a)) {
 			roomPols[i].windows.Add(roomPols[i].points.Num());
+		}
+		fp.exteriorWalls.Add(fp.points.Num());
 
 		FVector first = roomPols[i].points[0];
 		roomPols[i].points.Add(first);
@@ -164,13 +169,18 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 	for (FRoomPolygon &p : roomPols) {
 		if (p.getArea() > maxRoomArea) {
 			FRoomPolygon* newP = p.splitAlongMax(0.5, false);
-			extra.Add(*newP);
-			delete(newP);
+			if (newP) {
+				extra.Add(*newP);
+				delete(newP);
+			}
 		}
 	}
 	roomPols.Append(extra);
 
 	corners.reverse();
+	for (int i = 1; i < corners.points.Num(); i++) {
+		corners.exteriorWalls.Add(i);
+	}
 	roomPols.Add(corners);
 
 	return roomPols;
@@ -397,7 +407,7 @@ void buildRoof(FRoomInfo &info, FPolygon pol) {
 	}
 }
 
-FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHeight, float maxRoomArea)
+FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHeight, float maxRoomArea, bool shellOnly)
 {
 	if (f.points.Num() < 3) {
 		return FRoomInfo();
@@ -426,16 +436,10 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	}
 	FVector rot = getNormal(hole.points[1], hole.points[0], true);
 	rot.Normalize();
-	//rot.X = 0;
-	//rot.Y = 0;
-	//rot.Z = 0;
 	FPolygon stairPol = MeshPolygonReference::getStairPolygon(hole.getCenter() + rot*500, rot.Rotation());
 	FPolygon elevatorPol = MeshPolygonReference::getStairPolygon(hole.getCenter() - rot * 500, rot.Rotation());
 	FVector stairPos = stairPol.getCenter();
 	FVector elevatorPos = elevatorPol.getCenter();
-//	stair.Add(stairPol);
-	//stairPol.points.RemoveAt(stairPol.points.Num() - 1);
-	//hole.offset(hole.getDirection() * 200);
 
 	FPolygon hole2;
 	hole2.points = hole.points;
@@ -447,8 +451,6 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	toReturn.pols.Append(getShaftSides(stairPol, 3, floorHeight * floors));
 
 	for (int i = 1; i < floors; i++) {
-		//holeP.offset(FVector(0, 0, floorHeight));
-		//stair[0].offset(FVector(0, 0, floorHeight));
 		TArray<FMaterialPolygon> temp = getFloorPolygonsWithHole(f, floorHeight*i + 1, hole, true);
 		temp.Append(getFloorPolygonsWithHole(hole, floorHeight*i, stairPol, false));
 
@@ -542,6 +544,21 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	}
 
 	toReturn.pols.Append(otherSides);
+
+	if (shellOnly) {
+		FRoomInfo shell;
+		for (FMaterialPolygon p : toReturn.pols) {
+			switch (p.type) {
+			case PolygonType::exterior: shell.pols.Add(p);
+				break;
+			case PolygonType::roof: shell.pols.Add(p);
+				break;
+			case PolygonType::window: p.type = PolygonType::occlusionWindow;  shell.pols.Add(p);
+				break;
+			}
+		}
+		return shell;
+	}
 	return toReturn;
 
 

@@ -37,6 +37,7 @@ enum class PolygonType : uint8
 	exterior UMETA(DisplayName = "Exterior"),
 	floor UMETA(DisplayName = "Floor"),
 	window UMETA(DisplayName = "Window"),
+	occlusionWindow UMETA(DisplayName = "Occlusion Window"),
 	roof UMETA(DisplayName = "Roof")
 };
 
@@ -332,6 +333,8 @@ struct FRoomPolygon : public FPolygon
 	TSet<int32> windows;
 	// sides of the polygon with entrances from my end
 	TSet<int32> entrances;
+	// sides of polygons that are towards the outside
+	TSet<int32> exteriorWalls;
 	// sides of the polygon with entrances that cannot be duplicated to other rooms when i split
 	// a subset of entrances where the entrance is not in the middle but in a specified position
 	TMap<int32, FVector> specificEntrances;
@@ -443,6 +446,9 @@ struct FRoomPolygon : public FPolygon
 		if (windows.Contains(p.min)) {
 			newP->windows.Add(1);
 		}
+		if (exteriorWalls.Contains(p.min)) {
+			newP->exteriorWalls.Add(1);
+		}
 
 		updateConnections(p.min, p.p1, newP, true, 1);
 		// move intersection to make more sense if possible
@@ -497,6 +503,10 @@ struct FRoomPolygon : public FPolygon
 				windows.Remove(i);
 				newP->windows.Add(newP->points.Num());
 			}
+			if (exteriorWalls.Contains(i)) {
+				exteriorWalls.Remove(i);
+				newP->exteriorWalls.Add(newP->points.Num());
+			}
 			if (toIgnore.Contains(i)) {
 				toIgnore.Remove(i);
 				newP->toIgnore.Add(newP->points.Num());
@@ -545,6 +555,9 @@ struct FRoomPolygon : public FPolygon
 		if (windows.Contains(p.max)) {
 			newP->windows.Add(newP->points.Num());
 		}
+		if (exteriorWalls.Contains(p.max)) {
+			newP->exteriorWalls.Add(newP->points.Num());
+		}
 
 		updateConnections(p.max, p.p2, newP, false, newP->points.Num());
 
@@ -588,6 +601,14 @@ struct FRoomPolygon : public FPolygon
 		}
 		windows = newList;
 
+		newList.Empty();
+		for (int32 i : exteriorWalls) {
+			if (i >= p.max)
+				newList.Add(i - (p.max - p.min) + 2);
+			else
+				newList.Add(i);
+		}
+		exteriorWalls = newList;
 
 		newList.Empty();
 		for (int32 i : toIgnore) {
