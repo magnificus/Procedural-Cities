@@ -520,8 +520,8 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon *r2, TMap<FString, UHierarch
 	
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
+	attemptPlace(r2, placed, meshes, 400, true, 2, "sofa", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 
-	// add maybe sofa and stuff? lamps?
 	return meshes;
 }
 
