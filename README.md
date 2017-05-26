@@ -5,13 +5,13 @@ TODO:
 * interiors
   * ground level details
   * <strike>room subdivision</strike>
-  * windows
+  * <strike>windows</strike>
+   * different types of windows for different levels
   * types
-   * offices
-   * living apartments
+   * <strike>offices</strike>
+   * <strike>living apartments</strike>
    * stores
    * cafes
-
 * heatmaps
  * population heatmap
  * heightmap
@@ -24,5 +24,7 @@ TODO:
 * <strike>proper polygon splits</strike>
 * make building shapes more interesting
 * add detail to buildings
+ * facades
+ * roofs
 * make buildings with several "levels" with different roomPolygons.
 * window mesh details

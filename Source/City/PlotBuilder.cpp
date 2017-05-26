@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "City.h"
+#include "NoiseGenerator2.h"
 #include "PlotBuilder.h"
 
 
@@ -108,7 +109,9 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 				fh.population = 1.0;
 				fh.height = randFloat() * (maxFloors - minFloors) + minFloors;
 				fh.housePosition = pol.getCenter();
-				fh.type = randFloat() < 0.5 ? RoomType::office : RoomType::apartment;
+				UNoiseGenerator2 *n = NewObject<UNoiseGenerator2>();
+				fh.type = n->Noise(fh.housePosition.X, fh.housePosition.Y, fh.housePosition.Z) < 0.5 ? RoomType::office : RoomType::apartment;//randFloat() < 0.5 ? RoomType::office : RoomType::apartment;
+				delete n;
 
 				fh.entrances.Add(2);
 				for (int i = 1; i < fh.points.Num(); i++) {
