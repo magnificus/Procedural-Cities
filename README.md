@@ -5,11 +5,11 @@ TODO:
 * interiors
   * ground level details
   * <strike>room subdivision</strike>
-  * <strike>windows<strike>
+  * <strike>windows</strike>
    * different types of windows for different levels
   * types
-   * <strike>offices<strike>
-   * <strike>living apartments<strike>
+   * <strike>offices</strike>
+   * <strike>living apartments</strike>
    * stores
    * cafes
 * heatmaps
