@@ -6,12 +6,12 @@ TODO:
   * ground level details
   * <strike>room subdivision</strike>
   * <strike>windows<strike>
+   * different types of windows for different levels
   * types
    * <strike>offices<strike>
    * <strike>living apartments<strike>
    * stores
    * cafes
-
 * heatmaps
  * population heatmap
  * heightmap
