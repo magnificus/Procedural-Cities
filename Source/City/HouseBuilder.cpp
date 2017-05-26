@@ -315,7 +315,7 @@ void makeInteresting(FHousePolygon &f) {
 		FVector tangent = f.points[place] - f.points[place - 1];
 		float lenSide = tangent.Size();
 		tangent.Normalize();
-		FVector dir = FRotator(0, f.buildLeft ? 270 : 90, 0).RotateVector(tangent);
+		FVector dir = FRotator(0, f.buildLeft ? 90 : 270, 0).RotateVector(tangent);
 		FVector first = f.points[place - 1] + tangent * lenSide / 3;
 		FVector first2 = first + dir * depth;
 		FVector snd = f.points[place - 1] + tangent * lenSide / (3/2) ;
@@ -389,7 +389,7 @@ void addStairInfo(FRoomInfo &info, float height, FPolygon &hole) {
 
 }
 
-void buildRoof(FRoomInfo &info, FPolygon pol) {
+void buildRoof(FRoomInfo &info, FHousePolygon pol) {
 	if (randFloat() < 0.5f) {
 		// add angled roof
 		float height = 1000;
@@ -424,6 +424,9 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 	float wHeight = randFloat() * 400 + 200;
 
 
+	// add detail to facade
+	
+
 	FPolygon hole = getShaftHolePolygon(f);
 	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, 300, maxRoomArea);
 
@@ -455,7 +458,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 		temp.Append(getFloorPolygonsWithHole(hole, floorHeight*i, stairPol, false));
 
 		for (FPolygon &f2 : temp) {
-			if (FVector::DotProduct(f.getDirection(), FVector(1.0f, 1.0f, 1.0f)) > 0.0f) {
+			if (FVector::DotProduct(f.getDirection(), FVector(1.0f, 1.0f, 1.0f)) < 0.0f) {
 				f2.reverse();
 			}
 
@@ -485,6 +488,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 
 		toReturn.pols.Add(above);
 	}
+
 
 
 	FMaterialPolygon roof;

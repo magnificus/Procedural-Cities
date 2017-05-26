@@ -37,6 +37,7 @@ enum class PolygonType : uint8
 	exterior UMETA(DisplayName = "Exterior"),
 	floor UMETA(DisplayName = "Floor"),
 	window UMETA(DisplayName = "Window"),
+	windowFrame UMETA(DisplayName = "Window Frame"),
 	occlusionWindow UMETA(DisplayName = "Occlusion Window"),
 	roof UMETA(DisplayName = "Roof")
 };
@@ -285,7 +286,10 @@ enum class SubRoomType : uint8
 	kitchen UMETA(DisplayName = "Kitchen"),
 	living UMETA(DisplayName = "Living Room"),
 	closet UMETA(DisplayName = "Closet"),
-	hallway UMETA(DisplayName = "Hallway")
+	hallway UMETA(DisplayName = "Hallway"),
+	storeFront UMETA(DisplayName = "Store Front"),
+	storeBack UMETA(DisplayName = "Store Back"),
+
 
 };
 
@@ -302,6 +306,8 @@ static bool splitableType(SubRoomType type) {
 	case SubRoomType::living: return true;
 	case SubRoomType::closet: return false;
 	case SubRoomType::hallway: return true;
+	case SubRoomType::storeBack: return true;
+	case SubRoomType::storeFront: return true;
 	}
 	return true;
 }

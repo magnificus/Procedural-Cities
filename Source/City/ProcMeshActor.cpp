@@ -135,7 +135,7 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	mesh->SetMaterial(1, mat);
 	//mesh->SetCullDistance(100);
 
-	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, true);
+	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
 }
 
 // uses fan triangulation, doesn't work with convex shapes, builds faces in both directions
@@ -144,6 +144,8 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	TArray<FPolygon> exterior;
 	TArray<FPolygon> interior;
 	TArray<FPolygon> windows;
+	TArray<FPolygon> windowFrames;
+
 	TArray<FPolygon> occlusionWindows;
 	TArray<FPolygon> floors;
 	TArray<FPolygon> roofs;
@@ -167,6 +169,10 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 		case PolygonType::occlusionWindow:
 			occlusionWindows.Add(p);
 			break;
+		case PolygonType::windowFrame:
+			windowFrames.Add(p);
+			break;
+
 		}
 	}
 	buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
@@ -175,6 +181,7 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	buildPolygons(floors, offset, floorMesh, floorMat);
 	buildPolygons(roofs, offset, roofMesh, roofMat);
 	buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
+	buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
 	
 }
 

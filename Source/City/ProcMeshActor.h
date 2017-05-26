@@ -31,6 +31,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		UMaterial* windowMat;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		UMaterial* windowFrameMat;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		UMaterial* occlusionWindowMat;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		UMaterial* interiorMat;
@@ -61,6 +63,8 @@ private:
 	UProceduralMeshComponent * windowMesh;
 	UPROPERTY(VisibleAnywhere, Category = Meshes)
 	UProceduralMeshComponent * occlusionWindowMesh;
+	UPROPERTY(VisibleAnywhere, Category = Meshes)
+	UProceduralMeshComponent * windowFrameMesh;
 	UPROPERTY(VisibleAnywhere, Category = Meshes)
 	UProceduralMeshComponent * floorMesh;
 	UPROPERTY(VisibleAnywhere, Category = Meshes)
