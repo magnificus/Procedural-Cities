@@ -24,7 +24,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	FRoomInfo getHouseInfo(FHousePolygon f, int floors, float floorHeight, float maxRoomArea, bool shellOnly);
+	FRoomInfo getHouseInfo(FHousePolygon f, float noiseMultiplier, float floorHeight, float maxRoomArea, bool shellOnly);
 
 protected:
 	// Called when the game starts or when spawned

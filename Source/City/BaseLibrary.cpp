@@ -25,23 +25,6 @@ void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points) 
 	}
 }
 
-
-
-//void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4) {
-//	float res = FVector::DotProduct(tangent, v1);
-//	min = res;
-//	max = res;
-//	res = FVector::DotProduct(tangent, v2);
-//	min = std::min(min, res);
-//	max = std::max(max, res);
-//	res = FVector::DotProduct(tangent, v3);
-//	min = std::min(min, res);
-//	max = std::max(max, res);
-//	res = FVector::DotProduct(tangent, v4);
-//	min = std::min(min, res);
-//	max = std::max(max, res);
-//}
-
 FVector intersection(FPolygon &p1, TArray<FPolygon> &p2) {
 	for (FPolygon &f : p2) {
 		FVector res = intersection(p1, f);
@@ -465,9 +448,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 				f.points.Add(first);
 			}
 
-			if (FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) > 0.1f) {
-				UE_LOG(LogTemp, Log, TEXT("BEGINNING AND END NOT CONNECTED"), remaining.Num());
-			}
 			f.open = false;
 			f.checkOrientation();
 		}

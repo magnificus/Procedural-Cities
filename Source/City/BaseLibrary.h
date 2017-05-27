@@ -933,7 +933,7 @@ struct FHousePolygon : public FMetaPolygon {
 	void addPoint(int place, FVector point) {
 		std::vector<int> toRemove;
 		for (int i : windows) {
-			if (i > place) {
+			if (i >= place) {
 				toRemove.push_back(i);
 			}
 		}
@@ -943,7 +943,7 @@ struct FHousePolygon : public FMetaPolygon {
 		}
 		toRemove.clear();
 		for (int i : entrances) {
-			if (i > place) {
+			if (i >= place) {
 				toRemove.push_back(i);
 			}
 		}

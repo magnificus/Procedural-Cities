@@ -25,7 +25,7 @@ class CITY_API UNoiseGenerator2 : public UObject
 	int numX = 512,
 	numY = 512,
 	numOctaves = 7;
-	float persistence = 0.5;
+	double persistence = 0.5;
 
 	int primeIndex = 0;
 
@@ -48,18 +48,18 @@ public:
 	};
 
 
-	UFUNCTION(BlueprintCallable, Category = "Generation")
-		float Noise(int i, int x, int y) {
+	//UFUNCTION(BlueprintCallable, Category = "Generation")
+	double Noise(int i, int x, int y) {
 		int n = x + y * 57;
 		n = (n << 13) ^ n;
 		int a = primes[i][0], b = primes[i][1], c = primes[i][2];
 		int t = (n * (n * n * a + b) + c) & 0x7fffffff;
-		return 1.0 - (float)(t) / 1073741824.0;
+		return 1.0 - (double)(t) / 1073741824.0;
 	}
 
-	UFUNCTION(BlueprintCallable, Category = "Generation")
-	float SmoothedNoise(int i, int x, int y) {
-		 float corners = (Noise(i, x - 1, y - 1) + Noise(i, x + 1, y - 1) +
+	//UFUNCTION(BlueprintCallable, Category = "Generation")
+	double SmoothedNoise(int i, int x, int y) {
+		double corners = (Noise(i, x - 1, y - 1) + Noise(i, x + 1, y - 1) +
 			Noise(i, x - 1, y + 1) + Noise(i, x + 1, y + 1)) / 16,
 			sides = (Noise(i, x - 1, y) + Noise(i, x + 1, y) + Noise(i, x, y - 1) +
 				Noise(i, x, y + 1)) / 8,

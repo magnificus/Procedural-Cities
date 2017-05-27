@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "City.h"
+#include "simplexnoise.h"
 #include "HouseBuilder.h"
 
 struct FPolygon;
@@ -311,7 +312,7 @@ void makeInteresting(FHousePolygon &f) {
 	if (randFloat() < 0.1f) {
 		float depth = 5000;
 		// turn a side inwards into a U
-		int place = (randFloat() * (f.points.Num() - 2)) + 2;
+		int place = FMath::Rand() % (f.points.Num()-1) + 1;
 		FVector tangent = f.points[place] - f.points[place - 1];
 		float lenSide = tangent.Size();
 		tangent.Normalize();
@@ -407,15 +408,15 @@ void buildRoof(FRoomInfo &info, FHousePolygon pol) {
 	}
 }
 
-FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHeight, float maxRoomArea, bool shellOnly)
+FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, float floorHeight, float maxRoomArea, bool shellOnly)
 {
 	if (f.points.Num() < 3) {
 		return FRoomInfo();
 	}
-	//makeInteresting(f);
+	makeInteresting(f);
 	FRoomInfo toReturn;
 
-
+	int floors = 3 + 10 * (raw_noise_2d(f.housePosition.X*noiseMultiplier, f.housePosition.Y*noiseMultiplier) * 0.5 + 0.5);
 
 
 	float wDens = randFloat() * 0.0010 + 0.0005;
@@ -426,6 +427,8 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, int floors, float floorHe
 
 	// add detail to facade
 	
+	//float density = 0.01;
+	//float width = 0.01;
 
 	FPolygon hole = getShaftHolePolygon(f);
 	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, 300, maxRoomArea);
