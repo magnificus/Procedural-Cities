@@ -257,6 +257,7 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 				newP->line.p2 = inLine->line.p2;
 				inLine->line.p2 = intSec - altTangent * middleOffset;
 			}
+
 			newP->buildLeft = inLine->buildLeft;
 			decidePolygonFate(segments, blocking, newP, lines, true, extraRoadLen, width, middleOffset);
 			intSec = intersection(f.p1 - tangent * extraRoadLen, f.p2 + tangent * extraRoadLen, inLine->line.p1, inLine->line.p2);
@@ -453,6 +454,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 		}
 		else {
 			f.open = true;
+
 		}
 
 		polygons.Add(f);

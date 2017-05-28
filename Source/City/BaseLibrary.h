@@ -262,15 +262,23 @@ struct FMetaPolygon : public FPolygon
 
 	void checkOrientation() {
 		FVector tangent = points[1] - points[0];
-		tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(tangent);
+		tangent = FRotator(0, 90, 0).RotateVector(tangent);
 		tangent.Normalize();
 		FVector middle = (points[1] - points[0]) / 2 + points[0];
 		for (int i = 2; i < points.Num(); i++) {
-			if (intersection(middle, middle + tangent * 100000, points[i - 1], points[i]).X != 0.0f)
+			if (intersection(middle, middle + tangent * 100000, points[i - 1], points[i]).X != 0.0f) {
+				//reverse();
+				//buildLeft = true;
 				return;
+
+			}
+
 		}
-		buildLeft = !buildLeft;
+		reverse();
+		buildLeft = true;
 	}
+
+
 
 };
 
@@ -908,6 +916,9 @@ struct FHousePolygon : public FMetaPolygon {
 		TSet<int32> windows;
 
 	void removePoint(int place) {
+		if (points.Num() <= place) {
+			return;
+		}
 		std::vector<int> toRemove;
 		for (int i : windows) {
 			if (i > place) {
@@ -964,7 +975,7 @@ struct FHousePolygon : public FMetaPolygon {
 			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN splitAlongMax, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
 		}
 
-		SplitStruct p = getSplitProposal(buildLeft, 0.5);
+		SplitStruct p = getSplitProposal(true, 0.5);
 		if (p.p1.X == 0.0f) {
 			height = 50;
 			return FHousePolygon();
@@ -972,7 +983,7 @@ struct FHousePolygon : public FMetaPolygon {
 
 		FHousePolygon newP;
 		newP.open = open;
-		newP.buildLeft = buildLeft;
+		//newP.buildLeft = buildLeft;
 		newP.population = population;
 		newP.type = type;
 

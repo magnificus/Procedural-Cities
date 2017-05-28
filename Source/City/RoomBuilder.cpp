@@ -619,7 +619,7 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchica
 		tangent.Normalize();
 		dir.Normalize();
 		FVector origin = r2->points[place - 1] + tangent * 120;
-		FVector pos = origin + dir * 180;
+		FVector pos = origin + dir * 250;
 		FRotator rot = dir.Rotation();
 		FPolygon bedP = getPolygon(rot, pos, "bed", map);
 		if (testCollision(bedP, placed, 0, *r2)) {

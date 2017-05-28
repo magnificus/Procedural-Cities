@@ -2,7 +2,7 @@
 
 #include "City.h"
 #include "ProcMeshActor.h"
-
+#include "polypartition.h"
 
 // Sets default values
 AProcMeshActor::AProcMeshActor()
@@ -89,41 +89,55 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	TArray<FProcMeshTangent> tangents;
 
 	int current = 0;
-	for (FPolygon pol : pols) {
+	for (FPolygon &pol : pols) {
 
-		// UVS are found by getting the coordinates of points on the plane which they span up
-		FVector e1 = pol.points[1] - pol.points[0];//FVector(1.0, 0.0, 0.0); 
+		//pol.reverse();
+
+		// local coordinates are found by getting the coordinates of points on the plane which they span up
+		FVector e1 = pol.points[1] - pol.points[0];
 		e1.Normalize();
 		FVector n = FVector::CrossProduct(e1, pol.points[2] - pol.points[0]);
 		FVector e2 = FVector::CrossProduct(e1, n);
 		e2.Normalize();
 
 
-		FVector origin = FVector(0, 0, 0);//pol.points[0];
+		FVector origin = FVector(0, 0, 0);
 
-		for (FVector f : pol.points) {
-			vertices.Add(f + offset);
-			float y = FVector::DotProduct(e1, f - origin);
-			float x = FVector::DotProduct(e2, f - origin);
+		std::list<TPPLPoly> inTriangles;
+
+		TPPLPoly poly;
+		poly.Init(pol.points.Num());
+		for (int i = 0; i < pol.points.Num(); i++) {
+			FVector point = pol.points[i];
+			float y = FVector::DotProduct(e1, point - origin);
+			float x = FVector::DotProduct(e2, point - origin);
 			UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
-		}
-		//UV.Add(FVector2D(0, 0));
-		//UV.Add(FVector2D(10* texScaleMultiplier, 0));
-		//UV.Add(FVector2D(0, 10* texScaleMultiplier	));
-
-		//FVector middle = pol.getCenter();
-
-		for (int i = 2; i < pol.points.Num(); i++) {
-			triangles.Add(current);
-			triangles.Add(i - 1 + current);
-			triangles.Add(i + current);
-
-			//triangles.Add(i + current);
-			//triangles.Add(i - 1 + current);
-			//triangles.Add(current);
+			TPPLPoint newP{ x, y, current + i};
+			poly[i] = newP;
+			vertices.Add(point);
 
 		}
+		TPPLPartition part;
+		int res = part.Triangulate_EC(&poly, &inTriangles);
 
+		if (res != 1) {
+			UE_LOG(LogTemp, Warning, TEXT("Triangulation failed!"));
+		}
+		for (auto i : inTriangles) {
+			triangles.Add(i[0].id);
+			triangles.Add(i[1].id);
+			triangles.Add(i[2].id);
+		}
+		//vertices.Add(FVector(pol.points[curr[0].id].X, pol.points[curr[0].id].Y, pol.points[curr[0].id].Z));
+		//vertices.Add(FVector(pol.points[curr[1].id].X, pol.points[curr[1].id].Y, pol.points[curr[1].id].Z));
+		//vertices.Add(FVector(pol.points[curr[2].id].X, pol.points[curr[2].id].Y, pol.points[curr[2].id].Z));
+		//	for (TPPLPoint tp : l.GetPoints()) {
+
+		//	}
+		//	vertices.Add(points[l.idf + offset);
+		//	float y = FVector::DotProduct(e1, f - origin);
+		//	float x = FVector::DotProduct(e2, f - origin);
+		//	UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
 		current += pol.points.Num();
 	}
 

@@ -32,7 +32,8 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 
 		FHousePolygon original;
 		original.points = p.points;
-		original.buildLeft = p.buildLeft;
+		original.checkOrientation();
+		//original.buildLeft = p.buildLeft;
 		original.open = p.open;
 		original.population = p.population;
 		original.type = p.type;
@@ -100,12 +101,15 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			FVector first = pol.points[0];
 			pol.points.Add(first);
 
+			//pol.checkOrientation();
+
 
 			//fh.windows.Add(2);
 			//fh.windows.Add(4);
 			FPolygon tmp;
  			if (!testCollision(pol, others, 500, tmp)) {
 				fh.points = pol.points;
+				//fh.checkOrientation();
 				fh.population = 1.0;
 				fh.height = randFloat() * (maxFloors - minFloors) + minFloors;
 				fh.housePosition = pol.getCenter();
