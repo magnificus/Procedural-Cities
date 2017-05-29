@@ -268,7 +268,7 @@ struct FMetaPolygon : public FPolygon
 		for (int i = 2; i < points.Num(); i++) {
 			if (intersection(middle, middle + tangent * 100000, points[i - 1], points[i]).X != 0.0f) {
 				//reverse();
-				//buildLeft = true;
+				buildLeft = true;
 				return;
 
 			}
@@ -963,12 +963,15 @@ struct FHousePolygon : public FMetaPolygon {
 			entrances.Add(i + 1);
 		}
 		points.EmplaceAt(place, point);
-		if (windows.Contains(place - 1) || windows.Contains(place + 1)) {
-			windows.Add(place);
-		}
+		//if (windows.Contains(place - 1) || windows.Contains(place + 1)) {
+		//	windows.Add(place);
+		//}
+		//if (entrances.Contains(place - 1) || entrances.Contains(place + 1)) {
+		//	entrances.Add(place);
+		//}
 	}
 
-	FHousePolygon splitAlongMax() {
+	FHousePolygon splitAlongMax(float spaceBetween) {
 
 
 		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
@@ -983,7 +986,7 @@ struct FHousePolygon : public FMetaPolygon {
 
 		FHousePolygon newP;
 		newP.open = open;
-		//newP.buildLeft = buildLeft;
+		newP.buildLeft = buildLeft;
 		newP.population = population;
 		newP.type = type;
 
@@ -1053,7 +1056,7 @@ struct FHousePolygon : public FMetaPolygon {
 
 	}
 
-	TArray<FHousePolygon> recursiveSplit(float maxArea, float minArea, int depth) {
+	TArray<FHousePolygon> recursiveSplit(float maxArea, float minArea, int depth, float spaceBetween) {
 
 		double area = getArea();
 		//UE_LOG(LogTemp, Warning, TEXT("area of new house: %f"), area);
@@ -1069,11 +1072,11 @@ struct FHousePolygon : public FMetaPolygon {
 			return tot;
 		}
 		else if (area > maxArea) {
-			FHousePolygon newP = splitAlongMax();
+			FHousePolygon newP = splitAlongMax(spaceBetween);
 			if (newP.points.Num() > 2) {
-				tot = newP.recursiveSplit(maxArea, minArea, depth + 1);
+				tot = newP.recursiveSplit(maxArea, minArea, depth + 1, spaceBetween);
 			}
-			tot.Append(recursiveSplit(maxArea, minArea, depth + 1));
+			tot.Append(recursiveSplit(maxArea, minArea, depth + 1, spaceBetween));
 
 		}
 		else {
@@ -1082,7 +1085,7 @@ struct FHousePolygon : public FMetaPolygon {
 		return tot;
 	}
 
-	TArray<FHousePolygon> refine(float maxArea, float minArea) {
+	TArray<FHousePolygon> refine(float maxArea, float minArea, float spaceBetween) {
 
 
 		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
@@ -1092,7 +1095,7 @@ struct FHousePolygon : public FMetaPolygon {
 		decreaseEdges();
 		TArray<FHousePolygon> toReturn;
 		if (!open) {
-			toReturn.Append(recursiveSplit(maxArea, minArea, 0));
+			toReturn.Append(recursiveSplit(maxArea, minArea, 0, spaceBetween));
 		}
 		else 
 			toReturn.Add(*this);

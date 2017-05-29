@@ -24,7 +24,7 @@ void APlotBuilder::BeginPlay()
 TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int maxFloors, int minFloors) {
 	TArray<FHousePolygon> housePolygons;
 
-	float maxArea = 6000.0f;
+	float maxArea = 4000.0f;
 	float minArea = 800.0f;
 
 	if (!p.open) {
@@ -32,20 +32,21 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 
 		FHousePolygon original;
 		original.points = p.points;
-		original.checkOrientation();
+		if (!p.buildLeft)
+			original.reverse();
+		//original.checkOrientation();
 		//original.buildLeft = p.buildLeft;
-		original.open = p.open;
+		original.buildLeft = true;
+		original.open = false;
 		original.population = p.population;
 		original.type = p.type;
 		for (int32 i = 1; i < original.points.Num(); i++) {
 			original.entrances.Add(i);
 			original.windows.Add(i);
 		}
-		if (FVector::Dist(original.points[0], original.points[original.points.Num()-1]) > 0.1f)
-			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN PLOTBUILDER"));
 
 
-		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, minArea);
+		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, minArea, 0);
 		for (FHousePolygon r : refinedPolygons) {
 			r.height = randFloat() * (maxFloors - minFloors) + minFloors;
 			r.type = randFloat() < 0.5 ? RoomType::office : RoomType::apartment;
@@ -62,8 +63,8 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 	else {
 		// wander along the line and place adjacent houses on the curve
 
-		float minLen = 3500;
-		float minWidth = 3500;
+		float minLen = 3000;
+		float minWidth = 3000;
 
 		float maxLen = 6000;
 		float maxWidth = 6000;
@@ -83,25 +84,62 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			FHousePolygon fh;
 			FVector tangent1 = p.points[next] - currPos;
 			tangent1.Normalize();
-			FVector tangent2 = FRotator(0, p.buildLeft ? 90 : 270, 0).RotateVector(tangent1);
-
 			FPolygon pol;
-			float len = std::min(FVector::Dist(p.points[next], currPos), randFloat()*(maxLen - minLen) + minLen);
-			float width = randFloat()*(maxWidth - minWidth) + minWidth;
-			if (prev1.X != 0.0f) {
-				pol.points.Add(prev1 + prevTan * width);
-				pol.points.Add(prev1 );
+			if (p.buildLeft) {
+				FVector tangent2 = FRotator(0, 90, 0).RotateVector(tangent1);
+				float len = std::min(FVector::Dist(p.points[next], currPos), randFloat()*(maxLen - minLen) + minLen);
+				float width = randFloat()*(maxWidth - minWidth) + minWidth;
+				if (prev1.X != 0.0f) {
+					pol.points.Add(prev1 + prevTan * width);
+					pol.points.Add(prev1);
+				}
+				else {
+					pol.points.Add(currPos + width*tangent2);
+					pol.points.Add(currPos);
+				}
+				pol.points.Add(currPos + len*tangent1);
+				pol.points.Add(currPos + len*tangent1 + width*tangent2);
+				FVector first = pol.points[0];
+				pol.points.Add(first);
 			}
 			else {
-				pol.points.Add(currPos + width*tangent2);
-				pol.points.Add(currPos);
-			}
-			pol.points.Add(currPos + len*tangent1);
-			pol.points.Add(currPos + len*tangent1 + width*tangent2);
-			FVector first = pol.points[0];
-			pol.points.Add(first);
+				FVector tangent2 = FRotator(0, 270, 0).RotateVector(tangent1);
+				float len = std::min(FVector::Dist(p.points[next], currPos), randFloat()*(maxLen - minLen) + minLen);
+				float width = randFloat()*(maxWidth - minWidth) + minWidth;
 
-			//pol.checkOrientation();
+				pol.points.Add(currPos + len*tangent1 + width*tangent2);
+				pol.points.Add(currPos + len*tangent1);
+				if (prev1.X != 0.0f) {
+					pol.points.Add(prev1);
+					pol.points.Add(prev1 + prevTan * width);
+
+				}
+				else {
+					pol.points.Add(currPos);
+					pol.points.Add(currPos + width*tangent2);
+
+				}
+
+				FVector first = pol.points[0];
+				pol.points.Add(first);
+			}
+			//FVector tangent2 = FRotator(0, p.buildLeft ? 90 : 270, 0).RotateVector(tangent1);
+
+			float len = std::min(FVector::Dist(p.points[next], currPos), randFloat()*(maxLen - minLen) + minLen);
+			//float width = randFloat()*(maxWidth - minWidth) + minWidth;
+			//if (prev1.X != 0.0f) {
+			//	pol.points.Add(prev1 + prevTan * width);
+			//	pol.points.Add(prev1 );
+			//}
+			//else {
+			//	pol.points.Add(currPos + width*tangent2);
+			//	pol.points.Add(currPos);
+			//}
+			//pol.points.Add(currPos + len*tangent1);
+			//pol.points.Add(currPos + len*tangent1 + width*tangent2);
+			//FVector first = pol.points[0];
+			//pol.points.Add(first);
+
 
 
 			//fh.windows.Add(2);
@@ -109,7 +147,7 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			FPolygon tmp;
  			if (!testCollision(pol, others, 500, tmp)) {
 				fh.points = pol.points;
-				//fh.checkOrientation();
+				fh.checkOrientation();
 				fh.population = 1.0;
 				fh.height = randFloat() * (maxFloors - minFloors) + minFloors;
 				fh.housePosition = pol.getCenter();

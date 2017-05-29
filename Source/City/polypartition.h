@@ -96,9 +96,9 @@ protected:
 
 	TPPLPoint *points;
 	long numpoints;
+	bool hole;
 
 public:
-	bool hole;
 
 	//constructors/destructors
 	TPPLPoly();
@@ -116,8 +116,8 @@ public:
 		return hole;
 	}
 
-	void SetHole(bool hole) {
-		this->hole = hole;
+	void SetHole(bool inhole) {
+		this->hole = inhole;
 	}
 
 	TPPLPoint &GetPoint(long i) {
