@@ -12,6 +12,7 @@ AProcMeshActor::AProcMeshActor()
 	exteriorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("exteriorMesh"));
 	interiorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("interiorMesh"));
 	windowMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("windowMesh"));
+	windowFrameMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("windowFrameMesh"));
 	occlusionWindowMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("occlusionWindowMesh"));
 	floorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("floorMesh"));
 	roofMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("roofMesh"));
@@ -96,6 +97,9 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 		// local coordinates are found by getting the coordinates of points on the plane which they span up
 		FVector e1 = pol.points[1] - pol.points[0];
 		e1.Normalize();
+		//if (FVector::DotProduct(e1, FVector(1, 0, 0)) < 0) {
+		//	e1 = -e1;
+		//}
 		FVector n = FVector::CrossProduct(e1, pol.points[2] - pol.points[0]);
 		FVector e2 = FVector::CrossProduct(e1, n);
 		e2.Normalize();
@@ -222,7 +226,7 @@ void AProcMeshActor::buildTriangle(FVector p1, FVector p2, FVector p3) {
 	TArray<FLinearColor> vertexColors;
 	TArray<FProcMeshTangent> tangents;
 
-	exteriorMesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
+	exteriorMesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, true);
 
 }
 

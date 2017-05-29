@@ -65,7 +65,6 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FMaterialPolygon outer, 
 			p1.points.Add(attach1);
 			p1.points.Add(p.points[3]);
 			p1.type = type;
-
 			p1.points.Add((p.points[3] - outer.points[0]).ProjectOnTo(tangentUp) + outer.points[0]);
 
 			FMaterialPolygon p2 = FMaterialPolygon();
@@ -305,11 +304,44 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 				}
 
 				TArray<FMaterialPolygon> pols = getSideWithHoles(newP, windows, rp->exteriorWalls.Contains(i) ? PolygonType::exterior : PolygonType::interior);
+
+				// add window frame as well
+
+				float frameWidth = 20;
+				float frameLength = 20;
+				float frameDepth = 30;
 				for (FPolygon p : windows) {
 					FMaterialPolygon win;
 					win.points = p.points;
+					win.width = 8;
 					win.type = shellOnly ? PolygonType::occlusionWindow : PolygonType::window;
 					toReturn.Add(win);
+					FVector center = p.getCenter();
+					if (true || !shellOnly) {
+						p.points.Add(FVector(p.points[0]));
+						for (int i = 1; i < p.points.Num(); i++) {
+							FMaterialPolygon frame;
+							frame.type = PolygonType::windowFrame;
+							frame.width = frameDepth;
+							FVector tangent1 = center - p.points[i - 1];
+							FVector tangent2 = center - p.points[i];
+							tangent1.Normalize();
+							tangent2.Normalize();
+							FVector normal = getNormal(p.points[i], p.points[i - 1], true);
+							normal.Normalize();
+							frame.points.Add(p.points[i - 1]);
+							frame.points.Add(p.points[i]);
+							frame.points.Add(p.points[i] + tangent2 * frameWidth);
+							frame.points.Add(p.points[i - 1] + tangent1 * frameWidth);
+							frame.points.Add(p.points[i - 1]);
+							FVector frameDir = frame.getDirection();
+							frame.offset(-frameDir*(10 + frameDepth / 2));
+							toReturn.Add(frame);
+
+						}
+						p.points.RemoveAt(p.points.Num() - 1);
+					}
+
 				}
 				holes.Append(windows);
 
@@ -760,7 +792,7 @@ FRoomInfo placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalIn
 	r.pols.Add(side1);
 	r.pols.Add(side2);
 	r.pols.Add(side3);
-	
+	p->windows.Remove(place);
 
 	return r;
 }

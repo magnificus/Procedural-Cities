@@ -244,7 +244,7 @@ struct FMaterialPolygon : public FPolygon {
 	GENERATED_USTRUCT_BODY();
 
 	PolygonType type = PolygonType::exterior;
-	float width = 0;
+	float width = 20;
 };
 
 
@@ -1067,7 +1067,7 @@ struct FHousePolygon : public FMetaPolygon {
 			//tot.Add(*this);
 			return tot;
 		}
-		else if (depth > 3) {
+		else if (depth > 2) {
 			tot.Add(*this);
 			return tot;
 		}
