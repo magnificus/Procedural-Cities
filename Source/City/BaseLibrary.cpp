@@ -164,27 +164,27 @@ struct LinkedLine {
 
 
 void invertAndParents(LinkedLine* line) {
+	//return;
+
 	TSet<LinkedLine*> taken;
 	LinkedLine* prev = NULL;
-	FVector prevPoint = FVector(0, 0, 0);
 	while (line && !taken.Contains(line)) {
 		taken.Add(line);
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
 		line->line.p2 = temp;
-
+		
+		if (line->parent)
+			line->point = line->parent->point;
 		line->child = line->parent;	
 		if (prev) {
 			line->parent = prev;
 		}
 		temp = line->point;
-		line->point = prevPoint;
-		prevPoint = temp;
 		prev = line;
 		line->buildLeft = !line->buildLeft;
 
 		line = line->child;
-
 	}
 }
 
