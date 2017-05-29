@@ -31,16 +31,6 @@ class CITY_API MeshPolygonReference
 {
 public:
 	MeshPolygonReference();
-	//static FPolygon getAppropriatePolygon(MeshType m, FVector origin, FRotator dir);
-	//static FPolygon getBedPolygon(FVector origin, FRotator dir);
-	//static FPolygon getShelfPolygon(FVector origin, FRotator dir);
-	//static FPolygon getSmallTablePolygon(FVector origin, FRotator dir);
-	//static FPolygon getToiletPolygon(FVector origin, FRotator dir);
-	//static FPolygon getSinkPolygon(FVector origin, FRotator dir);
-	//static FPolygon getShelfUpperLarge(FVector origin, FRotator dir);
-	//static FPolygon getHanger(FVector origin, FRotator dir);
-	//static FPolygon getFridge(FVector origin, FRotator dir);
-	//static FPolygon getOven(FVector origin, FRotator dir);
 
 	static FPolygon getStairPolygon(FVector origin, FRotator dir);
 

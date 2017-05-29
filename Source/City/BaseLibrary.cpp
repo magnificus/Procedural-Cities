@@ -165,18 +165,22 @@ struct LinkedLine {
 
 void invertAndParents(LinkedLine* line) {
 	TSet<LinkedLine*> taken;
+	LinkedLine* prev = NULL;
+	FVector prevPoint = FVector(0, 0, 0);
 	while (line && !taken.Contains(line)) {
 		taken.Add(line);
-		//if (line->parent && FVector::Dist(line->point, line->parent->point) < 10000)
-		//	line->point = line->parent->point;
-		//else
-			line->point = FVector(0.0f, 0.0f, 0.0f);
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
 		line->line.p2 = temp;
-		LinkedLine* prevC = line->child;
-		line->child = line->parent;
-		line->parent = prevC;
+
+		line->child = line->parent;	
+		if (prev) {
+			line->parent = prev;
+		}
+		temp = line->point;
+		line->point = prevPoint;
+		prevPoint = temp;
+		prev = line;
 		line->buildLeft = !line->buildLeft;
 
 		line = line->child;
@@ -186,19 +190,23 @@ void invertAndParents(LinkedLine* line) {
 
 void invertAndChildren(LinkedLine* line) {
 	TSet<LinkedLine*> taken;
+	LinkedLine* prev = NULL;
+	FVector prevPoint = FVector(0,0,0);
 	while (line && !taken.Contains(line)) {
 		taken.Add(line);
-		//if (line->child && FVector::Dist(line->point, line->child->point) < 10000)
-		//	line->point = line->child->point;
-		//else
-			line->point = FVector(0.0f, 0.0f, 0.0f);
 
 		FVector temp = line->line.p1;
 		line->line.p1 = line->line.p2;
 		line->line.p2 = temp;
-		LinkedLine* prevC = line->child;
-		line->child = line->parent;
-		line->parent = prevC;
+
+		line->parent = line->child;
+		if (prev) {
+			line->child = prev;
+		}
+		temp = line->point;
+		line->point = prevPoint;
+		prevPoint = temp;
+		prev = line;
 		line->buildLeft = !line->buildLeft;
 
 		line = line->parent;
@@ -292,19 +300,16 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 		lineVertices2.Add(pol->line.p2 - tangent4 * width);
 
 
-		if (testCollision(tangents, lineVertices, lineVertices2, 0)) {
+		//if (testCollision(tangents, lineVertices, lineVertices2, 0)) {
 
 			FVector res = intersection(pol->line.p1, pol->line.p2, inLine->line.p1, inLine->line.p2);
 			if (res.X != 0.0f) {
-				// on the previous line, is the collision close to the end?
+				// on the previous line, is the collision close to the end? if so, old pol is master
 				if (FVector::Dist(pol->line.p1, res) > FVector::Dist(pol->line.p2, res)) {
 					// on the new line, collision end?
 					if (FVector::Dist(inLine->line.p1, res) > FVector::Dist(inLine->line.p2, res)) {
 						// then flip
 						invertAndParents(inLine);
-					}
-					else {
-
 					}
 					inLine->parent = pol;
 					pol->child = inLine;
@@ -314,60 +319,52 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 				// so the new line is maybe the master
 				else {
 					// on inLine, collision end?
-					if (FVector::Dist(inLine->line.p1, res) > FVector::Dist(inLine->line.p2, res)) {
-						pol->parent = inLine;
-						inLine->child = pol;
-
-					}
-					else {
-						// otherwise flip me
+					if (FVector::Dist(inLine->line.p1, res) < FVector::Dist(inLine->line.p2, res)) {
 						invertAndChildren(inLine);
-						inLine->child = pol;
-						pol->parent = inLine;
 					}
+					pol->parent = inLine;
+					inLine->child = pol;
 					inLine->point = res;
 
 				}
 			}
-			else {
-				// continous road
-				//if (FVector::Dist(pol->line.p1, inLine->line.getMiddle()) > FVector::Dist(pol->line.p2, inLine->line.getMiddle())) {
-				//	// on the new line, collision end?
-				//	if (FVector::Dist(inLine->line.p1, pol->line.getMiddle()) > FVector::Dist(inLine->line.p2, pol->line.getMiddle())) {
-				//		// then flip
-				//		invertAndParents(inLine);
-				//	}
-				//	else {
+			//else {
+			//	// continous road
+			//	//if (FVector::Dist(pol->line.p1, inLine->line.getMiddle()) > FVector::Dist(pol->line.p2, inLine->line.getMiddle())) {
+			//	//	// on the new line, collision end?
+			//	//	if (FVector::Dist(inLine->line.p1, pol->line.getMiddle()) > FVector::Dist(inLine->line.p2, pol->line.getMiddle())) {
+			//	//		// then flip
+			//	//		invertAndParents(inLine);
+			//	//	}
+			//	//	else {
 
-				//	}
-				//	inLine->parent = pol;
-				//	pol->child = inLine;
-				//	//pol->point = res;
+			//	//	}
+			//	//	inLine->parent = pol;
+			//	//	pol->child = inLine;
+			//	//	//pol->point = res;
 
-				//}
-				//// so the new line is maybe the master
-				//else {
-				//	// on inLine, collision end?
-				//	if (FVector::Dist(inLine->line.p1, pol->line.getMiddle()) > FVector::Dist(inLine->line.p2, pol->line.getMiddle())) {
-				//		pol->parent = inLine;
-				//		inLine->child = pol;
+			//	//}
+			//	//// so the new line is maybe the master
+			//	//else {
+			//	//	// on inLine, collision end?
+			//	//	if (FVector::Dist(inLine->line.p1, pol->line.getMiddle()) > FVector::Dist(inLine->line.p2, pol->line.getMiddle())) {
+			//	//		pol->parent = inLine;
+			//	//		inLine->child = pol;
 
-				//	}
-				//	else {
-				//		// otherwise flip me
-				//		invertAndChildren(inLine);
-				//		inLine->child = pol;
-				//		pol->parent = inLine;
-				//	}
-				//	inLine->point = res;
+			//	//	}
+			//	//	else {
+			//	//		// otherwise flip me
+			//	//		invertAndChildren(inLine);
+			//	//		inLine->child = pol;
+			//	//		pol->parent = inLine;
+			//	//	}
+			//	//	inLine->point = res;
 
-				//}
+			//	//}
 
-			}
+			//}
 
-
-
-		}
+		//}
 	}
 	lines.Add(inLine);
 	return;
@@ -425,13 +422,14 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 		FMetaPolygon f;
 		f.buildLeft = curr->buildLeft;
 		f.points.Add(curr->line.p1);
-		f.points.Add(curr->point.X != 0.0f ? curr->point : curr->line.p2);
+		f.points.Add(curr->point.X != 0.0f ? curr->point: curr->line.p2);
 
 		taken.Empty();
 		taken.Add(curr);
 		remaining.Remove(curr);
 		while (curr->child && !taken.Contains(curr->child)) {
 			curr = curr->child;
+			//FVector res = intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
 			f.points.Add(curr->point.X != 0.0f ? curr->point : curr->line.p2);
 			remaining.Remove(curr);
 			taken.Add(curr);
@@ -439,7 +437,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 		if (curr->child && taken.Contains(curr->child)) {
 			// closed polygon since last point continues into first
 			FVector res = intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
-			if (res.X != 0.0f) {
+			if (true || res.X != 0.0f) {
 				f.points.RemoveAt(0);
 				f.points.EmplaceAt(0, res);
 				f.points.Add(res);

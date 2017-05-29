@@ -179,7 +179,6 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 
 FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
 	FPolygon polygon;
-	//if (!p.open) {
 		FVector center = p.getCenter();
 		FPolygon sidewalk;
 		for (int i = 1; i < p.points.Num(); i+=1) {
@@ -190,11 +189,13 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 			polygon.points.Add(p.points[i] + offset);
 		}
 		if (!p.open) {
-			FVector tangent = p.points[1] - p.points[0];
-			tangent.Normalize();
-			FVector offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
-			polygon.points.Add(p.points[0] + offset);
-			polygon.points.Add(p.points[1] + offset);
+			for (int i = 1; i < p.points.Num(); i += 1) {
+				FVector tangent = p.points[i] - p.points[i - 1];
+				tangent.Normalize();
+				FVector offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
+				polygon.points.Add(p.points[i - 1] + offset);
+				polygon.points.Add(p.points[i] + offset);
+			}
 		}
 		else {
 			FVector last = p.points[p.points.Num() - 1];
