@@ -35,6 +35,7 @@ enum class PolygonType : uint8
 {
 	interior 	UMETA(DisplayName = "Interior"),
 	exterior UMETA(DisplayName = "Exterior"),
+	exteriorSnd UMETA(DisplayName = "Exterior Secondary"),
 	floor UMETA(DisplayName = "Floor"),
 	window UMETA(DisplayName = "Window"),
 	windowFrame UMETA(DisplayName = "Window Frame"),

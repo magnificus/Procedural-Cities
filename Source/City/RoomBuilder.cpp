@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "City.h"
+#include "polypartition.h"
 #include "RoomBuilder.h"
 
 
@@ -37,6 +38,57 @@ holes are assumed to be of a certain structure, just four points upper left -> l
 TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FMaterialPolygon outer, TArray<FPolygon> holes, PolygonType type) {
 
 	TArray<FMaterialPolygon> polygons;
+
+	FVector e1 = outer.points[1] - outer.points[0];
+	e1.Normalize();
+	FVector n = FVector::CrossProduct(e1, outer.points[2] - outer.points[0]);
+	FVector e2 = FVector::CrossProduct(e1, n);
+	e2.Normalize();
+
+	FVector origin = outer.points[0];
+	TArray<FVector> allPoints;
+	int current = 0;
+	std::list<TPPLPoly> inPolys;
+	std::list<TPPLPoly> outPolys;
+	TPPLPoly outerP;
+	outerP.SetHole(false);
+	outerP.Init(outer.points.Num());
+
+	for (int i = 0; i < outer.points.Num(); i++) {
+		FVector point = outer.points[i];
+		float y = FVector::DotProduct(e1, point - origin);
+		float x = FVector::DotProduct(e2, point - origin);
+		outerP[i] = TPPLPoint{ x, y, current++};
+		allPoints.Add(point);
+	}
+	inPolys.push_back(outerP);
+	for (FPolygon p : holes) {
+		TPPLPoly holeP;
+		holeP.Init(p.points.Num());
+		holeP.SetHole(true);
+		for (int i = 0; i < p.points.Num(); i++) {
+			FVector point = p.points[i];
+			float y = FVector::DotProduct(e1, point - origin);
+			float x = FVector::DotProduct(e2, point - origin);
+			holeP[p.points.Num() - 1 - i] = TPPLPoint{ x, y, current++ };
+			allPoints.Add(point);
+		}
+		inPolys.push_back(holeP);
+	}
+
+	TPPLPartition part;
+	part.RemoveHoles(&inPolys, &outPolys);
+	for (TPPLPoly t : outPolys) {
+		FMaterialPolygon newP;
+		for (int i = 0; i < t.GetNumPoints(); i++) {
+			newP.points.Add(allPoints[t[i].id]);
+		}
+		newP.type = type;
+		polygons.Add(newP);
+		//newP.
+	}
+	return polygons;
+
 	FVector start = outer.points[1];
 	FVector end = outer.points[2];
 
@@ -206,37 +258,39 @@ FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHe
 	float distToDoor = FVector::Dist(doorPos, p1) - doorWidth / 2;
 	FMaterialPolygon doorPolygon;
 	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
-	doorPolygon.points.Add(p1 + side*distToDoor);// + FVector(0, 0, 100));
-	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth);// + FVector(0, 0, 100));
+	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 1));// + FVector(0, 0, 100));
+	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 1));// + FVector(0, 0, 100));
 	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, doorHeight));
+	//doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
+	//doorPolygon.reverse();
 	return doorPolygon;
 }
 
-TArray<FMaterialPolygon> getEntranceSide(FVector p1, FVector p2, float floorHeight, float doorHeight, float doorWidth, FVector doorPos, PolygonType type) {
-	TArray<FMaterialPolygon> polygons;
-	TArray<FPolygon> holes;
-
-	//FVector side = p2 - p1;
-	//float sideLen = side.Size();
-	//side.Normalize();
-	//float distToDoor = FVector::Dist(doorPos, p1) - doorWidth/2;
-	//TArray<FPolygon> holes;
-	//FMaterialPolygon doorPolygon;
-	//doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
-	//doorPolygon.points.Add(p1 + side*distToDoor);// + FVector(0, 0, 100));
-	//doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth);// + FVector(0, 0, 100));
-	//doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, doorHeight));
-	holes.Add(getEntranceHole(p1,p2,floorHeight, doorHeight, doorWidth, doorPos));
-
-	FMaterialPolygon outer;
-	outer.points.Add(p1 + FVector(0, 0, floorHeight));
-	outer.points.Add(p1 + FVector(0, 0, 0));
-	outer.points.Add(p2 + FVector(0, 0, 0));
-	outer.points.Add(p2 + FVector(0, 0, floorHeight));
-	polygons.Append(ARoomBuilder::getSideWithHoles(outer, holes, type));
-
-	return polygons;
-}
+//TArray<FMaterialPolygon> getEntranceSide(FVector p1, FVector p2, float floorHeight, float doorHeight, float doorWidth, FVector doorPos, PolygonType type) {
+//	TArray<FMaterialPolygon> polygons;
+//	TArray<FPolygon> holes;
+//
+//	//FVector side = p2 - p1;
+//	//float sideLen = side.Size();
+//	//side.Normalize();
+//	//float distToDoor = FVector::Dist(doorPos, p1) - doorWidth/2;
+//	//TArray<FPolygon> holes;
+//	//FMaterialPolygon doorPolygon;
+//	//doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
+//	//doorPolygon.points.Add(p1 + side*distToDoor);// + FVector(0, 0, 100));
+//	//doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth);// + FVector(0, 0, 100));
+//	//doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, doorHeight));
+//	holes.Add(getEntranceHole(p1,p2,floorHeight, doorHeight, doorWidth, doorPos));
+//
+//	FMaterialPolygon outer;
+//	outer.points.Add(p1 + FVector(0, 0, floorHeight));
+//	outer.points.Add(p1 + FVector(0, 0, 0));
+//	outer.points.Add(p2 + FVector(0, 0, 0));
+//	outer.points.Add(p2 + FVector(0, 0, floorHeight));
+//	polygons.Append(ARoomBuilder::getSideWithHoles(outer, holes, type));
+//
+//	return polygons;
+//}
 
 
 TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygon*> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth, int floor, bool shellOnly) {
@@ -251,18 +305,22 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 			newP.type = rp->exteriorWalls.Contains(i) ? PolygonType::exterior : PolygonType::interior;
 			FVector p1 = rp->points[i - 1];
 			FVector p2 = rp->points[i];
-			newP.points.Add(p1 + FVector(0, 0, floorHeight));
-			newP.points.Add(p1 + FVector(0, 0, 0));
-			newP.points.Add(p2 + FVector(0, 0, 0));
-			newP.points.Add(p2 + FVector(0, 0, floorHeight));
-			newP.points.Add(p1 + FVector(0, 0, floorHeight));
+
+			// this extra offset is to avoid z-fighting between walls
+			FVector normal = getNormal(p1, p2, true);
+			normal.Normalize();
+			newP.points.Add(p1 + FVector(0, 0, floorHeight) + normal);
+			newP.points.Add(p1 + FVector(0, 0, 0) + normal);
+			newP.points.Add(p2 + FVector(0, 0, 0) + normal);
+			newP.points.Add(p2 + FVector(0, 0, floorHeight) + normal);
+			newP.points.Add(p1 + FVector(0, 0, floorHeight) + normal);
 
 			TArray<FPolygon> holes;
 			if (rp->entrances.Contains(i)) {
 				holes.Add(getEntranceHole(rp->points[i - 1], rp->points[i], floorHeight, 297, 137, rp->specificEntrances.Contains(i) ? rp->specificEntrances[i] : middle(rp->points[i - 1], rp->points[i])));
 				//toReturn.Append(getEntranceSide(rp->points[i - 1] , rp->points[i], floorHeight, 297, 137, rp->specificEntrances.Contains(i) ? rp->specificEntrances[i] : middle(rp->points[i-1], rp->points[i]), rp->exteriorWalls.Contains(i) ? PolygonType::exterior : PolygonType::interior));
 			}
-			if (rp->windows.Contains(i)) {
+			else if (rp->windows.Contains(i)) {
 				FVector tangent = rp->points[i] - rp->points[i - 1];
 				float len = tangent.Size();
 				tangent.Normalize();
@@ -307,7 +365,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 
 				// add window frame as well
 
-				float frameWidth = 20;
+				float frameWidth = 15;
 				float frameLength = 20;
 				float frameDepth = 30;
 				for (FPolygon p : windows) {
@@ -335,8 +393,8 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 							frame.points.Add(p.points[i - 1] + tangent1 * frameWidth);
 							frame.points.Add(p.points[i - 1]);
 							FVector frameDir = frame.getDirection();
-							frame.offset(-frameDir*(10 + frameDepth / 2));
-							toReturn.Add(frame);
+							frame.offset(frameDir*(frameDepth / 2 - 20));
+							//toReturn.Add(frame);
 
 						}
 						p.points.RemoveAt(p.points.Num() - 1);
@@ -757,7 +815,7 @@ FRoomInfo placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalIn
 	FVector startOut = start + normal*length;
 
 	FMaterialPolygon floor;
-	floor.type = PolygonType::exterior;
+	floor.type = PolygonType::exteriorSnd;
 	floor.points.Add(start);
 	floor.points.Add(end);
 	floor.points.Add(endOut);
@@ -768,11 +826,11 @@ FRoomInfo placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalIn
 
 
 	FMaterialPolygon side1;
-	side1.type = PolygonType::exterior;
+	side1.type = PolygonType::exteriorSnd;
 	FMaterialPolygon side2;
-	side2.type = PolygonType::exterior;
+	side2.type = PolygonType::exteriorSnd;
 	FMaterialPolygon side3;
-	side3.type = PolygonType::exterior;
+	side3.type = PolygonType::exteriorSnd;
 
 	side1.points.Add(start);
 	side1.points.Add(startOut);
@@ -969,7 +1027,7 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, flo
 		return r;
 	}
 	switch (type) {
-	case RoomType::office: return buildOffice(f, floor, height, 0.005, 270, 170, map, shellOnly);
+	case RoomType::office: return buildOffice(f, floor, height, 0.004, 270, 170, map, shellOnly);
 	case RoomType::apartment: return buildApartment(f, floor, height, 0.002, 200, 200, map, floor != 0, shellOnly);
 	case RoomType::store: return buildStore(f, height, map, shellOnly);
 	}

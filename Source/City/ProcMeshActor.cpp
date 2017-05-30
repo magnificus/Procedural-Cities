@@ -10,6 +10,7 @@ AProcMeshActor::AProcMeshActor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	exteriorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("exteriorMesh"));
+	sndExteriorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("sndExteriorMesh"));
 	interiorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("interiorMesh"));
 	windowMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("windowMesh"));
 	windowFrameMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("windowFrameMesh"));
@@ -105,7 +106,7 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 		e2.Normalize();
 
 
-		FVector origin = FVector(0, 0, 0);
+		FVector origin = pol.points[0]; //FVector(0, 0, 0);
 
 		std::list<TPPLPoly> inTriangles;
 
@@ -160,6 +161,8 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset) {
 
 	TArray<FPolygon> exterior;
+	TArray<FPolygon> exteriorSnd;
+
 	TArray<FPolygon> interior;
 	TArray<FPolygon> windows;
 	TArray<FPolygon> windowFrames;
@@ -171,6 +174,9 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 		switch (p.type) {
 		case PolygonType::exterior:
 			exterior.Add(p);
+			break;
+		case PolygonType::exteriorSnd:
+			exteriorSnd.Add(p);
 			break;
 		case PolygonType::interior:
 			interior.Add(p);
@@ -194,6 +200,8 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 		}
 	}
 	buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
+	buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
+
 	buildPolygons(interior, offset, interiorMesh, interiorMat);
 	buildPolygons(windows, offset, windowMesh, windowMat);
 	buildPolygons(floors, offset, floorMesh, floorMat);

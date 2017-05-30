@@ -540,30 +540,58 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 
 		}
 	}
-	float minHeight = 300;
-	float maxHeight = 500;
+	float minHeight = 100;
+	float maxHeight = 300;
 	float len = 500;
 	float offset = FMath::FRandRange(minHeight, maxHeight);
-	if (FMath::FRand() < 0.5) {
-		FPolygon box;
+	if (FMath::FRand() < 0.8) {
+		FMaterialPolygon box;
+		bool found = true;
+		int count = 0;
 		do {
-			box = FPolygon();
+			if (count > 4) {
+				found = false;
+				break;
+			}
+			box = FMaterialPolygon();
+			box.type = PolygonType::roof;
 			FVector center = roof.getCenter();
-			FVector p1 = FVector(FMath::FRandRange(500, 2000) * FMath::RandBool() ? 1 : -1 + center.X, FMath::FRandRange(500, 2000) * FMath::RandBool() ? 1 : -1 + center.Y, offset + roof.points[0].Z);
-			box.points.Add(p1);
-			box.points.Add(p1 + FVector(FMath::FRandRange(500, 2000) * FMath::RandBool() ? 1 : -1 + center.X, FMath::FRandRange(500, 2000) * FMath::RandBool() ? 1 : -1 + center.Y, offset + roof.points[0].Z));
-			FVector tangent = box.points[1] - box.points[0];
-			//float tanLen = 
+			FVector p1 = center + FVector(FMath::FRandRange(900, 2500) * FMath::RandBool() ? 1 : -1, FMath::FRandRange(900, 2500) * FMath::RandBool() ? 1 : -1, offset);
+			FVector tangent = roof.points[1] - roof.points[0];
+			float firstLen = FMath::FRandRange(900, 2500);
+			float sndLen = FMath::FRandRange(900, 2500);
 			tangent.Normalize();
+			FVector p2 = p1 + tangent * firstLen;
 			tangent = FRotator(0, 90, 0).RotateVector(tangent);
-			box.points.Add(box.points[2] + tangent * FMath::FRandRange(500, 2000));
+			FVector p3 = p2 + tangent * sndLen;
 			tangent = FRotator(0, 90, 0).RotateVector(tangent);
+			FVector p4 = p3 + tangent * firstLen;
+			box.points.Add(p1);
+			box.points.Add(p4);
+			box.points.Add(p3);
+			box.points.Add(p2);
+			box.points.Add(p1);
+			count++;
 
-		} while (testCollision(box, roof, 0));
+		} while (intersection(box, roof).X != 0.0f);
+
+		if (found) {
+			for (int i = 1; i < box.points.Num(); i++) {
+				FMaterialPolygon side;
+				side.type = PolygonType::roof;
+				side.points.Add(box.points[i - 1]);
+				side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
+				side.points.Add(box.points[i] - FVector(0, 0, offset));
+				side.points.Add(box.points[i]);
+				side.points.Add(box.points[i - 1]);
+				toReturn.pols.Add(side);
+			}
+			toReturn.pols.Add(box);
+		}
 	}
 	else {
 
-		// same shape, but smaller
+		// same shape as roof, but smaller
 		FMaterialPolygon shape = roof;
 		shape.type = PolygonType::exterior;
 		shape.offset(FVector(0, 0, offset));
@@ -701,7 +729,8 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, fl
 		for (FMaterialPolygon &p : toReturn.pols) {
 
 			FMaterialPolygon other = p;
-			if (p.type == PolygonType::exterior) {
+			// exterior walls are interiors on the inside
+			if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
 				other.type = PolygonType::interior;
 			}
 

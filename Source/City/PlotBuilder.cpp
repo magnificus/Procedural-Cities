@@ -63,7 +63,7 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 	else {
 		// wander along the line and place adjacent houses on the curve
 
-		float minLen = 3000;
+		float minLen = 6000;
 		float minWidth = 3500;
 
 		float maxLen = 6000;
