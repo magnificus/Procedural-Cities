@@ -8,17 +8,7 @@
 #include "RoomBuilder.generated.h"
 
 
-USTRUCT(BlueprintType)
-struct FMeshInfo {
 
-	GENERATED_USTRUCT_BODY();
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString description;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FTransform transform;
-};
 
 USTRUCT(BlueprintType)
 struct FRoomInfo {
@@ -30,8 +20,6 @@ struct FRoomInfo {
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FMeshInfo> meshes;
-
-
 
 	void offset(FVector offset) {
 		for(FPolygon &p : pols)

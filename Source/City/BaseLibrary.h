@@ -3,6 +3,7 @@
 #pragma once
 
 
+
 #include "stdlib.h"
 #include <queue>
 #include "GameFramework/Actor.h"
@@ -43,6 +44,14 @@ enum class PolygonType : uint8
 	roof UMETA(DisplayName = "Roof")
 };
 
+USTRUCT(BlueprintType)
+struct FMeshInfo {
+	GENERATED_USTRUCT_BODY();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FString description;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FTransform transform;
+};
 
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 
@@ -964,12 +973,6 @@ struct FHousePolygon : public FMetaPolygon {
 			entrances.Add(i + 1);
 		}
 		points.EmplaceAt(place, point);
-		//if (windows.Contains(place - 1) || windows.Contains(place + 1)) {
-		//	windows.Add(place);
-		//}
-		//if (entrances.Contains(place - 1) || entrances.Contains(place + 1)) {
-		//	entrances.Add(place);
-		//}
 	}
 
 	FHousePolygon splitAlongMax(float spaceBetween) {

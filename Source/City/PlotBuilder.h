@@ -7,6 +7,17 @@
 #include "BaseLibrary.h"
 #include "PlotBuilder.generated.h"
 
+USTRUCT(BlueprintType)
+struct FSidewalkInfo {
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<FMeshInfo> staticMeshes;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<FMeshInfo> instancedMeshes;
+};
+
+
 UCLASS()
 class CITY_API APlotBuilder : public AActor
 {
@@ -16,24 +27,15 @@ public:
 	// Sets default values for this actor's properties
 	APlotBuilder();
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
-	//	float	offsetSize = 500;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
-	//	int32	minFloors = 3;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
-	//	int32	maxFloors = 15;
-
-	//UFUNCTION(BlueprintCallable, Category = "Generation")
-	//TArray<FHousePolygon> getHousePolygons(FPlotPolygon p);
-
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static TArray<FHousePolygon> generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int minFloors, int maxFloors);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static FPolygon generateSidewalkPolygon(FPlotPolygon p, float offsetSize);
 
-	//UFUNCTION(BlueprintCallable, Category = "Generation")
-	//void BuildPlot(FPlotPolygon p);
+	
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	static FSidewalkInfo getSideWalkInfo(FPolygon sidewalk);
 
 protected:
 	// Called when the game starts or when spawned

@@ -300,71 +300,33 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 		lineVertices2.Add(pol->line.p2 - tangent4 * width);
 
 
-		//if (testCollision(tangents, lineVertices, lineVertices2, 0)) {
 
-			FVector res = intersection(pol->line.p1, pol->line.p2, inLine->line.p1, inLine->line.p2);
-			if (res.X != 0.0f) {
-				// on the previous line, is the collision close to the end? if so, old pol is master
-				if (FVector::Dist(pol->line.p1, res) > FVector::Dist(pol->line.p2, res)) {
-					// on the new line, collision end?
-					if (FVector::Dist(inLine->line.p1, res) > FVector::Dist(inLine->line.p2, res)) {
-						// then flip
-						invertAndParents(inLine);
-					}
-					inLine->parent = pol;
-					pol->child = inLine;
-					pol->point = res;
-
+		FVector res = intersection(pol->line.p1, pol->line.p2, inLine->line.p1, inLine->line.p2);
+		if (res.X != 0.0f) {
+			// on the previous line, is the collision close to the end? if so, old pol is master
+			if (FVector::Dist(pol->line.p1, res) > FVector::Dist(pol->line.p2, res)) {
+				// on the new line, collision end?
+				if (FVector::Dist(inLine->line.p1, res) > FVector::Dist(inLine->line.p2, res)) {
+					// then flip
+					invertAndParents(inLine);
 				}
-				// so the new line is maybe the master
-				else {
-					// on inLine, collision end?
-					if (FVector::Dist(inLine->line.p1, res) < FVector::Dist(inLine->line.p2, res)) {
-						invertAndChildren(inLine);
-					}
-					pol->parent = inLine;
-					inLine->child = pol;
-					inLine->point = res;
+				inLine->parent = pol;
+				pol->child = inLine;
+				pol->point = res;
 
-				}
 			}
-			//else {
-			//	// continous road
-			//	//if (FVector::Dist(pol->line.p1, inLine->line.getMiddle()) > FVector::Dist(pol->line.p2, inLine->line.getMiddle())) {
-			//	//	// on the new line, collision end?
-			//	//	if (FVector::Dist(inLine->line.p1, pol->line.getMiddle()) > FVector::Dist(inLine->line.p2, pol->line.getMiddle())) {
-			//	//		// then flip
-			//	//		invertAndParents(inLine);
-			//	//	}
-			//	//	else {
+			// so the new line is maybe the master
+			else {
+				// on inLine, collision end?
+				if (FVector::Dist(inLine->line.p1, res) < FVector::Dist(inLine->line.p2, res)) {
+					invertAndChildren(inLine);
+				}
+				pol->parent = inLine;
+				inLine->child = pol;
+				inLine->point = res;
 
-			//	//	}
-			//	//	inLine->parent = pol;
-			//	//	pol->child = inLine;
-			//	//	//pol->point = res;
-
-			//	//}
-			//	//// so the new line is maybe the master
-			//	//else {
-			//	//	// on inLine, collision end?
-			//	//	if (FVector::Dist(inLine->line.p1, pol->line.getMiddle()) > FVector::Dist(inLine->line.p2, pol->line.getMiddle())) {
-			//	//		pol->parent = inLine;
-			//	//		inLine->child = pol;
-
-			//	//	}
-			//	//	else {
-			//	//		// otherwise flip me
-			//	//		invertAndChildren(inLine);
-			//	//		inLine->child = pol;
-			//	//		pol->parent = inLine;
-			//	//	}
-			//	//	inLine->point = res;
-
-			//	//}
-
-			//}
-
-		//}
+			}
+		}
 	}
 	lines.Add(inLine);
 	return;

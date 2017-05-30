@@ -17,16 +17,25 @@ AHouseBuilder::AHouseBuilder()
 	//mapStatic = map;
 }
 
-
-
-
-
 struct twoInt {
 	int32 a;
 	int32 b;
 };
 
-// dont even ask
+
+
+
+// VERY crudely checks which direction an array is going, it can wrap around 0 unfortunately
+bool increasing(std::vector<int> nbrs) {
+	for (int i = 1; i < nbrs.size(); i++) {
+		if (nbrs[i] == nbrs[i - 1] + 1) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// similar to above but for a different structure
 bool increasing(TArray<twoInt> ints) {
 	for (twoInt t : ints) {
 		if (t.b == t.a + 1) {
@@ -78,8 +87,6 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 		roomPols[i - 1].points.Add(firstAttach);
 		roomPols[i - 1].entrances.Add(roomPols[i - 1].points.Num());
 		roomPols[i - 1].points.Add(sndAttach);
-		//roomPols[i - 1].exteriorWalls.Add(roomPols[i - 1].points.Num());
-
 
 
 		firstAttach = hole.points[i-1] + (midPos + corrWidth * 0.5) * tangent;
@@ -126,7 +133,6 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 	bool isIncreasing = increasing(connections);
 	for (int i = 0; i < roomPols.Num(); i++) {
 		FRoomPolygon &fp = roomPols[i];
-		//UE_LOG(LogTemp, Warning, TEXT("a %i,b %i"), connections[i].a, connections[i].b);
 
 		if (isIncreasing) {
 			for (int j = connections[i].b - 1 == -1 ? f.points.Num() - 1 : connections[i].b - 1; j != std::abs((connections[i].a - 1) % f.points.Num()); j = j == 0 ? f.points.Num() - 1 : j - 1) {
@@ -190,20 +196,10 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 
 
 
-// ugly method for finding direction of polygon
-bool increasing(std::vector<int> nbrs) {
-	for (int i = 1; i < nbrs.size(); i++) {
-		if (nbrs[i] == nbrs[i - 1] + 1) {
-			return true;
-		}
-	}
-	return false;
-}
 
-// this returns polygons corresponding to a hole with the shape "hole" in the polygon f
+
+// this returns polygons corresponding to a hole with the shape "hole" in the polygon f, using the keyhole triangulation algorithm
 TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, FPolygon hole, bool toMiddle) {
-	//hole.offset(FVector(0, 0, floorBegin));
-	//f.offset(FVector(0, 0, floorBegin));
 	TArray<FMaterialPolygon> polygons;
 
 
@@ -219,10 +215,6 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 
 
 	hole.points.RemoveAt(hole.points.Num() - 1);
-
-	//f.points.RemoveAt(f.points.Num() - 1);
-
-
 
 	int closestNum = -1;
 	float closestDist = 10000000.0f;
@@ -257,123 +249,12 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 			i += hole.points.Num();
 		pol.points.Add(hole.points[i] + FVector(0, 0, floorBegin));
 	}
-	//pol.points.Add(hole.points[closestNum - change < 0 ? hole.points.Num() - 1 : (closestNum - change) % hole.points.Num()] + FVector(0, 0, floorBegin));
 	pol.points.Add(hole.points[closestNum] + FVector(0, 0, floorBegin));
 
 
 	pol.points.Add(f.points[0] + FVector(0, 0, floorBegin));
 	
 	polygons.Add(pol);
-	return polygons;
-
-	//TPPLPoly poly;
-	//TPPLPoly holePoly;
-
-	//poly.hole = false;
-	//holePoly.hole = true;
-	//poly.Init(f.points.Num());
-	//holePoly.Init(hole.points.Num());
-
-
-	//TArray<FVector> allPoints;
-
-	////hole.reverse();
-	////f.reverse();
-	//for (int i = 0; i < f.points.Num(); i++) {
-	//	poly[i] = TPPLPoint{ f.points[i].X , f.points[i].Y , i};
-	//	allPoints.Add(f.points[i]);
-	//}
-	//for (int i = 0; i < hole.points.Num(); i++) {
-	//	TPPLPoint curr = TPPLPoint{ hole.points[i].X, hole.points[i].Y, f.points.Num() + i};
-	//	holePoly[i] = curr;
-	//	allPoints.Add(hole.points[i]);
-	//}
-	////poly.Invert();
-	////holePoly.Invert();
-	//TPPLPartition part;
-	//std::list<TPPLPoly> inPols;
-
-	////holePoly.SetOrientation(TPPL_CW);
-	////poly.SetOrientation(TPPL_CCW);
-	//inPols.push_back(poly);
-	//inPols.push_back(holePoly);
-	//std::list<TPPLPoly> outPols;
-	////int res = part.Triangulate_MONO(&inPols, &outPols);
-	//int res = part.RemoveHoles(&inPols, &outPols);
-	//if (res != 1) {
-	//	UE_LOG(LogTemp, Warning, TEXT("REMOVE HOLES FAILED"));
-	//}
-	//for (std::list<TPPLPoly>::iterator iterator = outPols.begin(), end = outPols.end(); iterator != end; ++iterator) {
-	//	//auto pol = outPols.back();
-	//	FMaterialPolygon newP;
-	//	newP.type = PolygonType::floor;
-	//	newP.width = 20;
-	//	for (int i = 0; i < iterator->GetNumPoints(); i++) {
-	//		newP.points.Add(allPoints[(*iterator)[i].id]);//FVector(pol.GetPoints()[i].x, pol.GetPoints()[i].y, floorBegin));
-	//	}
-	//	//newP.points.Add(FVector(pol.GetPoints()[0].x, pol.GetPoints()[0].y, floorBegin));
-
-	//	polygons.Add(newP);
-	//	break;
-	//};
-	//std::vector<int> connections;
-	//for (int i = 1; i < f.points.Num(); i++) {
-	//	FVector currMid = (f.points[i] - f.points[i - 1]) / 2 + f.points[i - 1];
-	//	int closest = 0;
-	//	float closestDist = 10000000;
-	//	for (int j = 0; j < hole.points.Num(); j++) {
-	//		FVector f2 = hole.points[j];
-	//		float currDist = FVector::Dist(f2, currMid);
-	//		if (currDist < closestDist) {
-	//			closestDist = currDist;
-	//			closest = j;
-	//		}
-	//	}
-	//	connections.push_back(closest);
-	//	FMaterialPolygon newP;
-	//	newP.points.Add(f.points[i - 1]);
-	//	newP.points.Add(hole.points[closest]);
-	//	newP.points.Add(f.points[i]);
-	//	newP.type = PolygonType::floor;
-	//	polygons.Add(newP);
-	//}
-	//int change = increasing(connections) ? 1 : -1;
-	//int prev = connections[0];
-	//for (int i = 1; i < connections.size(); i++) {
-	//	while (connections[i] != prev) {
-	//		FMaterialPolygon newP;
-	//		int next = prev + change;
-	//		next %= hole.points.Num();
-	//		if (next < 0) {
-	//			next += hole.points.Num();
-	//		}
-	//		newP.points.Add(f.points[i]);
-	//		newP.points.Add(hole.points[prev]);
-	//		newP.points.Add(hole.points[next]);
-
-	//		newP.type = PolygonType::floor;
-	//		polygons.Add(newP);
-	//		prev = next;
-	//	}
-
-	//}
-	//prev = connections[connections.size() - 1];
-	//while (prev != connections[0]) {
-	//	FMaterialPolygon newP;
-	//	int next = prev + change;
-	//	next %= hole.points.Num();
-	//	if (next < 0) {
-	//		next += hole.points.Num();
-	//	}
-
-	//	newP.points.Add(hole.points[next]);
-	//	newP.points.Add(f.points[0]);
-	//	newP.points.Add(hole.points[prev]);
-	//	newP.type = PolygonType::floor;
-	//	polygons.Add(newP);
-	//	prev = next;
-	//}
-
 	return polygons;
 
 
@@ -403,13 +284,13 @@ FPolygon getShaftHolePolygon(FHousePolygon f) {
 	return hole;
 }
 
-// changes the shape of the house
+// changes the shape of the house to make it less cube-like
 void makeInteresting(FHousePolygon &f) {
 	//if (randFloat() < 0.1f) {
 	//	f.removePoint((randFloat() * f.points.Num() - 1) + 1);
 	//	//f.points.RemoveAt((randFloat() * f.points.Num() - 1) + 1);
 	//}
-	if (randFloat() < 0.1f) {
+	if (randFloat() < 0.2f) {
 		float depth = 1000;
 		// turn a side inwards into a U
 		int place = 2;
@@ -433,8 +314,6 @@ void makeInteresting(FHousePolygon &f) {
 		f.addPoint(place + 3, snd);
 		f.windows.Add(place+3);
 		f.windows.Add(place + 4);
-
-
 	}
 }
 
@@ -545,6 +424,7 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 	float len = 500;
 	float offset = FMath::FRandRange(minHeight, maxHeight);
 	if (FMath::FRand() < 0.6) {
+		// add box shape on top of room
 		FMaterialPolygon box;
 		bool found = true;
 		int count = 0;
@@ -633,17 +513,6 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, fl
 	float wWidth = randFloat() * 500 + 500;
 	float wHeight = randFloat() * 400 + 200;
 
-
-	// add detail to facade
-
-	// add small facade detail over first floor
-	//float height = 100;
-	//float width = 30;
-
-	
-	//float density = 0.01;
-	//float width = 0.01;
-
 	FPolygon hole = getShaftHolePolygon(f);
 	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, 300, maxRoomArea);
 
@@ -673,7 +542,6 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, fl
 	}
 
 
-	//if (!shellOnly) {
 	bool facade = FMath::FRand() < 0.2;
 		for (int i = 1; i < floors; i++) {
 			if (!shellOnly) {
@@ -686,7 +554,6 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, fl
 
 			roomPols = getInteriorPlan(f, hole, false, 300, 500);
 			for (FRoomPolygon &p : roomPols) {
-				//p.offset(FVector(0, 0, floorHeight*i));
 				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, 0.005, 250, 150, map, shellOnly);
 				newR.offset(FVector(0, 0, floorHeight*i));
 				toReturn.pols.Append(newR.pols);
@@ -720,7 +587,6 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, fl
 	toReturn.pols.Add(roof);
 	addRoofDetail(roof, toReturn);
 
-	//buildRoof(toReturn, roof);
 	FMaterialPolygon floor;
 	floor.points = f.points;
 	floor.offset(FVector(0, 0, 20));
