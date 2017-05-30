@@ -394,7 +394,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 							frame.points.Add(p.points[i - 1]);
 							FVector frameDir = frame.getDirection();
 							frame.offset(frameDir*(frameDepth / 2 - 20));
-							//toReturn.Add(frame);
+							toReturn.Add(frame);
 
 						}
 						p.points.RemoveAt(p.points.Num() - 1);

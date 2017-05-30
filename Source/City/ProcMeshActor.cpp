@@ -154,7 +154,7 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	mesh->SetMaterial(1, mat);
 	//mesh->SetCullDistance(100);
 
-	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
+	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, true);
 }
 
 // uses fan triangulation, doesn't work with convex shapes, builds faces in both directions
