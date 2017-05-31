@@ -309,33 +309,40 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		FVector tangent = f2->p2 - f2->p1;
 		tangent.Normalize();
 		f2->p2 += tangent*maxAttachDistance;
+		float closestDist = 100000.0f;
+		FRoadSegment* closest = nullptr;
+		FVector impactP;
 		addVertices(f2);
 		bool foundCollision = false;
 		for (FRoadSegment* f : determinedSegments) {
 			if (f == f2 || FVector::Dist(f->p2, f2->p1) < 400)
 				continue;
 			FVector res = intersection(f2->p1, f2->p2, f->p1, f->p2);
-			if (res.X != 0.0f) {
-				FVector tangent2 = res - f2->p1;
-				tangent2.Normalize();
-				float len = FVector::Dist(res, f2->p1);
-				f2->p2 = f2->p1 + (len - standardWidth / 2) * tangent2;
-				//f2->p2 = res;
-
-				FVector naturalTangent = f2->p2 - f2->p1;
-				naturalTangent.Normalize();
-				FVector pot1 = FRotator(0, 90, 0).RotateVector(f->p2 - f->p1);
-				FVector pot2 = FRotator(0, 270, 0).RotateVector(f->p2 - f->p1);
-				f2->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
-				addVertices(f2);
-				f2->roadInFront = true;
+			if (res.X != 0.0f && FVector::Dist(f2->p2, res) < closestDist) {
+				closestDist = FVector::Dist(f2->p2, res);
+				closest = f;
+				impactP = res;
 				foundCollision = true;
-				break;
+				//break;
 			}
 
 
 		}
-		if (!foundCollision) {
+		if (foundCollision) {
+			FVector tangent2 = impactP - f2->p1;
+			tangent2.Normalize();
+			float len = FVector::Dist(impactP, f2->p1);
+			f2->p2 = f2->p1 + (len - standardWidth / 2) * tangent2;
+
+			FVector naturalTangent = f2->p2 - f2->p1;
+			naturalTangent.Normalize();
+			FVector pot1 = FRotator(0, 90, 0).RotateVector(closest->p2 - closest->p1);
+			FVector pot2 = FRotator(0, 270, 0).RotateVector(closest->p2 - closest->p1);
+			f2->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
+			addVertices(f2);
+			f2->roadInFront = true;
+		}
+		else {
 			f2->p2 -= tangent*maxAttachDistance;
 			addVertices(f2);
 		}
