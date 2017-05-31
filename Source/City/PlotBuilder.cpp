@@ -157,7 +157,23 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			tangent1.Normalize();
 			FPolygon pol;
 			float len = 0;
-			if (p.buildLeft) {
+
+			bool overridePlacementOk = false;
+			if (p.points.Num() > next + 2 && FVector::Dist(p.points[next + 2], currPos) < acceptableLen){//FVector::Dist(p.points[next + 1], currPos)) {
+				pol.points.Add(currPos);
+				pol.points.Add(p.points[next]);
+				pol.points.Add(p.points[next+1]);
+				FVector target = NearestPointOnLine(p.points[next + 2], p.points[next + 2] - p.points[next + 1], currPos);
+				pol.points.Add(target);
+				pol.points.Add(currPos);
+				next += 2;
+				prev1 = target;
+				prevTan = currPos - target;
+				currPos = target;
+				overridePlacementOk = true;
+
+			}
+			else if (p.buildLeft) {
 				FVector tangent2 = FRotator(0, 90, 0).RotateVector(tangent1);
 				if (FVector::Dist(p.points[next], currPos) < acceptableLen)
 					len = FVector::Dist(p.points[next], currPos);
@@ -202,7 +218,7 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			}
 			FPolygon tmp;
 			
- 			if (!testCollision(pol, others, 500, tmp)) {
+ 			if (overridePlacementOk || !testCollision(pol, others, 500, tmp)) {
 				fh.points = pol.points;
 				fh.checkOrientation();
 				fh.population = 1.0;
