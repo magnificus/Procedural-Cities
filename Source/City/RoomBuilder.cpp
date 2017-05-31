@@ -377,21 +377,21 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 					FVector center = p.getCenter();
 					if (true || !shellOnly) {
 						p.points.Add(FVector(p.points[0]));
-						for (int i = 1; i < p.points.Num(); i++) {
+						for (int j = 1; j < p.points.Num(); j++) {
 							FMaterialPolygon frame;
 							frame.type = PolygonType::windowFrame;
 							frame.width = frameDepth;
-							FVector tangent1 = center - p.points[i - 1];
-							FVector tangent2 = center - p.points[i];
+							FVector tangent1 = center - p.points[j - 1];
+							FVector tangent2 = center - p.points[j];
 							tangent1.Normalize();
 							tangent2.Normalize();
-							FVector normal = getNormal(p.points[i], p.points[i - 1], true);
+							FVector normal = getNormal(p.points[j], p.points[j - 1], true);
 							normal.Normalize();
-							frame.points.Add(p.points[i - 1]);
-							frame.points.Add(p.points[i]);
-							frame.points.Add(p.points[i] + tangent2 * frameWidth);
-							frame.points.Add(p.points[i - 1] + tangent1 * frameWidth);
-							frame.points.Add(p.points[i - 1]);
+							frame.points.Add(p.points[j - 1]);
+							frame.points.Add(p.points[j]);
+							frame.points.Add(p.points[j] + tangent2 * frameWidth);
+							frame.points.Add(p.points[j - 1] + tangent1 * frameWidth);
+							frame.points.Add(p.points[j - 1]);
 							FVector frameDir = frame.getDirection();
 							frame.offset(frameDir*(frameDepth / 2 - 20));
 							toReturn.Add(frame);
@@ -1016,7 +1016,7 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 }
 
 
-FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, float height, float density, float windowHeight, float windowWidth, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool shellOnly) {
+FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, float height, float density, float windowHeight, float windowWidth, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly) {
 	if (!f->canRefine) {
 		FRoomInfo r;
 		//r.beginning = beginning;
@@ -1028,7 +1028,7 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, flo
 	}
 	switch (type) {
 	case RoomType::office: return buildOffice(f, floor, height, 0.004, 270, 170, map, shellOnly);
-	case RoomType::apartment: return buildApartment(f, floor, height, 0.002, 200, 200, map, floor != 0, shellOnly);
+	case RoomType::apartment: return buildApartment(f, floor, height, 0.002, 200, 200, map, potentialBalcony, shellOnly);
 	case RoomType::store: return buildStore(f, height, map, shellOnly);
 	}
 	return FRoomInfo();

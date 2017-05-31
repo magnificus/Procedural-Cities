@@ -265,8 +265,8 @@ FPolygon getShaftHolePolygon(FHousePolygon f) {
 	FPolygon hole;
 	FVector center = f.getCenter();
 
-	float holeSizeX = 1000;
-	float holeSizeY = 2000;
+	float holeSizeX = 900;
+	float holeSizeY = 1200;
 
 	FVector tangent1 = f.points[1] - f.points[0];
 	tangent1.Normalize();
@@ -286,14 +286,29 @@ FPolygon getShaftHolePolygon(FHousePolygon f) {
 
 // changes the shape of the house to make it less cube-like
 void makeInteresting(FHousePolygon &f) {
-	//if (randFloat() < 0.1f) {
-	//	f.removePoint((randFloat() * f.points.Num() - 1) + 1);
-	//	//f.points.RemoveAt((randFloat() * f.points.Num() - 1) + 1);
-	//}
-	if (randFloat() < 0.2f) {
+	if (randFloat() < 0.1f) {
+		// remove corner
+		int place = FMath::FRand() * (f.points.Num() - 2) + 1;
+		FVector p1 = middle(f.points[place - 1], f.points[place]);
+		FVector p2 = middle(f.points[place + 1], f.points[place]);
+		bool hadW = f.entrances.Contains(place);
+		bool hadE = f.entrances.Contains(place);
+		f.addPoint(place, p1);
+		f.addPoint(place + 1, p2);
+		f.removePoint(place + 2);
+		f.windows.Add(place + 1);
+		f.entrances.Add(place + 1);
+		if (hadW)
+			f.windows.Add(place);
+		if (hadE)
+			f.entrances.Add(place);
+	}
+	else if (randFloat() < 0.1f) {
 		float depth = 1000;
 		// turn a side inwards into a U
 		int place = 2;
+		place = FMath::FRand() * (f.points.Num() - 1) + 1;
+
 		FVector tangent = f.points[place] - f.points[place - 1];
 		float lenSide = tangent.Size();
 		tangent.Normalize();
@@ -501,11 +516,16 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, fl
 	if (f.points.Num() < 3) {
 		return FRoomInfo();
 	}
-	makeInteresting(f);
+	for (int i = 0; i < 3; i++)
+		makeInteresting(f);
 	FRoomInfo toReturn;
 	//noise
 	int floors = minFloors + (maxFloors - minFloors) * (FMath::FRand());
-	//int floors = scaled_raw_noise_2d(minFloors, maxFloors, f.housePosition.X*noiseMultiplier, f.housePosition.Y*noiseMultiplier); // minFloors + (maxFloors - minFloors) * (FMath::FRand());// *(f.housePosition.X, f.housePosition.Y*noiseMultiplier) * 0.5 + 0.5);
+	floors *= FMath::FRand() < 0.3 ? 1 : 2;
+	//if (scaled_raw_noise_2d(minFloors, maxFloors, f.housePosition.X*noiseMultiplier, f.housePosition.Y*noiseMultiplier) > 0.7f) {
+	//	floors *= 2;
+	//}
+	//int floors = scaled_raw_noise_2d(minFloors, maxFloors, f.housePosition.X*noiseMultiplier, f.housePosition.Y*noiseMultiplier);
 
 
 	float wDens = randFloat() * 0.0010 + 0.0005;
@@ -516,17 +536,17 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, fl
 	FPolygon hole = getShaftHolePolygon(f);
 	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, 300, maxRoomArea);
 
-	
+	bool potentialBalcony = f.type == RoomType::apartment && floors < 10 && floors > 0;
 	for (FRoomPolygon p : roomPols) {
-		FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 0, floorHeight, 0.005, 250, 150, map, shellOnly);
+		FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 0, floorHeight, 0.005, 250, 150, map, potentialBalcony, shellOnly);
 		newR.offset(FVector(0, 0, 30));
 		toReturn.pols.Append(newR.pols);
 		toReturn.meshes.Append(newR.meshes);
 	}
 	FVector rot = getNormal(hole.points[1], hole.points[0], true);
 	rot.Normalize();
-	FPolygon stairPol = MeshPolygonReference::getStairPolygon(hole.getCenter() + rot*500, rot.Rotation());
-	FPolygon elevatorPol = MeshPolygonReference::getStairPolygon(hole.getCenter() - rot * 500, rot.Rotation());
+	FPolygon stairPol = MeshPolygonReference::getStairPolygon(hole.getCenter() + rot*200, rot.Rotation());
+	FPolygon elevatorPol = MeshPolygonReference::getStairPolygon(hole.getCenter() - rot * 200, rot.Rotation());
 	FVector stairPos = stairPol.getCenter();
 	FVector elevatorPos = elevatorPol.getCenter();
 
@@ -546,7 +566,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, fl
 		for (int i = 1; i < floors; i++) {
 			if (!shellOnly) {
 				toReturn.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol, true));
-				toReturn.meshes.Add(FMeshInfo{ "office_lamp", FTransform(hole.getCenter() + FVector(0, 0, floorHeight*(i + 1) - 45)) }); // lamp between stair and elevator
+				//toReturn.meshes.Add(FMeshInfo{ "office_lamp", FTransform(hole.getCenter() + FVector(0, 0, floorHeight*(i + 1) - 45)) }); // lamp between stair and elevator
 				toReturn.meshes.Add(FMeshInfo{ "stair", FTransform(rot.Rotation(), stairPos + FVector(0, 0, floorHeight * (i - 1)), FVector(1.0f, 1.0f, 1.0f)) });
 			}
 			if (facade)
@@ -554,7 +574,7 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, fl
 
 			roomPols = getInteriorPlan(f, hole, false, 300, 500);
 			for (FRoomPolygon &p : roomPols) {
-				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, 0.005, 250, 150, map, shellOnly);
+				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, 0.005, 250, 150, map, potentialBalcony, shellOnly);
 				newR.offset(FVector(0, 0, floorHeight*i));
 				toReturn.pols.Append(newR.pols);
 				toReturn.meshes.Append(newR.meshes);
@@ -584,8 +604,12 @@ FRoomInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, fl
 	roof.offset(FVector(0, 0, floorHeight*floors));
 	roof.type = PolygonType::roof;
 	roof.reverse();
-	toReturn.pols.Add(roof);
-	addRoofDetail(roof, toReturn);
+
+	if (generateRoofs) {
+		toReturn.pols.Add(roof);
+		addRoofDetail(roof, toReturn);
+	}
+
 
 	FMaterialPolygon floor;
 	floor.points = f.points;

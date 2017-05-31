@@ -22,6 +22,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 	TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+	bool generateRoofs = true;
+
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	FRoomInfo getHouseInfo(FHousePolygon f, float noiseMultiplier, float floorHeight, float maxRoomArea, bool shellOnly, int minFloors, int maxFloors);

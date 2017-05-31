@@ -28,6 +28,10 @@ public:
 	APlotBuilder();
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
+	static TArray<FHousePolygon> generateAllHousePolygons(TArray<FPlotPolygon> p, TArray<FPolygon> others, int maxFloors, int minFloors);
+
+
+	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static TArray<FHousePolygon> generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int minFloors, int maxFloors);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")

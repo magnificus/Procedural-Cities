@@ -46,22 +46,37 @@ FVector getPointDirection(const FPolygon &pol, int place, bool left) {
 
 }
 
+TArray<FHousePolygon> APlotBuilder::generateAllHousePolygons(TArray<FPlotPolygon> plots, TArray<FPolygon> others, int maxFloors, int minFloors) {
+	TArray<FHousePolygon> houses;
+
+
+	// n^2 :/
+	for (int i = 0; i < plots.Num(); i++) {
+		for (int j = i; j < plots.Num(); j++) {
+			for (int k = 0; k < plots[i].points.Num(); k++) {
+				for (int l = 0; l < plots[j].points.Num(); l++) {
+
+				}
+			}
+		}
+	}
+
+	return houses;
+}
+
+
 
 TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int maxFloors, int minFloors) {
 	TArray<FHousePolygon> housePolygons;
 
-	float maxArea = 4000.0f;
-	float minArea = 800.0f;
+	float maxArea = 3000.0f;
+	float minArea = 1200.0f;
 
 	if (!p.open) {
-
-
 		FHousePolygon original;
 		original.points = p.points;
 		if (!p.buildLeft)
 			original.reverse();
-		//original.checkOrientation();
-		//original.buildLeft = p.buildLeft;
 		original.buildLeft = true;
 		original.open = false;
 		original.population = p.population;
@@ -80,20 +95,22 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 			float area = r.getArea();
 			UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
 
-			//if (area > minArea) {
-			housePolygons.Add(r);
-			others.Add(r);
+			if (area > minArea) {
+				housePolygons.Add(r);
+				others.Add(r);
+			}
 		}
 
 	}
 	else {
 		// wander along the line and place adjacent houses on the curve
+		return housePolygons;
 
-		float minLen = 4000;
-		float minWidth = 5000;
+		float minLen = 3000;
+		float minWidth = 3000;
 
-		float maxLen = 6000;
-		float maxWidth = 6000;
+		float maxLen = 4000;
+		float maxWidth = 4000;
 
 		float acceptableLen = 8000;
 

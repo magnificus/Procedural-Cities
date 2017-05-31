@@ -14,6 +14,170 @@
 /**
  * 
  */
+struct SplitStruct {
+	int min;
+	int max;
+	FVector p1;
+	FVector p2;
+};
+
+
+FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
+
+
+USTRUCT(BlueprintType)
+struct FPolygon
+{
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(BlueprintReadWrite)
+		TArray<FVector> points;
+
+	FVector getCenter() {
+		FVector center = FVector(0, 0, 0);
+		double totLen = 0;
+		for (int i = 1; i < points.Num(); i++) {
+			float len = (points[i] - points[i - 1]).Size();
+			center += ((points[i] - points[i - 1]) / 2 + points[i - 1])*len;
+			totLen += len;
+		}
+		center /= totLen;
+		return center;
+	}
+
+	// only cares about dimensions X and Y, not Z
+	double getArea() {
+		double tot = 0;
+
+		for (int i = 0; i < points.Num() - 1; i++) {
+			tot += 0.0001*(points[i].X * points[i + 1].Y);
+			tot -= 0.0001*(points[i].Y * points[i + 1].X);
+		}
+		tot *= 0.5;
+		return std::abs(tot);
+	}
+
+	void offset(FVector offset) {
+		for (FVector &f : points) {
+			f += offset;
+		}
+	};
+
+
+
+
+
+	// this method merges polygon sides when possible, and combines points
+	void decreaseEdges() {
+		float dirDiffAllowed = 0.07f;
+		float distDiffAllowed = 200;
+
+		for (int i = 1; i < points.Num(); i++) {
+			if (FVector::Dist(points[i - 1], points[i]) < distDiffAllowed) {
+				points.RemoveAt(i - 1);
+				i--;
+			}
+		}
+
+		for (int i = 2; i < points.Num(); i++) {
+			FVector prev = points[i - 1] - points[i - 2];
+			prev.Normalize();
+			FVector curr = points[i] - points[i - 1];
+			curr.Normalize();
+			//UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
+			if (FVector::Dist(curr, prev) < dirDiffAllowed) {
+				points.RemoveAt(i - 1);
+				i--;
+			}
+		}
+	}
+
+	// assumes at least 3 points in polygon
+	FVector getDirection() {
+		FVector res = FVector::CrossProduct(points[1] - points[0], points[2] - points[0]);
+		res.Normalize();
+		return res;
+	}
+
+	void reverse() {
+		Algo::Reverse(points);
+	}
+
+	SplitStruct getSplitProposal(bool buildLeft, float approxRatio) {
+
+		if (points.Num() < 3) {
+			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
+		}
+		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
+			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN SPLITSTRUCT, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
+			FVector first = points[0];
+			points.Add(first);
+		}
+
+		int longest = -1;
+
+		float longestLen = 0.0f;
+
+		FVector curr;
+		for (int i = 1; i < points.Num(); i++) {
+			float dist = FVector::DistSquared(points[i], points[i - 1]);
+			if (dist > longestLen) {
+				longestLen = dist;
+				longest = i;
+			}
+		}
+		if (longest == -1) {
+			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
+		}
+		curr = points[longest] - points[longest - 1];
+		curr.Normalize();
+
+		FVector middle = (points[longest] - points[longest - 1]) * approxRatio + points[longest - 1];
+		FVector p1 = middle;
+		int split = 0;
+		FVector p2 = FVector(0.0f, 0.0f, 0.0f);
+		FVector tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(curr);
+		//tangent.Normalize();
+		float closest = 10000000.0f;
+		for (int i = 1; i < points.Num(); i++) {
+			if (i == longest) {
+				continue;
+			}
+			curr = intersection(middle, middle + tangent * 100000, points[i - 1], points[i]);
+			if (curr.X != 0.0f && FVector::Dist(curr, middle) < closest) {
+				closest = FVector::Dist(curr, middle);
+				split = i;
+				p2 = curr;
+
+			}
+		}
+
+		if (p2.X == 0.0f || p1.X == 0.0f) {
+			UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT"));
+			// cant split, no target, this shouldn't happen unless the polygons are poorly constructed
+			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
+
+		}
+
+
+
+		int min = longest;
+		int max = split;
+
+		// rearrange if split comes before longest in the array
+		if (longest > split) {
+			FVector temp = p1;
+			p1 = p2;
+			p2 = temp;
+			min = split;
+			max = longest;
+		}
+
+		return SplitStruct{ min, max, p1, p2 };
+	}
+
+
+};
 
 
 UENUM(BlueprintType)
@@ -44,6 +208,15 @@ enum class PolygonType : uint8
 	roof UMETA(DisplayName = "Roof")
 };
 
+
+USTRUCT(BlueprintType)
+struct FMaterialPolygon : public FPolygon {
+	GENERATED_USTRUCT_BODY();
+
+	PolygonType type = PolygonType::exterior;
+	float width = 20;
+};
+
 USTRUCT(BlueprintType)
 struct FMeshInfo {
 	GENERATED_USTRUCT_BODY();
@@ -53,14 +226,60 @@ struct FMeshInfo {
 		FTransform transform;
 };
 
-FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 
-struct SplitStruct {
-	int min;
-	int max;
-	FVector p1;
-	FVector p2;
+USTRUCT(BlueprintType)
+struct FRoomInfo {
+
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<FMaterialPolygon> pols;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<FMeshInfo> meshes;
+
+	void offset(FVector offset) {
+		for (FPolygon &p : pols)
+			p.offset(offset);
+		for (FMeshInfo &f : meshes)
+			f.transform.SetTranslation(f.transform.GetTranslation() + offset);
+	}
 };
+
+
+UENUM(BlueprintType)
+enum class SimplePlotType : uint8
+{
+	undecided UMETA(DisplayName = "Undecided"),
+	asphalt UMETA(DisplayName = "Asphalt"),
+	green UMETA(DisplayName = "Green")
+};
+
+USTRUCT(BlueprintType)
+struct FSimplePlot {
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FPolygon pol;
+
+	SimplePlotType type = SimplePlotType::undecided;
+};
+USTRUCT(BlueprintType)
+struct FHouseInfo {
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FRoomInfo roomInfo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FSimplePlot> remainingPlots;
+
+};
+
+
+
+
+
 
 static FVector middle(FVector p1, FVector p2) {
 	return ((p2 - p1) * 0.5) + p1;
@@ -94,168 +313,7 @@ static void removeAllButOne(TSet<int32> &entries) {
 }
 
 
-USTRUCT(BlueprintType)
-struct FPolygon
-{
-	GENERATED_USTRUCT_BODY();
 
-	UPROPERTY(BlueprintReadWrite)
-		TArray<FVector> points;
-
-	FVector getCenter() {
-		FVector center = FVector(0, 0, 0);
-		double totLen = 0;
-		for (int i = 1; i < points.Num(); i++) {
-			float len = (points[i] - points[i - 1]).Size();
-			center += ((points[i] - points[i - 1])/2 + points[i-1])*len;
-			totLen += len;
-		}
-		center /= totLen;
-		return center;
-	}
-
-	// only cares about dimensions X and Y, not Z
-	double getArea() {
-	double tot = 0;
-
-	for (int i = 0; i < points.Num() - 1; i++) {
-		tot += 0.0001*(points[i].X * points[i + 1].Y);
-		tot -= 0.0001*(points[i].Y * points[i+1].X);
-	}
-	tot *= 0.5;
-	return std::abs(tot);
-	}
-
-	void offset(FVector offset) {
-		for (FVector &f : points) {
-			f += offset;
-		}
-	};
-
-
-
-
-
-	// this method merges polygon sides when possible, and combines points
-	void decreaseEdges() {
-		float dirDiffAllowed = 0.07f;
-		float distDiffAllowed = 200;
-
-		for (int i = 1; i < points.Num(); i++) {
-			if (FVector::Dist(points[i - 1], points[i]) < distDiffAllowed) {
-				points.RemoveAt(i-1);
-				i--;
-			}
-		}
-
-		for (int i = 2; i < points.Num(); i++) {
-			FVector prev = points[i - 1] - points[i - 2];
-			prev.Normalize();
-			FVector curr = points[i] - points[i - 1];
-			curr.Normalize();
-			//UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
-			if (FVector::Dist(curr, prev) < dirDiffAllowed) {
-				points.RemoveAt(i-1);
-				i--;
-			}
-		}
-	}
-
-	// assumes at least 3 points in polygon
-	FVector getDirection() {
-		FVector res = FVector::CrossProduct(points[1] - points[0], points[2] - points[0]);
-		res.Normalize();
-		return res;
-	}
-
-	void reverse() {
-		Algo::Reverse(points);
-	}
-
-	SplitStruct getSplitProposal(bool buildLeft, float approxRatio) {
-			
-		if (points.Num() < 3) {
-			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
-		}
-		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
-			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN SPLITSTRUCT, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
-			FVector first = points[0];
-			points.Add(first);
-		}
-
-			int longest = -1;
-
-			float longestLen = 0.0f;
-
-			FVector curr;
-			for (int i = 1; i < points.Num(); i++) {
-				float dist = FVector::DistSquared(points[i], points[i - 1]);
-				if (dist > longestLen) {
-					longestLen = dist;
-					longest = i;
-				}
-			}
-			if (longest == -1) {
-				return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
-			}
-			curr = points[longest] - points[longest - 1];
-			curr.Normalize();
-
-			FVector middle = (points[longest] - points[longest - 1]) * approxRatio + points[longest - 1];
-			FVector p1 = middle;
-			int split = 0;
-			FVector p2 = FVector(0.0f, 0.0f, 0.0f);
-			FVector tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(curr);
-			//tangent.Normalize();
-			float closest = 10000000.0f;
-			for (int i = 1; i < points.Num(); i++) {
-				if (i == longest) {
-					continue;
-				}
-				curr = intersection(middle, middle + tangent * 100000, points[i - 1], points[i]);
-				if (curr.X != 0.0f && FVector::Dist(curr, middle) < closest) {
-					closest = FVector::Dist(curr, middle);
-					split = i;
-					p2 = curr;
-					
-				}
-			}
-
-			if (p2.X == 0.0f || p1.X == 0.0f) {
-				UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT"));
-				// cant split, no target, this shouldn't happen unless the polygons are poorly constructed
-				return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
-
-			}
-
-
-
-			int min = longest;
-			int max = split;
-
-			// rearrange if split comes before longest in the array
-			if (longest > split) {
-				FVector temp = p1;
-				p1 = p2;
-				p2 = temp;
-				min = split;
-				max = longest;
-			}
-
-			return SplitStruct{ min, max, p1, p2 };
-	}
-
-
-};
-
-
-USTRUCT(BlueprintType)
-struct FMaterialPolygon : public FPolygon {
-	GENERATED_USTRUCT_BODY();
-
-	PolygonType type = PolygonType::exterior;
-	float width = 20;
-};
 
 
 USTRUCT(BlueprintType)
@@ -1167,6 +1225,16 @@ struct roadComparator {
 	}
 };
 
+
+USTRUCT(BlueprintType)
+struct FPlotInfo {
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FHousePolygon> houses;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FSimplePlot> leftovers;
+};
 
 USTRUCT(BlueprintType)
 struct FPlotPolygon : public FMetaPolygon{
