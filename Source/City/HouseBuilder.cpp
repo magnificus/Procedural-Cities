@@ -309,6 +309,8 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn) {
 		simplePlot.pol.offset(FVector(0, 0, 30));
 		toReturn.remainingPlots.Add(simplePlot);
 
+		f.windows.Add(place);
+
 	}
 
 	else if (randFloat() < 0.1f) {
@@ -565,7 +567,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 		return FHouseInfo();
 	}
 	FHouseInfo toReturn;
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < makeInterestingAttempts; i++)
 		makeInteresting(f, toReturn);
 	//noise
 	int floors = minFloors + (maxFloors - minFloors) * (FMath::FRand());
@@ -584,9 +586,9 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 	FPolygon hole = getShaftHolePolygon(f);
 	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, 300, maxRoomArea);
 
-	bool potentialBalcony = f.type == RoomType::apartment && floors < 10 && floors > 0;
+	bool potentialBalcony = f.type == RoomType::apartment && floors < 10;
 	for (FRoomPolygon p : roomPols) {
-		FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 0, floorHeight, 0.005, 250, 150, map, potentialBalcony, shellOnly);
+		FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 0, floorHeight, 0.005, 250, 150, map, false, shellOnly);
 		newR.offset(FVector(0, 0, 30));
 		toReturn.roomInfo.pols.Append(newR.pols);
 		toReturn.roomInfo.meshes.Append(newR.meshes);

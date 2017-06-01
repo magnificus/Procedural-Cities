@@ -284,7 +284,7 @@ struct FHouseInfo {
 
 
 static FVector middle(FVector p1, FVector p2) {
-	return ((p2 - p1) * 0.5) + p1;
+	return (p2 + p1) / 2;// ((p2 - p1) * 0.5) + p1;
 }
 
 static TArray<int32> getIntList(int32 min, int32 max) {
@@ -754,13 +754,14 @@ struct FRoomPolygon : public FPolygon
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
+
 		return newP;
 	}
 
 
 
 
-	TArray<FRoomPolygon*> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon*> &remaining, bool repeating) {
+	TArray<FRoomPolygon*> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon*> &remaining, bool repeating, bool useMin) {
 		TArray<FRoomPolygon*> toReturn;
 		float area;
 		float minPctSplit = 0.25f;
@@ -771,11 +772,12 @@ struct FRoomPolygon : public FPolygon
 			for (RoomSpecification r : specs) {
 				bool found = false;
 				bool smaller = false;
+				float maxAreaAllowed = useMin ? (r.maxArea + r.minArea) / 2 : r.maxArea;
 				for (int i = 0; i < remaining.Num(); i++) {
 					FRoomPolygon *p = remaining[i];
 					area = p->getArea();
-					smaller = smaller || (area > r.maxArea);
-					if (area <= r.maxArea && area >= r.minArea){// && p->type != SubRoomType::hallway) {
+					smaller = smaller || (area > maxAreaAllowed);
+					if (area <= maxAreaAllowed && area >= r.minArea){// && p->type != SubRoomType::hallway) {
 						// found fitting room
 						p->type = r.type;
 						toReturn.Add(p);
@@ -810,13 +812,12 @@ struct FRoomPolygon : public FPolygon
 						scale = r.minArea / target->getArea();
 
 					}
-					if (target->getArea() <= r.maxArea && target->getArea() >= r.minArea){// && target->type != SubRoomType::hallway) {
+					if (target->getArea() <= maxAreaAllowed && target->getArea() >= r.minArea){// && target->type != SubRoomType::hallway) {
 						target->type = r.type;
 						//remaining.RemoveAt(targetNum);
 						toReturn.Add(target);
 					}
 					else {
-						//float ideal = (r.maxArea - r.minArea) / 2 + r.minArea;
 						FRoomPolygon* newP = target->splitAlongMax(r.minArea / target->getArea(), true);
 						if (newP == nullptr) {
 							continue;
@@ -935,8 +936,14 @@ struct FRoomPolygon : public FPolygon
 		remaining.Add(thisP);
 		removeAllButOne(remaining[0]->entrances);
 
-		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false));
-		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true));
+		float standardAreaRequired = 0;
+		// if the sum of the average room areas for neccesary rooms is greater than the total area of the apartment, use rooms as small as possible
+		for (RoomSpecification r : blueprint.needed) {
+			standardAreaRequired += (r.maxArea + r.minArea) / 2;
+		}
+		bool minimizeRoomSizes = standardAreaRequired > getArea();
+		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false, minimizeRoomSizes));
+		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true, false));
 
 		//TArray<FRoomPolygon> toReturn;
 		rooms.Append(remaining);
@@ -1122,7 +1129,7 @@ struct FHousePolygon : public FMetaPolygon {
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
 
-
+		newP.checkOrientation();
 		return newP;
 
 	}
@@ -1187,7 +1194,7 @@ struct FLine {
 		float width;
 
 	FVector getMiddle() {
-		return (p2 - p1) / 2 + p1;
+		return (p1 + p2) / 2;//(p2 - p1) / 2 + p1;
 	}
 };
 

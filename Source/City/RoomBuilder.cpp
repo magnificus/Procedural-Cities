@@ -586,7 +586,7 @@ RoomBlueprint getApartmentBlueprint(float areaScale) {
 	TArray<RoomSpecification> needed;
 	RoomSpecification kitchen{40*areaScale, 90*areaScale, SubRoomType::kitchen};
 	RoomSpecification bathroom{30*areaScale, 60*areaScale, SubRoomType::bath };
-	RoomSpecification bedroom{50*areaScale, 90*areaScale, SubRoomType::bed };
+	RoomSpecification bedroom{50*areaScale, 100*areaScale, SubRoomType::bed };
 	RoomSpecification living{100 * areaScale, 150 * areaScale, SubRoomType::living };
 	RoomSpecification closet{ 10 * areaScale, 40 * areaScale, SubRoomType::closet };
 
@@ -697,30 +697,31 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 	//placed.Add(r2);
-	placed.Append(getBlockingVolumes(r2, 200, 200));
+	//placed.Append(getBlockingVolumes(r2, 200, 200));
 
-	for (int i = 1; i < r2->points.Num(); i++) {
-		if (r2->entrances.Contains(i) || r2->toIgnore.Contains(i)) {
-			continue;
-		}
-		int place = i;
-		FVector dir = getNormal(r2->points[place], r2->points[place - 1], true);
-		FVector tangent = r2->points[place] - r2->points[place - 1];
-		tangent.Normalize();
-		dir.Normalize();
-		FVector origin = r2->points[place - 1] + tangent * 120;
-		FVector pos = origin + dir * 250;
-		FRotator rot = dir.Rotation();
-		FPolygon bedP = getPolygon(rot, pos, "bed", map);
-		if (testCollision(bedP, placed, 0, *r2)) {
-			continue;
-		}
-		placed.Add(bedP);
-		FMeshInfo bed{ "bed", FTransform(rot + FRotator(0, 270, 0), pos + FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
-		meshes.Add(bed);
-		pos += tangent * 150 - dir * 70;
-		break;
-	}
+	//for (int i = 1; i < r2->points.Num(); i++) {
+	//	if (r2->entrances.Contains(i) || r2->toIgnore.Contains(i)) {
+	//		continue;
+	//	}
+	//	int place = i;
+	//	FVector dir = getNormal(r2->points[place], r2->points[place - 1], true);
+	//	FVector tangent = r2->points[place] - r2->points[place - 1];
+	//	tangent.Normalize();
+	//	dir.Normalize();
+	//	FVector origin = r2->points[place - 1] + tangent * 120;
+	//	FVector pos = origin + dir * 250;
+	//	FRotator rot = dir.Rotation();
+	//	FPolygon bedP = getPolygon(rot, pos, "bed", map);
+	//	if (testCollision(bedP, placed, 0, *r2)) {
+	//		continue;
+	//	}
+	//	placed.Add(bedP);
+	//	FMeshInfo bed{ "bed", FTransform(rot + FRotator(0, 270, 0), pos + FVector(0, 0, 50), FVector(1.0f, 1.0f, 1.0f)) };
+	//	meshes.Add(bed);
+	//	pos += tangent * 150 - dir * 70;
+	//	break;
+	//}
+	attemptPlace(r2, placed, meshes, 150, true, 500, "bed", FRotator(0, 270, 0), FVector(0, 0, 50), map, false);
 	attemptPlace(r2, placed, meshes, 100, true, 2, "small_table", FRotator(0, 0, 0), FVector(0, 0, -50), map, false);
 	attemptPlace(r2, placed, meshes, 50.0f, false, 2, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	attemptPlace(r2, placed, meshes, 50, false, 2, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
@@ -948,8 +949,6 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 					p->entrances.Add(place);
 					FVector mid = middle(p->points[place], p->points[place - 1]);
 					p->specificEntrances.Add(place, mid);
-
-
 					r = placeBalcony(p, place, map);
 					break;
 				}

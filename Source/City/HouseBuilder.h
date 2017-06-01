@@ -26,6 +26,10 @@ public:
 	bool generateRoofs = true;
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+	int makeInterestingAttempts = 2;
+
+
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	FHouseInfo getHouseInfo(FHousePolygon f, float noiseMultiplier, float floorHeight, float maxRoomArea, bool shellOnly, int minFloors, int maxFloors);
 
