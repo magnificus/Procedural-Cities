@@ -45,6 +45,11 @@ struct FPolygon
 		return center;
 	}
 
+	FVector getRandomPoint() {
+		int place = FMath::Rand() % (points.Num() - 1) + 1;
+		return FVector();
+	}
+
 	// only cares about dimensions X and Y, not Z
 	double getArea() {
 		double tot = 0;

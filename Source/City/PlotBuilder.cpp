@@ -338,7 +338,9 @@ TArray<FMaterialPolygon> APlotBuilder::getSimplePlotPolygonsAndDecorate(TArray<F
 		newP.type = p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;
 		toReturn.Add(newP);
 		float area = p.pol.getArea();
-		//for ()
+		for (int i = 0; i < treeAreaRatio * area; i++) {
+			FVector point = p.pol.getRandomPoint();
+		}
 	}
 	return toReturn;
 }
