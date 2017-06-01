@@ -442,10 +442,10 @@ FTransform attemptGetPosition(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray
 
 			// fit the polygon properly if possible
 			float lenToMove = 0;
-			for (int i = 1; i < pol.points.Num(); i++) {
-				FVector res = intersection(pol.points[i - 1], pol.points[i], r2->points[place], r2->points[place - 1]);
+			for (int k = 1; k < pol.points.Num(); k++) {
+				FVector res = intersection(pol.points[k - 1], pol.points[k], r2->points[place], r2->points[place - 1]);
 				if (res.X != 0.0f) {
-					float currentToMove = FVector::Dist(pol.points[i - 1], pol.points[i]) - FVector::Dist(pol.points[i - 1], res);
+					float currentToMove = FVector::Dist(pol.points[k - 1], pol.points[k]) - FVector::Dist(pol.points[k - 1], res);
 					lenToMove = std::max(lenToMove, currentToMove);
 					//pos += dir * (lenToMove+5);
 					//break;
@@ -958,7 +958,8 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 				FVector dir2 = r2->points[i] - r2->points[i - 1];
 				dir2.Normalize();
 				r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
-				r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
+
+				//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
 			}
 
 			r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });

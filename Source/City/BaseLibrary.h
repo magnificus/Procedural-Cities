@@ -426,11 +426,8 @@ struct FRoomPolygon : public FPolygon
 	TSet<int32> entrances;
 	// sides of polygons that are towards the outside
 	TSet<int32> exteriorWalls;
-	// sides of the polygon with entrances that cannot be duplicated to other rooms when i split
 	// a subset of entrances where the entrance is not in the middle but in a specified position
 	TMap<int32, FVector> specificEntrances;
-	TSet<int32> nonDuplicatingEntrances;
-	// sides of the polygon that are "taken care of" by another polygon, so this polygon doesn't have to draw them
 	TSet<int32> toIgnore;
 	// members of toIgnore that correspond to an entrance from the neighboring polygon
 	TMap<int32, TSet<FRoomPolygon*>> passiveConnections;
@@ -501,8 +498,9 @@ struct FRoomPolygon : public FPolygon
 			return NULL;
 		}
 		FRoomPolygon* newP = new FRoomPolygon();
+		updateConnections(p.min, p.p1, newP, true, 1);
 
-		if (entrances.Contains(p.min)){// && !nonDuplicatingEntrances.Contains(p.min)) {
+		if (entrances.Contains(p.min)){
 			// potentially add responsibility of child
 			FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(p.p1, points[p.min-1]);
 			if (isOnLine(entrancePoint, p.p1, points[p.min])) {
@@ -541,7 +539,6 @@ struct FRoomPolygon : public FPolygon
 			newP->exteriorWalls.Add(1);
 		}
 
-		updateConnections(p.min, p.p1, newP, true, 1);
 		// move intersection to make more sense if possible
 		FVector res = intersection(p.p1, p.p1 + FRotator(0, 270, 0).RotateVector(points[p.min] - points[p.min - 1]) * 50, points[p.max], points[p.max - 1]);
 		if (res.X != 0.0f)
@@ -614,6 +611,9 @@ struct FRoomPolygon : public FPolygon
 			newP->points.Add(points[i]);
 		}
 
+		updateConnections(p.max, p.p2, newP, false, newP->points.Num());
+
+
 		if (entrances.Contains(p.max)){// && !nonDuplicatingEntrances.Contains(p.max)) {
 			FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max]);
 			if (isOnLine(entrancePoint, p.p2, points[p.max-1])) {
@@ -650,7 +650,6 @@ struct FRoomPolygon : public FPolygon
 			newP->exteriorWalls.Add(newP->points.Num());
 		}
 
-		updateConnections(p.max, p.p2, newP, false, newP->points.Num());
 
 		if (toIgnore.Contains(p.max)) {
 			newP->toIgnore.Add(newP->points.Num());
@@ -659,21 +658,14 @@ struct FRoomPolygon : public FPolygon
 
 
 		TSet<int32> newList;
-		TSet<int32> newNonDuplicating;
 		TMap<int32, FVector> newSpecificList;
 		for (int32 i : entrances) {
 			if (i >= p.max){
-				if (nonDuplicatingEntrances.Contains(i)) {
-					newNonDuplicating.Add(i - (p.max - p.min) + 2);
-				}
 				newList.Add(i - (p.max - p.min) + 2);
 				if (specificEntrances.Contains(i))
 					newSpecificList.Add(i - (p.max - p.min) + 2, specificEntrances[i]);
 			}
 			else {
-				if (nonDuplicatingEntrances.Contains(i)) {
-					newNonDuplicating.Add(i);
-				}
 				newList.Add(i);
 				if (specificEntrances.Contains(i))
 					newSpecificList.Add(i, specificEntrances[i]);
@@ -681,7 +673,6 @@ struct FRoomPolygon : public FPolygon
 		}
 		entrances = newList;
 		specificEntrances = newSpecificList;
-		nonDuplicatingEntrances = newNonDuplicating;
 
 		newList.Empty();
 		for (int32 i : windows) {
@@ -739,7 +730,7 @@ struct FRoomPolygon : public FPolygon
 		//// dont place the wall twice
 		toIgnore.Add(p.min+1);
 		//	// entrance to next room
-		if (entranceBetween){ //&& ((!entrances.Contains(p.min) && !entrances.Contains(p.min+2) || nonDuplicatingEntrances.Contains(p.min) || nonDuplicatingEntrances.Contains(p.min+2)))) {
+		if (entranceBetween){
 			TSet<FRoomPolygon*> passive = newP->passiveConnections.Contains(newP->points.Num()) ? newP->passiveConnections[newP->points.Num()] : TSet<FRoomPolygon*>();
 			passive.Add(newP);
 			passiveConnections.Add(p.min + 1, passive);
@@ -807,7 +798,6 @@ struct FRoomPolygon : public FPolygon
 						if (newP == nullptr) {
 							break;
 						}
-						//if (newP->nonDuplicatingEntrances)
 						remaining.EmplaceAt(0, newP);
 						scale = r.minArea / target->getArea();
 
