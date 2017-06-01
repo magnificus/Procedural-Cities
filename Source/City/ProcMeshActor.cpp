@@ -146,7 +146,7 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	mesh->SetMaterial(1, mat);
 	//mesh->SetCullDistance(100);
 
-	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, true);
+	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
 }
 
 // divides the polygon into the different materials used by the house
