@@ -66,7 +66,8 @@ TArray<FHousePolygon> APlotBuilder::generateAllHousePolygons(TArray<FPlotPolygon
 
 
 
-TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int maxFloors, int minFloors) {
+FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int maxFloors, int minFloors) {
+	FPlotInfo info;
 	TArray<FHousePolygon> housePolygons;
 
 	float maxArea = 3000.0f;
@@ -75,8 +76,9 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 	if (!p.open) {
 		FHousePolygon original;
 		original.points = p.points;
-		if (!p.buildLeft)
-			original.reverse();
+//		original.checkOrientation();
+		//if (!p.buildLeft)
+		//	original.reverse();
 		original.buildLeft = true;
 		original.open = false;
 		original.population = p.population;
@@ -87,7 +89,7 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 		}
 
 
-		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, minArea, 0);
+		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 		for (FHousePolygon r : refinedPolygons) {
 			r.height = randFloat() * (maxFloors - minFloors) + minFloors;
 			r.type = randFloat() < 0.5 ? RoomType::office : RoomType::apartment;
@@ -99,12 +101,21 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 				housePolygons.Add(r);
 				others.Add(r);
 			}
+			else {
+				FSimplePlot fs;
+				fs.pol = r;
+				fs.pol.reverse();
+				fs.pol.offset(FVector(0, 0, 30));
+				fs.type = SimplePlotType::green;
+				info.leftovers.Add(fs);
+			}
 		}
 
 	}
 	else {
 		// wander along the line and place adjacent houses on the curve
-		return housePolygons;
+		info.houses = housePolygons;
+		return info;
 
 		float minLen = 3000;
 		float minWidth = 3000;
@@ -263,7 +274,8 @@ TArray<FHousePolygon> APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray
 		}
 
 	}
-	return housePolygons;
+	info.houses = housePolygons;
+	return info;
 
 }
 
@@ -298,9 +310,10 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 {
 	FSidewalkInfo toReturn;
-	int toPlace = 6;
+	float placeRatio = 0.001;
 	if (FMath::FRand() < 0.1f) {
 		for (int i = 1; i < sidewalk.points.Num(); i += 2) {
+			int toPlace = placeRatio * (sidewalk.points[i] - sidewalk.points[i - 1]).Size();
 			for (int j = 1; j < toPlace; j++) {
 				FVector origin = sidewalk.points[i - 1];
 				FVector target = sidewalk.points[i];
@@ -313,6 +326,20 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 	}
 
 
+	return toReturn;
+}
+
+TArray<FMaterialPolygon> APlotBuilder::getSimplePlotPolygonsAndDecorate(TArray<FSimplePlot> plots) {
+	TArray<FMaterialPolygon> toReturn;
+	float treeAreaRatio = 0.01;
+	for (FSimplePlot p : plots) {
+		FMaterialPolygon newP;
+		newP.points = p.pol.points;
+		newP.type = p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;
+		toReturn.Add(newP);
+		float area = p.pol.getArea();
+		//for ()
+	}
 	return toReturn;
 }
 

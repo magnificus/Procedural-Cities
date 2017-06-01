@@ -176,6 +176,8 @@ void invertAndParents(LinkedLine* line) {
 		
 		if (line->parent)
 			line->point = line->parent->point;
+		else 
+			line->point = FVector(0, 0, 0);
 		line->child = line->parent;	
 		if (prev) {
 			line->parent = prev;
@@ -189,6 +191,7 @@ void invertAndParents(LinkedLine* line) {
 }
 
 void invertAndChildren(LinkedLine* line) {
+	//return;
 	TSet<LinkedLine*> taken;
 	LinkedLine* prev = NULL;
 	FVector prevPoint = FVector(0,0,0);
@@ -302,8 +305,13 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 
 
 		FVector res = intersection(pol->line.p1, pol->line.p2, inLine->line.p1, inLine->line.p2);
+		//if (testCollision(tangents, lineVertices, lineVertices2, 0)) {
+
+			//if (std::abs(res.X) < 0.1f) {
+			//	res = FVector::Dist(pol->line.p1, middle(inLine->line.p1, inLine->line.p2)) < FVector::Dist(pol->line.p2, middle(inLine->line.p1, inLine->line.p2)) ? pol->line.p1 : pol->line.p2;
+			//}
 		if (res.X != 0.0f) {
-			// on the previous line, is the collision close to the end? if so, old pol is master
+				// on the previous line, is the collision close to the end? if so, old pol is master
 			if (FVector::Dist(pol->line.p1, res) > FVector::Dist(pol->line.p2, res)) {
 				// on the new line, collision end?
 				if (FVector::Dist(inLine->line.p1, res) > FVector::Dist(inLine->line.p2, res)) {
@@ -327,6 +335,7 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 
 			}
 		}
+	
 	}
 	lines.Add(inLine);
 	return;
@@ -421,13 +430,23 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 
 	}
 
-	// these roads shouldn't exist, so this is mainly to highlight errors
+	//// delete impossible polygons if they exist, they shouldn't 
+	//for (int i = 0; i < polygons.Num(); i++) {
+	//	FMetaPolygon f = polygons[i];
+	//	if (f.points.Num() < 3) {
+	//		polygons.RemoveAt(i);
+	//		i--;
+	//	}
+	//}
+
+	// zip together open polygons where end and beginning are really close together, and check orientation
 	for (int i = 0; i < polygons.Num(); i++) {
-		FMetaPolygon f = polygons[i];
-		if (f.points.Num() < 3) {
-			polygons.RemoveAt(i);
-			i--;
+		FMetaPolygon &f = polygons[i];
+		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num()-1]) < 4000) {
+			f.points.Add(FVector(f.points[0]));
+			f.open = false;
 		}
+		f.checkOrientation();
 	}
 
 

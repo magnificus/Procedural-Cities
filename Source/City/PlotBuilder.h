@@ -32,14 +32,16 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	static TArray<FHousePolygon> generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int minFloors, int maxFloors);
+	static FPlotInfo generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int minFloors, int maxFloors);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static FPolygon generateSidewalkPolygon(FPlotPolygon p, float offsetSize);
-
 	
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static FSidewalkInfo getSideWalkInfo(FPolygon sidewalk);
+
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	static TArray<FMaterialPolygon> getSimplePlotPolygonsAndDecorate(TArray<FSimplePlot> plots);
 
 protected:
 	// Called when the game starts or when spawned

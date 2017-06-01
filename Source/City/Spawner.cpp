@@ -90,7 +90,9 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 	vert1.Add(current->segment->v4);
 
 	for (FRoadSegment* f : segments){
-
+		if (f == current->previous->segment)
+			continue; 
+		
 		TArray<FVector> tangents;
 
 		// can't be too close to another segment
@@ -168,7 +170,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->type = prevSeg->type;
 	newRoad->endTangent = newRoad->p2 - newRoad->p1;
 	newRoadL->segment = newRoad;
-	newRoadL->time = previous->segment->type != RoadType::main ? previous->time + 1 : previous->time;
+	newRoadL->time = - raw_noise_2d(newRoad->p1.X*noiseScale, newRoad->p1.Y*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	newRoadL->roadLength = previous->roadLength + 1;
 	newRoadL->previous = previous;
 	addVertices(newRoad);
@@ -199,7 +201,8 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	newRoadL->segment = newRoad;
 	// every side track has less priority
 
-	newRoadL->time = previous->segment->type != RoadType::main ? previous->time: (previous->time + 1);
+	//newRoadL->time = previous->segment->type != RoadType::main ? previous->time + FMath::Rand() % 1 : (previous->time + 1);
+	newRoadL->time = - raw_noise_2d(newRoad->p1.X*noiseScale, newRoad->p1.Y*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
 
@@ -216,24 +219,23 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 		if (current->roadLength < maxMainRoadLength)
 			addRoadForward(queue, current, allsegments);
 
-		if (randFloat() < mainRoadBranchChance) {
-			if (randFloat() < 0.15f) {
-				addRoadSide(queue, current, true, 3.0f, allsegments, RoadType::main);
-			}
-
-			else if (randFloat() < 0.15f) {
-				addRoadSide(queue, current, false, 3.0f, allsegments, RoadType::main);
-			}
-			else {
-				if (randFloat() < secondaryRoadBranchChance) {
-					addRoadSide(queue, current, true, 2.0f, allsegments, RoadType::secondary);
-				}
-				if (randFloat() < secondaryRoadBranchChance) {
-					addRoadSide(queue, current, false, 2.0f, allsegments, RoadType::secondary);
-
-				}
-			}
+		//if (randFloat() < mainRoadBranchChance) {
+		if (randFloat() < 0.15f) {
+			addRoadSide(queue, current, true, 3.0f, allsegments, RoadType::main);
 		}
+
+		else if (randFloat() < 0.15f) {
+			addRoadSide(queue, current, false, 3.0f, allsegments, RoadType::main);
+		}
+		else {
+			//if (randFloat() < secondaryRoadBranchChance) {
+				addRoadSide(queue, current, true, 2.0f, allsegments, RoadType::secondary);
+			//}
+			//if (randFloat() < secondaryRoadBranchChance) {
+				addRoadSide(queue, current, false, 2.0f, allsegments, RoadType::secondary);
+			//}
+		}
+		//}
 	}
 
 	else if (current->segment->type == RoadType::secondary) {
@@ -295,7 +297,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 				current->previous->segment->roadInFront = true;
 			addRoadToMap(segmentsOrganized, current->segment, primaryStepLength.Size() / 2);
 
-			//UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT START X %f"), current->segment->start.X);
+			UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT PRIORITY %f"), current->time);
 			addExtensions(queue, current, allSegments);
 		}
 	}
@@ -315,8 +317,12 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		addVertices(f2);
 		bool foundCollision = false;
 		for (FRoadSegment* f : determinedSegments) {
-			if (f == f2 || FVector::Dist(f->p2, f2->p1) < 400)
+			if (f == f2)
 				continue;
+			if (FVector::Dist(f->p2, f2->p1) < 100) {
+				foundCollision = false;
+				break;
+			}
 			FVector res = intersection(f2->p1, f2->p2, f->p1, f->p2);
 			if (res.X != 0.0f && FVector::Dist(f2->p2, res) < closestDist) {
 				closestDist = FVector::Dist(f2->p2, res);
@@ -382,6 +388,23 @@ TArray<FPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
 		polygons.Add(p);
 	}
 	return polygons;
+}
+
+TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, float posMultiplier) {
+	TArray<FTransform> toReturn;
+	for (int i = 0; i < numSide; i++) {
+		for (int j = 0; j < numSide; j++) {
+			FTransform f;
+			f.SetLocation(FVector(posMultiplier * i, posMultiplier * j, 0));
+			float x = f.GetLocation().X * noiseMultiplier;
+			float y = f.GetLocation().Y * noiseMultiplier;
+			float res = raw_noise_2d(x, y);
+			//res = octave_noise_2d(5, 0.5, 1.0, x, y);
+			f.SetScale3D(FVector(posMultiplier/100, posMultiplier/100,  res* posMultiplier/10));
+			toReturn.Add(f);
+		}
+	}
+	return toReturn;
 }
 
 

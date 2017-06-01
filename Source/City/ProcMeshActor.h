@@ -17,12 +17,6 @@ public:
 	AProcMeshActor();
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void buildTriangle(FVector p1, FVector p2, FVector p3);
-
-	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void buildWall(FVector p1, FVector p2, FVector p3, FVector p4);
-
-	UFUNCTION(BlueprintCallable, Category = "Generation")
 	void buildPolygons(TArray<FMaterialPolygon> pols, FVector offset);
 
 
@@ -42,6 +36,11 @@ public:
 		UMaterial* floorMat;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		UMaterial* roofMat;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		UMaterial* greenMat;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		UMaterial* concreteMat;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		float texScaleMultiplier = 1.0f;
@@ -73,6 +72,11 @@ private:
 	UProceduralMeshComponent * floorMesh;
 	UPROPERTY(VisibleAnywhere, Category = Meshes)
 	UProceduralMeshComponent * roofMesh;
+
+	UPROPERTY(VisibleAnywhere, Category = Meshes)
+		UProceduralMeshComponent * greenMesh;
+	UPROPERTY(VisibleAnywhere, Category = Meshes)
+		UProceduralMeshComponent * concreteMesh;
 
 
 	int currIndex = 1;

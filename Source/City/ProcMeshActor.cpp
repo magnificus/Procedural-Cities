@@ -17,6 +17,9 @@ AProcMeshActor::AProcMeshActor()
 	occlusionWindowMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("occlusionWindowMesh"));
 	floorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("floorMesh"));
 	roofMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("roofMesh"));
+	greenMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("greenMesh"));
+	concreteMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("concreteMesh"));
+
 
 	RootComponent = exteriorMesh;
 	/**
@@ -133,16 +136,6 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 			triangles.Add(i[1].id);
 			triangles.Add(i[2].id);
 		}
-		//vertices.Add(FVector(pol.points[curr[0].id].X, pol.points[curr[0].id].Y, pol.points[curr[0].id].Z));
-		//vertices.Add(FVector(pol.points[curr[1].id].X, pol.points[curr[1].id].Y, pol.points[curr[1].id].Z));
-		//vertices.Add(FVector(pol.points[curr[2].id].X, pol.points[curr[2].id].Y, pol.points[curr[2].id].Z));
-		//	for (TPPLPoint tp : l.GetPoints()) {
-
-		//	}
-		//	vertices.Add(points[l.idf + offset);
-		//	float y = FVector::DotProduct(e1, f - origin);
-		//	float x = FVector::DotProduct(e2, f - origin);
-		//	UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
 		current += pol.points.Num();
 	}
 
@@ -150,14 +143,13 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 
 	TArray<FVector> normals;
 
-	//mesh->MarkRenderStateDirty();
 	mesh->SetMaterial(1, mat);
 	//mesh->SetCullDistance(100);
 
 	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, true);
 }
 
-// uses fan triangulation, doesn't work with convex shapes, builds faces in both directions
+// divides the polygon into the different materials used by the house
 void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset) {
 
 	TArray<FPolygon> exterior;
@@ -170,6 +162,10 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	TArray<FPolygon> occlusionWindows;
 	TArray<FPolygon> floors;
 	TArray<FPolygon> roofs;
+
+	TArray<FPolygon> concrete;
+	TArray<FPolygon> green;
+
 	for (FMaterialPolygon &p : pols) {
 		switch (p.type) {
 		case PolygonType::exterior:
@@ -196,83 +192,27 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 		case PolygonType::windowFrame:
 			windowFrames.Add(p);
 			break;
-
+		case PolygonType::concrete:
+			concrete.Add(p);
+			break;
+		case PolygonType::green:
+			green.Add(p);
+			break;
 		}
 	}
 	buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
 	buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
-
 	buildPolygons(interior, offset, interiorMesh, interiorMat);
 	buildPolygons(windows, offset, windowMesh, windowMat);
 	buildPolygons(floors, offset, floorMesh, floorMat);
 	buildPolygons(roofs, offset, roofMesh, roofMat);
 	buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
 	buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
-	
-}
-
-
-void AProcMeshActor::buildTriangle(FVector p1, FVector p2, FVector p3) {
-	// 4 faces for a wall, two triangles in each direction
-
-	TArray<FVector> vertices;
-	vertices.Add(p1);
-	vertices.Add(p2);
-	vertices.Add(p3);
-
-	TArray<int32> Triangles;
-	Triangles.Add(0);
-	Triangles.Add(1);
-	Triangles.Add(2);
-
-	Triangles.Add(2);
-	Triangles.Add(1);
-	Triangles.Add(0);
-
-	TArray<FVector> normals;
-	TArray<FVector2D> UV0;
-	TArray<FLinearColor> vertexColors;
-	TArray<FProcMeshTangent> tangents;
-
-	exteriorMesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, true);
+	buildPolygons(concrete, offset, concreteMesh, concreteMat);
+	buildPolygons(green, offset, greenMesh, greenMat);
 
 }
 
-void AProcMeshActor::buildWall(FVector p1, FVector p2, FVector p3, FVector p4) {
-	// 4 faces for a wall, two triangles in each direction
-
-	TArray<FVector> vertices;
-	vertices.Add(p1);
-	vertices.Add(p2);
-	vertices.Add(p3);
-	vertices.Add(p4);
-
-	TArray<int32> Triangles;
-	Triangles.Add(0);
-	Triangles.Add(1);
-	Triangles.Add(2);
-
-	Triangles.Add(2);
-	Triangles.Add(1);
-	Triangles.Add(3);
-
-
-	Triangles.Add(2);
-	Triangles.Add(1);
-	Triangles.Add(0);
-
-	Triangles.Add(3);
-	Triangles.Add(1);
-	Triangles.Add(2);
-
-	TArray<FVector> normals;
-	TArray<FVector2D> UV0;
-	TArray<FLinearColor> vertexColors;
-	TArray<FProcMeshTangent> tangents;
-
-	exteriorMesh->CreateMeshSection_LinearColor(currIndex++, vertices, Triangles, normals, UV0, vertexColors, tangents, true);
-
-}
 
 // Called when the game starts or when spawned
 void AProcMeshActor::BeginPlay()

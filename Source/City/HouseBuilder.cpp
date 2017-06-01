@@ -286,7 +286,32 @@ FPolygon getShaftHolePolygon(FHousePolygon f) {
 
 // changes the shape of the house to make it less cube-like
 void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn) {
-	if (randFloat() < 0.1f) {
+
+	if (randFloat() < 0.2f) {
+		// move side inwards
+		float len = FMath::FRandRange(500, 1000);
+		int place = FMath::FRand() * (f.points.Num() - 3) + 2;
+		FVector dir1 = f.points[place - 2] - f.points[place - 1];
+		dir1.Normalize();
+		FVector dir2 = f.points[place + 1] - f.points[place];
+		dir2.Normalize();
+
+
+		FSimplePlot simplePlot;
+		simplePlot.pol.points.Add(f.points[place]);
+		simplePlot.pol.points.Add(f.points[place - 1]);
+		FVector &toChange1 = f.points[place - 1];
+		toChange1 += dir1 * len;
+		FVector &toChange2 = f.points[place];
+		toChange2 += dir2 * len;
+		simplePlot.pol.points.Add(f.points[place - 1]);
+		simplePlot.pol.points.Add(f.points[place]);
+		simplePlot.pol.offset(FVector(0, 0, 30));
+		toReturn.remainingPlots.Add(simplePlot);
+
+	}
+
+	else if (randFloat() < 0.1f) {
 		// remove corner
 		int place = FMath::FRand() * (f.points.Num() - 3) + 1;
 		FVector p1 = middle(f.points[place - 1], f.points[place]);
@@ -300,6 +325,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn) {
 		simplePlot.pol.points.Add(p2);
 		simplePlot.pol.points.Add(f.points[place]);
 		simplePlot.pol.points.Add(p1);
+		simplePlot.pol.offset(FVector(0, 0, 30));
 		toReturn.remainingPlots.Add(simplePlot);
 
 		f.addPoint(place, p1);
@@ -334,6 +360,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn) {
 		simplePlot.pol.points.Add(snd);
 		simplePlot.pol.points.Add(first);
 		toReturn.remainingPlots.Add(simplePlot);
+		simplePlot.pol.offset(FVector(0, 0, 30));
 
 		f.addPoint(place, first);
 		f.windows.Add(place);
@@ -347,6 +374,9 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn) {
 		f.addPoint(place + 3, snd);
 		f.windows.Add(place+3);
 		f.windows.Add(place + 4);
+	}
+	else if (randFloat() < 0.1f) {
+
 	}
 }
 
@@ -535,7 +565,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 		return FHouseInfo();
 	}
 	FHouseInfo toReturn;
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 2; i++)
 		makeInteresting(f, toReturn);
 	//noise
 	int floors = minFloors + (maxFloors - minFloors) * (FMath::FRand());
@@ -584,7 +614,6 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 		for (int i = 1; i < floors; i++) {
 			if (!shellOnly) {
 				toReturn.roomInfo.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol, true));
-				//toReturn.meshes.Add(FMeshInfo{ "office_lamp", FTransform(hole.getCenter() + FVector(0, 0, floorHeight*(i + 1) - 45)) }); // lamp between stair and elevator
 				toReturn.roomInfo.meshes.Add(FMeshInfo{ "stair", FTransform(rot.Rotation(), stairPos + FVector(0, 0, floorHeight * (i - 1)), FVector(1.0f, 1.0f, 1.0f)) });
 			}
 			if (facade)

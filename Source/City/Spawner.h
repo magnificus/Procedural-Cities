@@ -5,12 +5,22 @@
 #include "Components/SplineMeshComponent.h"
 #include "BaseLibrary.h"
 #include "PlotBuilder.h"
+#include "simplexnoise.h"
 #include "Spawner.generated.h"
 
 
 
+USTRUCT(BlueprintType)
+struct FVisualizer{
+	GENERATED_USTRUCT_BODY();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector position;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float height;
+
+};
 
 UCLASS()
 class CITY_API ASpawner : public AActor
@@ -34,16 +44,18 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = limits, meta = (AllowPrivateAccess = "true"))
 		int32 length;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = limits, meta = (AllowPrivateAccess = "true"))
-		float maxDist;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float maxAttachDistance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
-		float mainRoadBranchChance;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
-		float secondaryRoadBranchChance;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+	//	float mainRoadBranchChance;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+	//	float secondaryRoadBranchChance;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
+		float noiseScale = 0.00003;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
+		float mainRoadAdvantage = 0.1;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float collisionLeniency;
@@ -103,6 +115,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> segments);
+
+	UFUNCTION(BlueprintCallable, Category = "Test")
+	TArray<FTransform> visualizeNoise(int numSide, float noiseMultiplier, float posMultiplier);
 
 	//UFUNCTION(BlueprintCallable, Category = "Generation")
 protected:

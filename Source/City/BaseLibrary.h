@@ -205,7 +205,9 @@ enum class PolygonType : uint8
 	window UMETA(DisplayName = "Window"),
 	windowFrame UMETA(DisplayName = "Window Frame"),
 	occlusionWindow UMETA(DisplayName = "Occlusion Window"),
-	roof UMETA(DisplayName = "Roof")
+	roof UMETA(DisplayName = "Roof"),
+	green UMETA(DisplayName = "Green"),
+	concrete UMETA(DisplayName = "Concrete")
 };
 
 
@@ -333,17 +335,24 @@ struct FMetaPolygon : public FPolygon
 		tangent = FRotator(0, 90, 0).RotateVector(tangent);
 		tangent.Normalize();
 		FVector middle = (points[1] - points[0]) / 2 + points[0];
-		for (int i = 2; i < points.Num(); i++) {
-			if (intersection(middle, middle + tangent * 100000, points[i - 1], points[i]).X != 0.0f) {
-				//reverse();
-				buildLeft = true;
-				return;
-
-			}
-
+		FVector center = getCenter();
+		if (FVector::Dist(middle, center) < FVector::Dist(middle + tangent, center)) {
+			reverse();
 		}
-		reverse();
 		buildLeft = true;
+
+
+		//for (int i = 2; i < points.Num(); i++) {
+		//	if (intersection(middle, middle + tangent * 100000, points[i - 1], points[i]).X != 0.0f) {
+		//		//reverse();
+		//		buildLeft = true;
+		//		return;
+
+		//	}
+
+		//}
+		//reverse();
+		//buildLeft = true;
 	}
 
 
@@ -1211,7 +1220,7 @@ struct FRoadSegment : public FLine
 
 
 struct logicRoadSegment {
-	int time;
+	float time;
 	logicRoadSegment* previous;
 	FRoadSegment* segment;
 	FRotator firstDegreeRot;
