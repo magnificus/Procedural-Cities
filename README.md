@@ -1,8 +1,9 @@
 # Procedural-Cities
 TODO:
-* optimize road attachment
+* <strike>optimize road attachment</strike>
 * fix open polygon house placement
 * interiors
+  * <strike>general purpose algorithm for interiors that "makes sense", should take the requirement for rooms as input.</strike>
   * ground level details
   * <strike>room subdivision</strike>
   * <strike>windows</strike>
@@ -13,6 +14,7 @@ TODO:
    * stores
    * cafes
 * heatmaps
+ * <strike>road placement heatmap (same as population heatmap?)</strike>
  * population heatmap
  * heightmap
  * building type heatmap
@@ -23,8 +25,8 @@ TODO:
 * add details to sidewalks
 * <strike>proper polygon splits</strike>
 * make building shapes more interesting
-* add detail to buildings
+* add detail to building exterior
  * facades
  * roofs
 * make buildings with several "levels" with different roomPolygons.
-* window mesh details
+* <strike>window mesh details<strike>
