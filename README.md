@@ -1,6 +1,6 @@
 # Procedural-Cities
 TODO:
-* optimize road attachment
+* <strike>optimize road attachment</strike>
 * fix open polygon house placement
 * interiors
   * <strike>general purpose algorithm for interiors that "makes sense", should take the requirement for rooms as input.</strike>
@@ -14,7 +14,7 @@ TODO:
    * stores
    * cafes
 * heatmaps
- * build roads with 
+ * <strike>road placement heatmap (same as population heatmap?)</strike>
  * population heatmap
  * heightmap
  * building type heatmap
