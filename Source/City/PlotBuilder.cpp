@@ -66,11 +66,31 @@ TArray<FHousePolygon> APlotBuilder::generateAllHousePolygons(TArray<FPlotPolygon
 
 
 
-FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int maxFloors, int minFloors) {
+TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others) {
+	TArray<FMetaPolygon> added;
+	for (FMetaPolygon p : plots) {
+		for (FPolygon o : others) {
+			if (testCollision(p, o, 500))
+				goto next;
+		}
+		for (FPolygon a : added) {
+			if (testCollision(p, a, 0))
+				goto next;
+		}
+		added.Add(p);
+	next:
+		;
+	}
+	return added;
+}
+
+
+
+FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int minFloors) {
 	FPlotInfo info;
 	TArray<FHousePolygon> housePolygons;
 
-	float maxArea = 3000.0f;
+	float maxArea = 4500.0f;
 	float minArea = 1200.0f;
 
 	if (!p.open) {
@@ -97,22 +117,25 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> o
 			float area = r.getArea();
 			UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
 
-			if (area > minArea) {
-				housePolygons.Add(r);
-				others.Add(r);
-			}
-			else {
+			if (area < minArea || area > maxArea) {
 				FSimplePlot fs;
 				fs.pol = r;
 				fs.pol.reverse();
 				fs.pol.offset(FVector(0, 0, 30));
 				fs.type = SimplePlotType::green;
+				fs.decorate();
 				info.leftovers.Add(fs);
+
+			}
+			else {
+				housePolygons.Add(r);
+				//others.Add(r);
 			}
 		}
 
 	}
 	else {
+		return info;
 		// wander along the line and place adjacent houses on the curve
 		info.houses = housePolygons;
 		return info;
@@ -246,7 +269,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> o
 			}
 			FPolygon tmp;
 			
- 			if (overridePlacementOk || !testCollision(pol, others, 500, tmp)) {
+ 			//if (overridePlacementOk || !testCollision(pol, others, 500, tmp)) {
 				fh.points = pol.points;
 				fh.checkOrientation();
 				fh.population = 1.0;
@@ -258,7 +281,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> o
 				for (int i = 1; i < fh.points.Num(); i++) {
 					fh.windows.Add(i);
 				}
-				others.Add(fh);
+//				others.Add(fh);
 				housePolygons.Add(fh);
 				FVector tangent = pol.points[2] - pol.points[1];
 				tangent.Normalize();
@@ -266,7 +289,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, TArray<FPolygon> o
 				prevTan = pol.points[3] - pol.points[2];
 				prevTan.Normalize();
 
-			}
+			//}
 
 
 			currPos += len*tangent1;
@@ -290,20 +313,17 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 			polygon.points.Add(p.points[i - 1] + offset);
 			polygon.points.Add(p.points[i] + offset);
 		}
-		if (!p.open) {
-			FVector tangent = p.points[1] - p.points[0];
-			tangent.Normalize();
-			FVector offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
-			polygon.points.Add(p.points[0] + offset);
-			polygon.points.Add(p.points[1] + offset);
+		//if (!p.open) {
+			polygon.points.Add(FVector(polygon.points[0]));
+			polygon.points.Add(FVector(polygon.points[1]));
 			
-		}
-		else {
-			FVector last = p.points[p.points.Num() - 1];
-			polygon.points.Add(last);
-			polygon.points.Add(last);
+		//}
+		//else {
+		//	FVector last = p.points[p.points.Num() - 1];
+		//	polygon.points.Add(last);
+		//	polygon.points.Add(last);
 
-		}
+		//}
 	return polygon;
 }
 
@@ -329,18 +349,14 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 	return toReturn;
 }
 
-TArray<FMaterialPolygon> APlotBuilder::getSimplePlotPolygonsAndDecorate(TArray<FSimplePlot> plots) {
+TArray<FMaterialPolygon> APlotBuilder::getSimplePlotPolygons(TArray<FSimplePlot> plots) {
 	TArray<FMaterialPolygon> toReturn;
-	float treeAreaRatio = 0.01;
 	for (FSimplePlot p : plots) {
 		FMaterialPolygon newP;
 		newP.points = p.pol.points;
 		newP.type = p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;
 		toReturn.Add(newP);
-		float area = p.pol.getArea();
-		for (int i = 0; i < treeAreaRatio * area; i++) {
-			FVector point = p.pol.getRandomPoint();
-		}
+
 	}
 	return toReturn;
 }

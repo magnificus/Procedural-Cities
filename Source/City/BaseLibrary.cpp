@@ -419,10 +419,10 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 			}
 
 			f.open = false;
-			f.checkOrientation();
 		}
 		else {
 			f.open = true;
+
 
 		}
 

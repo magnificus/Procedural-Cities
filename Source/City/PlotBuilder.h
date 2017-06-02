@@ -30,9 +30,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static TArray<FHousePolygon> generateAllHousePolygons(TArray<FPlotPolygon> p, TArray<FPolygon> others, int maxFloors, int minFloors);
 
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	static TArray<FMetaPolygon> sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	static FPlotInfo generateHousePolygons(FPlotPolygon p, TArray<FPolygon> others, int minFloors, int maxFloors);
+	static FPlotInfo generateHousePolygons(FPlotPolygon p, int minFloors, int maxFloors);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static FPolygon generateSidewalkPolygon(FPlotPolygon p, float offsetSize);
@@ -41,7 +43,8 @@ public:
 	static FSidewalkInfo getSideWalkInfo(FPolygon sidewalk);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	static TArray<FMaterialPolygon> getSimplePlotPolygonsAndDecorate(TArray<FSimplePlot> plots);
+	static TArray<FMaterialPolygon> getSimplePlotPolygons(TArray<FSimplePlot> plots);
+
 
 protected:
 	// Called when the game starts or when spawned

@@ -45,9 +45,20 @@ struct FPolygon
 		return center;
 	}
 
-	FVector getRandomPoint() {
+	// not totally random, favors placement closer to the sides a bit, but good enough
+	FVector getRandomPoint(bool left, float minDist) {
 		int place = FMath::Rand() % (points.Num() - 1) + 1;
-		return FVector();
+		FVector tangent = (points[place] - points[place - 1]);
+		FVector beginPlace = FMath::FRand() * tangent + points[place - 1];
+		tangent.Normalize();
+		FVector normal = FRotator(0, left ? 90 : 270, 0).RotateVector(tangent);
+		int a;
+		FVector target;
+		getSplitCorrespondingPoint(place, beginPlace, tangent, normal, a, target);
+		if (target.X == 0.0f || FVector::Dist(beginPlace, target) < minDist * 2)
+			return FVector(0, 0, 0);
+		FVector point = FMath::FRandRange(minDist, FVector::Dist(beginPlace, target) - minDist) * normal + beginPlace;
+		return point;
 	}
 
 	// only cares about dimensions X and Y, not Z
@@ -108,6 +119,21 @@ struct FPolygon
 		Algo::Reverse(points);
 	}
 
+	void getSplitCorrespondingPoint(int begin, FVector point, FVector tangent, FVector normal, int &split, FVector &p2) {
+		float closest = 10000000.0f;
+		for (int i = 1; i < points.Num(); i++) {
+			if (i == begin) {
+				continue;
+			}
+			FVector curr = intersection(point, point + normal * 100000, points[i - 1], points[i]);
+			if (curr.X != 0.0f && FVector::Dist(curr, point) < closest) {
+				closest = FVector::Dist(curr, point);
+				split = i;
+				p2 = curr;
+			}
+		}
+	}
+
 	SplitStruct getSplitProposal(bool buildLeft, float approxRatio) {
 
 		if (points.Num() < 3) {
@@ -142,20 +168,21 @@ struct FPolygon
 		int split = 0;
 		FVector p2 = FVector(0.0f, 0.0f, 0.0f);
 		FVector tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(curr);
-		//tangent.Normalize();
-		float closest = 10000000.0f;
-		for (int i = 1; i < points.Num(); i++) {
-			if (i == longest) {
-				continue;
-			}
-			curr = intersection(middle, middle + tangent * 100000, points[i - 1], points[i]);
-			if (curr.X != 0.0f && FVector::Dist(curr, middle) < closest) {
-				closest = FVector::Dist(curr, middle);
-				split = i;
-				p2 = curr;
+		tangent.Normalize();
 
-			}
-		}
+		getSplitCorrespondingPoint(longest, middle, curr, tangent, split, p2);
+		//float closest = 10000000.0f;
+		//for (int i = 1; i < points.Num(); i++) {
+		//	if (i == longest) {
+		//		continue;
+		//	}
+		//	curr = intersection(middle, middle + tangent * 100000, points[i - 1], points[i]);
+		//	if (curr.X != 0.0f && FVector::Dist(curr, middle) < closest) {
+		//		closest = FVector::Dist(curr, middle);
+		//		split = i;
+		//		p2 = curr;
+		//	}
+		//}
 
 		if (p2.X == 0.0f || p1.X == 0.0f) {
 			UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT"));
@@ -269,7 +296,29 @@ struct FSimplePlot {
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FPolygon pol;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FMeshInfo> meshes;
+
 	SimplePlotType type = SimplePlotType::undecided;
+
+
+	void decorate() {
+		float area = pol.getArea();
+		switch (type) {
+		case SimplePlotType::undecided:
+		case SimplePlotType::green: {
+			float treeAreaRatio = 0.01;
+			for (int i = 0; i < treeAreaRatio * area; i++) {
+				FVector point = pol.getRandomPoint(false, 150);
+				if (point.X != 0.0f)
+					meshes.Add(FMeshInfo{ "tree", FTransform(point) });
+			}
+			break;
+		}
+		case SimplePlotType::asphalt:break;
+		}
+
+	}
 };
 USTRUCT(BlueprintType)
 struct FHouseInfo {
@@ -336,28 +385,21 @@ struct FMetaPolygon : public FPolygon
 		bool buildLeft;
 
 	void checkOrientation() {
-		FVector tangent = points[1] - points[0];
-		tangent = FRotator(0, 90, 0).RotateVector(tangent);
-		tangent.Normalize();
-		FVector middle = (points[1] - points[0]) / 2 + points[0];
-		FVector center = getCenter();
-		if (FVector::Dist(middle, center) < FVector::Dist(middle + tangent, center)) {
+		float totDiff = 0;
+		for (int i = 1; i < points.Num(); i++) {
+			FVector tangent = points[i] - points[i-1];
+			tangent = FRotator(0, 90, 0).RotateVector(tangent);
+			tangent.Normalize();
+			FVector middle = (points[i] + points[i - 1]) / 2;
+			FVector center = getCenter();
+			totDiff += FVector::Dist(middle, center) - FVector::Dist(middle + tangent * 50, center);
+		}
+
+		if (totDiff < 0) {
 			reverse();
 		}
 		buildLeft = true;
 
-
-		//for (int i = 2; i < points.Num(); i++) {
-		//	if (intersection(middle, middle + tangent * 100000, points[i - 1], points[i]).X != 0.0f) {
-		//		//reverse();
-		//		buildLeft = true;
-		//		return;
-
-		//	}
-
-		//}
-		//reverse();
-		//buildLeft = true;
 	}
 
 
@@ -751,6 +793,7 @@ struct FRoomPolygon : public FPolygon
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
 
+		//newP->checkOrientation();
 		return newP;
 	}
 

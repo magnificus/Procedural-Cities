@@ -452,7 +452,7 @@ FTransform attemptGetPosition(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray
 				}
 			}
 			if (true || lenToMove != 0) {
-				pos += (lenToMove + 20)*dir;
+				pos += (lenToMove + 5)*dir;
 				pol = getPolygon(rot, pos, string, map);
 
 			}
@@ -704,7 +704,6 @@ static TArray<FMeshInfo> getBathRoom(FRoomPolygon *r2, TMap<FString, UHierarchic
 		//res.Ro
 		meshes.Add(FMeshInfo{ "mirror", FTransform(res.Rotator() + FRotator(0, 270, 0), res.GetLocation() + FVector(0, 0, 55) - res.Rotator().Vector() * 50, FVector(1.0, 1.0, 1.0)) });
 	}
-	//attemptPlace(r2, placed, meshes, 80, false, 5, "sink", FRotator(0, 180, 0), FVector(0, 0, 0), map, false);
 	return meshes;
 }
 
@@ -714,7 +713,7 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 	//placed.Add(r2);
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	attemptPlace(r2, placed, meshes, true, 5, "bed", FRotator(0, 270, 0), FVector(0, 0, 50), map, false);
+	attemptPlace(r2, placed, meshes, true, 5, "bed", FRotator(0, 270, 0), FVector(0, 40, 50), map, false);
 	attemptPlace(r2, placed, meshes, true, 2, "small_table", FRotator(0, 0, 0), FVector(0, 0, -50), map, false);
 	attemptPlace(r2, placed, meshes, false, 2, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	attemptPlace(r2, placed, meshes, false, 2, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
@@ -735,7 +734,7 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	attemptPlace(r2, placed, meshes, false, 3, "kitchen", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
+	attemptPlace(r2, placed, meshes, false, 4, "kitchen", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
 	meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
 	attemptPlace(r2, placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
 	attemptPlace(r2, placed, meshes, false, 3, "fridge", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);

@@ -169,9 +169,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 		}
 	}
 
-	for (int i = 2; i < corners.points.Num(); i+=2) {
-		corners.toIgnore.Add(i);
-	}
+
 
 	TArray<FRoomPolygon> extra;
 	for (FRoomPolygon &p : roomPols) {
@@ -186,6 +184,9 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 	roomPols.Append(extra);
 
 	corners.reverse();
+	for (int i = 2; i < corners.points.Num(); i += 2) {
+		corners.toIgnore.Add(i);
+	}
 	for (int i = 1; i < corners.points.Num(); i++) {
 		corners.exteriorWalls.Add(i);
 	}
@@ -307,6 +308,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn) {
 		simplePlot.pol.points.Add(f.points[place - 1]);
 		simplePlot.pol.points.Add(f.points[place]);
 		simplePlot.pol.offset(FVector(0, 0, 30));
+		simplePlot.decorate();
 		toReturn.remainingPlots.Add(simplePlot);
 
 		f.windows.Add(place);
@@ -328,6 +330,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn) {
 		simplePlot.pol.points.Add(f.points[place]);
 		simplePlot.pol.points.Add(p1);
 		simplePlot.pol.offset(FVector(0, 0, 30));
+		simplePlot.decorate();
 		toReturn.remainingPlots.Add(simplePlot);
 
 		f.addPoint(place, p1);
@@ -361,8 +364,9 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn) {
 		simplePlot.pol.points.Add(snd2);
 		simplePlot.pol.points.Add(snd);
 		simplePlot.pol.points.Add(first);
-		toReturn.remainingPlots.Add(simplePlot);
 		simplePlot.pol.offset(FVector(0, 0, 30));
+		simplePlot.decorate();
+		toReturn.remainingPlots.Add(simplePlot);
 
 		f.addPoint(place, first);
 		f.windows.Add(place);
