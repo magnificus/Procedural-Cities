@@ -170,7 +170,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->type = prevSeg->type;
 	newRoad->endTangent = newRoad->p2 - newRoad->p1;
 	newRoadL->segment = newRoad;
-	newRoadL->time = - raw_noise_2d(newRoad->p1.X*noiseScale, newRoad->p1.Y*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	newRoadL->time = - raw_noise_2d((newRoad->p1.X + newRoad->p2.X)/2*noiseScale, ((newRoad->p1.Y + newRoad->p2.Y)/2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	newRoadL->roadLength = previous->roadLength + 1;
 	newRoadL->previous = previous;
 	addVertices(newRoad);
@@ -202,7 +202,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	// every side track has less priority
 
 	//newRoadL->time = previous->segment->type != RoadType::main ? previous->time + FMath::Rand() % 1 : (previous->time + 1);
-	newRoadL->time = - raw_noise_2d(newRoad->p1.X*noiseScale, newRoad->p1.Y*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	newRoadL->time = -raw_noise_2d((newRoad->p1.X + newRoad->p2.X) / 2 * noiseScale, ((newRoad->p1.Y + newRoad->p2.Y) / 2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
 

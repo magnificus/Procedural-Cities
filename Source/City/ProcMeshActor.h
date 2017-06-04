@@ -17,7 +17,7 @@ public:
 	AProcMeshActor();
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void buildPolygons(TArray<FMaterialPolygon> pols, FVector offset);
+	bool buildPolygons(TArray<FMaterialPolygon> pols, FVector offset);
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
@@ -54,7 +54,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProceduralMeshComponent* mesh, UMaterialInterface *mat);
+	bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProceduralMeshComponent* mesh, UMaterialInterface *mat);
 
 	UPROPERTY(VisibleAnywhere, Category = Meshes)
 	UProceduralMeshComponent * exteriorMesh;

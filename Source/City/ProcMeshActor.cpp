@@ -82,9 +82,9 @@ AProcMeshActor::AProcMeshActor()
 
 
 
-void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProceduralMeshComponent* mesh, UMaterialInterface *mat) {
+bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProceduralMeshComponent* mesh, UMaterialInterface *mat) {
 	if (pols.Num() == 0) {
-		return;
+		return true;
 	}
 	TArray<FVector> vertices;
 	TArray<int32> triangles;
@@ -126,10 +126,11 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 
 		}
 		TPPLPartition part;
-		int res = part.Triangulate_EC(&poly, &inTriangles);
+		int res = part.Triangulate_MONO(&poly, &inTriangles);
 
 		if (res != 1) {
 			UE_LOG(LogTemp, Warning, TEXT("Triangulation failed!"));
+			return false;
 		}
 		for (auto i : inTriangles) {
 			triangles.Add(i[0].id);
@@ -147,10 +148,11 @@ void AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	//mesh->SetCullDistance(100);
 
 	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
+	return true;
 }
 
 // divides the polygon into the different materials used by the house
-void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset) {
+bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset) {
 
 	TArray<FPolygon> exterior;
 	TArray<FPolygon> exteriorSnd;
@@ -200,16 +202,23 @@ void AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 			break;
 		}
 	}
-	buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
-	buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
-	buildPolygons(interior, offset, interiorMesh, interiorMat);
-	buildPolygons(windows, offset, windowMesh, windowMat);
-	buildPolygons(floors, offset, floorMesh, floorMat);
-	buildPolygons(roofs, offset, roofMesh, roofMat);
-	buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
-	buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
-	buildPolygons(concrete, offset, concreteMesh, concreteMat);
-	buildPolygons(green, offset, greenMesh, greenMat);
+	int a = buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
+	a += buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
+	a += buildPolygons(interior, offset, interiorMesh, interiorMat);
+	a += buildPolygons(windows, offset, windowMesh, windowMat);
+	a += buildPolygons(floors, offset, floorMesh, floorMat);
+	a += buildPolygons(roofs, offset, roofMesh, roofMat);
+	a += buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
+	a += buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
+	a += buildPolygons(concrete, offset, concreteMesh, concreteMat);
+	a += buildPolygons(green, offset, greenMesh, greenMat);
+
+	if (a < 15) {
+		Destroy();
+		return false;
+	} 
+	return true;
+
 
 }
 

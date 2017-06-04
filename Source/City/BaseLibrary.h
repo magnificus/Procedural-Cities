@@ -208,6 +208,31 @@ struct FPolygon
 		return SplitStruct{ min, max, p1, p2 };
 	}
 
+	FVector getPointDirection(int place, bool left) {
+		if (place == 0) {
+			FVector dir = points[1] - points[0];
+			dir.Normalize();
+			return FRotator(0, left ? 90 : 270, 0).RotateVector(dir);
+		}
+		else if (place == points.Num() - 1) {
+			FVector dir = points[points.Num() - 1] - points[points.Num() - 2];
+			dir.Normalize();
+			return FRotator(0, left ? 90 : 270, 0).RotateVector(dir);
+		}
+		else {
+			FVector dir1 = points[place] - points[place - 1];
+			FVector dir2 = points[place + 1] - points[place];
+			dir1.Normalize();
+			dir2.Normalize();
+			dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
+			dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
+
+			FVector totDir = dir1 + dir2;
+			totDir.Normalize();
+			return totDir;
+		}
+
+	}
 
 };
 
@@ -803,7 +828,7 @@ struct FRoomPolygon : public FPolygon
 	TArray<FRoomPolygon*> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon*> &remaining, bool repeating, bool useMin) {
 		TArray<FRoomPolygon*> toReturn;
 		float area;
-		float minPctSplit = 0.25f;
+		float minPctSplit = 0.35f;
 		bool couldPlace = false;
 		int c1 = 0;
 		do {

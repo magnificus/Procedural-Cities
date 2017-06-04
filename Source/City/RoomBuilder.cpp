@@ -530,11 +530,11 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	FVector center = r2->getCenter();
 	meshes.Add(FMeshInfo{"office_meeting_table", FTransform(dir.Rotation(), center + FVector(0, 0, 2), FVector(1.0, 1.0, 1.0))});
 	float offsetLen = 100;
-	for (int i = 1; i < 4; i+=2) {
-		FRotator curr = FRotator(0, 90 * i, 0);
-		FVector chairPos = curr.Vector() * offsetLen + center + FVector(0, 0, 2);
-		meshes.Add(FMeshInfo{ "office_meeting_chair", FTransform(curr.GetInverse(), chairPos, FVector(1.0, 1.0, 1.0)) });
-	}
+	//for (int i = 1; i < 4; i+=2) {
+	//	FRotator curr = FRotator(0, 90 * i, 0);
+	//	FVector chairPos = curr.Vector() * offsetLen + center + FVector(0, 0, 2);
+	//	meshes.Add(FMeshInfo{ "office_meeting_chair", FTransform(curr.GetInverse(), chairPos, FVector(1.0, 1.0, 1.0)) });
+	//}
 
 	if (randFloat() < 0.5) {
 		attemptPlace(r2, placed, meshes, false, 2, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
@@ -542,7 +542,7 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 
 	if (randFloat() < 0.5) {
 		// add whiteboard
-		attemptPlace(r2, placed, meshes, false, 1, "office_whiteboard", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
+		attemptPlace(r2, placed, meshes, false, 1, "office_whiteboard", FRotator(0, 180, 0), FVector(0, 0, 100), map, true);
 	}
 
 	attemptPlace(r2, placed, meshes, true, 2, "dispenser", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
@@ -676,7 +676,7 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon *r2, TMap<FString, UHierarch
 	
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	attemptPlace(r2, placed, meshes, false, 5, "sofa", FRotator(0, 180, 0), FVector(0, 0, 0), map, true);
+	attemptPlace(r2, placed, meshes, false, 5, "sofa", FRotator(0, 180, 0), FVector(0, 0, 30), map, true);
 
 	return meshes;
 }
@@ -713,7 +713,7 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 	//placed.Add(r2);
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	attemptPlace(r2, placed, meshes, true, 5, "bed", FRotator(0, 270, 0), FVector(0, 40, 50), map, false);
+	attemptPlace(r2, placed, meshes, true, 5, "bed", FRotator(0, 270, 0), FVector(0, 40, 70), map, false);
 	attemptPlace(r2, placed, meshes, true, 2, "small_table", FRotator(0, 0, 0), FVector(0, 0, -50), map, false);
 	attemptPlace(r2, placed, meshes, false, 2, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	attemptPlace(r2, placed, meshes, false, 2, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);

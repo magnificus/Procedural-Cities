@@ -20,31 +20,7 @@ void APlotBuilder::BeginPlay()
 	
 }
 
-FVector getPointDirection(const FPolygon &pol, int place, bool left) {
-	if (place == 0) {
-		FVector dir = pol.points[1] - pol.points[0];
-		dir.Normalize();
-		return FRotator(0, left ? 90 : 270, 0).RotateVector(dir);
-	}
-	else if (place == pol.points.Num() - 1) {
-		FVector dir = pol.points[pol.points.Num() - 1] - pol.points[pol.points.Num() - 2];
-		dir.Normalize();
-		return FRotator(0, left ? 90 : 270, 0).RotateVector(dir);
-	}
-	else {
-		FVector dir1 = pol.points[place] - pol.points[place-1];
-		FVector dir2 = pol.points[place+1] - pol.points[place];
-		dir1.Normalize();
-		dir2.Normalize();
-		dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
-		dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
 
-		FVector totDir = dir1 + dir2;
-		totDir.Normalize();
-		return totDir;
-	}
-
-}
 
 TArray<FHousePolygon> APlotBuilder::generateAllHousePolygons(TArray<FPlotPolygon> plots, TArray<FPolygon> others, int maxFloors, int minFloors) {
 	TArray<FHousePolygon> houses;
@@ -67,19 +43,26 @@ TArray<FHousePolygon> APlotBuilder::generateAllHousePolygons(TArray<FPlotPolygon
 
 
 TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others) {
+	//return plots;
 	TArray<FMetaPolygon> added;
 	for (FMetaPolygon p : plots) {
+		bool shouldAdd = true;
 		for (FPolygon o : others) {
-			if (testCollision(p, o, 500))
-				goto next;
+			if (testCollision(p, o, 500)) {
+				shouldAdd = false;
+				break;
+			}
 		}
-		for (FPolygon a : added) {
-			if (testCollision(p, a, 0))
-				goto next;
+		if (shouldAdd) {
+			for (FPolygon a : added) {
+				if (testCollision(p, a, 0)) {
+					shouldAdd = false;
+					break;
+				}
+			}
 		}
-		added.Add(p);
-	next:
-		;
+		if (shouldAdd)
+			added.Add(p);
 	}
 	return added;
 }
@@ -122,7 +105,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				fs.pol = r;
 				fs.pol.reverse();
 				fs.pol.offset(FVector(0, 0, 30));
-				fs.type = SimplePlotType::green;
+				fs.type = FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 				fs.decorate();
 				info.leftovers.Add(fs);
 
@@ -305,25 +288,29 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
 	FPolygon polygon;
 		FVector center = p.getCenter();
-		FPolygon sidewalk;
-		for (int i = 1; i < p.points.Num(); i+=1) {
+		for (int i = 1; i < p.points.Num(); i++) {
 			FVector tangent = p.points[i] - p.points[i - 1];
 			tangent.Normalize();
 			FVector offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
 			polygon.points.Add(p.points[i - 1] + offset);
 			polygon.points.Add(p.points[i] + offset);
 		}
-		//if (!p.open) {
-			polygon.points.Add(FVector(polygon.points[0]));
-			polygon.points.Add(FVector(polygon.points[1]));
-			
-		//}
-		//else {
-		//	FVector last = p.points[p.points.Num() - 1];
-		//	polygon.points.Add(last);
-		//	polygon.points.Add(last);
 
-		//}
+		if (!p.open) {
+		//polygon.points.RemoveAt(polygon.points.Num() - 1);
+		polygon.points.Add(FVector(polygon.points[0]));
+		polygon.points.Add(FVector(polygon.points[0]));
+
+		//polygon.points.Add(FVector(polygon.points[2]));
+
+			
+		}
+		else {
+			FVector last = p.points[p.points.Num() - 1];
+			polygon.points.Add(last);
+			//polygon.points.Add(last);
+
+		}
 	return polygon;
 }
 
@@ -351,10 +338,13 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 
 TArray<FMaterialPolygon> APlotBuilder::getSimplePlotPolygons(TArray<FSimplePlot> plots) {
 	TArray<FMaterialPolygon> toReturn;
+	PolygonType type;
+	if (plots.Num() > 0)
+		type = plots[0].type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;
 	for (FSimplePlot p : plots) {
 		FMaterialPolygon newP;
 		newP.points = p.pol.points;
-		newP.type = p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;
+		newP.type = p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;;
 		toReturn.Add(newP);
 
 	}
