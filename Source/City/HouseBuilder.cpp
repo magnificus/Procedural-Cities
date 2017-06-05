@@ -109,6 +109,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			}
 			for (int32 j : toRemove) {
 				roomPols[0].entrances.Remove(j);
+				// offset bc of the new points we're adding here
 				roomPols[0].entrances.Add(j + 3);
 			}
 			connections[0].a = conn;
@@ -130,7 +131,6 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 
 	// sew the roomPolygons together by adding walls
 
-	bool isIncreasing = true; //increasing(connections);
 	for (int i = 0; i < roomPols.Num(); i++) {
 		FRoomPolygon &fp = roomPols[i];
 
@@ -171,27 +171,30 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 
 
 
-	TArray<FRoomPolygon> extra;
-	for (FRoomPolygon &p : roomPols) {
-		if (p.getArea() > maxRoomArea) {
-			FRoomPolygon* newP = p.splitAlongMax(0.5, false);
-			if (newP) {
-				extra.Add(*newP);
-				delete(newP);
-			}
-		}
-	}
-	roomPols.Append(extra);
+	//TArray<FRoomPolygon> extra;
+	//for (FRoomPolygon &p : roomPols) {
+	//	if (p.getArea() > maxRoomArea) {
+	//		FRoomPolygon* newP = p.splitAlongMax(0.5, false);
+	//		if (newP) {
+	//			newP->entrances.Add(1);
+	//			p.entrances.Add(1);
+	//			extra.Add(*newP);
+	//			delete(newP);
+	//		}
+	//	}
+	//}
+	//roomPols.Append(extra);
 	
+
+
+	corners.reverse();
 	if (corners.points.Num() > 0) {
 		corners.points.Add(FVector(corners.points[0]));
 	}
-
-	corners.reverse();
-	for (int i = 1; i < corners.points.Num(); i += 2) {
+	for (int i = 0; i < corners.points.Num(); i += 2) {
 		corners.toIgnore.Add(i);
 	}
-	for (int i = 0; i < corners.points.Num(); i+=2) {
+	for (int i = 1; i < corners.points.Num(); i+=2) {
 		corners.exteriorWalls.Add(i);
 		corners.windows.Add(i);
 	}

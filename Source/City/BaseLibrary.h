@@ -897,18 +897,21 @@ struct FRoomPolygon : public FPolygon
 						target->type = r.type;
 						//remaining.RemoveAt(targetNum);
 						toReturn.Add(target);
+						couldPlace = true;
+
 					}
 					else {
 						FRoomPolygon* newP = target->splitAlongMax(r.minArea / target->getArea(), true);
 						if (newP == nullptr) {
-							continue;
+							couldPlace = false;
 						}
-						newP->type = r.type;
-						toReturn.Add(newP);
+						else {
+							newP->type = r.type;
+							toReturn.Add(newP);
+							couldPlace = true;
+						}
 						remaining.EmplaceAt(0, target);
-
 					}
-					couldPlace = true;
 						
 				}
 			}
@@ -928,7 +931,7 @@ struct FRoomPolygon : public FPolygon
 	}
 
 
-	// post placement part of algorithm, makes sure the required rooms are there BY ANY MEANS NECCESARY
+	// post placement part of algorithm, makes sure the required rooms are there by any means neccesary
 	void postFit(TArray<FRoomPolygon*> &rooms, TArray<RoomSpecification> neededRooms, TArray<RoomSpecification> optionalRooms){
 
 		if (neededRooms.Num() > rooms.Num()) {
@@ -1026,16 +1029,12 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.needed, remaining, false, minimizeRoomSizes));
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true, false));
 
-		//TArray<FRoomPolygon> toReturn;
 		rooms.Append(remaining);
 		TArray<SubRoomType> neededTypes;
 		for (auto &a : blueprint.needed) {
 			neededTypes.Add(a.type);
 		}
-		postFit(rooms, blueprint.needed, blueprint.optional);
-		//for (FRoomPolygon *p : rooms) {
-		//	toReturn.Add(*p);
-		//}
+		//postFit(rooms, blueprint.needed, blueprint.optional);
 
 
 

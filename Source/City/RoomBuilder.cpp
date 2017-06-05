@@ -320,7 +320,6 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 			TArray<FPolygon> holes;
 			if (rp->entrances.Contains(i)) {
 				holes.Add(getEntranceHole(rp->points[i - 1], rp->points[i], floorHeight, 297, 137, rp->specificEntrances.Contains(i) ? rp->specificEntrances[i] : middle(rp->points[i - 1], rp->points[i])));
-				//toReturn.Append(getEntranceSide(rp->points[i - 1] , rp->points[i], floorHeight, 297, 137, rp->specificEntrances.Contains(i) ? rp->specificEntrances[i] : middle(rp->points[i-1], rp->points[i]), rp->exteriorWalls.Contains(i) ? PolygonType::exterior : PolygonType::interior));
 			}
 			else if (rp->windows.Contains(i)) {
 				FVector tangent = rp->points[i] - rp->points[i - 1];
@@ -363,7 +362,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 					}
 				}
 
-				TArray<FMaterialPolygon> pols = getSideWithHoles(newP, windows, rp->exteriorWalls.Contains(i) ? PolygonType::exterior : PolygonType::interior);
+				//TArray<FMaterialPolygon> pols = getSideWithHoles(newP, windows, rp->exteriorWalls.Contains(i) ? PolygonType::exterior : PolygonType::interior);
 
 				// add window frame as well
 
@@ -406,6 +405,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 				holes.Append(windows);
 
 			}
+			//holes.Empty();
 			TArray<FMaterialPolygon> pols = getSideWithHoles(newP, holes, rp->exteriorWalls.Contains(i) ? PolygonType::exterior : PolygonType::interior);
 			toReturn.Append(pols);
 
