@@ -126,11 +126,12 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 
 		}
 		TPPLPartition part;
-		int res = part.Triangulate_MONO(&poly, &inTriangles);
+		poly.SetOrientation(TPPL_CCW);
+		int res = part.Triangulate_EC(&poly, &inTriangles);
 
-		if (res != 1) {
+		if (res == 0) {
 			UE_LOG(LogTemp, Warning, TEXT("Triangulation failed!"));
-			return false;
+			//return false;
 		}
 		for (auto i : inTriangles) {
 			triangles.Add(i[0].id);
@@ -213,7 +214,8 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	a += buildPolygons(concrete, offset, concreteMesh, concreteMat);
 	a += buildPolygons(green, offset, greenMesh, greenMat);
 
-	if (a < 15) {
+	if (a < 10) {
+		UE_LOG(LogTemp, Warning, TEXT("a: %i"), a);
 		Destroy();
 		return false;
 	} 

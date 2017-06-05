@@ -208,16 +208,34 @@ struct FPolygon
 		return SplitStruct{ min, max, p1, p2 };
 	}
 
-	FVector getPointDirection(int place, bool left) {
+	FVector getPointDirection(int place, bool left, bool wrapAround) {
 		if (place == 0) {
-			FVector dir = points[1] - points[0];
-			dir.Normalize();
-			return FRotator(0, left ? 90 : 270, 0).RotateVector(dir);
+			FVector dir1 = points[1] - points[0];
+			dir1.Normalize();
+			dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
+			if (wrapAround) {
+				FVector dir2 = points[points.Num() - 1] - points[points.Num() - 2];
+				dir2.Normalize();
+				dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
+				FVector totDir = dir1 + dir2;
+				totDir.Normalize();
+				return totDir;
+			}
+			return dir1;
 		}
 		else if (place == points.Num() - 1) {
-			FVector dir = points[points.Num() - 1] - points[points.Num() - 2];
-			dir.Normalize();
-			return FRotator(0, left ? 90 : 270, 0).RotateVector(dir);
+			FVector dir2 = points[points.Num() - 1] - points[points.Num() - 2];
+			dir2.Normalize();
+			dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
+			if (wrapAround) {
+				FVector dir1 = points[1] - points[0];
+				dir1.Normalize();
+				dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
+				FVector totDir = dir1 + dir2;
+				totDir.Normalize();
+				return totDir;
+			}
+			return dir2;
 		}
 		else {
 			FVector dir1 = points[place] - points[place - 1];
@@ -1192,7 +1210,7 @@ struct FHousePolygon : public FMetaPolygon {
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
 
-		newP.checkOrientation();
+		//newP.checkOrientation();
 		return newP;
 
 	}

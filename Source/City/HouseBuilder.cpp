@@ -130,7 +130,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 
 	// sew the roomPolygons together by adding walls
 
-	bool isIncreasing = increasing(connections);
+	bool isIncreasing = true; //increasing(connections);
 	for (int i = 0; i < roomPols.Num(); i++) {
 		FRoomPolygon &fp = roomPols[i];
 
@@ -200,7 +200,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 
 
 // this returns polygons corresponding to a hole with the shape "hole" in the polygon f, using the keyhole triangulation algorithm
-TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon &f, float floorBegin, FPolygon hole, bool toMiddle) {
+TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, FPolygon hole, bool toMiddle) {
 	TArray<FMaterialPolygon> polygons;
 
 
@@ -208,8 +208,8 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon &f, float floorBegin,
 	if (toMiddle) {
 		FVector middle = f.getCenter();
 		for (int i = 0; i < f.points.Num(); i++) {
-			FVector dir = f.getPointDirection(i, false);
-			f.points[i] += dir * 5;
+			FVector dir = f.getPointDirection(i, false, true);
+			f.points[i] += dir * 2;
 		}
 		//for (FVector &p : f.points) {
 		//	f.getPointDirection();
@@ -219,6 +219,18 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon &f, float floorBegin,
 		//}
 	}
 
+
+	FMaterialPolygon f2;
+	f2.type = PolygonType::floor;
+	f2.points = f.points;
+	f2.points.RemoveAt(f2.points.Num() - 1);
+	hole.points.RemoveAt(hole.points.Num() - 1);
+	//hole.reverse();
+	f2.offset(FVector(0, 0, floorBegin));
+	hole.offset(FVector(0, 0, floorBegin));
+	TArray<FPolygon> holes;
+	holes.Add(hole);
+	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 
 	hole.points.RemoveAt(hole.points.Num() - 1);
 
@@ -239,6 +251,7 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon &f, float floorBegin,
 	for (int i = 0; i < f.points.Num(); i++) {
 		pol.points.Add(f.points[i] + FVector(0, 0, floorBegin));
 	}
+	//pol.points.Add(f.points[0] + FVector(0, 0, floorBegin));
 
 	// decide direction
 	int change = 1;
@@ -246,9 +259,9 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon &f, float floorBegin,
 	if (neg < 0) {
 		neg += hole.points.Num();
 	}
-	if (FVector::Dist(hole.points[(closestNum + 1) % hole.points.Num()], f.points[f.points.Num() - 2]) > FVector::Dist(hole.points[neg], f.points[f.points.Num() - 2])) {
-		change = -1;
-	}
+	//if (FVector::Dist(hole.points[(closestNum + 1) % hole.points.Num()], f.points[f.points.Num() - 2]) > FVector::Dist(hole.points[neg], f.points[f.points.Num() - 2])) {
+	//	change = -1;
+	//}
 	int count = 0;
 	for (int i = closestNum; count < hole.points.Num(); i+=change, i %= hole.points.Num(), count++) {
 		if (i < 0)
@@ -293,7 +306,7 @@ FPolygon getShaftHolePolygon(FHousePolygon f) {
 // changes the shape of the house to make it less cube-like
 void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHole) {
 	//return;
-	if (randFloat() < 0.1f) {
+	if (randFloat() < 0.1f && f.points.Num() > 3) {
 		// move side inwards
 		float len = FMath::FRandRange(400, 1000);
 		int place = FMath::FRand() * (f.points.Num() - 3) + 2;
@@ -368,7 +381,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 		float depth = FMath::FRandRange(500, 1000);
 		// turn a side inwards into a U
 		int place = 2;
-		place = FMath::FRand() * (f.points.Num() - 2) + 1;
+		place = FMath::FRand() * (f.points.Num() - 3) + 1;
 
 		FVector tangent = f.points[place] - f.points[place - 1];
 		float lenSide = tangent.Size();
@@ -615,7 +628,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 
 	bool potentialBalcony = f.type == RoomType::apartment && floors < 10;
 	for (FRoomPolygon p : roomPols) {
-		FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 0, floorHeight, 0.005, 250, 150, map, false, shellOnly);
+		FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 0, floorHeight, map, false, shellOnly);
 		newR.offset(FVector(0, 0, 30));
 		toReturn.roomInfo.pols.Append(newR.pols);
 		toReturn.roomInfo.meshes.Append(newR.meshes);
@@ -650,7 +663,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 
 			roomPols = getInteriorPlan(f, hole, false, 300, 500);
 			for (FRoomPolygon &p : roomPols) {
-				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, 0.005, 250, 150, map, potentialBalcony, shellOnly);
+				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, map, potentialBalcony, shellOnly);
 				newR.offset(FVector(0, 0, floorHeight*i));
 				toReturn.roomInfo.pols.Append(newR.pols);
 				toReturn.roomInfo.meshes.Append(newR.meshes);

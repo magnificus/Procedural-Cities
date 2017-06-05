@@ -111,6 +111,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 
 			}
 			else {
+				r.checkOrientation();
 				housePolygons.Add(r);
 				//others.Add(r);
 			}

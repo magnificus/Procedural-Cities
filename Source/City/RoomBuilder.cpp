@@ -61,6 +61,7 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FMaterialPolygon outer, 
 		outerP[i] = TPPLPoint{ x, y, current++};
 		allPoints.Add(point);
 	}
+	outerP.SetOrientation(TPPL_CCW);
 	inPolys.push_back(outerP);
 	for (FPolygon p : holes) {
 		TPPLPoly holeP;
@@ -73,6 +74,7 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FMaterialPolygon outer, 
 			holeP[p.points.Num() - 1 - i] = TPPLPoint{ x, y, current++ };
 			allPoints.Add(point);
 		}
+		holeP.SetOrientation(TPPL_CW);
 		inPolys.push_back(holeP);
 	}
 
@@ -89,103 +91,103 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FMaterialPolygon outer, 
 	}
 	return polygons;
 
-	FVector start = outer.points[1];
-	FVector end = outer.points[2];
+	//FVector start = outer.points[1];
+	//FVector end = outer.points[2];
 
-	// sort holes according to dist to starting point so that they can be applied in order
-	holes.Sort([start](const FPolygon &p1, const FPolygon &p2) {
-		return FVector::DistSquared(p1.points[1], start) < FVector::DistSquared(p2.points[1], start);
-	});
-	if (holes.Num() > 0) {
+	//// sort holes according to dist to starting point so that they can be applied in order
+	//holes.Sort([start](const FPolygon &p1, const FPolygon &p2) {
+	//	return FVector::DistSquared(p1.points[1], start) < FVector::DistSquared(p2.points[1], start);
+	//});
+	//if (holes.Num() > 0) {
 
-		FVector sideTangent = outer.points[1] - outer.points[0];
+	//	FVector sideTangent = outer.points[1] - outer.points[0];
 
-		FVector attach1 = outer.points[0];
-		FVector attach2 = (holes[0].points[0] - outer.points[0]).ProjectOnTo(sideTangent) + outer.points[0];
-		FVector attach3 = (holes[0].points[1] - outer.points[0]).ProjectOnTo(sideTangent) + outer.points[0];
-		FVector attach4 = outer.points[1];
+	//	FVector attach1 = outer.points[0];
+	//	FVector attach2 = (holes[0].points[0] - outer.points[0]).ProjectOnTo(sideTangent) + outer.points[0];
+	//	FVector attach3 = (holes[0].points[1] - outer.points[0]).ProjectOnTo(sideTangent) + outer.points[0];
+	//	FVector attach4 = outer.points[1];
 
-		FVector tangentUp = outer.points[3] - outer.points[0];
-		FVector tangentDown = outer.points[2] - outer.points[1];
-		//tangentUp.Normalize();
-		//tangentDown.Normalize();
+	//	FVector tangentUp = outer.points[3] - outer.points[0];
+	//	FVector tangentDown = outer.points[2] - outer.points[1];
+	//	//tangentUp.Normalize();
+	//	//tangentDown.Normalize();
 
-		int count = 0;
-		for (FPolygon p : holes) {
-			//UE_LOG(LogTemp, Warning, TEXT("attach1 %s, %i"), *attach1.ToString(), count++);
-			FMaterialPolygon p1 = FMaterialPolygon();
-			p1.points.Add(attach1);
-			p1.points.Add(p.points[3]);
-			p1.type = type;
-			p1.points.Add((p.points[3] - outer.points[0]).ProjectOnTo(tangentUp) + outer.points[0]);
+	//	int count = 0;
+	//	for (FPolygon p : holes) {
+	//		//UE_LOG(LogTemp, Warning, TEXT("attach1 %s, %i"), *attach1.ToString(), count++);
+	//		FMaterialPolygon p1 = FMaterialPolygon();
+	//		p1.points.Add(attach1);
+	//		p1.points.Add(p.points[3]);
+	//		p1.type = type;
+	//		p1.points.Add((p.points[3] - outer.points[0]).ProjectOnTo(tangentUp) + outer.points[0]);
 
-			FMaterialPolygon p2 = FMaterialPolygon();
-			p2.type = type;
-			p2.points.Add(attach1);
-			p2.points.Add(attach2);
-			p2.points.Add(p.points[3]);
+	//		FMaterialPolygon p2 = FMaterialPolygon();
+	//		p2.type = type;
+	//		p2.points.Add(attach1);
+	//		p2.points.Add(attach2);
+	//		p2.points.Add(p.points[3]);
 
-			FMaterialPolygon p3 = FMaterialPolygon();
-			p3.type = type;
-			p3.points.Add(attach2);
-			p3.points.Add(p.points[1]);
-			p3.points.Add(p.points[0]);
+	//		FMaterialPolygon p3 = FMaterialPolygon();
+	//		p3.type = type;
+	//		p3.points.Add(attach2);
+	//		p3.points.Add(p.points[1]);
+	//		p3.points.Add(p.points[0]);
 
-			FMaterialPolygon p4 = FMaterialPolygon();
-			p4.type = type;
-			p4.points.Add(attach2);
-			p4.points.Add(attach3);
-			p4.points.Add(p.points[1]);
+	//		FMaterialPolygon p4 = FMaterialPolygon();
+	//		p4.type = type;
+	//		p4.points.Add(attach2);
+	//		p4.points.Add(attach3);
+	//		p4.points.Add(p.points[1]);
 
-			FMaterialPolygon p5 = FMaterialPolygon();
-			p5.type = type;
-			p5.points.Add(attach3);
-			p5.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
-			p5.points.Add(p.points[2]);
+	//		FMaterialPolygon p5 = FMaterialPolygon();
+	//		p5.type = type;
+	//		p5.points.Add(attach3);
+	//		p5.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
+	//		p5.points.Add(p.points[2]);
 
-			FMaterialPolygon p6 = FMaterialPolygon();
-			p6.type = type;
-			p6.points.Add(attach3);
-			p6.points.Add(attach4);
-			p6.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
+	//		FMaterialPolygon p6 = FMaterialPolygon();
+	//		p6.type = type;
+	//		p6.points.Add(attach3);
+	//		p6.points.Add(attach4);
+	//		p6.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
 
-			polygons.Add(p1);
-			polygons.Add(p2);
-			polygons.Add(p3);
-			polygons.Add(p4);
-			polygons.Add(p5);
-			polygons.Add(p6);
+	//		polygons.Add(p1);
+	//		polygons.Add(p2);
+	//		polygons.Add(p3);
+	//		polygons.Add(p4);
+	//		polygons.Add(p5);
+	//		polygons.Add(p6);
 
-			attach1 = p1.points[2];
-			attach2 = p1.points[1];
-			attach3 = p5.points[2];
-			attach4 = p5.points[1];
-		}
-		// attach to end of outer
-		//UE_LOG(LogTemp, Warning, TEXT("attach1 %s, %i"), *attach1.ToString(), count++);
+	//		attach1 = p1.points[2];
+	//		attach2 = p1.points[1];
+	//		attach3 = p5.points[2];
+	//		attach4 = p5.points[1];
+	//	}
+	//	// attach to end of outer
+	//	//UE_LOG(LogTemp, Warning, TEXT("attach1 %s, %i"), *attach1.ToString(), count++);
 
-		FMaterialPolygon p7;
-		p7.type = type;
-		p7.points.Add(attach1);
-		p7.points.Add(attach4);
-		p7.points.Add(outer.points[2]);
+	//	FMaterialPolygon p7;
+	//	p7.type = type;
+	//	p7.points.Add(attach1);
+	//	p7.points.Add(attach4);
+	//	p7.points.Add(outer.points[2]);
 
-		FMaterialPolygon p8;
-		p8.type = type;
-		p8.points.Add(attach1);
-		p8.points.Add(outer.points[2]);
-		p8.points.Add(outer.points[3]);
+	//	FMaterialPolygon p8;
+	//	p8.type = type;
+	//	p8.points.Add(attach1);
+	//	p8.points.Add(outer.points[2]);
+	//	p8.points.Add(outer.points[3]);
 
-		polygons.Add(p7);
-		polygons.Add(p8);
-	}
-	else {
-		polygons.Add(outer);
-	}
+	//	polygons.Add(p7);
+	//	polygons.Add(p8);
+	//}
+	//else {
+	//	polygons.Add(outer);
+	//}
 
 
 
-	return polygons;
+	//return polygons;
 }
 
 TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float blockingLength) {
@@ -734,7 +736,7 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	attemptPlace(r2, placed, meshes, false, 4, "kitchen", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
+	attemptPlace(r2, placed, meshes, false, 4, "kitchen", FRotator(0, 90, 0), FVector(-20, 0, 0), map, true);
 	meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
 	attemptPlace(r2, placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
 	attemptPlace(r2, placed, meshes, false, 3, "fridge", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
@@ -1008,7 +1010,7 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 }
 
 
-FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, float height, float density, float windowHeight, float windowWidth, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly) {
+FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly) {
 	if (!f->canRefine) {
 		FRoomInfo r;
 		//r.beginning = beginning;

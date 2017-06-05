@@ -102,12 +102,12 @@ bool testAxis(FVector axis, FPolygon &p1, FPolygon &p2, float leniency) {
 
 bool testCollision(FPolygon &p1, FPolygon &p2, float leniency) {
 	for (int i = 1; i < p1.points.Num(); i++) {
-		if (!testAxis(FRotator(0, 270, 0).RotateVector(p1.points[i] - p1.points[i-1]), p1, p2, leniency)) {
+		if (!testAxis(getNormal(p1.points[i], p1.points[i-1], true), p1, p2, leniency)) {
 			return false;
 		}
 	}
 	for (int i = 1; i < p2.points.Num(); i++) {
-		if (!testAxis(FRotator(0, 270, 0).RotateVector(p2.points[i] - p2.points[i-1]), p1, p2, leniency)) {
+		if (!testAxis(getNormal(p2.points[i], p2.points[i-1], true), p2, p2, leniency)){//FRotator(0, 90, 0).RotateVector(p2.points[i] - p2.points[i-1]), p1, p2, leniency)) {
 			return false;
 		}
 	}
