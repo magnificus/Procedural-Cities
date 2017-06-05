@@ -260,8 +260,8 @@ FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHe
 	float distToDoor = FVector::Dist(doorPos, p1) - doorWidth / 2;
 	FMaterialPolygon doorPolygon;
 	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
-	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 1));// + FVector(0, 0, 100));
-	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 1));// + FVector(0, 0, 100));
+	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 10));// + FVector(0, 0, 100));
+	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 10));// + FVector(0, 0, 100));
 	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, doorHeight));
 	//doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
 	//doorPolygon.reverse();
@@ -736,7 +736,7 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	attemptPlace(r2, placed, meshes, false, 4, "kitchen", FRotator(0, 90, 0), FVector(-20, 0, 0), map, true);
+	attemptPlace(r2, placed, meshes, false, 4, "kitchen", FRotator(0, 90, 0), FVector(-15, 0, 0), map, true);
 	meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
 	attemptPlace(r2, placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
 	attemptPlace(r2, placed, meshes, false, 3, "fridge", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);

@@ -134,27 +134,27 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 	for (int i = 0; i < roomPols.Num(); i++) {
 		FRoomPolygon &fp = roomPols[i];
 
-		if (isIncreasing) {
-			for (int j = connections[i].b - 1 == -1 ? f.points.Num() - 1 : connections[i].b - 1; j != std::abs((connections[i].a - 1) % f.points.Num()); j = j == 0 ? f.points.Num() - 1 : j - 1) {
-				if (f.windows.Contains(j+1)) {
-					fp.windows.Add(fp.points.Num());
-				}
-				fp.exteriorWalls.Add(fp.points.Num());
-				fp.points.Add(f.points[j]);
-
-
+		//if (isIncreasing) {
+		for (int j = connections[i].b - 1 == -1 ? f.points.Num() - 1 : connections[i].b - 1; j != (connections[i].a - 1 == -1 ? f.points.Num() - 1 : connections[i].a - 1); j = j == 0 ? f.points.Num() - 1 : j - 1) {
+			if (f.windows.Contains(j+1)) {
+				fp.windows.Add(fp.points.Num());
 			}
-		}
-		else {
-			for (int j = (connections[i].b) % f.points.Num(); j != (connections[i].a) % f.points.Num(); j++, j %= f.points.Num()) {
-				if (f.windows.Contains(j)) {
-					fp.windows.Add(fp.points.Num());
-				}
-				fp.exteriorWalls.Add(fp.points.Num());
-				fp.points.Add(f.points[j]);
+			fp.exteriorWalls.Add(fp.points.Num());
+			fp.points.Add(f.points[j]);
 
-			}
+
 		}
+		//}
+		//else {
+		//	for (int j = (connections[i].b) % f.points.Num(); j != (connections[i].a) % f.points.Num(); j++, j %= f.points.Num()) {
+		//		if (f.windows.Contains(j)) {
+		//			fp.windows.Add(fp.points.Num());
+		//		}
+		//		fp.exteriorWalls.Add(fp.points.Num());
+		//		fp.points.Add(f.points[j]);
+
+		//	}
+		//}
 		if (f.windows.Contains(connections[i].a)) {
 			roomPols[i].windows.Add(roomPols[i].points.Num());
 		}
@@ -182,13 +182,18 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 		}
 	}
 	roomPols.Append(extra);
+	
+	if (corners.points.Num() > 0) {
+		corners.points.Add(FVector(corners.points[0]));
+	}
 
 	corners.reverse();
-	for (int i = 2; i < corners.points.Num(); i += 2) {
+	for (int i = 1; i < corners.points.Num(); i += 2) {
 		corners.toIgnore.Add(i);
 	}
-	for (int i = 1; i < corners.points.Num(); i++) {
+	for (int i = 0; i < corners.points.Num(); i+=2) {
 		corners.exteriorWalls.Add(i);
+		corners.windows.Add(i);
 	}
 	roomPols.Add(corners);
 
@@ -208,7 +213,7 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	if (toMiddle) {
 		FVector middle = f.getCenter();
 		for (int i = 0; i < f.points.Num(); i++) {
-			FVector dir = f.getPointDirection(i, false, true);
+			FVector dir = f.getPointDirection(i, true, true);
 			f.points[i] += dir * 2;
 		}
 		//for (FVector &p : f.points) {
@@ -709,7 +714,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 	if (!shellOnly) {
 		TArray<FMaterialPolygon> otherSides;
 		for (FMaterialPolygon &p : toReturn.roomInfo.pols) {
-
+			otherSides.Add(p);
 			FMaterialPolygon other = p;
 			// exterior walls are interiors on the inside
 			if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
@@ -754,8 +759,10 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 
 		}
 		toReturn.roomInfo.pols.Append(otherSides);
+		//toReturn.roomInfo.pols = otherSides;
 
 	}
+
 	return toReturn;
 
 

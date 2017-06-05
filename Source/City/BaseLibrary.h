@@ -836,7 +836,7 @@ struct FRoomPolygon : public FPolygon
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
 
-		//newP->checkOrientation();
+		//toIgnore.Empty();
 		return newP;
 	}
 

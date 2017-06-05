@@ -216,8 +216,8 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 
 	if (a < 10) {
 		UE_LOG(LogTemp, Warning, TEXT("a: %i"), a);
-		Destroy();
-		return false;
+		//Destroy();
+		//return false;
 	} 
 	return true;
 
