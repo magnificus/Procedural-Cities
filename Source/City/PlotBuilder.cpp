@@ -43,12 +43,11 @@ TArray<FHousePolygon> APlotBuilder::generateAllHousePolygons(TArray<FPlotPolygon
 
 
 TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others) {
-	return plots;
 	TArray<FMetaPolygon> added;
 	for (FMetaPolygon p : plots) {
 		bool shouldAdd = true;
 		for (FPolygon o : others) {
-			if (testCollision(p, o, 500)) {
+			if (testCollision(p, o, 2000)) {
 				shouldAdd = false;
 				break;
 			}
@@ -69,7 +68,7 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 
 
 
-FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int minFloors) {
+FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int minFloors, float noiseScale) {
 	FPlotInfo info;
 	TArray<FHousePolygon> housePolygons;
 
@@ -95,7 +94,10 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 		for (FHousePolygon r : refinedPolygons) {
 			r.height = randFloat() * (maxFloors - minFloors) + minFloors;
-			r.type = randFloat() < 0.5 ? RoomType::office : RoomType::apartment;
+			if (raw_noise_2d((r.housePosition.X + 1000000)*noiseScale, (r.housePosition.Y+ 1000000)*noiseScale) > 0.7) {
+				r.height *= 2;
+			}
+			r.type = raw_noise_2d(r.housePosition.X*noiseScale, r.housePosition.Y*noiseScale) < 0 ? RoomType::office : RoomType::apartment;
 
 			float area = r.getArea();
 			UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);

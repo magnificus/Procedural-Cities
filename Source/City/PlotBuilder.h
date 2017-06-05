@@ -34,7 +34,7 @@ public:
 	static TArray<FMetaPolygon> sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	static FPlotInfo generateHousePolygons(FPlotPolygon p, int minFloors, int maxFloors);
+	static FPlotInfo generateHousePolygons(FPlotPolygon p, int minFloors, int maxFloors, float noiseScale);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static FPolygon generateSidewalkPolygon(FPlotPolygon p, float offsetSize);

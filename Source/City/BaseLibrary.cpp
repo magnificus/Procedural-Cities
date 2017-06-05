@@ -94,7 +94,7 @@ bool testAxis(FVector axis, FPolygon &p1, FPolygon &p2, float leniency) {
 
 	getMinMax(min1, max1, axis, p1.points);
 	getMinMax(min2, max2, axis, p2.points);
-	if (std::max(min1, min2) >= std::min(max1, max2) - leniency) {
+	if (std::max(min1, min2) >= std::min(max1, max2) + leniency) {
 		return true;
 	}
 	return false;
@@ -120,7 +120,7 @@ bool testCollision(FPolygon &in, TArray<FPolygon> &others, float leniency, FPoly
 			return true;
 		}
 	}
-	return false; // intersection(in, surrounding).X != 0.0f;
+	return intersection(in, surrounding).X != 0.0f;
 }
 
 // returns true if colliding

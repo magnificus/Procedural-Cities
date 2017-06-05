@@ -99,8 +99,11 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 				break;
 			}
 		}
-		if (!ground || !f.entrances.Contains(conn))
+		if (!ground || !f.entrances.Contains(conn)) {
+			if (f.windows.Contains(conn))
+				corners.windows.Add(corners.points.Num());
 			corners.points.Add(sndAttach);
+		}
 
 		if (i == (hole.points.Num() - 1)) {
 			TArray<int32> toRemove;
@@ -196,7 +199,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 	}
 	for (int i = 1; i < corners.points.Num(); i+=2) {
 		corners.exteriorWalls.Add(i);
-		corners.windows.Add(i);
+		//corners.windows.Add(i);
 	}
 	roomPols.Add(corners);
 
@@ -385,11 +388,11 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 
 
 	}
-	else if (randFloat() < 0.1f) {
+	else if (randFloat() < 0.07f) {
 		float depth = FMath::FRandRange(500, 1500);
 		// turn a side inwards into a U
 		int place = 2;
-		place = FMath::FRand() * (f.points.Num() - 3) + 1;
+		place = FMath::FRand() * (f.points.Num() - 2) + 1;
 
 		FVector tangent = f.points[place] - f.points[place - 1];
 		float lenSide = tangent.Size();
@@ -607,6 +610,11 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 		}
 		toReturn.pols.Add(shape);
 	}
+}
+
+
+void potentiallyShrink(FHousePolygon &f) {
+
 }
 
 FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, float floorHeight, float maxRoomArea, bool shellOnly, int minFloors, int maxFloors)

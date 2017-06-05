@@ -20,7 +20,7 @@ public:
 	// Sets default values for this actor's properties
 	ARoomBuilder();
 
-	static TArray<FMaterialPolygon> interiorPlanToPolygons(TArray<FRoomPolygon*> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth, int floor, bool shellOnly);
+	static TArray<FMaterialPolygon> interiorPlanToPolygons(TArray<FRoomPolygon*> roomPols, float floorHeight, float windowDensity, float windowHeight, float windowWidth, int floor, bool shellOnly, bool windowFrames);
 
 	float areaScale = 1.0f;
 protected:
