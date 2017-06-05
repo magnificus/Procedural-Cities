@@ -208,6 +208,7 @@ struct FPolygon
 		return SplitStruct{ min, max, p1, p2 };
 	}
 
+	// combined lengths will be sqrt(2) longer than single lengths because otherwise the corners look bad
 	FVector getPointDirection(int place, bool left, bool wrapAround) {
 		if (place == 0) {
 			FVector dir1 = points[1] - points[0];
@@ -218,7 +219,7 @@ struct FPolygon
 				dir2.Normalize();
 				dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
 				FVector totDir = dir1 + dir2;
-				totDir.Normalize();
+				//totDir.Normalize();
 				return totDir;
 			}
 			return dir1;
@@ -232,7 +233,7 @@ struct FPolygon
 				dir1.Normalize();
 				dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
 				FVector totDir = dir1 + dir2;
-				totDir.Normalize();
+				//totDir.Normalize();
 				return totDir;
 			}
 			return dir2;
@@ -246,10 +247,16 @@ struct FPolygon
 			dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
 
 			FVector totDir = dir1 + dir2;
-			totDir.Normalize();
+			//totDir.Normalize();
 			return totDir;
 		}
 
+	}
+
+	void symmetricShrink(float length, bool left) {
+		for (int i = 0; i < points.Num(); i++) {
+			points[i] += getPointDirection(i, left, true)*length;
+		}
 	}
 
 };

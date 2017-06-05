@@ -43,7 +43,7 @@ TArray<FHousePolygon> APlotBuilder::generateAllHousePolygons(TArray<FPlotPolygon
 
 
 TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others) {
-	//return plots;
+	return plots;
 	TArray<FMetaPolygon> added;
 	for (FMetaPolygon p : plots) {
 		bool shouldAdd = true;

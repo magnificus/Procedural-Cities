@@ -498,6 +498,9 @@ void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &me
 	int place = 1;
 	// get a line through the room
 	SplitStruct res = r2->getSplitProposal(false, 0.5);
+	if (res.min == 0) {
+		return;
+	}
 	FVector origin = r2->points[res.min - 1];
 	FVector normal = res.p2 - res.p1;
 	normal.Normalize();
@@ -514,10 +517,11 @@ void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &me
 	for (int i = 1; i < numWidth; i++) {
 		for (int j = 1; j < numHeight; j++) {
 			FPolygon pol = getPolygon(normal.Rotation(), origin + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
-			//if (!testCollision(pol, placed, 0, *r2)) {
-			placed.Add(pol);
-			meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),origin + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)) });
-			//s}
+			// make sure it's fully inside the room
+			if (testCollision(pol, placed, 0, *r2) && intersection(pol, *r2).X == 0.0f) {
+				placed.Add(pol);
+				meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),origin + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)) });
+			}
 		}
 	}
 	//FVector start =
@@ -678,7 +682,7 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon *r2, TMap<FString, UHierarch
 	
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	attemptPlace(r2, placed, meshes, false, 5, "sofa", FRotator(0, 180, 0), FVector(0, 0, 30), map, true);
+	attemptPlace(r2, placed, meshes, false, 5, "sofa", FRotator(0, 180, 0), FVector(0, 0, 10), map, true);
 
 	return meshes;
 }
@@ -795,7 +799,7 @@ static TArray<FMeshInfo> getStoreBack(FRoomPolygon *r2, TMap<FString, UHierarchi
 FRoomInfo placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	FRoomInfo r;
 
-	float width = 400;
+	float width = 500;
 	float length = 200;
 	float height = 150;
 
@@ -803,6 +807,7 @@ FRoomInfo placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalIn
 	FVector normal = getNormal(p->points[place], p->points[place - 1], false);
 	normal.Normalize();
 	float len = tangent.Size();
+	width = std::min(width, len);
 	tangent.Normalize();
 	FVector start = p->points[place - 1] + tangent*(len - width) * 0.5;
 	FVector end = p->points[place - 1] + tangent*(len + width) * 0.5;
@@ -1017,11 +1022,17 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, flo
 		//r.height = height;
 		TArray<FRoomPolygon*> pols;
 		pols.Add(f);
-		r.pols = interiorPlanToPolygons(pols, height, 0, 0, 0, floor, shellOnly);
+		switch (type) {
+			case RoomType::office: r.pols = interiorPlanToPolygons(pols, height, 0.0042, 330, 190, floor, shellOnly);
+			break;
+			case RoomType::apartment: r.pols = interiorPlanToPolygons(pols, height, 0.002, 200, 200, floor, shellOnly);
+			break;
+		}
+
 		return r;
 	}
 	switch (type) {
-	case RoomType::office: return buildOffice(f, floor, height, 0.004, 270, 170, map, shellOnly);
+	case RoomType::office: return buildOffice(f, floor, height, 0.0042, 330, 190, map, shellOnly);
 	case RoomType::apartment: return buildApartment(f, floor, height, 0.002, 200, 200, map, potentialBalcony, shellOnly);
 	case RoomType::store: return buildStore(f, height, map, shellOnly);
 	}
