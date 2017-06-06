@@ -36,6 +36,6 @@ public:
 	static FRoomInfo buildStore(FRoomPolygon *f, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool shellOnly);
 
 	static FRoomInfo buildRoom(FRoomPolygon *f, RoomType type, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly);
-	static TArray<FMaterialPolygon> getSideWithHoles(FMaterialPolygon outer, TArray<FPolygon> holes, PolygonType type);
+	static TArray<FMaterialPolygon> getSideWithHoles(FPolygon outer, TArray<FPolygon> holes, PolygonType type);
 	
 };

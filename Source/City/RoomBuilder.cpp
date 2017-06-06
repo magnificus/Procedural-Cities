@@ -28,14 +28,11 @@ void ARoomBuilder::Tick(float DeltaTime)
 }
 
 /*
-holes are assumed to be of a certain structure, just four points upper left -> lower left -> lower right -> upper right, no window is allowed to overlap another or WEIRD things happen
-0---3
-|	|
-1---2
+no hole is allowed to overlap another or WEIRD things happen
 */
 
 
-TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FMaterialPolygon outer, TArray<FPolygon> holes, PolygonType type) {
+TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon> holes, PolygonType type) {
 
 	TArray<FMaterialPolygon> polygons;
 
@@ -260,8 +257,8 @@ FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHe
 	float distToDoor = FVector::Dist(doorPos, p1) - doorWidth / 2;
 	FMaterialPolygon doorPolygon;
 	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
-	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 10));// + FVector(0, 0, 100));
-	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 10));// + FVector(0, 0, 100));
+	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 3));// + FVector(0, 0, 100));
+	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 3));// + FVector(0, 0, 100));
 	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, doorHeight));
 	//doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
 	//doorPolygon.reverse();
@@ -309,13 +306,30 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 			FVector p2 = rp->points[i];
 
 			// this extra offset is to avoid z-fighting between walls
-			FVector normal = getNormal(p1, p2, true);
-			normal.Normalize();
-			newP.points.Add(p1 + FVector(0, 0, floorHeight) + normal);
-			newP.points.Add(p1 + FVector(0, 0, 0) + normal);
-			newP.points.Add(p2 + FVector(0, 0, 0) + normal);
-			newP.points.Add(p2 + FVector(0, 0, floorHeight) + normal);
-			newP.points.Add(p1 + FVector(0, 0, floorHeight) + normal);
+			FVector tan = p2 - p1;
+			tan.Normalize();
+			FVector extraBack = FVector(0, 0, 0);
+			FVector extraFront = FVector(0, 0, 0);
+
+			int prev = i > 1 ? i - 1 : rp->points.Num() - 1;
+			int next = i < rp->points.Num() - 1 ? i + 1 : 1;
+			if (!rp->exteriorWalls.Contains(i)) {
+				// this means that prev wall was exterior, move our back a little forward
+				if (rp->exteriorWalls.Contains(prev))
+					extraFront = tan * 25;
+
+				// this means that next wall is exterior, move our front a little back
+				if (rp->exteriorWalls.Contains(next))
+					extraBack = -tan * 25;
+			}
+
+
+			
+			newP.points.Add(p1 + FVector(0, 0, floorHeight - 1) + extraFront);
+			newP.points.Add(p1 + FVector(0, 0, 1) + extraFront);
+			newP.points.Add(p2 + FVector(0, 0, 1) + extraBack);
+			newP.points.Add(p2 + FVector(0, 0, floorHeight - 1) + extraBack);
+			newP.points.Add(p1 + FVector(0, 0, floorHeight - 1) + extraFront);
 
 			TArray<FPolygon> holes;
 			if (rp->entrances.Contains(i)) {
@@ -327,7 +341,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 				tangent.Normalize();
 
 				TArray<FPolygon> windows;
-				int spaces = FMath::FloorToInt(windowDensity * len) + 1;
+				int spaces = FMath::FloorToInt(std::min(windowDensity * len, len / (windowWidth + 20.0f)));
 				float jumpLen = len / (float)spaces;
 
 				if (floor == 0) {
@@ -385,8 +399,8 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 								FVector tangent2 = center - p.points[j];
 								tangent1.Normalize();
 								tangent2.Normalize();
-								FVector normal = getNormal(p.points[j], p.points[j - 1], true);
-								normal.Normalize();
+								FVector windowNormal = getNormal(p.points[j], p.points[j - 1], true);
+								windowNormal.Normalize();
 								frame.points.Add(p.points[j - 1]);
 								frame.points.Add(p.points[j]);
 								frame.points.Add(p.points[j] + tangent2 * frameWidth);
@@ -516,7 +530,7 @@ void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &me
 		for (int j = 1; j < numHeight; j++) {
 			FPolygon pol = getPolygon(normal.Rotation(), origin + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
 			// make sure it's fully inside the room
-			if (testCollision(pol, placed, 0, *r2) && intersection(pol, *r2).X == 0.0f) {
+			if (!testCollision(pol, placed, 0, *r2) && intersection(pol, *r2).X == 0.0f) {
 				placed.Add(pol);
 				meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),origin + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)) });
 			}
@@ -558,7 +572,7 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 	placed = getBlockingVolumes(r2, 200, 200);
-	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_table_position", 0.004, 0.004, map);
+	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_table_position", 0.002, 0.0042, map);
 	//int target = 1;
 	//FVector start = middle(r2->points[target], r2->points[target - 1]);
 	//FVector end = 
@@ -706,7 +720,7 @@ static TArray<FMeshInfo> getBathRoom(FRoomPolygon *r2, TMap<FString, UHierarchic
 		meshes.Add(FMeshInfo{ "sink", res});
 		res.SetLocation(res.GetLocation() + FVector(0, 0, 150));
 		//res.Ro
-		meshes.Add(FMeshInfo{ "mirror", FTransform(res.Rotator() + FRotator(0, 270, 0), res.GetLocation() + FVector(0, 0, 55) - res.Rotator().Vector() * 50, FVector(1.0, 1.0, 1.0)) });
+		meshes.Add(FMeshInfo{ "mirror", FTransform(res.Rotator() + FRotator(0, 270, 0), res.GetLocation() + FVector(0, 0, 55) - res.Rotator().Vector() * 40, FVector(1.0, 1.0, 1.0)) });
 	}
 	return meshes;
 }
@@ -1021,17 +1035,17 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, flo
 		TArray<FRoomPolygon*> pols;
 		pols.Add(f);
 		switch (type) {
-			case RoomType::office: r.pols = interiorPlanToPolygons(pols, height, 0.0041, 330, 190, floor, shellOnly, false);
+			case RoomType::office: r.pols = interiorPlanToPolygons(pols, height, 1, 340, 190, floor, shellOnly, false);
 			break;
-			case RoomType::apartment: r.pols = interiorPlanToPolygons(pols, height, 0.002, 200, 200, floor, shellOnly, true);
+			case RoomType::apartment: r.pols = interiorPlanToPolygons(pols, height, 0.003, 200, 200, floor, shellOnly, true);
 			break;
 		}
 
 		return r;
 	}
 	switch (type) {
-	case RoomType::office: return buildOffice(f, floor, height, 0.0042, 330, 190, map, shellOnly);
-	case RoomType::apartment: return buildApartment(f, floor, height, 0.002, 200, 200, map, potentialBalcony, shellOnly);
+	case RoomType::office: return buildOffice(f, floor, height, 1/* 0.0042*/, 340.0f, 190.0f, map, shellOnly);
+	case RoomType::apartment: return buildApartment(f, floor, height, 0.003, 200.0f, 200.0f, map, potentialBalcony, shellOnly);
 	case RoomType::store: return buildStore(f, height, map, shellOnly);
 	}
 	return FRoomInfo();

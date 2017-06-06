@@ -28,9 +28,6 @@ public:
 	APlotBuilder();
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	static TArray<FHousePolygon> generateAllHousePolygons(TArray<FPlotPolygon> p, TArray<FPolygon> others, int maxFloors, int minFloors);
-
-	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static TArray<FMetaPolygon> sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
@@ -43,7 +40,7 @@ public:
 	static FSidewalkInfo getSideWalkInfo(FPolygon sidewalk);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	static TArray<FMaterialPolygon> getSimplePlotPolygons(TArray<FSimplePlot> plots);
+	TArray<FMaterialPolygon> getSimplePlotPolygons(TArray<FSimplePlot> plots);
 
 
 protected:

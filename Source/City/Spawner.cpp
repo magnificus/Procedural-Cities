@@ -126,7 +126,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				FVector tangent = newE - current->segment->p1;
 				tangent.Normalize();
 				float len = FVector::Dist(newE, current->segment->p2);
-				current->segment->p2 += (len - standardWidth / 2) * tangent;
+				current->segment->p2 += (len/* - standardWidth / 2*/) * tangent;
 				current->segment->p2 = newE;
 				//addVertices(current->segment);
 				current->segment->roadInFront = true;
@@ -311,7 +311,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		FVector tangent = f2->p2 - f2->p1;
 		tangent.Normalize();
 		f2->p2 += tangent*maxAttachDistance;
-		float closestDist = 100000.0f;
+		float closestDist = 10000000.0f;
 		FRoadSegment* closest = nullptr;
 		FVector impactP;
 		addVertices(f2);
@@ -319,7 +319,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		for (FRoadSegment* f : determinedSegments) {
 			if (f == f2)
 				continue;
-			if (FVector::Dist(f->p2, f2->p1) < 100) {
+			if (FVector::Dist(f->p2, f2->p1) < 100 || FVector::Dist(f->p1, f2->p2) < 100) {
 				foundCollision = false;
 				break;
 			}
@@ -329,7 +329,6 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 				closest = f;
 				impactP = res;
 				foundCollision = true;
-				//break;
 			}
 
 
@@ -338,12 +337,14 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 			FVector tangent2 = impactP - f2->p1;
 			tangent2.Normalize();
 			float len = FVector::Dist(impactP, f2->p1);
-			f2->p2 = f2->p1 + (len - standardWidth / 2) * tangent2;
+			f2->p2 = f2->p1 + (len/* - standardWidth / 2*/) * tangent2;
 
 			FVector naturalTangent = f2->p2 - f2->p1;
 			naturalTangent.Normalize();
 			FVector pot1 = FRotator(0, 90, 0).RotateVector(closest->p2 - closest->p1);
+			pot1.Normalize();
 			FVector pot2 = FRotator(0, 270, 0).RotateVector(closest->p2 - closest->p1);
+			pot2.Normalize();
 			f2->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
 			addVertices(f2);
 			f2->roadInFront = true;

@@ -87,17 +87,19 @@ FVector intersection(FVector p1, FVector p2, FPolygon p) {
 
 
 bool testAxis(FVector axis, FPolygon &p1, FPolygon &p2, float leniency) {
-	float min1 = 0;
-	float max1 = 0;
-	float min2 = 0;
-	float max2 = 0;
+	float min1;
+	float max1;
+	float min2;
+	float max2;
 
 	getMinMax(min1, max1, axis, p1.points);
 	getMinMax(min2, max2, axis, p2.points);
-	if (std::max(min1, min2) >= std::min(max1, max2) + leniency) {
+	if (std::max(min1, min2) >= std::min(max1, max2) - leniency) {
+		return false;
+	}
+	else {
 		return true;
 	}
-	return false;
 }
 
 bool testCollision(FPolygon &p1, FPolygon &p2, float leniency) {

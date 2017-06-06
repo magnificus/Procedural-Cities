@@ -248,9 +248,9 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	int closestNum = -1;
 	float closestDist = 10000000.0f;
 	for (int i = 0; i < hole.points.Num(); i++) {
-		FVector f2 = hole.points[i];
-		if (FVector::Dist(f2, f.points[0]) < closestDist) {
-			closestDist = FVector::Dist(f2, f.points[0]);
+		FVector f3 = hole.points[i];
+		if (FVector::Dist(f3, f.points[0]) < closestDist) {
+			closestDist = FVector::Dist(f3, f.points[0]);
 			closestNum = i;
 		}
 	}
@@ -314,48 +314,61 @@ FPolygon getShaftHolePolygon(FHousePolygon f) {
 	return hole;
 }
 
+
+
+// return polygon covering the space that was removed from f
+FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHole, float len, FVector offset) {
+	FVector dir1 = f.points[place - 2] - f.points[place - 1];
+	dir1.Normalize();
+	FVector dir2 = f.points[place + 1] - f.points[place];
+	dir2.Normalize();
+
+	FPolygon line;
+	//intersection()
+	//FSimplePlot simplePlot;
+	FPolygon pol;
+	pol.points.Add(f.points[place]);
+	pol.points.Add(f.points[place - 1]);
+	FVector toChange1To = f.points[place - 1] + dir1 * len;
+	FVector toChange2To = f.points[place] + dir2 * len;
+	line.points.Add(toChange1To);
+	line.points.Add(toChange2To);
+	line.points.Add(toChange1To);
+	if (intersection(line, centerHole).X == 0.0f && intersection(line, f).X == 0.0f) {
+		f.points[place - 1] = toChange1To;
+		f.points[place] = toChange2To;
+		pol.points.Add(f.points[place - 1]);
+		pol.points.Add(f.points[place]);
+		pol.offset(offset);
+		f.windows.Add(place);
+		return pol;
+	}
+	return FPolygon();
+}
+
 // this method changes the shape of the house to make it less cube-like, can be called several times for more "interesting" shapes 
 void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHole) {
 	//return;
 	if (randFloat() < 0.15f && f.points.Num() > 3) {
 		// move side inwards
 		float len = FMath::FRandRange(400, 1500);
-		int place = FMath::FRand() * (f.points.Num() - 3) + 2;
-		FVector dir1 = f.points[place - 2] - f.points[place - 1];
-		dir1.Normalize();
-		FVector dir2 = f.points[place + 1] - f.points[place];
-		dir2.Normalize();
-
-		FPolygon line;
-		//intersection()
-		FSimplePlot simplePlot;
-		simplePlot.pol.points.Add(f.points[place]);
-		simplePlot.pol.points.Add(f.points[place - 1]);
-		FVector toChange1To = f.points[place - 1] + dir1 * len;
-		FVector toChange2To = f.points[place] + dir2 * len;
-		line.points.Add(toChange1To);
-		line.points.Add(toChange2To);
-		line.points.Add(toChange1To);
-		if (intersection(line, centerHole).X == 0.0f) {
-			f.points[place - 1] = toChange1To;
-			f.points[place] = toChange2To;
-			simplePlot.pol.points.Add(f.points[place - 1]);
-			simplePlot.pol.points.Add(f.points[place]);
-			simplePlot.pol.offset(FVector(0, 0, 30));
-			simplePlot.type = FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+		int place = FMath::FRand() * (f.points.Num() - 4) + 2;
+		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
+		if (res.points.Num() > 0) {
+			FSimplePlot simplePlot;
+			simplePlot.pol = res;
+			simplePlot.type = f.simplePlotType;//FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 			simplePlot.decorate();
 			toReturn.remainingPlots.Add(simplePlot);
 
-			f.windows.Add(place);
 		}
-
 
 
 	}
 
 	else if (randFloat() < 0.1f) {
 		// remove corner
-		int place = FMath::FRand() * (f.points.Num() - 3) + 1;
+		int place = FMath::FRand() * (f.points.Num() - 3) + 2;
 		FVector p1 = middle(f.points[place - 1], f.points[place]);
 		FVector p2 = middle(f.points[place + 1], f.points[place]);
 
@@ -369,7 +382,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 			bool hadW = f.entrances.Contains(place);
 			bool hadE = f.entrances.Contains(place);
 
-			simplePlot.type = FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+			simplePlot.type = f.simplePlotType; // FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 
 			simplePlot.decorate();
 			toReturn.remainingPlots.Add(simplePlot);
@@ -411,7 +424,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 		simplePlot.pol.points.Add(first);
 		if (intersection(simplePlot.pol, centerHole).X == 0.0f) {
 			simplePlot.pol.offset(FVector(0, 0, 30));
-			simplePlot.type = FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+			simplePlot.type = f.simplePlotType;
 
 			simplePlot.decorate();
 			toReturn.remainingPlots.Add(simplePlot);
@@ -613,8 +626,41 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 }
 
 
-void potentiallyShrink(FHousePolygon &f) {
-
+TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHole) {
+	TArray<FMaterialPolygon> toReturn;
+	FHousePolygon newF = FHousePolygon(f);
+	if (FMath::FRand() < 0.2) {
+		// only shrink one side
+		float len = FMath::FRandRange(400, 1500);
+		int place = FMath::FRand() * (f.points.Num() - 3) + 2;
+		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,0));
+		if (res.points.Num() > 2) {
+			FMaterialPolygon pol;
+			pol.points = res.points;
+			pol.type = PolygonType::roof;
+			toReturn.Add(pol);
+			return toReturn;
+		}
+	}
+	else if (FMath::FRand() < 0.0) {
+		float len = FMath::FRandRange(400, 1500);
+		FHousePolygon cp = f;
+		cp.symmetricShrink(len, cp.buildLeft);
+		if (intersection(cp, centerHole).X == 0.0f) {
+			f.points.RemoveAt(f.points.Num() - 1);
+			f.reverse();
+			//cp.reverse();
+			TArray<FPolygon> holes;
+			//cp.points.RemoveAt(cp.points.Num() - 1);
+			holes.Add(cp);
+			toReturn = ARoomBuilder::getSideWithHoles(f, holes, PolygonType::roof);
+			//for (FMaterialPolygon &fm : toReturn) {
+			//	fm.reverse();
+			//}
+			f = cp;
+		}
+	}
+	return toReturn;
 }
 
 FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, float floorHeight, float maxRoomArea, bool shellOnly, int minFloors, int maxFloors)
@@ -627,8 +673,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 	for (int i = 0; i < makeInterestingAttempts; i++)
 		makeInteresting(f, toReturn, hole);
 	//noise
-	int floors = minFloors + (maxFloors - minFloors) * (FMath::FRand());
-	floors *= FMath::FRand() > 0.1 ? 1 : 2;
+	int floors = f.height;
 	//if (scaled_raw_noise_2d(minFloors, maxFloors, f.housePosition.X*noiseMultiplier, f.housePosition.Y*noiseMultiplier) > 0.7f) {
 	//	floors *= 2;
 	//}
@@ -677,6 +722,11 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 	bool facade = FMath::FRand() < 0.2;
 		for (int i = 1; i < floors; i++) {
 			if (FMath::FRand() < 0.1) {
+				TArray<FMaterialPolygon> res = potentiallyShrink(f, hole);
+				for (FMaterialPolygon &fm : res) {
+					fm.offset(FVector(0,0,floorHeight*i));
+				}
+				toReturn.roomInfo.pols.Append(res);
 				//f.symmetricShrink(FMath::FRandRange(100.0f, 1000.0f), f.buildLeft);
 			}
 

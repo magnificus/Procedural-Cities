@@ -219,7 +219,7 @@ struct FPolygon
 				dir2.Normalize();
 				dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
 				FVector totDir = dir1 + dir2;
-				//totDir.Normalize();
+				totDir.Normalize();
 				return totDir;
 			}
 			return dir1;
@@ -233,7 +233,7 @@ struct FPolygon
 				dir1.Normalize();
 				dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
 				FVector totDir = dir1 + dir2;
-				//totDir.Normalize();
+				totDir.Normalize();
 				return totDir;
 			}
 			return dir2;
@@ -247,7 +247,7 @@ struct FPolygon
 			dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
 
 			FVector totDir = dir1 + dir2;
-			//totDir.Normalize();
+			totDir.Normalize();
 			return totDir;
 		}
 
@@ -357,7 +357,7 @@ struct FSimplePlot {
 		switch (type) {
 		case SimplePlotType::undecided:
 		case SimplePlotType::green: {
-			float treeAreaRatio = 0.01;
+			float treeAreaRatio = 0.001;
 			for (int i = 0; i < treeAreaRatio * area; i++) {
 				FVector point = pol.getRandomPoint(false, 150);
 				if (point.X != 0.0f)
@@ -853,7 +853,7 @@ struct FRoomPolygon : public FPolygon
 	TArray<FRoomPolygon*> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon*> &remaining, bool repeating, bool useMin) {
 		TArray<FRoomPolygon*> toReturn;
 		float area;
-		float minPctSplit = 0.35f;
+		float minPctSplit = 0.25f;
 		bool couldPlace = false;
 		int c1 = 0;
 		do {
@@ -907,7 +907,7 @@ struct FRoomPolygon : public FPolygon
 						couldPlace = true;
 
 					}
-					else {
+					else if (scale > minPctSplit) {
 						FRoomPolygon* newP = target->splitAlongMax(r.minArea / target->getArea(), true);
 						if (newP == nullptr) {
 							couldPlace = false;
@@ -917,6 +917,9 @@ struct FRoomPolygon : public FPolygon
 							toReturn.Add(newP);
 							couldPlace = true;
 						}
+						remaining.EmplaceAt(0, target);
+					}
+					else {
 						remaining.EmplaceAt(0, target);
 					}
 						
@@ -1080,6 +1083,8 @@ struct FHousePolygon : public FMetaPolygon {
 	float population;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	RoomType type;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	SimplePlotType simplePlotType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TSet<int32> entrances;
@@ -1347,6 +1352,8 @@ struct FPlotPolygon : public FMetaPolygon{
 	float population;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	RoomType type;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	SimplePlotType simplePlotType;
 
 };
 
