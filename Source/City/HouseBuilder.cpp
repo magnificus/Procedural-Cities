@@ -662,8 +662,32 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	}
 	return toReturn;
 }
+FHouseInfo AHouseBuilder::getHouseInfoSimple(FHousePolygon f, float floorHeight, float maxRoomArea) {
+	FHouseInfo toReturn;
+	for (int i = 1; i < f.points.Num(); i++) {
+		FMaterialPolygon side;
+		side.type = PolygonType::exterior;
+		side.points.Add(f.points[i - 1] + FVector(0, 0, f.height*floorHeight));
+		side.points.Add(f.points[i - 1]);
+		side.points.Add(f.points[i]);
+		side.points.Add(f.points[i] + FVector(0, 0, f.height*floorHeight));
+		side.points.Add(f.points[i - 1] + FVector(0, 0, f.height*floorHeight));
+		side.reverse();
+		toReturn.roomInfo.pols.Add(side);
+	}
+	FMaterialPolygon roof;
+	roof.points = f.points;
+	roof.type = PolygonType::roof;
+	roof.offset(FVector(0, 0, f.height*floorHeight));
+	roof.reverse();
+	toReturn.roomInfo.pols.Add(roof);
 
-FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, float floorHeight, float maxRoomArea, bool shellOnly, int minFloors, int maxFloors)
+	return toReturn;
+
+}
+
+
+FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly)
 {
 	if (f.points.Num() < 3) {
 		return FHouseInfo();
@@ -672,12 +696,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float noiseMultiplier, f
 	FHouseInfo toReturn;
 	for (int i = 0; i < makeInterestingAttempts; i++)
 		makeInteresting(f, toReturn, hole);
-	//noise
 	int floors = f.height;
-	//if (scaled_raw_noise_2d(minFloors, maxFloors, f.housePosition.X*noiseMultiplier, f.housePosition.Y*noiseMultiplier) > 0.7f) {
-	//	floors *= 2;
-	//}
-	//int floors = scaled_raw_noise_2d(minFloors, maxFloors, f.housePosition.X*noiseMultiplier, f.housePosition.Y*noiseMultiplier);
 
 
 	float wDens = randFloat() * 0.0010 + 0.0005;

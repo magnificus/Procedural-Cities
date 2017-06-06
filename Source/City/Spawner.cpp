@@ -117,17 +117,17 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 
 		if (testCollision(tangents, vert1, vert2, collisionLeniency)) {
 			FVector newE = intersection(current->segment->p1, current->segment->p2, f->p1, f->p2);
-			current->time = 100000;
 			if (newE.X == 0) {
 				// the lines themselves are not colliding, its an edge case
 				continue;
 			}
 			else {
+				current->time = 100000;
 				FVector tangent = newE - current->segment->p1;
 				tangent.Normalize();
-				float len = FVector::Dist(newE, current->segment->p2);
-				current->segment->p2 += (len/* - standardWidth / 2*/) * tangent;
-				current->segment->p2 = newE;
+				float len = FVector::Dist(newE, current->segment->p1);
+				current->segment->p2 = current->segment->p1 + (len/* - standardWidth / 2*/) * tangent;
+				//current->segment->p2 = newE;
 				//addVertices(current->segment);
 				current->segment->roadInFront = true;
 
@@ -138,9 +138,9 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				current->segment->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
 				addVertices(current->segment);
 				// new road cant be too short
-				if (FVector::Dist(current->segment->p1, current->segment->p2) < primaryStepLength.Size() / 6) {
-					return false;
-				}
+				//if (FVector::Dist(current->segment->p1, current->segment->p2) < 1000) {
+				//	return false;
+				//}
 			}
 		}
 
@@ -413,7 +413,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FLine> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 500, 500, 200, 100);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 1000, 400, 0, 200);
 }
 
 // Called when the game starts or when spawned

@@ -449,6 +449,10 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 			f.open = false;
 		}
 		f.checkOrientation();
+		//if (f.getArea() < 500) {
+		//	polygons.RemoveAt(i);
+		//	i--;
+		//}
 	}
 
 
