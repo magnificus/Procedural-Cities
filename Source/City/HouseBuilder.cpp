@@ -352,7 +352,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 	if (randFloat() < 0.15f && f.points.Num() > 3) {
 		// move side inwards
 		float len = FMath::FRandRange(400, 1500);
-		int place = (FMath::FRand() - 0.01) * (f.points.Num() - 4) + 2;
+		int place = FMath::FRandRange(0, 0.99) * (f.points.Num() - 3) + 2;
 		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
 		if (res.points.Num() > 0) {
 			FSimplePlot simplePlot;
@@ -368,7 +368,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 
 	else if (randFloat() < 0.1f && f.points.Num() > 3) {
 		// remove corner
-		int place = (FMath::FRand() - 0.01)* (f.points.Num() - 3) + 1;
+		int place = FMath::FRandRange(0, 0.99) * (f.points.Num() - 3) + 2;
 		FVector p1 = middle(f.points[place - 1], f.points[place]);
 		FVector p2 = middle(f.points[place + 1], f.points[place]);
 
@@ -643,7 +643,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		}
 	}
 	// shrink whole symmetrically
-	else if (FMath::FRand() < 0.2) {
+	else if (FMath::FRand() < 0.3) {
 		float len = FMath::FRandRange(400, 1200);
 		FHousePolygon cp = f;
 		cp.symmetricShrink(len, cp.buildLeft);

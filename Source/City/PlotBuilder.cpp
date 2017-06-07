@@ -269,8 +269,9 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 {
 	FSidewalkInfo toReturn;
-	float placeRatio = 0.001;
+	// trees
 	if (FMath::FRand() < 0.1f) {
+		float placeRatio = 0.001;
 		for (int i = 1; i < sidewalk.points.Num(); i += 2) {
 			int toPlace = placeRatio * (sidewalk.points[i] - sidewalk.points[i - 1]).Size();
 			for (int j = 1; j < toPlace; j++) {
@@ -281,6 +282,21 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 				tan.Normalize();
 				toReturn.staticMeshes.Add(FMeshInfo{ "tree", FTransform(origin + j * tan * (len / toPlace)) });
 			}
+		}
+	}
+	// lamp posts
+	float placeRatio = 0.0005;
+
+	for (int i = 1; i < sidewalk.points.Num(); i += 2) {
+		int toPlace = placeRatio * (sidewalk.points[i] - sidewalk.points[i - 1]).Size();
+		for (int j = 1; j < toPlace; j++) {
+			FVector origin = sidewalk.points[i - 1];
+			FVector target = sidewalk.points[i];
+			FVector tan = target - origin;
+			FVector normal = getNormal(origin, target, true);
+			float len = tan.Size();
+			tan.Normalize();
+			toReturn.staticMeshes.Add(FMeshInfo{ "lamppost", FTransform(normal.Rotation(), origin + j * tan * (len / toPlace)) });
 		}
 	}
 

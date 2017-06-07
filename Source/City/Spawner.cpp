@@ -24,6 +24,11 @@ int convertToMapIndex(int x, int y) {
 	return x * 10000 + y;
 }
 
+float noise(float multiplier, float x, float y) {
+	return scaled_octave_noise_2d(2, 1.0, multiplier, 0, 1, x, y);
+
+}
+
 void addRoadToMap(TMap <int, TArray<FRoadSegment*>*> &map, FRoadSegment* current, float intervalLength) {
 	FVector middle = (current->p2 - current->p1) / 2 + current->p1;
 	int x = FMath::RoundToInt((middle.X / intervalLength));
@@ -137,7 +142,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				FVector tangent = newE - current->segment->p1;
 				tangent.Normalize();
 				float len = FVector::Dist(newE, current->segment->p1);
-				current->segment->p2 = current->segment->p1 + (len/* - standardWidth / 2*/) * tangent;
+				current->segment->p2 = current->segment->p1 + (len - standardWidth / 2) * tangent;
 				//current->segment->p2 = newE;
 				//addVertices(current->segment);
 				current->segment->roadInFront = true;
@@ -181,7 +186,9 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->type = prevSeg->type;
 	newRoad->endTangent = newRoad->p2 - newRoad->p1;
 	newRoadL->segment = newRoad;
-	newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X)/2)*noiseScale, ((newRoad->p1.Y + newRoad->p2.Y)/2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	FVector mP = middle(newRoad->p1, newRoad->p2);
+	newRoadL->time = noise(noiseScale, mP.X, mP.Y) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	//newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X)/2)*noiseScale, ((newRoad->p1.Y + newRoad->p2.Y)/2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	newRoadL->roadLength = previous->roadLength + 1;
 	newRoadL->previous = previous;
 	addVertices(newRoad);
@@ -213,7 +220,11 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	// every side track has less priority
 
 	//newRoadL->time = previous->segment->type != RoadType::main ? previous->time + FMath::Rand() % 1 : (previous->time + 1);
-	newRoadL->time = -raw_noise_2d(((newRoad->p1.X + newRoad->p2.X) / 2) * noiseScale, ((newRoad->p1.Y + newRoad->p2.Y) / 2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	//newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X) / 2) * noiseScale, ((newRoad->p1.Y + newRoad->p2.Y) / 2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	//newRoadL->time = scaled_octave_noise_2d(4, 0.5, noiseScale, 0, 1, newRoad->p1.X, newRoad->p1.Y);
+	FVector mP = middle(newRoad->p1, newRoad->p2);
+	newRoadL->time = noise(noiseScale, mP.X, mP.Y);// ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
 
@@ -341,7 +352,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments(float noiseScale)
 			determinedSegments.Add(current->segment);
 			if (current->previous && FVector::Dist(current->previous->segment->p2, current->segment->p1) < 100)
 				current->previous->segment->roadInFront = true;
-			addRoadToMap(segmentsOrganized, current->segment, primaryStepLength.Size() / 2);
+			//addRoadToMap(segmentsOrganized, current->segment, primaryStepLength.Size() / 2);
 
 			UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT PRIORITY %f"), current->time);
 			addExtensions(queue, current, allSegments);
@@ -360,11 +371,12 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments(float noiseScale)
 		float closestDist = 10000000.0f;
 		FRoadSegment* closest = nullptr;
 		FVector impactP;
-		addVertices(f2);
+		//addVertices(f2);
 		bool foundCollision = false;
 		for (FRoadSegment* f : determinedSegments) {
-			if (f == f2)
+			if (f == f2) {
 				continue;
+			}
 			if (FVector::Dist(f->p2, f2->p1) < 100 || FVector::Dist(f->p1, f2->p2) < 100) {
 				foundCollision = false;
 				break;
@@ -380,10 +392,10 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments(float noiseScale)
 
 		}
 		if (foundCollision) {
-			FVector tangent2 = impactP - f2->p1;
-			tangent2.Normalize();
+			//FVector tangent2 = impactP - f2->p1;
+			//tangent2.Normalize();
 			float len = FVector::Dist(impactP, f2->p1);
-			f2->p2 = f2->p1 + (len/* - standardWidth / 2*/) * tangent2;
+			f2->p2 = f2->p1 + (len - standardWidth / 2) * tangent;
 
 			FVector naturalTangent = f2->p2 - f2->p1;
 			naturalTangent.Normalize();
@@ -397,7 +409,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments(float noiseScale)
 		}
 		else {
 			f2->p2 -= tangent*maxAttachDistance;
-			addVertices(f2);
+			//addVertices(f2);
 		}
 
 
@@ -437,15 +449,17 @@ TArray<FPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
 	return polygons;
 }
 
+
 TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, float posMultiplier) {
 	TArray<FTransform> toReturn;
 	for (int i = 0; i < numSide; i++) {
 		for (int j = 0; j < numSide; j++) {
 			FTransform f;
 			f.SetLocation(FVector(posMultiplier * i, posMultiplier * j, 0));
-			float x = f.GetLocation().X * noiseMultiplier;
-			float y = f.GetLocation().Y * noiseMultiplier;
-			float res = raw_noise_2d(x, y);
+			//float x = f.GetLocation().X * noiseMultiplier;
+			//float y = f.GetLocation().Y * noiseMultiplier;
+			//float res = raw_noise_2d(x, y);
+			float res = noise(noiseMultiplier, f.GetLocation().X, f.GetLocation().Y);
 			//res = octave_noise_2d(5, 0.5, 1.0, x, y);
 			f.SetScale3D(FVector(posMultiplier/100, posMultiplier/100,  res* posMultiplier/10));
 			toReturn.Add(f);
@@ -459,7 +473,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FLine> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 500, 500, 300, 50);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 700, 700, 300, 50);
 }
 
 // Called when the game starts or when spawned
