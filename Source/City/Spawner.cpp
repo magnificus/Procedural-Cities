@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "City.h"
+#include "simplexnoise.h"
 #include "Spawner.h"
 
 
@@ -24,10 +25,7 @@ int convertToMapIndex(int x, int y) {
 	return x * 10000 + y;
 }
 
-float noise(float multiplier, float x, float y) {
-	return scaled_octave_noise_2d(2, 1.0, multiplier, 0, 1, x, y);
 
-}
 
 void addRoadToMap(TMap <int, TArray<FRoadSegment*>*> &map, FRoadSegment* current, float intervalLength) {
 	FVector middle = (current->p2 - current->p1) / 2 + current->p1;
@@ -78,7 +76,9 @@ void ASpawner::addVertices(FRoadSegment* road) {
 }
 
 
-
+float noise(float multiplier, float x, float y) {
+	return scaled_octave_noise_2d(2, 1.0, multiplier, 0, 1, x, y);
+}
 
 bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map){
 
@@ -154,7 +154,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				//current->segment->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
 				addVertices(current->segment);
 				// new road cant be too short
-				if (FVector::Dist(current->segment->p1, current->segment->p2) < 1000) {
+				if (FVector::Dist(current->segment->p1, current->segment->p2) < 3000) {
 					return false;
 				}
 			//}
@@ -187,7 +187,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->endTangent = newRoad->p2 - newRoad->p1;
 	newRoadL->segment = newRoad;
 	FVector mP = middle(newRoad->p1, newRoad->p2);
-	newRoadL->time = noise(noiseScale, mP.X, mP.Y) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	newRoadL->time = noise(noiseScale, mP.X, mP.Y) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);// + FMath::FRand() * 0.1;
 	//newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X)/2)*noiseScale, ((newRoad->p1.Y + newRoad->p2.Y)/2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	newRoadL->roadLength = previous->roadLength + 1;
 	newRoadL->previous = previous;
@@ -223,7 +223,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	//newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X) / 2) * noiseScale, ((newRoad->p1.Y + newRoad->p2.Y) / 2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	//newRoadL->time = scaled_octave_noise_2d(4, 0.5, noiseScale, 0, 1, newRoad->p1.X, newRoad->p1.Y);
 	FVector mP = middle(newRoad->p1, newRoad->p2);
-	newRoadL->time = noise(noiseScale, mP.X, mP.Y);// ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	newRoadL->time = noise(noiseScale, mP.X, mP.Y);// +FMath::FRand() * 0.1;// ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
@@ -273,7 +273,7 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 
 }
 
-TArray<FRoadSegment> ASpawner::determineRoadSegments(float noiseScale)
+TArray<FRoadSegment> ASpawner::determineRoadSegments()
 {
 	FVector origin;
 
@@ -473,7 +473,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FLine> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 700, 700, 300, 50);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 800, 400, 300, 50);
 }
 
 // Called when the game starts or when spawned

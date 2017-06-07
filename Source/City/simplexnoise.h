@@ -127,7 +127,6 @@ float scaled_raw_noise_4d(const float loBound,
 	const float z,
 	const float w);
 
-
 // Raw Simplex noise - a single noise value.
 float raw_noise_2d(const float x, const float y);
 float raw_noise_3d(const float x, const float y, const float z);

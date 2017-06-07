@@ -35,6 +35,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	FHouseInfo getHouseInfo(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly);
 
+	static void makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole);
+
+	static TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height);
+
+	static FPolygon getShaftHolePolygon(FHousePolygon f);
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

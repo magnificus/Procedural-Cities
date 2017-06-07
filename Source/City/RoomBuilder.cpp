@@ -354,7 +354,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 					currWindow.points.Add(pw2);
 					currWindow.points.Add(pw3);
 					currWindow.points.Add(pw4);
-					if (!testCollision(currWindow, holes, 0, *rp))
+					//if (!testCollision(currWindow, holes, 0, *rp))
 						windows.Add(currWindow);
 				}
 				else {
@@ -370,7 +370,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 						currWindow.points.Add(pw3);
 						currWindow.points.Add(pw4);
 						//currWindow.type = PolygonType::window;
-						if (!testCollision(currWindow, holes, 0, *rp))
+						//if (!testCollision(currWindow, holes, 0, *rp))
 							windows.Add(currWindow);
 
 					}

@@ -1,0 +1,472 @@
+diff --git a/.vs/City/v14/.suo b/.vs/City/v14/.suo
+index 302af6a..98eee29 100644
+Binary files a/.vs/City/v14/.suo and b/.vs/City/v14/.suo differ
+diff --git a/City.sln b/City.sln
+index a46a257..8d9f669 100644
+--- a/City.sln
++++ b/City.sln
+@@ -1,7 +1,7 @@
+ ﻿
+ Microsoft Visual Studio Solution File, Format Version 12.00
+ # Visual Studio 14
+-VisualStudioVersion = 14.0.22310.1
++VisualStudioVersion = 14.0.25420.1
+ MinimumVisualStudioVersion = 10.0.40219.1
+ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Engine", "Engine", "{106DEA80-E19F-474B-A12B-F33FD82C6C5D}"
+ EndProject
+@@ -30,6 +30,36 @@ Global
+ 		Shipping|Win64 = Shipping|Win64
+ 	EndGlobalSection
+ 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame Editor|HTML5.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame Editor|HTML5.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame Editor|Win32.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame Editor|Win32.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame Editor|Win64.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame Editor|Win64.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame|HTML5.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame|HTML5.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame|Win32.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame|Win32.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame|Win64.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.DebugGame|Win64.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development Editor|HTML5.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development Editor|HTML5.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development Editor|Win32.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development Editor|Win32.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development Editor|Win64.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development Editor|Win64.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development|HTML5.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development|HTML5.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development|Win32.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development|Win32.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development|Win64.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Development|Win64.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Shipping|HTML5.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Shipping|HTML5.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Shipping|Win32.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Shipping|Win32.Build.0 = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Shipping|Win64.ActiveCfg = BuiltWithUnrealBuildTool|Win32
++		{F9E3EC55-7E0F-41B4-B3F8-8221C37A49B6}.Shipping|Win64.Build.0 = BuiltWithUnrealBuildTool|Win32
+ 		{8CFEE401-73A1-4CD0-B5EF-A5ACF8D2BD8B}.DebugGame Editor|HTML5.ActiveCfg = HTML5_DebugGame_Editor|Win32
+ 		{8CFEE401-73A1-4CD0-B5EF-A5ACF8D2BD8B}.DebugGame Editor|Win32.ActiveCfg = DebugGame_Editor|Win32
+ 		{8CFEE401-73A1-4CD0-B5EF-A5ACF8D2BD8B}.DebugGame Editor|Win64.ActiveCfg = DebugGame_Editor|x64
+diff --git a/Content/FirstPersonCPP/Maps/standardmap.umap b/Content/FirstPersonCPP/Maps/standardmap.umap
+index 32b674d..fc33a00 100644
+Binary files a/Content/FirstPersonCPP/Maps/standardmap.umap and b/Content/FirstPersonCPP/Maps/standardmap.umap differ
+diff --git a/Content/FirstPersonCPP/Maps/standardmap_BuiltData.uasset b/Content/FirstPersonCPP/Maps/standardmap_BuiltData.uasset
+index 01cdd65..7e32cc1 100644
+Binary files a/Content/FirstPersonCPP/Maps/standardmap_BuiltData.uasset and b/Content/FirstPersonCPP/Maps/standardmap_BuiltData.uasset differ
+diff --git a/Content/HouseBuilderBP.uasset b/Content/HouseBuilderBP.uasset
+index 96c9289..be5ece2 100644
+Binary files a/Content/HouseBuilderBP.uasset and b/Content/HouseBuilderBP.uasset differ
+diff --git a/Content/SpawnerBP.uasset b/Content/SpawnerBP.uasset
+index 0a48125..262f068 100644
+Binary files a/Content/SpawnerBP.uasset and b/Content/SpawnerBP.uasset differ
+diff --git a/Source/City/BaseLibrary.cpp b/Source/City/BaseLibrary.cpp
+index 24e67cc..45f8f3e 100644
+--- a/Source/City/BaseLibrary.cpp
++++ b/Source/City/BaseLibrary.cpp
+@@ -136,7 +136,7 @@ bool testCollision(FPolygon &in, TArray<FPolygon> &others, float leniency, FPoly
+ 			return true;
+ 		}
+ 	}
+-	return intersection(in, surrounding).X != 0.0f;
++	return intersection(in, surrounding).X != 0.0f || !testCollision(in, surrounding, leniency);
+ }
+ 
+ // returns true if colliding
+diff --git a/Source/City/BaseLibrary.h b/Source/City/BaseLibrary.h
+index 1042c30..0faabd7 100644
+--- a/Source/City/BaseLibrary.h
++++ b/Source/City/BaseLibrary.h
+@@ -1087,6 +1087,8 @@ struct FHousePolygon : public FMetaPolygon {
+ 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+ 	SimplePlotType simplePlotType;
+ 
++	bool canBeModified = true;
++
+ 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+ 		TSet<int32> entrances;
+ 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+diff --git a/Source/City/HouseBuilder.cpp b/Source/City/HouseBuilder.cpp
+index 74e4e86..3716aec 100644
+--- a/Source/City/HouseBuilder.cpp
++++ b/Source/City/HouseBuilder.cpp
+@@ -1,7 +1,7 @@
+ // Fill out your copyright notice in the Description page of Project Settings.
+ 
+ #include "City.h"
+-#include "simplexnoise.h"
++//#include "simplexnoise.h"
+ #include "polypartition.h"
+ #include "HouseBuilder.h"
+ 
+@@ -291,7 +291,7 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin,
+ }
+ 
+ 
+-FPolygon getShaftHolePolygon(FHousePolygon f) {
++FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f) {
+ 	FPolygon hole;
+ 	FVector center = f.getCenter();
+ 
+@@ -347,7 +347,7 @@ FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHol
+ }
+ 
+ // this method changes the shape of the house to make it less cube-like, can be called several times for more "interesting" shapes 
+-void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHole) {
++void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole) {
+ 	//return;
+ 	if (randFloat() < 0.15f && f.points.Num() > 3) {
+ 		// move side inwards
+@@ -359,7 +359,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
+ 			simplePlot.pol = res;
+ 			simplePlot.type = f.simplePlotType;//FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+ 			simplePlot.decorate();
+-			toReturn.remainingPlots.Add(simplePlot);
++			toReturn.Add(simplePlot);
+ 
+ 		}
+ 
+@@ -385,7 +385,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
+ 			simplePlot.type = f.simplePlotType; // FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+ 
+ 			simplePlot.decorate();
+-			toReturn.remainingPlots.Add(simplePlot);
++			toReturn.Add(simplePlot);
+ 
+ 			f.addPoint(place, p1);
+ 			f.addPoint(place + 1, p2);
+@@ -427,7 +427,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
+ 			simplePlot.type = f.simplePlotType;
+ 
+ 			simplePlot.decorate();
+-			toReturn.remainingPlots.Add(simplePlot);
++			toReturn.Add(simplePlot);
+ 
+ 			f.addPoint(place, first);
+ 			f.windows.Add(place);
+@@ -447,7 +447,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
+ }
+ 
+ 
+-TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height) {
++TArray<FMaterialPolygon> AHouseBuilder::getShaftSides(FPolygon hole, int openSide, float height) {
+ 	TArray<FMaterialPolygon> sides;
+ 	FVector center = hole.getCenter();
+ 	for (int i = 1; i < hole.points.Num(); i++) {
+@@ -698,8 +698,10 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
+ 	}
+ 	FPolygon hole = getShaftHolePolygon(f);
+ 	FHouseInfo toReturn;
+-	for (int i = 0; i < makeInterestingAttempts; i++)
+-		makeInteresting(f, toReturn, hole);
++	if (f.canBeModified) {
++		for (int i = 0; i < makeInterestingAttempts; i++)
++			makeInteresting(f, toReturn.remainingPlots, hole);
++	}
+ 	int floors = f.height;
+ 
+ 
+@@ -744,7 +746,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
+ 
+ 	bool facade = FMath::FRand() < 0.2;
+ 		for (int i = 1; i < floors; i++) {
+-			if (FMath::FRand() < 0.15) {
++			if (FMath::FRand() < 0.15 && f.canBeModified) {
+ 				TArray<FMaterialPolygon> res = potentiallyShrink(f, hole);
+ 				for (FMaterialPolygon &fm : res) {
+ 					fm.offset(FVector(0,0,floorHeight*i));
+diff --git a/Source/City/HouseBuilder.h b/Source/City/HouseBuilder.h
+index f7ebb89..6bd1f64 100644
+--- a/Source/City/HouseBuilder.h
++++ b/Source/City/HouseBuilder.h
+@@ -35,6 +35,13 @@ public:
+ 	UFUNCTION(BlueprintCallable, Category = "Generation")
+ 	FHouseInfo getHouseInfo(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly);
+ 
++	static void makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole);
++
++	static TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height);
++
++	static FPolygon getShaftHolePolygon(FHousePolygon f);
++
++
+ protected:
+ 	// Called when the game starts or when spawned
+ 	virtual void BeginPlay() override;
+diff --git a/Source/City/PlotBuilder.cpp b/Source/City/PlotBuilder.cpp
+index 6811209..f9c1124 100644
+--- a/Source/City/PlotBuilder.cpp
++++ b/Source/City/PlotBuilder.cpp
+@@ -49,11 +49,32 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
+ 	return added;
+ }
+ 
++FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int maxFloors, float noiseScale) {
++	FHousePolygon pol;
++	float xLen = FMath::FRandRange(minSize, maxSize);
++	float yLen = FMath::FRandRange(minSize, maxSize);
++	FVector tangent = FVector(FMath::FRand(), FMath::FRand(), 0);
++	FVector normal = FRotator(0, 90, 0).RotateVector(tangent);
++	pol.points.Add(FVector(0, 0, 0));
++	pol.points.Add(xLen * tangent);
++	pol.points.Add(xLen * tangent + normal * yLen);
++	pol.points.Add(normal*yLen);
++	pol.points.Add(FVector(0, 0, 0));
++	for (int i = 1; i < pol.points.Num(); i++) {
++		pol.entrances.Add(i);
++		pol.windows.Add(i);
++		pol.open = false;
++	}
++	pol.height = randFloat() * (maxFloors - minFloors) + minFloors;
++	if (raw_noise_2d((pol.housePosition.X)*noiseScale, (pol.housePosition.Y)*noiseScale) > 0.7) {
++		pol.height *= 2;
++	}
++	return pol;
++}
+ 
+ 
+ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int minFloors, float noiseScale) {
+ 	FPlotInfo info;
+-	TArray<FHousePolygon> housePolygons;
+ 
+ 	float maxArea = 4500.0f;
+ 	float minArea = 1200.0f;
+@@ -61,9 +82,6 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
+ 	if (!p.open) {
+ 		FHousePolygon original;
+ 		original.points = p.points;
+-//		original.checkOrientation();
+-		//if (!p.buildLeft)
+-		//	original.reverse();
+ 		original.buildLeft = true;
+ 		original.open = false;
+ 		original.population = p.population;
+@@ -75,33 +93,53 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
+ 		FVector center = p.getCenter();
+ 		p.type = raw_noise_2d((center.X + 31000000)*noiseScale, (center.Y + 3000000)*noiseScale) < 0.5 ? RoomType::office : RoomType::apartment;
+ 
++		if (p.getArea() > 3000 && FMath::FRand() < 0.9) {
++			// create a special plot with several identical houses placed around a green area, this happens in real cities sometimes
++			FHousePolygon model = getRandomModel(4000,7000, minFloors, maxFloors, noiseScale);
++			model.canBeModified = false;
++			FPolygon shaft = AHouseBuilder::getShaftHolePolygon(model);
++			for (int i = 0; i < 5; i++) {
++				TArray<FSimplePlot> temp;
++				AHouseBuilder::makeInteresting(model, temp, shaft);
++			}
+ 
+-		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
+-		for (FHousePolygon r : refinedPolygons) {
+-			r.height = randFloat() * (maxFloors - minFloors) + minFloors;
+-			if (raw_noise_2d((r.housePosition.X)*noiseScale, (r.housePosition.Y)*noiseScale) > 0.7) {
+-				r.height *= 2;
++			TArray<FPolygon> placed;
++			for (int i = 0; i < 20; i++) {
++				FHousePolygon newH = model;
++				newH.offset(p.getRandomPoint(true, 0));
++				if (!testCollision(newH, placed, 0, p)) {
++					info.houses.Add(newH);
++					placed.Add(newH);
++				}
+ 			}
+-			r.type = p.type;
+-			r.simplePlotType = r.type == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
++		}
++		else {
++			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
++			for (FHousePolygon r : refinedPolygons) {
++				r.height = randFloat() * (maxFloors - minFloors) + minFloors;
++				if (raw_noise_2d((r.housePosition.X)*noiseScale, (r.housePosition.Y)*noiseScale) > 0.7) {
++					r.height *= 2;
++				}
++				r.type = p.type;
++				r.simplePlotType = r.type == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
+ 
+-			float area = r.getArea();
+-			UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
++				float area = r.getArea();
++				UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
+ 
+-			if (area < minArea || area > maxArea) {
+-				FSimplePlot fs;
+-				fs.pol = r;
+-				fs.pol.reverse();
+-				fs.pol.offset(FVector(0, 0, 30));
+-				fs.type = FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+-				fs.decorate();
+-				info.leftovers.Add(fs);
++				if (area < minArea || area > maxArea) {
++					FSimplePlot fs;
++					fs.pol = r;
++					fs.pol.reverse();
++					fs.pol.offset(FVector(0, 0, 30));
++					fs.type = FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
++					fs.decorate();
++					info.leftovers.Add(fs);
+ 
+-			}
+-			else {
+-				r.checkOrientation();
+-				housePolygons.Add(r);
+-				//others.Add(r);
++				}
++				else {
++					r.checkOrientation();
++					info.houses.Add(r);
++				}
+ 			}
+ 		}
+ 
+@@ -227,14 +265,13 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
+ //		}
+ //
+ //	}
+-	info.houses = housePolygons;
+ 	return info;
+ 
+ }
+ 
+ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
+ 	FPolygon polygon;
+-	if (p.points.Num() > 2 && p.getArea() > 1000) {
++	if (p.points.Num() > 2){//{ && p.getArea() > 1000) {
+ 		FVector center = p.getCenter();
+ 		for (int i = 1; i < p.points.Num(); i++) {
+ 			FVector tangent = p.points[i] - p.points[i - 1];
+@@ -285,7 +322,7 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
+ 		}
+ 	}
+ 	// lamp posts
+-	float placeRatio = 0.0005;
++	float placeRatio = 0.0007;
+ 
+ 	for (int i = 1; i < sidewalk.points.Num(); i += 2) {
+ 		int toPlace = placeRatio * (sidewalk.points[i] - sidewalk.points[i - 1]).Size();
+diff --git a/Source/City/RoomBuilder.cpp b/Source/City/RoomBuilder.cpp
+index 6d317a1..7196439 100644
+--- a/Source/City/RoomBuilder.cpp
++++ b/Source/City/RoomBuilder.cpp
+@@ -354,7 +354,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
+ 					currWindow.points.Add(pw2);
+ 					currWindow.points.Add(pw3);
+ 					currWindow.points.Add(pw4);
+-					if (!testCollision(currWindow, holes, 0, *rp))
++					//if (!testCollision(currWindow, holes, 0, *rp))
+ 						windows.Add(currWindow);
+ 				}
+ 				else {
+diff --git a/Source/City/Spawner.cpp b/Source/City/Spawner.cpp
+index 47badc1..df21541 100644
+--- a/Source/City/Spawner.cpp
++++ b/Source/City/Spawner.cpp
+@@ -1,6 +1,7 @@
+ // Fill out your copyright notice in the Description page of Project Settings.
+ 
+ #include "City.h"
++#include "simplexnoise.h"
+ #include "Spawner.h"
+ 
+ 
+@@ -24,10 +25,7 @@ int convertToMapIndex(int x, int y) {
+ 	return x * 10000 + y;
+ }
+ 
+-float noise(float multiplier, float x, float y) {
+-	return scaled_octave_noise_2d(2, 1.0, multiplier, 0, 1, x, y);
+ 
+-}
+ 
+ void addRoadToMap(TMap <int, TArray<FRoadSegment*>*> &map, FRoadSegment* current, float intervalLength) {
+ 	FVector middle = (current->p2 - current->p1) / 2 + current->p1;
+@@ -78,7 +76,9 @@ void ASpawner::addVertices(FRoadSegment* road) {
+ }
+ 
+ 
+-
++float noise(float multiplier, float x, float y) {
++	return scaled_octave_noise_2d(2, 1.0, multiplier, 0, 1, x, y);
++}
+ 
+ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map){
+ 
+@@ -154,7 +154,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
+ 				//current->segment->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
+ 				addVertices(current->segment);
+ 				// new road cant be too short
+-				if (FVector::Dist(current->segment->p1, current->segment->p2) < 1000) {
++				if (FVector::Dist(current->segment->p1, current->segment->p2) < 3000) {
+ 					return false;
+ 				}
+ 			//}
+@@ -187,7 +187,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
+ 	newRoad->endTangent = newRoad->p2 - newRoad->p1;
+ 	newRoadL->segment = newRoad;
+ 	FVector mP = middle(newRoad->p1, newRoad->p2);
+-	newRoadL->time = noise(noiseScale, mP.X, mP.Y) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
++	newRoadL->time = noise(noiseScale, mP.X, mP.Y) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);// + FMath::FRand() * 0.1;
+ 	//newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X)/2)*noiseScale, ((newRoad->p1.Y + newRoad->p2.Y)/2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+ 	newRoadL->roadLength = previous->roadLength + 1;
+ 	newRoadL->previous = previous;
+@@ -223,7 +223,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
+ 	//newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X) / 2) * noiseScale, ((newRoad->p1.Y + newRoad->p2.Y) / 2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+ 	//newRoadL->time = scaled_octave_noise_2d(4, 0.5, noiseScale, 0, 1, newRoad->p1.X, newRoad->p1.Y);
+ 	FVector mP = middle(newRoad->p1, newRoad->p2);
+-	newRoadL->time = noise(noiseScale, mP.X, mP.Y);// ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
++	newRoadL->time = noise(noiseScale, mP.X, mP.Y);// +FMath::FRand() * 0.1;// ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+ 
+ 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
+ 	newRoadL->previous = previous;
+@@ -273,7 +273,7 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
+ 
+ }
+ 
+-TArray<FRoadSegment> ASpawner::determineRoadSegments(float noiseScale)
++TArray<FRoadSegment> ASpawner::determineRoadSegments()
+ {
+ 	FVector origin;
+ 
+@@ -473,7 +473,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier,
+ 
+ TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FLine> segments)
+ {
+-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 700, 700, 300, 50);
++	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 800, 400, 300, 50);
+ }
+ 
+ // Called when the game starts or when spawned
+diff --git a/Source/City/Spawner.h b/Source/City/Spawner.h
+index 44edc03..b9576ec 100644
+--- a/Source/City/Spawner.h
++++ b/Source/City/Spawner.h
+@@ -5,7 +5,6 @@
+ #include "Components/SplineMeshComponent.h"
+ #include "BaseLibrary.h"
+ #include "PlotBuilder.h"
+-#include "simplexnoise.h"
+ #include "Spawner.generated.h"
+ 
+ 
+@@ -104,7 +103,7 @@ public:
+ 	bool placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map);
+ 
+ 	UFUNCTION(BlueprintCallable, Category = "Generation")
+-	TArray<FRoadSegment> determineRoadSegments(float noiseMultiplier);
++	TArray<FRoadSegment> determineRoadSegments();
+ 
+ 	UFUNCTION(BlueprintCallable, Category = "Data")
+ 		TArray<FPolygon> roadsToPolygons(TArray<FRoadSegment> segments);
+diff --git a/Source/City/simplexnoise.h b/Source/City/simplexnoise.h
+index 4c04ce7..241ecfa 100644
+--- a/Source/City/simplexnoise.h
++++ b/Source/City/simplexnoise.h
+@@ -127,7 +127,6 @@ float scaled_raw_noise_4d(const float loBound,
+ 	const float z,
+ 	const float w);
+ 
+-
+ // Raw Simplex noise - a single noise value.
+ float raw_noise_2d(const float x, const float y);
+ float raw_noise_3d(const float x, const float y, const float z);

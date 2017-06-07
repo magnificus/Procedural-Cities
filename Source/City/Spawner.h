@@ -5,7 +5,6 @@
 #include "Components/SplineMeshComponent.h"
 #include "BaseLibrary.h"
 #include "PlotBuilder.h"
-#include "simplexnoise.h"
 #include "Spawner.generated.h"
 
 
@@ -104,7 +103,7 @@ public:
 	bool placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	TArray<FRoadSegment> determineRoadSegments(float noiseMultiplier);
+	TArray<FRoadSegment> determineRoadSegments();
 
 	UFUNCTION(BlueprintCallable, Category = "Data")
 		TArray<FPolygon> roadsToPolygons(TArray<FRoadSegment> segments);

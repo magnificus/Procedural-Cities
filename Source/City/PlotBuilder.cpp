@@ -49,11 +49,32 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 	return added;
 }
 
+FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int maxFloors, float noiseScale) {
+	FHousePolygon pol;
+	float xLen = FMath::FRandRange(minSize, maxSize);
+	float yLen = FMath::FRandRange(minSize, maxSize);
+	FVector tangent = FVector(FMath::FRand(), FMath::FRand(), 0);
+	FVector normal = FRotator(0, 90, 0).RotateVector(tangent);
+	pol.points.Add(FVector(0, 0, 0));
+	pol.points.Add(xLen * tangent);
+	pol.points.Add(xLen * tangent + normal * yLen);
+	pol.points.Add(normal*yLen);
+	pol.points.Add(FVector(0, 0, 0));
+	for (int i = 1; i < pol.points.Num(); i++) {
+		pol.entrances.Add(i);
+		pol.windows.Add(i);
+		pol.open = false;
+	}
+	pol.height = randFloat() * (maxFloors - minFloors) + minFloors;
+	if (raw_noise_2d((pol.housePosition.X)*noiseScale, (pol.housePosition.Y)*noiseScale) > 0.7) {
+		pol.height *= 2;
+	}
+	return pol;
+}
 
 
 FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int minFloors, float noiseScale) {
 	FPlotInfo info;
-	TArray<FHousePolygon> housePolygons;
 
 	float maxArea = 4500.0f;
 	float minArea = 1200.0f;
@@ -61,9 +82,6 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 	if (!p.open) {
 		FHousePolygon original;
 		original.points = p.points;
-//		original.checkOrientation();
-		//if (!p.buildLeft)
-		//	original.reverse();
 		original.buildLeft = true;
 		original.open = false;
 		original.population = p.population;
@@ -75,33 +93,53 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 		FVector center = p.getCenter();
 		p.type = raw_noise_2d((center.X + 31000000)*noiseScale, (center.Y + 3000000)*noiseScale) < 0.5 ? RoomType::office : RoomType::apartment;
 
-
-		TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
-		for (FHousePolygon r : refinedPolygons) {
-			r.height = randFloat() * (maxFloors - minFloors) + minFloors;
-			if (raw_noise_2d((r.housePosition.X)*noiseScale, (r.housePosition.Y)*noiseScale) > 0.7) {
-				r.height *= 2;
+		if (p.getArea() > 3000 && FMath::FRand() < 0.2) {
+			// create a special plot with several identical houses placed around a green area, this happens in real cities sometimes
+			FHousePolygon model = getRandomModel(4000,7000, minFloors, maxFloors, noiseScale);
+			model.canBeModified = false;
+			FPolygon shaft = AHouseBuilder::getShaftHolePolygon(model);
+			for (int i = 0; i < 5; i++) {
+				TArray<FSimplePlot> temp;
+				AHouseBuilder::makeInteresting(model, temp, shaft);
 			}
-			r.type = p.type;
-			r.simplePlotType = r.type == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
 
-			float area = r.getArea();
-			UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
-
-			if (area < minArea || area > maxArea) {
-				FSimplePlot fs;
-				fs.pol = r;
-				fs.pol.reverse();
-				fs.pol.offset(FVector(0, 0, 30));
-				fs.type = FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
-				fs.decorate();
-				info.leftovers.Add(fs);
-
+			TArray<FPolygon> placed;
+			for (int i = 0; i < 20; i++) {
+				FHousePolygon newH = model;
+				newH.offset(p.getRandomPoint(true, 0));
+				if (!testCollision(newH, placed, 0, p)) {
+					info.houses.Add(newH);
+					placed.Add(newH);
+				}
 			}
-			else {
-				r.checkOrientation();
-				housePolygons.Add(r);
-				//others.Add(r);
+		}
+		else {
+			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
+			for (FHousePolygon r : refinedPolygons) {
+				r.height = randFloat() * (maxFloors - minFloors) + minFloors;
+				if (raw_noise_2d((r.housePosition.X)*noiseScale, (r.housePosition.Y)*noiseScale) > 0.7) {
+					r.height *= 2;
+				}
+				r.type = p.type;
+				r.simplePlotType = r.type == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
+
+				float area = r.getArea();
+				UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
+
+				if (area < minArea || area > maxArea) {
+					FSimplePlot fs;
+					fs.pol = r;
+					fs.pol.reverse();
+					fs.pol.offset(FVector(0, 0, 30));
+					fs.type = FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+					fs.decorate();
+					info.leftovers.Add(fs);
+
+				}
+				else {
+					r.checkOrientation();
+					info.houses.Add(r);
+				}
 			}
 		}
 
@@ -227,14 +265,13 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 //		}
 //
 //	}
-	info.houses = housePolygons;
 	return info;
 
 }
 
 FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
 	FPolygon polygon;
-	if (p.points.Num() > 2 && p.getArea() > 1000) {
+	if (p.points.Num() > 2){//{ && p.getArea() > 1000) {
 		FVector center = p.getCenter();
 		for (int i = 1; i < p.points.Num(); i++) {
 			FVector tangent = p.points[i] - p.points[i - 1];
@@ -285,7 +322,7 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 		}
 	}
 	// lamp posts
-	float placeRatio = 0.0005;
+	float placeRatio = 0.0007;
 
 	for (int i = 1; i < sidewalk.points.Num(); i += 2) {
 		int toPlace = placeRatio * (sidewalk.points[i] - sidewalk.points[i - 1]).Size();

@@ -1087,6 +1087,8 @@ struct FHousePolygon : public FMetaPolygon {
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	SimplePlotType simplePlotType;
 
+	bool canBeModified = true;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TSet<int32> entrances;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

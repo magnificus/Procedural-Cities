@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "City.h"
-#include "simplexnoise.h"
+//#include "simplexnoise.h"
 #include "polypartition.h"
 #include "HouseBuilder.h"
 
@@ -291,7 +291,7 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 }
 
 
-FPolygon getShaftHolePolygon(FHousePolygon f) {
+FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f) {
 	FPolygon hole;
 	FVector center = f.getCenter();
 
@@ -347,7 +347,7 @@ FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHol
 }
 
 // this method changes the shape of the house to make it less cube-like, can be called several times for more "interesting" shapes 
-void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHole) {
+void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole) {
 	//return;
 	if (randFloat() < 0.15f && f.points.Num() > 3) {
 		// move side inwards
@@ -359,7 +359,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 			simplePlot.pol = res;
 			simplePlot.type = f.simplePlotType;//FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 			simplePlot.decorate();
-			toReturn.remainingPlots.Add(simplePlot);
+			toReturn.Add(simplePlot);
 
 		}
 
@@ -385,7 +385,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 			simplePlot.type = f.simplePlotType; // FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 
 			simplePlot.decorate();
-			toReturn.remainingPlots.Add(simplePlot);
+			toReturn.Add(simplePlot);
 
 			f.addPoint(place, p1);
 			f.addPoint(place + 1, p2);
@@ -427,7 +427,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 			simplePlot.type = f.simplePlotType;
 
 			simplePlot.decorate();
-			toReturn.remainingPlots.Add(simplePlot);
+			toReturn.Add(simplePlot);
 
 			f.addPoint(place, first);
 			f.windows.Add(place);
@@ -447,7 +447,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 }
 
 
-TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height) {
+TArray<FMaterialPolygon> AHouseBuilder::getShaftSides(FPolygon hole, int openSide, float height) {
 	TArray<FMaterialPolygon> sides;
 	FVector center = hole.getCenter();
 	for (int i = 1; i < hole.points.Num(); i++) {
@@ -698,8 +698,10 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	}
 	FPolygon hole = getShaftHolePolygon(f);
 	FHouseInfo toReturn;
-	for (int i = 0; i < makeInterestingAttempts; i++)
-		makeInteresting(f, toReturn, hole);
+	if (f.canBeModified) {
+		for (int i = 0; i < makeInterestingAttempts; i++)
+			makeInteresting(f, toReturn.remainingPlots, hole);
+	}
 	int floors = f.height;
 
 
@@ -744,7 +746,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 
 	bool facade = FMath::FRand() < 0.2;
 		for (int i = 1; i < floors; i++) {
-			if (FMath::FRand() < 0.15) {
+			if (FMath::FRand() < 0.15 && f.canBeModified) {
 				TArray<FMaterialPolygon> res = potentiallyShrink(f, hole);
 				for (FMaterialPolygon &fm : res) {
 					fm.offset(FVector(0,0,floorHeight*i));

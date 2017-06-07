@@ -136,7 +136,7 @@ bool testCollision(FPolygon &in, TArray<FPolygon> &others, float leniency, FPoly
 			return true;
 		}
 	}
-	return intersection(in, surrounding).X != 0.0f;
+	return intersection(in, surrounding).X != 0.0f || !testCollision(in, surrounding, leniency);
 }
 
 // returns true if colliding
