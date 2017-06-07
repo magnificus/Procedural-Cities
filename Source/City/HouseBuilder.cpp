@@ -352,7 +352,7 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 	if (randFloat() < 0.15f && f.points.Num() > 3) {
 		// move side inwards
 		float len = FMath::FRandRange(400, 1500);
-		int place = FMath::FRand() * (f.points.Num() - 4) + 2;
+		int place = (FMath::FRand() - 0.01) * (f.points.Num() - 4) + 2;
 		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
 		if (res.points.Num() > 0) {
 			FSimplePlot simplePlot;
@@ -366,9 +366,9 @@ void makeInteresting(FHousePolygon &f, FHouseInfo &toReturn, FPolygon &centerHol
 
 	}
 
-	else if (randFloat() < 0.1f) {
+	else if (randFloat() < 0.1f && f.points.Num() > 3) {
 		// remove corner
-		int place = FMath::FRand() * (f.points.Num() - 3) + 2;
+		int place = (FMath::FRand() - 0.01)* (f.points.Num() - 3) + 1;
 		FVector p1 = middle(f.points[place - 1], f.points[place]);
 		FVector p2 = middle(f.points[place + 1], f.points[place]);
 
@@ -629,7 +629,7 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHole) {
 	TArray<FMaterialPolygon> toReturn;
 	FHousePolygon newF = FHousePolygon(f);
-	if (FMath::FRand() < 0.2) {
+	if (FMath::FRand() < 0.3) {
 		// only shrink one side
 		float len = FMath::FRandRange(400, 1500);
 		int place = FMath::FRand() * (f.points.Num() - 3) + 2;
@@ -642,11 +642,12 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 			return toReturn;
 		}
 	}
-	else if (FMath::FRand() < 0.0) {
-		float len = FMath::FRandRange(400, 1500);
+	// shrink whole symmetrically
+	else if (FMath::FRand() < 0.2) {
+		float len = FMath::FRandRange(400, 1200);
 		FHousePolygon cp = f;
 		cp.symmetricShrink(len, cp.buildLeft);
-		if (intersection(cp, centerHole).X == 0.0f) {
+		if (intersection(cp, centerHole).X == 0.0f && !selfIntersection(cp)) {
 			f.points.RemoveAt(f.points.Num() - 1);
 			f.reverse();
 			//cp.reverse();
@@ -658,6 +659,9 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 			//	fm.reverse();
 			//}
 			f = cp;
+			for (int i = 1; i < f.points.Num(); i++) {
+				f.windows.Add(i);
+			}
 		}
 	}
 	return toReturn;
@@ -740,7 +744,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 
 	bool facade = FMath::FRand() < 0.2;
 		for (int i = 1; i < floors; i++) {
-			if (FMath::FRand() < 0.1) {
+			if (FMath::FRand() < 0.15) {
 				TArray<FMaterialPolygon> res = potentiallyShrink(f, hole);
 				for (FMaterialPolygon &fm : res) {
 					fm.offset(FVector(0,0,floorHeight*i));

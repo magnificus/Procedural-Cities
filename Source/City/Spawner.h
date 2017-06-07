@@ -56,7 +56,6 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
 		float mainRoadAdvantage = 0.1;
 
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float collisionLeniency;
 
@@ -105,7 +104,7 @@ public:
 	bool placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	TArray<FRoadSegment> determineRoadSegments();
+	TArray<FRoadSegment> determineRoadSegments(float noiseMultiplier);
 
 	UFUNCTION(BlueprintCallable, Category = "Data")
 		TArray<FPolygon> roadsToPolygons(TArray<FRoadSegment> segments);

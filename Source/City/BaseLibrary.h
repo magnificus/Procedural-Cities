@@ -1380,6 +1380,7 @@ FVector intersection(FPolygon &p1, TArray<FPolygon> &p2);
 FVector intersection(FPolygon &p1, FPolygon &p2);
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 FVector intersection(FVector p1, FVector p2, FPolygon p);
+bool selfIntersection(FPolygon &p1);
 bool testCollision(FPolygon &, TArray<FPolygon> &, float leniency, FPolygon &);
 bool testCollision(FPolygon &, FPolygon &, float leniency);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);

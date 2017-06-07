@@ -47,6 +47,20 @@ FVector intersection(FPolygon &p1, FPolygon &p2) {
 	return FVector(0.0f, 0.0f, 0.0f);
 }
 
+bool selfIntersection(FPolygon &p) {
+	for (int i = 1; i < p.points.Num(); i++) {
+		for (int j = i+1; j < p.points.Num(); j++) {
+			FVector tan1 = p.points[i] - p.points[i - 1];
+			tan1.Normalize();
+			FVector tan2 = p.points[j] - p.points[j - 1];
+			tan2.Normalize();
+			if (intersection(p.points[i - 1] + tan1, p.points[i] - tan1, p.points[j - 1] + tan2, p.points[j] - tan2).X != 0.0f)
+				return true;
+		}
+	}
+	return false;
+}
+
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 	float p0_x = p1.X;
 	float p0_y = p1.Y;
