@@ -632,7 +632,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	if (FMath::FRand() < 0.3) {
 		// only shrink one side
 		float len = FMath::FRandRange(400, 1500);
-		int place = FMath::FRand() * (f.points.Num() - 3) + 2;
+		int place = FMath::FRandRange(0, 0.99) * (f.points.Num() - 3) + 2;
 		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,0));
 		if (res.points.Num() > 2) {
 			FMaterialPolygon pol;

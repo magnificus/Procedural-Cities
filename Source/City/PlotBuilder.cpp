@@ -93,7 +93,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 		FVector center = p.getCenter();
 		p.type = raw_noise_2d((center.X + 31000000)*noiseScale, (center.Y + 3000000)*noiseScale) < 0.5 ? RoomType::office : RoomType::apartment;
 
-		if (p.getArea() > 3000 && FMath::FRand() < 0.2) {
+		if (p.getArea() > 3000 && FMath::FRand() < 0.0) {
 			// create a special plot with several identical houses placed around a green area, this happens in real cities sometimes
 			FHousePolygon model = getRandomModel(4000,7000, minFloors, maxFloors, noiseScale);
 			model.canBeModified = false;
