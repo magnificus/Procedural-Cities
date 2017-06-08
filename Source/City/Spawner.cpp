@@ -167,17 +167,49 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 
 }
 
+FRotator getBestRotation(float maxDiffAllowed, FRotator original, FVector originalPoint, FVector step, float noiseScale) {
+	float bestVal = 10000;
+	FRotator bestRotator;
+	for (int i = 0; i < 5; i++) {
+		FRotator curr = original + FRotator(0, FMath::FRandRange(-maxDiffAllowed, maxDiffAllowed), 0);
+		FVector testPoint = originalPoint + curr.RotateVector(step);
+		if (noise(noiseScale, testPoint.X, testPoint.Y) < bestVal) {
+			bestRotator = curr;
+			bestVal = noise(noiseScale, testPoint.X, testPoint.Y);
+		}
+	}
+	return bestRotator;
+}
 
 void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* previous, std::vector<logicRoadSegment*> &allsegments) {
 	FRoadSegment* prevSeg = previous->segment;
 	logicRoadSegment* newRoadL = new logicRoadSegment();
 	FRoadSegment* newRoad = new FRoadSegment();
-
-	newRoadL->secondDegreeRot = previous->secondDegreeRot + FRotator(0, (prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity)*(randFloat() - 0.5f), 0);
-	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot;
 	FVector stepLength = prevSeg->type == RoadType::main ? primaryStepLength : secondaryStepLength;
+	//newRoadL->secondDegreeRot = previous->secondDegreeRot + FRotator(0, (prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity)*(randFloat() - 0.5f), 0);
 
 	newRoad->p1 = prevSeg->p2;
+	// set seconddegreerot to attempt to change towards that direction
+
+
+	FRotator bestRotator = getBestRotation((prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity), previous->firstDegreeRot,newRoad->p1, stepLength, noiseScale);
+	//float bestVal = 10000;
+	//FRotator bestRotator;
+	//float diffAllowed = 20;
+	//// get best direction
+	//for (int i = 0; i < 5; i++) {
+	//	FRotator curr = previous->firstDegreeRot + FRotator(0, FMath::FRandRange(-diffAllowed, diffAllowed), 0);
+	//	FVector testPoint = newRoad->p1 + curr.RotateVector(stepLength);
+	//	if (noise(noiseScale, testPoint.X, testPoint.Y) < bestVal) {
+	//		bestRotator = curr;
+	//		bestVal = noise(noiseScale, testPoint.X, testPoint.Y);
+	//	}
+	//}
+	//newRoadL->secondDegreeRot = bestRotator - newRoadL->firstDegreeRot;
+
+	newRoadL->firstDegreeRot = bestRotator;//previous->firstDegreeRot + newRoadL->secondDegreeRot;
+
+
 	newRoad->p2 = newRoad->p1 + newRoadL->firstDegreeRot.RotateVector(stepLength);
 	newRoad->beginTangent = prevSeg->p2 - prevSeg->p1;
 	newRoad->beginTangent.Normalize();
@@ -200,14 +232,31 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	FRoadSegment* prevSeg = previous->segment;
 	logicRoadSegment* newRoadL = new logicRoadSegment();
 	FRoadSegment* newRoad = new FRoadSegment();
-
-	newRoadL->secondDegreeRot = FRotator(0, (prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity)*(randFloat() - 0.5f), 0);
-	FRotator newRotation = left ? FRotator(0, 90, 0) : FRotator(0, 270, 0);
-	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRoadL->secondDegreeRot + newRotation;
-
 	FVector stepLength = newType == RoadType::main ? primaryStepLength : secondaryStepLength;
+
+	newRoadL->secondDegreeRot = FRotator(0, 0, 0);//FRotator(0, (prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity)*(randFloat() - 0.5f), 0);
+	FRotator newRotation = left ? FRotator(0, 90, 0) : FRotator(0, 270, 0);
+	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRotation;
 	FVector startOffset = newRoadL->firstDegreeRot.RotateVector(FVector(standardWidth*previous->segment->width / 2, 0, 0));
 	newRoad->p1 = /*prevSeg->end - (standardWidth * (prevSeg->end - prevSeg->start).Normalize()/2) + startOffset; */prevSeg->p1 + (prevSeg->p2 - prevSeg->p1) / 2 + startOffset;
+
+
+	//float bestVal = 10000;
+	//FRotator bestRotator;
+	//float diffAllowed = 20;
+	// get best direction
+	//for (int i = 0; i < 5; i++) {
+	//	FRotator curr = newRoadL->firstDegreeRot + FRotator(0, FMath::FRandRange(-diffAllowed, diffAllowed), 0);
+	//	FVector testPoint = newRoad->p1 + curr.RotateVector(stepLength);
+	//	if (noise(noiseScale, testPoint.X, testPoint.Y) < bestVal) {
+	//		bestRotator = curr;
+	//		bestVal = noise(noiseScale, testPoint.X, testPoint.Y);
+	//	}
+	//}
+	FRotator bestRotator = getBestRotation((prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity), newRoadL->firstDegreeRot, newRoad->p1, stepLength, noiseScale);
+	newRoadL->firstDegreeRot = bestRotator;//previous->firstDegreeRot + newRoadL->secondDegreeRot;
+
+
 	newRoad->p2 = newRoad->p1 + newRoadL->firstDegreeRot.RotateVector(stepLength);
 	newRoad->beginTangent = FRotator(0, left ? 90 : 270, 0).RotateVector(previous->segment->p2 - previous->segment->p1); //->p2 - newRoad->p1;
 	newRoad->beginTangent.Normalize();
@@ -222,7 +271,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	//newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X) / 2) * noiseScale, ((newRoad->p1.Y + newRoad->p2.Y) / 2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	//newRoadL->time = scaled_octave_noise_2d(4, 0.5, noiseScale, 0, 1, newRoad->p1.X, newRoad->p1.Y);
 	FVector mP = middle(newRoad->p1, newRoad->p2);
-	newRoadL->time = noise(noiseScale, mP.X, mP.Y) + 0.1*previous->time;// +FMath::FRand() * 0.1;// ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	newRoadL->time = noise(noiseScale, mP.X, mP.Y) + 0.1*previous->time*((5 - newRoadL->segment->width)/5);// +FMath::FRand() * 0.1;// ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
@@ -234,30 +283,32 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 }
 
 void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments) {
-	float mainRoadSize = 3.0f;
-	float sndRoadSize = 1.5f;
+	float mainRoadSize = 3.5f;
+	float sndRoadMinSize = 2.0f;
+	float sndRoadSize = std::max(sndRoadMinSize, current->segment->width - 1.0f);
 	FVector tangent = current->segment->p2 - current->segment->p1;
 	if (current->segment->type == RoadType::main) {
 		// on the main road
 		if (current->roadLength < maxMainRoadLength)
 			addRoadForward(queue, current, allsegments);
 
-		//if (randFloat() < mainRoadBranchChance) {
-		//if (randFloat() < 0.15f) {
-		//	addRoadSide(queue, current, true, 3.5f, allsegments, RoadType::main);
-		//}
+		if (randFloat() < mainRoadBranchChance) {
+			if (randFloat() < 0.5) {
+				addRoadSide(queue, current, true, mainRoadSize, allsegments, RoadType::main);
+			}
 
-		//else if (randFloat() < 0.15f) {
-		//	addRoadSide(queue, current, false, 3.5f, allsegments, RoadType::main);
-		//}
-		//else {
+			else{
+				addRoadSide(queue, current, false, mainRoadSize, allsegments, RoadType::main);
+			}
+		}
+		else {
 			//if (randFloat() < secondaryRoadBranchChance) {
 				addRoadSide(queue, current, true, sndRoadSize, allsegments, RoadType::secondary);
 			//}
 			//if (randFloat() < secondaryRoadBranchChance) {
 				addRoadSide(queue, current, false, sndRoadSize, allsegments, RoadType::secondary);
 			//}
-		//}
+		}
 		//}
 	}
 
@@ -294,38 +345,38 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	// wander to a local peak for the first node
 	FVector point = FVector(0, 0, 0);
-	float curr = raw_noise_2d(point.X * noiseScale, point.Y*noiseScale);
-	float stepLen = 10000;
-	while (true) {
-		FVector alt1 = point + FVector(stepLen, 0, 0);
-		FVector alt2 = point + FVector(-stepLen, 0, 0);
-		FVector alt3 = point + FVector(0, stepLen, 0);
-		FVector alt4 = point + FVector(0, -stepLen, 0);
-		float res1 = raw_noise_2d(alt1.X * noiseScale, alt1.Y*noiseScale);
-		float res2 = raw_noise_2d(alt2.X * noiseScale, alt2.Y*noiseScale);
-		float res3 = raw_noise_2d(alt3.X * noiseScale, alt3.Y*noiseScale);
-		float res4 = raw_noise_2d(alt4.X * noiseScale, alt4.Y*noiseScale);
+	//float curr = raw_noise_2d(point.X * noiseScale, point.Y*noiseScale);
+	//float stepLen = 10000;
+	//while (true) {
+	//	FVector alt1 = point + FVector(stepLen, 0, 0);
+	//	FVector alt2 = point + FVector(-stepLen, 0, 0);
+	//	FVector alt3 = point + FVector(0, stepLen, 0);
+	//	FVector alt4 = point + FVector(0, -stepLen, 0);
+	//	float res1 = raw_noise_2d(alt1.X * noiseScale, alt1.Y*noiseScale);
+	//	float res2 = raw_noise_2d(alt2.X * noiseScale, alt2.Y*noiseScale);
+	//	float res3 = raw_noise_2d(alt3.X * noiseScale, alt3.Y*noiseScale);
+	//	float res4 = raw_noise_2d(alt4.X * noiseScale, alt4.Y*noiseScale);
 
-		if (res1 < curr) {
-			curr = res1;
-			point = alt1;
-		}
-		else if (res2 < curr) {
-			curr = res2;
-			point = alt2;
-		}
-		else if (res3 < curr) {
-			curr = res3;
-			point = alt3;
-		}
-		else if (res4 < curr) {
-			curr = res4;
-			point = alt4;
-		}
-		else {
-			break;
-		}
-	}
+	//	if (res1 < curr) {
+	//		curr = res1;
+	//		point = alt1;
+	//	}
+	//	else if (res2 < curr) {
+	//		curr = res2;
+	//		point = alt2;
+	//	}
+	//	else if (res3 < curr) {
+	//		curr = res3;
+	//		point = alt3;
+	//	}
+	//	else if (res4 < curr) {
+	//		curr = res4;
+	//		point = alt4;
+	//	}
+	//	else {
+	//		break;
+	//	}
+	//}
 	startR->p1 = point;
 	startR->p2 = startR->p1 + primaryStepLength;
 	startR->width = 3.5f;
@@ -333,7 +384,16 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	startR->endTangent = startR->p2 - startR->p1;
 
 	start->segment = startR;
-	start->firstDegreeRot = FRotator(0, 0, 0);
+	float bestVal = 10000;
+	FRotator bestRot;
+	for (int i = 0; i < 360; i++) {
+		FVector testPoint = point + FRotator(0, i, 0).RotateVector(primaryStepLength);
+		if (noise(noiseScale, point.X, point.Y) < bestVal) {
+			bestVal = noise(noiseScale, point.X, point.Y);
+			bestRot = FRotator(0, i, 0);
+		}
+	}
+	start->firstDegreeRot = bestRot;
 	start->secondDegreeRot = FRotator(0, 0, 0);
 	start->roadLength = 1;
 	addVertices(startR);
@@ -481,7 +541,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FLine> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 400, 700, 300, 200);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 500, 600, 300, 200);
 }
 
 // Called when the game starts or when spawned
