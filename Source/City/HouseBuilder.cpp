@@ -318,7 +318,8 @@ FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f) {
 
 // return polygon covering the space that was removed from f
 FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHole, float len, FVector offset) {
-	FVector dir1 = f.points[place - 2] - f.points[place - 1];
+	int prev2 = place > 1 ? place - 2 : place - 3 + f.points.Num();
+	FVector dir1 = f.points[prev2] - f.points[place - 1];
 	dir1.Normalize();
 	FVector dir2 = f.points[place + 1] - f.points[place];
 	dir2.Normalize();
@@ -349,10 +350,10 @@ FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHol
 // this method changes the shape of the house to make it less cube-like, can be called several times for more "interesting" shapes 
 void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole) {
 	//return;
+	int place = FMath::FRandRange(0, 0.99) * (f.points.Num() - 3) + 2; // number is smaller than 
 	if (randFloat() < 0.15f && f.points.Num() > 3) {
 		// move side inwards
 		float len = FMath::FRandRange(400, 1500);
-		int place = FMath::FRandRange(0, 0.99) * (f.points.Num() - 3) + 2;
 		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
 		if (res.points.Num() > 0) {
 			FSimplePlot simplePlot;
@@ -368,7 +369,6 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 
 	else if (randFloat() < 0.1f && f.points.Num() > 3) {
 		// remove corner
-		int place = FMath::FRandRange(0, 0.99) * (f.points.Num() - 3) + 2;
 		FVector p1 = middle(f.points[place - 1], f.points[place]);
 		FVector p2 = middle(f.points[place + 1], f.points[place]);
 
@@ -404,9 +404,6 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 	else if (randFloat() < 0.07f) {
 		float depth = FMath::FRandRange(500, 1500);
 		// turn a side inwards into a U
-		int place = 2;
-		place = FMath::FRand() * (f.points.Num() - 2) + 1;
-
 		FVector tangent = f.points[place] - f.points[place - 1];
 		float lenSide = tangent.Size();
 		tangent.Normalize();
@@ -442,6 +439,13 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 			f.windows.Add(place + 3);
 			f.windows.Add(place + 4);
 		}
+	}
+	// since last and first points are supposed to be the same we have to adjust the other if one is changed
+	if (place == 1) {
+		f.points[f.points.Num() - 1] = f.points[0];
+	}
+	else if (place == f.points.Num() - 1) {
+		f.points[0] = f.points[f.points.Num() - 1];
 
 	}
 }

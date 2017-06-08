@@ -80,6 +80,13 @@ struct FPolygon
 		}
 	};
 
+	void rotate(FRotator rotation) {
+		FVector center = getCenter();
+		for (FVector &f : points) {
+			f = rotation.RotateVector(f - center) + center;
+		}
+	}
+
 
 
 

@@ -234,6 +234,8 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 }
 
 void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments) {
+	float mainRoadSize = 3.0f;
+	float sndRoadSize = 1.5f;
 	FVector tangent = current->segment->p2 - current->segment->p1;
 	if (current->segment->type == RoadType::main) {
 		// on the main road
@@ -241,21 +243,21 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 			addRoadForward(queue, current, allsegments);
 
 		//if (randFloat() < mainRoadBranchChance) {
-		if (randFloat() < 0.15f) {
-			addRoadSide(queue, current, true, 3.5f, allsegments, RoadType::main);
-		}
+		//if (randFloat() < 0.15f) {
+		//	addRoadSide(queue, current, true, 3.5f, allsegments, RoadType::main);
+		//}
 
-		else if (randFloat() < 0.15f) {
-			addRoadSide(queue, current, false, 3.5f, allsegments, RoadType::main);
-		}
-		else {
+		//else if (randFloat() < 0.15f) {
+		//	addRoadSide(queue, current, false, 3.5f, allsegments, RoadType::main);
+		//}
+		//else {
 			//if (randFloat() < secondaryRoadBranchChance) {
-				addRoadSide(queue, current, true, 1.8f, allsegments, RoadType::secondary);
+				addRoadSide(queue, current, true, sndRoadSize, allsegments, RoadType::secondary);
 			//}
 			//if (randFloat() < secondaryRoadBranchChance) {
-				addRoadSide(queue, current, false, 1.8f, allsegments, RoadType::secondary);
+				addRoadSide(queue, current, false, sndRoadSize, allsegments, RoadType::secondary);
 			//}
-		}
+		//}
 		//}
 	}
 
@@ -264,8 +266,8 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 		if (current->roadLength < maxSecondaryRoadLength) {
 			addRoadForward(queue, current, allsegments);
 
-			addRoadSide(queue, current, true, 2.0f, allsegments, RoadType::secondary);
-			addRoadSide(queue, current, false, 2.0f, allsegments, RoadType::secondary);
+			addRoadSide(queue, current, true, sndRoadSize, allsegments, RoadType::secondary);
+			addRoadSide(queue, current, false, sndRoadSize, allsegments, RoadType::secondary);
 		}
 	}
 
@@ -326,7 +328,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	}
 	startR->p1 = point;
 	startR->p2 = startR->p1 + primaryStepLength;
-	startR->width = 3.0f;
+	startR->width = 3.5f;
 	startR->type = RoadType::main;
 	startR->endTangent = startR->p2 - startR->p1;
 

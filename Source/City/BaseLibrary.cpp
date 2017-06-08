@@ -25,6 +25,7 @@ void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points) 
 	}
 }
 
+// finds the first intersection point (if any) between a polygon and a list of potentially colliding polygons
 FVector intersection(FPolygon &p1, TArray<FPolygon> &p2) {
 	for (FPolygon &f : p2) {
 		FVector res = intersection(p1, f);
@@ -35,6 +36,7 @@ FVector intersection(FPolygon &p1, TArray<FPolygon> &p2) {
 	return FVector(0.0f, 0.0f, 0.0f);
 }
 
+// finds the first intersection point (if any) between two polygons via brute force (n^2)
 FVector intersection(FPolygon &p1, FPolygon &p2) {
 	for (int i = 1; i < p1.points.Num(); i++) {
 		for (int j = 1; j < p2.points.Num(); j++) {
@@ -47,6 +49,7 @@ FVector intersection(FPolygon &p1, FPolygon &p2) {
 	return FVector(0.0f, 0.0f, 0.0f);
 }
 
+// a pretty inefficient method for checking whether any of the lines in the polygon intersects another
 bool selfIntersection(FPolygon &p) {
 	for (int i = 1; i < p.points.Num(); i++) {
 		for (int j = i+1; j < p.points.Num(); j++) {
@@ -116,6 +119,7 @@ bool testAxis(FVector axis, FPolygon &p1, FPolygon &p2, float leniency) {
 	}
 }
 
+// check whether two polygons overlap with potential collision leniency
 bool testCollision(FPolygon &p1, FPolygon &p2, float leniency) {
 	for (int i = 1; i < p1.points.Num(); i++) {
 		if (!testAxis(getNormal(p1.points[i], p1.points[i-1], true), p1, p2, leniency)) {
@@ -130,6 +134,7 @@ bool testCollision(FPolygon &p1, FPolygon &p2, float leniency) {
 	return true;
 }
 
+// check that a polygon doesn't collide with any other polygon and is inside of the surrounding polygon
 bool testCollision(FPolygon &in, TArray<FPolygon> &others, float leniency, FPolygon &surrounding) {
 	for (FPolygon &other : others) {
 		if (testCollision(other, in, leniency)) {
@@ -179,6 +184,7 @@ struct LinkedLine {
 };
 
 
+// change direction of line hierarchy, me and the parents
 void invertAndParents(LinkedLine* line) {
 	//return;
 
@@ -206,6 +212,7 @@ void invertAndParents(LinkedLine* line) {
 	}
 }
 
+// change direction of line hierarchy, me and the children
 void invertAndChildren(LinkedLine* line) {
 	//return;
 	TSet<LinkedLine*> taken;
@@ -363,6 +370,7 @@ struct PolygonPoint {
 	FVector point;
 };
 
+// get polygons describing the shapes between all of the lines in segments
 TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments, TArray<FLine> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset) {
 
 	TArray<LinkedLine*> lines;
@@ -458,7 +466,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 	// zip together open polygons where end and beginning are really close together, and check orientation
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
-		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num()-1]) < 4000) {
+		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num()-1]) < 5000) {
 			f.points.Add(FVector(f.points[0]));
 			f.open = false;
 		}

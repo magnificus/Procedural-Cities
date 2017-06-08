@@ -20,11 +20,6 @@ void APlotBuilder::BeginPlay()
 	
 }
 
-
-
-
-
-
 TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others) {
 	TArray<FMetaPolygon> added;
 	for (FMetaPolygon p : plots) {
@@ -49,11 +44,12 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 	return added;
 }
 
-FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int maxFloors, float noiseScale) {
+FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int maxFloors, float noiseScale, RoomType type) {
 	FHousePolygon pol;
 	float xLen = FMath::FRandRange(minSize, maxSize);
 	float yLen = FMath::FRandRange(minSize, maxSize);
 	FVector tangent = FVector(FMath::FRand(), FMath::FRand(), 0);
+	tangent.Normalize();
 	FVector normal = FRotator(0, 90, 0).RotateVector(tangent);
 	pol.points.Add(FVector(0, 0, 0));
 	pol.points.Add(xLen * tangent);
@@ -69,7 +65,7 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 	if (raw_noise_2d((pol.housePosition.X)*noiseScale, (pol.housePosition.Y)*noiseScale) > 0.7) {
 		pol.height *= 2;
 	}
-	pol.type = RoomType::apartment;
+	pol.type = type;
 	return pol;
 }
 
@@ -94,9 +90,10 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 		FVector center = p.getCenter();
 		p.type = raw_noise_2d((center.X + 31000000)*noiseScale, (center.Y + 3000000)*noiseScale) < 0.5 ? RoomType::office : RoomType::apartment;
 
-		if (p.getArea() > 5000 && FMath::FRand() < 0.2) {
+		bool normalPlacement = !(p.getArea() > 4000 && FMath::FRand() < 0.5);
+		if (!normalPlacement) {
 			// create a special plot with several identical houses placed around a green area, this happens in real cities sometimes
-			FHousePolygon model = getRandomModel(4000,7000, minFloors, maxFloors, noiseScale);
+			FHousePolygon model = getRandomModel(4000,7000, minFloors, maxFloors, noiseScale, p.type);
 			model.canBeModified = false;
 			FPolygon shaft = AHouseBuilder::getShaftHolePolygon(model);
 			for (int i = 0; i < 5; i++) {
@@ -107,18 +104,39 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			TArray<FPolygon> placed;
 			for (int i = 0; i < 20; i++) {
 				FHousePolygon newH = model;
+				newH.rotate(FRotator(0, FMath::FRandRange(0, 360), 0));
 				newH.offset(p.getRandomPoint(true, 0));
 				if (!testCollision(newH, placed, 0, p)) {
 					info.houses.Add(newH);
 					placed.Add(newH);
 				}
 			}
+			if (placed.Num() < 1) {
+				normalPlacement = true;
+			}
+			else {
+				TArray<FPolygon> holesWithoutLastPoint;
+				for (FPolygon h :placed) {
+					h.points.RemoveAt(h.points.Num() - 1);
+					holesWithoutLastPoint.Add(h);
+				}
+				TArray<FMaterialPolygon> results = ARoomBuilder::getSideWithHoles(p, holesWithoutLastPoint, p.type == RoomType::apartment ? PolygonType::green : PolygonType::concrete);
+				for (FMaterialPolygon fm : results) {
+					FSimplePlot fs;
+					fs.pol = fm;
+					//fs.pol.reverse();
+					fs.pol.offset(FVector(0, 0, 30));
+					fs.type = fm.type == PolygonType::concrete ? SimplePlotType::asphalt : SimplePlotType::green;
+					fs.decorate();
+					info.leftovers.Add(fs);
+				}
+			}
 		}
-		else {
+		if (normalPlacement) {
 			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
 				r.height = randFloat() * (maxFloors - minFloors) + minFloors;
-				if (raw_noise_2d((r.housePosition.X)*noiseScale, (r.housePosition.Y)*noiseScale) > 0.7) {
+				if (raw_noise_2d((r.housePosition.X)*noiseScale, (r.housePosition.Y)*noiseScale) > 0.5) {
 					r.height *= 2;
 				}
 				r.type = p.type;
