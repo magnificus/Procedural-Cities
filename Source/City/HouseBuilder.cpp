@@ -357,6 +357,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
 		if (res.points.Num() > 0) {
 			FSimplePlot simplePlot;
+			//res.points.RemoveAt(res.points.Num() - 1);
 			simplePlot.pol = res;
 			simplePlot.type = f.simplePlotType;//FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 			simplePlot.decorate();

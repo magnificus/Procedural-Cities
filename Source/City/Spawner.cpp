@@ -100,7 +100,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		TArray<FVector> tangents;
 
 		// can't be too close to another segment
-		if (FVector::Dist((f->p2 - f->p1) / 2 + f->p1, (current->segment->p2 - current->segment->p1) / 2 + current->segment->p1) < 7000) {
+		if (FVector::Dist((f->p2 - f->p1) / 2 + f->p1, (current->segment->p2 - current->segment->p1) / 2 + current->segment->p1) < 5000) {
 			return false;
 		}
 
@@ -122,19 +122,19 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		if (testCollision(tangents, vert1, vert2, collisionLeniency)) {
 			FVector newE = intersection(current->segment->p1, current->segment->p2, f->p1, f->p2);
 			if (newE.X == 0) {
-				//// the lines themselves are not colliding, its an edge case, find an intersection between the rectangles
-				//FPolygon p1;
-				//p1.points = vert1;
-				//p1.points.Add(FVector(p1.points[0]));
-				//FPolygon p2;
-				//p2.points = vert2;
-				//p2.points.Add(FVector(p2.points[0]));
+				// check if they collide into each other from the back
+				FVector otherTangent = f->p2 - f->p1;
+				otherTangent = FRotator(0, 90, 0).RotateVector(otherTangent);
+				otherTangent.Normalize();
 
-				//newE = intersection(p1, p2);
-				//if (newE.X == 0) {
+				newE = intersection(f->p1 + otherTangent * 100, f->p1 - otherTangent * 100, current->segment->p1, current->segment->p2);
+				if (newE.X == 0.0f) {
+					newE = intersection(f->p2 + otherTangent * 100, f->p2 - otherTangent * 100, current->segment->p1, current->segment->p2);
+
+				}
+				if (newE.X == 0.0f)
 					continue;
 				//}
-				//continue;
 			}
 			//else {
 				current->time = 100000;
@@ -153,9 +153,9 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				addVertices(current->segment);
 				//current->segment->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
 				// new road cant be too short
-				if (FVector::Dist(current->segment->p1, current->segment->p2) < 2000) {
-					return false;
-				}
+				//if (FVector::Dist(current->segment->p1, current->segment->p2) < 2000) {
+				//	return false;
+				//}
 			//}
 		}
 
@@ -253,7 +253,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	//		bestVal = noise(noiseScale, testPoint.X, testPoint.Y);
 	//	}
 	//}
-	FRotator bestRotator = getBestRotation(0.0f, newRoadL->firstDegreeRot, newRoad->p1, stepLength, noiseScale);
+	FRotator bestRotator = getBestRotation((prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity), newRoadL->firstDegreeRot, newRoad->p1, stepLength, noiseScale);
 	newRoadL->firstDegreeRot = bestRotator;//previous->firstDegreeRot + newRoadL->secondDegreeRot;
 
 
@@ -284,8 +284,8 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 
 void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments) {
 	float mainRoadSize = 4.0f;
-	float sndRoadMinSize = 2.0f;
-	float sndRoadSize = std::max(sndRoadMinSize, current->segment->width - 1.0f);
+	float sndRoadMinSize = 1.5f;
+	float sndRoadSize = std::max(sndRoadMinSize, current->segment->width - 1.5f);
 	FVector tangent = current->segment->p2 - current->segment->p1;
 	if (current->segment->type == RoadType::main) {
 		// on the main road
@@ -343,43 +343,11 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	FRoadSegment* startR = new FRoadSegment();
 	startR->beginTangent = primaryStepLength;
 
-	// wander to a local peak for the first node
 	FVector point = FVector(0, 0, 0);
-	//float curr = raw_noise_2d(point.X * noiseScale, point.Y*noiseScale);
-	//float stepLen = 10000;
-	//while (true) {
-	//	FVector alt1 = point + FVector(stepLen, 0, 0);
-	//	FVector alt2 = point + FVector(-stepLen, 0, 0);
-	//	FVector alt3 = point + FVector(0, stepLen, 0);
-	//	FVector alt4 = point + FVector(0, -stepLen, 0);
-	//	float res1 = raw_noise_2d(alt1.X * noiseScale, alt1.Y*noiseScale);
-	//	float res2 = raw_noise_2d(alt2.X * noiseScale, alt2.Y*noiseScale);
-	//	float res3 = raw_noise_2d(alt3.X * noiseScale, alt3.Y*noiseScale);
-	//	float res4 = raw_noise_2d(alt4.X * noiseScale, alt4.Y*noiseScale);
 
-	//	if (res1 < curr) {
-	//		curr = res1;
-	//		point = alt1;
-	//	}
-	//	else if (res2 < curr) {
-	//		curr = res2;
-	//		point = alt2;
-	//	}
-	//	else if (res3 < curr) {
-	//		curr = res3;
-	//		point = alt3;
-	//	}
-	//	else if (res4 < curr) {
-	//		curr = res4;
-	//		point = alt4;
-	//	}
-	//	else {
-	//		break;
-	//	}
-	//}
 	startR->p1 = point;
 	startR->p2 = startR->p1 + primaryStepLength;
-	startR->width = 4.0f;
+	startR->width = 5.0f;
 	startR->type = RoadType::main;
 	startR->endTangent = startR->p2 - startR->p1;
 
@@ -408,7 +376,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	while (queue.size() > 0 && determinedSegments.Num() < length) {
 		logicRoadSegment* current = queue.top();
 		queue.pop();
-		if (placementCheck(determinedSegments, current, segmentsOrganized) && FVector::Dist(current->segment->p1, current->segment->p2) > 2000) {
+		if (placementCheck(determinedSegments, current, segmentsOrganized)){/// && FVector::Dist(current->segment->p1, current->segment->p2) > 2000) {
 			determinedSegments.Add(current->segment);
 			if (current->previous && FVector::Dist(current->previous->segment->p2, current->segment->p1) < 1.0f)
 				current->previous->segment->roadInFront = true;
@@ -422,8 +390,9 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 
 	// make sure roads attach properly if there is another road not too far in front of them
-	for (int i = 0; i < 2; i++) {
-		for (FRoadSegment* f2 : determinedSegments) {
+	for (int k = 0; k < 1; k++) {
+		for (int i = 0; i < determinedSegments.Num(); i++) {
+			FRoadSegment* f2 = determinedSegments[i];
 			if (f2->roadInFront)
 				continue;
 			FVector tangent = f2->p2 - f2->p1;
@@ -434,18 +403,20 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 			//f2->p1 -= tangent*maxAttachDistance;
 			float closestDist = 10000000.0f;
 			FRoadSegment* closest = nullptr;
-			FVector impactP = FVector(0, 0, 0);
+			FVector impactP;
 			//addVertices(f2);
 			bool foundCollision = false;
-			for (FRoadSegment* f : determinedSegments) {
-				if (f == f2) {
+			for (int j = 0; j < determinedSegments.Num(); j++) {
+				FRoadSegment* f = determinedSegments[j];
+				if (i == j) {
 					continue;
 				}
-				if (FVector::Dist(f->p1, f2->p2) < 100 || FVector::Dist(f->p2, f2->p1) < 100) {
-					foundCollision = false;
-					break;
-				}
+				//if (FVector::Dist(f->p1, f2->p2) < 100 || FVector::Dist(f->p2, f2->p1) < 100) {
+				//	foundCollision = false;
+				//	break;
+				//}
 				FVector fTan = f->p2 - f->p1;
+				//FVector fTan = FVector(0,0,0);
 				fTan.Normalize();
 				FVector res = intersection(f2->p1, f2->p2, f->p1 - fTan * 100, f->p2 + fTan * 100);
 				if (res.X != 0.0f && FVector::Dist(f2->p1, res) < closestDist) {
@@ -461,7 +432,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 				//FVector tangent2 = impactP - f2->p1;
 				//tangent2.Normalize();
 				float len = FVector::Dist(impactP, f2->p1);
-				f2->p2 = f2->p1 + (len - standardWidth / 2) * tangent;
+				f2->p2 = impactP;// f2->p1 + (len - standardWidth / 2) * tangent;
 
 				FVector naturalTangent = f2->p2 - f2->p1;
 				naturalTangent.Normalize();
@@ -503,6 +474,38 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	return finishedSegments;
 }
 
+TArray<FMaterialPolygon> ASpawner::getRoadLines(TArray<FRoadSegment> segments)
+{
+	float lineInterval = 600;
+	float lineLen = 350;
+	float lineWidth = 40;
+	TArray<FMaterialPolygon> lines;
+	for (FRoadSegment f : segments) {
+		if (f.type == RoadType::main) {
+			FVector tangent = f.p2 - f.p1;
+			tangent.Normalize();
+			int spaces = FVector::Dist(f.p2, f.p1) / (lineInterval+1);
+			for (int i = 1; i < spaces; i++) {
+				FVector startPos = tangent * lineInterval * i + f.p1;
+				FVector endPos = startPos + tangent*lineLen;
+				FVector normal = getNormal(endPos, startPos, true);
+				normal.Normalize();
+				FMaterialPolygon line;
+				line.type = PolygonType::roadMiddle;
+				line.points.Add(startPos + normal*lineWidth);
+				line.points.Add(startPos - normal*lineWidth);
+				line.points.Add(endPos - normal*lineWidth);
+				line.points.Add(endPos + normal*lineWidth);
+				line.offset(FVector(0, 0, 20));
+				lines.Add(line);
+				//lines.Add(FLine{ startPos, endPos,5});
+			}
+		}
+	}
+
+	return lines;
+}
+
 TArray<FPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
 {
 	TArray<FPolygon> polygons;
@@ -541,7 +544,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FLine> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 100, 600, 300, 200);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 150, 400, 200, 500);
 }
 
 // Called when the game starts or when spawned

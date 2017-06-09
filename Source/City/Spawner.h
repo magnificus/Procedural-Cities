@@ -105,6 +105,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FRoadSegment> determineRoadSegments();
 
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	TArray<FMaterialPolygon> getRoadLines(TArray<FRoadSegment> segments);
+
 	UFUNCTION(BlueprintCallable, Category = "Data")
 		TArray<FPolygon> roadsToPolygons(TArray<FRoadSegment> segments);
 	//UFUNCTION(BlueprintCallable, Category = "Generation")

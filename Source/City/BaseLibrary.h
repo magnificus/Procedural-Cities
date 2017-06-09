@@ -297,7 +297,8 @@ enum class PolygonType : uint8
 	occlusionWindow UMETA(DisplayName = "Occlusion Window"),
 	roof UMETA(DisplayName = "Roof"),
 	green UMETA(DisplayName = "Green"),
-	concrete UMETA(DisplayName = "Concrete")
+	concrete UMETA(DisplayName = "Concrete"),
+	roadMiddle UMETA(DisplayName = "Middle of road line")
 };
 
 

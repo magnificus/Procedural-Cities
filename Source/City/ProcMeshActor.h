@@ -41,6 +41,8 @@ public:
 		UMaterial* greenMat;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		UMaterial* concreteMat;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		UMaterial* roadMiddleMat;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		float texScaleMultiplier = 1.0f;
@@ -77,6 +79,8 @@ private:
 		UProceduralMeshComponent * greenMesh;
 	UPROPERTY(VisibleAnywhere, Category = Meshes)
 		UProceduralMeshComponent * concreteMesh;
+	UPROPERTY(VisibleAnywhere, Category = Meshes)
+		UProceduralMeshComponent * roadMiddleMesh;
 
 
 	int currIndex = 1;

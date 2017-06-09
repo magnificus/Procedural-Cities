@@ -37,6 +37,10 @@ public:
 	static FPolygon generateSidewalkPolygon(FPlotPolygon p, float offsetSize);
 	
 	UFUNCTION(BlueprintCallable, Category = "Generation")
+	TArray<FMaterialPolygon> getSideWalkPolygons(FPlotPolygon p, float width);
+
+
+	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static FSidewalkInfo getSideWalkInfo(FPolygon sidewalk);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")

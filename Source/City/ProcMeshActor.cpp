@@ -19,6 +19,7 @@ AProcMeshActor::AProcMeshActor()
 	roofMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("roofMesh"));
 	greenMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("greenMesh"));
 	concreteMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("concreteMesh"));
+	roadMiddleMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("roadMiddleMesh"));
 
 
 	RootComponent = exteriorMesh;
@@ -86,6 +87,10 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	if (pols.Num() == 0) {
 		return true;
 	}
+
+	//if (mat == greenMat)
+	//	UE_LOG(LogTemp, Warning, TEXT("BUILDING GREEN POLYGONS"));
+
 	TArray<FVector> vertices;
 	TArray<int32> triangles;
 	TArray<FVector2D> UV;
@@ -146,7 +151,7 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	TArray<FVector> normals;
 
 	mesh->SetMaterial(1, mat);
-	//mesh->SetCullDistance(100);
+	mesh->SetCullDistance(100);
 
 	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, true);
 	return true;
@@ -169,6 +174,7 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	TArray<FPolygon> concrete;
 	TArray<FPolygon> green;
 
+	TArray<FPolygon> roadMiddle;
 	for (FMaterialPolygon &p : pols) {
 		switch (p.type) {
 		case PolygonType::exterior:
@@ -201,6 +207,9 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 		case PolygonType::green:
 			green.Add(p);
 			break;
+		case PolygonType::roadMiddle:
+			roadMiddle.Add(p);
+			break;
 		}
 	}
 	int a = buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
@@ -213,12 +222,13 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	a += buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
 	a += buildPolygons(concrete, offset, concreteMesh, concreteMat);
 	a += buildPolygons(green, offset, greenMesh, greenMat);
+	a += buildPolygons(roadMiddle, offset, roadMiddleMesh, roadMiddleMat);
 
-	if (a < 10) {
-		UE_LOG(LogTemp, Warning, TEXT("a: %i"), a);
-		//Destroy();
-		//return false;
-	} 
+	//if (a < 11) {
+	//	//UE_LOG(LogTemp, Warning, TEXT("a: %i"), a);
+	//	//Destroy();
+	//	return false;
+	//} 
 	return true;
 
 

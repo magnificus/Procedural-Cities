@@ -91,10 +91,10 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 		FVector center = p.getCenter();
 		p.type = raw_noise_2d((center.X + 31000000)*noiseScale*2, (center.Y + 3000000)*noiseScale*2) < 0.5 ? RoomType::office : RoomType::apartment;
 
-		bool normalPlacement = !(p.getArea() > 4000 && FMath::FRand() < 0.5);
+		bool normalPlacement = !(p.getArea() > 4000 && FMath::FRand() < 0.3);
 		if (!normalPlacement) {
 			// create a special plot with several identical houses placed around a green area, this happens in real cities sometimes
-			FHousePolygon model = getRandomModel(4000,7000, minFloors, maxFloors, noiseScale, p.type);
+			FHousePolygon model = getRandomModel(3500,6000, minFloors, maxFloors, noiseScale, p.type);
 			model.canBeModified = false;
 			FPolygon shaft = AHouseBuilder::getShaftHolePolygon(model);
 			for (int i = 0; i < 5; i++) {
@@ -103,10 +103,10 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			}
 
 			TArray<FPolygon> placed;
-			for (int i = 0; i < 20; i++) {
+			for (int i = 0; i < 30; i++) {
 				FHousePolygon newH = model;
 				newH.rotate(FRotator(0, FMath::FRandRange(0, 360), 0));
-				newH.offset(p.getRandomPoint(true, 0));
+				newH.offset(p.getRandomPoint(true, 2000));
 				if (!testCollision(newH, placed, 0, p)) {
 					info.houses.Add(newH);
 					placed.Add(newH);
@@ -144,7 +144,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				r.simplePlotType = r.type == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
 
 				float area = r.getArea();
-				UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
+				//UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
 
 				if (area < minArea || area > maxArea) {
 					FSimplePlot fs;
@@ -289,9 +289,60 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 
 }
 
+
+TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float width) {
+	TArray<FMaterialPolygon> pols;
+	FVector prevP1 = FVector(0,0,0);
+	FVector prevP2 = FVector(0, 0, 0);
+
+	for (int i = 1; i < p.points.Num(); i++) {
+		//UE_LOG(LogTemp, Warning, TEXT("vector: %i %s"), i, *(p.points[i].ToString()));
+		FMaterialPolygon current;
+		current.type = PolygonType::concrete;
+		FVector normal = getNormal(p.points[i - 1], p.points[i], !p.buildLeft);
+		normal.Normalize();
+		current.points.Add(p.points[i - 1]);
+		current.points.Add(p.points[i]);
+		current.points.Add(p.points[i] + width*normal);
+		current.points.Add(p.points[i - 1] + width*normal);
+		current.points.Add(p.points[i - 1]);
+		current.offset(FVector(0, 0, 30));
+		if (i != 1) {
+			FMaterialPolygon corner;
+			corner.type = PolygonType::concrete;
+			corner.points.Add(prevP1);
+			corner.points.Add(p.points[i - 1] + width*normal);
+			corner.points.Add(prevP2);
+			corner.points.Add(prevP1);
+			corner.offset(FVector(0, 0, 30));
+			pols.Add(corner);
+		}
+		//if (i != p.points.Num() - 1) {
+			prevP1 = p.points[i];
+			prevP2 = p.points[i] + width*normal;
+		//}
+		pols.Add(current);
+
+	}
+
+	FVector normal = getNormal(p.points[1], p.points[0], p.buildLeft);
+	normal.Normalize();
+	//prevP1 = p.points[p.points.Num() - 2];
+	//prevP2 = p.points[p.points.Num() - 1] + width*normal;
+	FMaterialPolygon corner;
+	corner.type = PolygonType::concrete;
+	corner.points.Add(p.points[0] + width*normal);
+	corner.points.Add(prevP2);
+	corner.points.Add(prevP1);
+
+	corner.offset(FVector(0, 0, 30));
+	pols.Add(corner);
+	return pols;
+}
+
 FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
 	FPolygon polygon;
-	if (p.points.Num() > 2 && p.getArea() > 200) {
+	if (p.points.Num() > 2 && p.getArea() > 400) {
 		FVector center = p.getCenter();
 		for (int i = 1; i < p.points.Num(); i++) {
 			FVector tangent = p.points[i] - p.points[i - 1];
@@ -305,8 +356,8 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 		//}
 
 		if (!p.open) {
-			polygon.points.RemoveAt(polygon.points.Num() - 1);
-			polygon.points.Add(FVector(polygon.points[0]));
+			//polygon.points.RemoveAt(polygon.points.Num() - 1);
+			//polygon.points.Add(FVector(polygon.points[0]));
 			polygon.points.Add(FVector(polygon.points[1]));
 
 			//polygon.points.Add(FVector(polygon.points[2]));
@@ -368,6 +419,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSimplePlotPolygons(TArray<FSimplePlot>
 		type = plots[0].type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;
 	for (FSimplePlot p : plots) {
 		FMaterialPolygon newP;
+		//p.pol.points.RemoveAt(p.pol.points.Num() - 1);
 		newP.points = p.pol.points;
 		newP.type = type;// simplePolygonType;//p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;;
 		toReturn.Add(newP);
