@@ -66,6 +66,7 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.height *= 2;
 	}
 	pol.type = type;
+	pol.offset(-pol.getCenter());
 	return pol;
 }
 
@@ -88,7 +89,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			original.windows.Add(i);
 		}
 		FVector center = p.getCenter();
-		p.type = raw_noise_2d((center.X + 31000000)*noiseScale, (center.Y + 3000000)*noiseScale) < 0.5 ? RoomType::office : RoomType::apartment;
+		p.type = raw_noise_2d((center.X + 31000000)*noiseScale*2, (center.Y + 3000000)*noiseScale*2) < 0.5 ? RoomType::office : RoomType::apartment;
 
 		bool normalPlacement = !(p.getArea() > 4000 && FMath::FRand() < 0.5);
 		if (!normalPlacement) {
@@ -290,7 +291,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 
 FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
 	FPolygon polygon;
-	if (p.points.Num() > 2){//{ && p.getArea() > 1000) {
+	if (p.points.Num() > 2 && p.getArea() > 200) {
 		FVector center = p.getCenter();
 		for (int i = 1; i < p.points.Num(); i++) {
 			FVector tangent = p.points[i] - p.points[i - 1];
@@ -304,7 +305,7 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 		//}
 
 		if (!p.open) {
-			//polygon.points.RemoveAt(polygon.points.Num() - 1);
+			polygon.points.RemoveAt(polygon.points.Num() - 1);
 			polygon.points.Add(FVector(polygon.points[0]));
 			polygon.points.Add(FVector(polygon.points[1]));
 

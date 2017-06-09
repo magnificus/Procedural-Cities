@@ -256,8 +256,8 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 	TArray<FVector> lineVertices;
 	FVector v1 = inLine->line.p1 + width * tangent2;
 	FVector v2 = inLine->line.p1 - width * tangent2;
-	FVector v3 = inLine->line.p2 + width * tangent2;
 	FVector v4 = inLine->line.p2 - width * tangent2;
+	FVector v3 = inLine->line.p2 + width * tangent2;
 	lineVertices.Add(v1);
 	lineVertices.Add(v2);
 	lineVertices.Add(v3);
@@ -299,10 +299,10 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 		}
 	}
 	len = FVector::Dist(inLine->line.p1, inLine->line.p2);
-	if (len < 1000) {
-		delete inLine;
-		return;
-	}
+	//if (len < 1000) {
+	//	delete inLine;
+	//	return;
+	//}
 
 	for (int i = 0; i < lines.Num(); i++) {
 		LinkedLine *pol = lines[i];
@@ -322,43 +322,53 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 		TArray<FVector> lineVertices2;
 		lineVertices2.Add(pol->line.p1 + tangent4 * width);
 		lineVertices2.Add(pol->line.p1 - tangent4 * width);
-		lineVertices2.Add(pol->line.p2 + tangent4 * width);
 		lineVertices2.Add(pol->line.p2 - tangent4 * width);
+		lineVertices2.Add(pol->line.p2 + tangent4 * width);
 
 
 
 		FVector res = intersection(pol->line.p1, pol->line.p2, inLine->line.p1, inLine->line.p2);
-		//if (testCollision(tangents, lineVertices, lineVertices2, 0)) {
 
-			//if (std::abs(res.X) < 0.1f) {
-			//	res = FVector::Dist(pol->line.p1, middle(inLine->line.p1, inLine->line.p2)) < FVector::Dist(pol->line.p2, middle(inLine->line.p1, inLine->line.p2)) ? pol->line.p1 : pol->line.p2;
-			//}
-		if (res.X != 0.0f) {
-				// on the previous line, is the collision close to the end? if so, old pol is master
-			if (FVector::Dist(pol->line.p1, res) > FVector::Dist(pol->line.p2, res)) {
-				// on the new line, collision end?
-				if (FVector::Dist(inLine->line.p1, res) > FVector::Dist(inLine->line.p2, res)) {
-					// then flip
-					invertAndParents(inLine);
+		if (testCollision(tangents, lineVertices, lineVertices2, 0)) {
+
+			if (res.X == 0.0f) {
+				// check if they collide into each other from the back
+				FVector otherTangent = pol->line.p2 - pol->line.p1;
+				otherTangent = FRotator(0, 90, 0).RotateVector(otherTangent);
+				otherTangent.Normalize();
+
+				res = intersection(pol->line.p1 + otherTangent * 100, pol->line.p1 - otherTangent * 100, inLine->line.p1, inLine->line.p2);
+				if (res.X == 0.0f) {
+					res = intersection(pol->line.p2 + otherTangent * 100, pol->line.p2 - otherTangent * 100, inLine->line.p1, inLine->line.p2);
+
 				}
-				inLine->parent = pol;
-				pol->child = inLine;
-				pol->point = res;
-
 			}
-			// so the new line is maybe the master
-			else {
-				// on inLine, collision end?
-				if (FVector::Dist(inLine->line.p1, res) < FVector::Dist(inLine->line.p2, res)) {
-					invertAndChildren(inLine);
-				}
-				pol->parent = inLine;
-				inLine->child = pol;
-				inLine->point = res;
+			if (res.X != 0.0f) {
+				// on the previous line, is the collision close to the end? if so, old pol is master
+				if (FVector::Dist(pol->line.p1, res) > FVector::Dist(pol->line.p2, res)) {
+					// on the new line, collision end?
+					if (FVector::Dist(inLine->line.p1, res) > FVector::Dist(inLine->line.p2, res)) {
+						// then flip
+						invertAndParents(inLine);
+					}
+					inLine->parent = pol;
+					pol->child = inLine;
+					pol->point = res;
 
+				}
+				// so the new line is maybe the master
+				else {
+					// on inLine, collision end?
+					if (FVector::Dist(inLine->line.p1, res) < FVector::Dist(inLine->line.p2, res)) {
+						invertAndChildren(inLine);
+					}
+					pol->parent = inLine;
+					inLine->child = pol;
+					inLine->point = res;
+
+				}
 			}
 		}
-	
 	}
 	lines.Add(inLine);
 	return;
