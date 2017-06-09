@@ -149,7 +149,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				if (area < minArea || area > maxArea) {
 					FSimplePlot fs;
 					fs.pol = r;
-					fs.pol.reverse();
+					//fs.pol.reverse();
 					fs.pol.offset(FVector(0, 0, 30));
 					fs.type = FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 					fs.decorate();
