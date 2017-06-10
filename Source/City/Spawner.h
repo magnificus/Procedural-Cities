@@ -115,7 +115,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> segments);
+	TArray<FMetaPolygon> getSurroundingPolygons(TArray<FRoadSegment> segments);
 
 	UFUNCTION(BlueprintCallable, Category = "Test")
 	TArray<FTransform> visualizeNoise(int numSide, float noiseMultiplier, float posMultiplier);

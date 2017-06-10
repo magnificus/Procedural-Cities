@@ -113,7 +113,7 @@ struct FPolygon
 				FVector tan2 = points[i + 1] - points[i];
 				tan1.Normalize();
 				tan2.Normalize();
-				float dist = FMath::Acos(FVector::DotProduct(tan1, tan2));
+				float dist = FVector::DotProduct(tan1, tan2);
 				if (dist < maxDot) {
 					points.RemoveAt(i);
 					i--;
@@ -585,7 +585,7 @@ static bool splitableType(SubRoomType type) {
 }
 
 static bool isOnLine(FVector point, FVector p1, FVector p2) {
-	return std::abs(FVector::Dist(point, p1) + FVector::Dist(point, p2) - FVector::Dist(p1, p2)) < 5.0f;
+	return std::abs(FVector::Dist(point, p1) + FVector::Dist(point, p2) - FVector::Dist(p1, p2)) < 1.0f;
 }
 
 
@@ -1477,6 +1477,7 @@ bool testCollision(FPolygon &, FPolygon &, float leniency);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
 float randFloat();
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
+TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width);
 
 class CITY_API BaseLibrary
 {
@@ -1485,7 +1486,7 @@ public:
 	~BaseLibrary();
 
 
-	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FLine> &segments, TArray<FLine> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset);
+	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset);
 
 
 };

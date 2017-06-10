@@ -151,9 +151,9 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	TArray<FVector> normals;
 
 	mesh->SetMaterial(1, mat);
-	mesh->SetCullDistance(100);
+	//mesh->SetCullDistance(100);
 
-	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, true);
+	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
 	return true;
 }
 

@@ -719,8 +719,15 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, 300, maxRoomArea);
 
 	bool potentialBalcony = f.type == RoomType::apartment && floors < 10;
-	for (FRoomPolygon p : roomPols) {
-		FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 0, floorHeight, map, false, shellOnly);
+	for (FRoomPolygon &p : roomPols) {
+		RoomType toUse = f.type;
+		if (p.windows.Num() > 0 && f.type == RoomType::apartment) {
+			for (int i : p.windows) {
+				p.entrances.Add(i);
+			}
+			toUse = RoomType::store;
+		}
+		FRoomInfo newR = ARoomBuilder::buildRoom(&p, toUse, 0, floorHeight, map, false, shellOnly);
 		newR.offset(FVector(0, 0, 30));
 		toReturn.roomInfo.pols.Append(newR.pols);
 		toReturn.roomInfo.meshes.Append(newR.meshes);

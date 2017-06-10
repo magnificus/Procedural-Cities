@@ -301,8 +301,10 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 	FVector prevP1 = FVector(0,0,0);
 	FVector prevP2 = FVector(0, 0, 0);
 
+	float endWidth = 40;
+	float endHeight = 40;
 	for (int i = 1; i < p.points.Num(); i++) {
-		//UE_LOG(LogTemp, Warning, TEXT("vector: %i %s"), i, *(p.points[i].ToString()));
+		// add the straight part
 		FMaterialPolygon current;
 		current.type = PolygonType::concrete;
 		FVector normal = getNormal(p.points[i - 1], p.points[i], !p.buildLeft);
@@ -313,7 +315,21 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 		current.points.Add(p.points[i - 1] + width*normal);
 		current.points.Add(p.points[i - 1]);
 		current.offset(FVector(0, 0, 30));
+
+		FMaterialPolygon currentOuterLine;
+		currentOuterLine.type = PolygonType::concrete;
+		currentOuterLine.points.Add(p.points[i] + width*normal);
+		currentOuterLine.points.Add(p.points[i] + (width + endWidth)*normal);
+		currentOuterLine.points.Add(p.points[i - 1] + (width+endWidth)*normal);
+		currentOuterLine.points.Add(p.points[i - 1] + width*normal);
+		currentOuterLine.points.Add(p.points[i] + width*normal);
+
+		currentOuterLine.offset(FVector(0, 0, endHeight));
+		pols.Append(getSidesOfPolygon(currentOuterLine, PolygonType::concrete, endHeight));
+		//currentOuterLine.width = 
+		pols.Add(currentOuterLine);
 		if (i != 1) {
+			// add the corner
 			FMaterialPolygon corner;
 			corner.type = PolygonType::concrete;
 			corner.points.Add(prevP1);
@@ -321,6 +337,19 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 			corner.points.Add(prevP2);
 			corner.points.Add(prevP1);
 			corner.offset(FVector(0, 0, 30));
+
+			FVector otherTan = prevP2 - prevP1;
+			otherTan.Normalize();
+			currentOuterLine.points.Empty();
+			currentOuterLine.type = PolygonType::concrete;
+			currentOuterLine.points.Add(prevP2);
+			currentOuterLine.points.Add(p.points[i - 1] + width*normal);
+			currentOuterLine.points.Add(p.points[i - 1] + (width+endWidth)*normal);
+			currentOuterLine.points.Add(prevP2 + (endWidth)*otherTan);
+			currentOuterLine.points.Add(prevP2);
+			currentOuterLine.offset(FVector(0, 0, endHeight));
+			pols.Append(getSidesOfPolygon(currentOuterLine, PolygonType::concrete, endHeight));
+			pols.Add(currentOuterLine);
 			pols.Add(corner);
 		}
 		//if (i != p.points.Num() - 1) {

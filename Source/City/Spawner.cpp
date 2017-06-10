@@ -188,6 +188,9 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	FVector stepLength = prevSeg->type == RoadType::main ? primaryStepLength : secondaryStepLength;
 	//newRoadL->secondDegreeRot = previous->secondDegreeRot + FRotator(0, (prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity)*(randFloat() - 0.5f), 0);
 
+	//float inset = 50;
+	//FVector tan = prevSeg->p2 - prevSeg->p1;
+	//tan.Normalize();
 	newRoad->p1 = prevSeg->p2;
 	// set seconddegreerot to attempt to change towards that direction
 
@@ -285,7 +288,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments) {
 	float mainRoadSize = 4.0f;
 	float sndRoadMinSize = 1.5f;
-	float sndRoadSize = std::max(sndRoadMinSize, current->segment->width - 1.5f);
+	float sndRoadSize = std::max(sndRoadMinSize, current->segment->width - 2.0f);
 	FVector tangent = current->segment->p2 - current->segment->p1;
 	if (current->segment->type == RoadType::main) {
 		// on the main road
@@ -542,9 +545,9 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 
 
-TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FLine> segments)
+TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FRoadSegment> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 500, 500, 200, 50);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 700, 500, 200, 50);
 }
 
 // Called when the game starts or when spawned

@@ -256,7 +256,7 @@ FVector getProperIntersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 	return res;
 }
 
-void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen, float width, float middleOffset)
+void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blocking, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen, float width, float middleOffset)
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 
@@ -280,10 +280,10 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 	lineVertices.Add(v3);
 	lineVertices.Add(v4);
 
-	for (FLine f : blocking) {
+	for (FRoadSegment f : blocking) {
 		FVector tangent = f.p2 - f.p1;
 		tangent.Normalize();
-		FVector intSec = intersection(f.p1 - tangent*extraRoadLen, f.p2 + tangent*extraRoadLen, inLine->line.p1, inLine->line.p2);
+		FVector intSec = getProperIntersection(f.p1 - tangent*extraRoadLen, f.p2 + tangent*extraRoadLen, inLine->line.p1, inLine->line.p2);
 		int counter = 0;
 		if (intSec.X != 0.0f) {
 			if (!allowSplit) {
@@ -311,7 +311,7 @@ void decidePolygonFate(TArray<FLine> &segments, TArray<FLine> &blocking, LinkedL
 
 			newP->buildLeft = inLine->buildLeft;
 			decidePolygonFate(segments, blocking, newP, lines, true, extraRoadLen, width, middleOffset);
-			intSec = intersection(f.p1 - tangent * extraRoadLen, f.p2 + tangent * extraRoadLen, inLine->line.p1, inLine->line.p2);
+			intSec = getProperIntersection(f.p1 - tangent * extraRoadLen, f.p2 + tangent * extraRoadLen, inLine->line.p1, inLine->line.p2);
 			//return;
 		}
 	}
@@ -397,27 +397,32 @@ struct PolygonPoint {
 };
 
 // get polygons describing the shapes between all of the lines in segments
-TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments, TArray<FLine> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset) {
+TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset) {
 
 	TArray<LinkedLine*> lines;
 	// get coherent polygons
-	for (FLine f : segments) {
+	for (FRoadSegment f : segments) {
 		// two collision segments for every road
 		FVector tangent = f.p2 - f.p1;
 		tangent.Normalize();
 		FVector extraLength = tangent * extraLen;
+		FVector beginNorm = f.beginTangent;
+		beginNorm.Normalize();
+		FVector endNorm = f.endTangent;
+		endNorm.Normalize();
+		FVector sideOffsetBegin = FRotator(0, 90, 0).RotateVector(beginNorm)*(stdWidth/2 * f.width);
+		FVector sideOffsetEnd = FRotator(0, 90, 0).RotateVector(tangent)*(stdWidth / 2 * f.width);
 
-		FVector sideOffset = FRotator(0, 90, 0).RotateVector(tangent)*(stdWidth/2 * f.width);
 		LinkedLine* left = new LinkedLine();
-		left->line.p1 = f.p1 + sideOffset - extraLength;
-		left->line.p2 = f.p2 + sideOffset + extraLength;
+		left->line.p1 = f.p1 + sideOffsetBegin - extraLength;
+		left->line.p2 = f.p2 + sideOffsetEnd + extraLength;
 		left->buildLeft = true;
 		decidePolygonFate(segments, blocking, left, lines, true, extraRoadLen, width, middleOffset);
 
 		if (f.width != 0.0f) {
 			LinkedLine* right = new LinkedLine();
-			right->line.p1 = f.p1 - sideOffset - extraLength;
-			right->line.p2 = f.p2 - sideOffset + extraLength;
+			right->line.p1 = f.p1 - sideOffsetBegin - extraLength;
+			right->line.p2 = f.p2 - sideOffsetEnd + extraLength;
 			right->buildLeft = false;
 			decidePolygonFate(segments, blocking, right, lines, true, extraRoadLen, width, middleOffset);
 		}
@@ -457,15 +462,15 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 		if (curr->child && taken.Contains(curr->child)) {
 			// closed polygon since last point continues into first
 			FVector res = getProperIntersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);//intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
-			if (res.X != 0.0f) {
+			//if (res.X != 0.0f) {
 				f.points.RemoveAt(0);
 				f.points.EmplaceAt(0, res);
 				f.points.Add(res);
-			}
-			else {
-				FVector first = f.points[0];
-				f.points.Add(first);
-			}
+			//}
+			//else {
+			//	FVector first = f.points[0];
+			//	f.points.Add(first);
+			//}
 
 			f.open = false;
 		}
@@ -478,7 +483,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 		polygons.Add(f);
 
 	}
-	float maxConnect = 4000;
+	float maxConnect = 5000;
 
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
@@ -542,10 +547,10 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 			f.open = false;
 		}
 		f.checkOrientation();
-		//while (FVector::Dist(f.points[f.points.Num() - 2], f.points[f.points.Num() - 1]) < 10.0f) {
-		//	f.points.RemoveAt(f.points.Num() - 1);
-		//}
-		f.clipEdges(-0.7f);
+		while (FVector::Dist(f.points[f.points.Num() - 2], f.points[f.points.Num() - 1]) < 10.0f) {
+			f.points.RemoveAt(f.points.Num() - 1);
+		}
+		f.clipEdges(-0.9f);
 	}
 
 	//// delete impossible polygons if they exist, they shouldn't 
@@ -564,4 +569,19 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 	return polygons;
 
 
+}
+
+TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width) {
+	TArray<FMaterialPolygon> toReturn;
+	for (int i = 1; i < p.points.Num(); i++) {
+		FMaterialPolygon side;
+		side.type = type;
+		side.points.Add(p.points[i - 1]);
+		side.points.Add(p.points[i - 1] - FVector(0, 0, width));
+		side.points.Add(p.points[i] - FVector(0, 0, width));
+		side.points.Add(p.points[i]);
+		side.points.Add(p.points[i - 1]);
+		toReturn.Add(side);
+	}
+	return toReturn;
 }
