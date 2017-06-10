@@ -497,23 +497,23 @@ void addStairInfo(FRoomInfo &info, float height, FPolygon &hole) {
 
 }
 
-void buildRoof(FRoomInfo &info, FHousePolygon pol) {
-	if (randFloat() < 0.5f) {
-		// add angled roof
-		float height = 1000;
-		FVector center = pol.getCenter();
-		center += FVector(0, 0, height);
-		for (int i = 1; i < pol.points.Num(); i++) {
-			FMaterialPolygon newP;
-			newP.points.Add(pol.points[i - 1]);
-			newP.points.Add(pol.points[i]);
-			newP.points.Add(center);
-			newP.points.Add(pol.points[i - 1]);
-			newP.type = PolygonType::roof;
-			info.pols.Add(newP);
-		}
-	}
-}
+//void buildRoof(FRoomInfo &info, FHousePolygon pol) {
+//	if (randFloat() < 0.5f) {
+//		// add angled roof
+//		float height = 1000;
+//		FVector center = pol.getCenter();
+//		center += FVector(0, 0, height);
+//		for (int i = 1; i < pol.points.Num(); i++) {
+//			FMaterialPolygon newP;
+//			newP.points.Add(pol.points[i - 1]);
+//			newP.points.Add(pol.points[i]);
+//			newP.points.Add(center);
+//			newP.points.Add(pol.points[i - 1]);
+//			newP.type = PolygonType::roof;
+//			info.pols.Add(newP);
+//		}
+//	}
+//}
 
 
 void addFacade(FHousePolygon &f, FRoomInfo &toReturn, float beginHeight, float facadeHeight, float width) {
@@ -605,7 +605,7 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 	}
 	else if (FMath::FRand() < 0.3){
 
-		// same shape as roof, but smaller
+		// same shape as roof, but 
 		FMaterialPolygon shape = roof;
 		shape.type = PolygonType::roof;
 		shape.offset(FVector(0, 0, offset));
@@ -701,6 +701,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	if (f.points.Num() < 3) {
 		return FHouseInfo();
 	}
+	f.checkOrientation();
 	FPolygon hole = getShaftHolePolygon(f);
 	FHouseInfo toReturn;
 	if (f.canBeModified) {

@@ -80,6 +80,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 	if (!p.open) {
 		FHousePolygon original;
 		original.points = p.points;
+		original.checkOrientation();
 		original.buildLeft = true;
 		original.open = false;
 		original.population = p.population;
@@ -95,6 +96,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 		if (!normalPlacement) {
 			// create a special plot with several identical houses placed around a green area, this happens in real cities sometimes
 			FHousePolygon model = getRandomModel(3500,6000, minFloors, maxFloors, noiseScale, p.type);
+			model.checkOrientation();
 			model.canBeModified = false;
 			FPolygon shaft = AHouseBuilder::getShaftHolePolygon(model);
 			for (int i = 0; i < 5; i++) {
@@ -125,7 +127,9 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				for (FMaterialPolygon fm : results) {
 					FSimplePlot fs;
 					fs.pol = fm;
-					//fs.pol.reverse();
+					if (fs.pol.getIsClockwise()) {
+						fs.pol.reverse();
+					}
 					fs.pol.offset(FVector(0, 0, 30));
 					fs.type = fm.type == PolygonType::concrete ? SimplePlotType::asphalt : SimplePlotType::green;
 					fs.decorate();
@@ -149,7 +153,9 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				if (area < minArea || area > maxArea) {
 					FSimplePlot fs;
 					fs.pol = r;
-					//fs.pol.reverse();
+					if (fs.pol.getIsClockwise()) {
+						fs.pol.reverse();
+					}
 					fs.pol.offset(FVector(0, 0, 30));
 					fs.type = FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 					fs.decorate();

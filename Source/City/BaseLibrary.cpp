@@ -450,7 +450,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 		remaining.Remove(curr);
 		while (curr->child && !taken.Contains(curr->child)) {
 			curr = curr->child;
-			//FVector res = intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
 			f.points.Add(curr->point.X != 0.0f ? curr->point : curr->line.p2);
 			remaining.Remove(curr);
 			taken.Add(curr);
@@ -458,7 +457,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 		if (curr->child && taken.Contains(curr->child)) {
 			// closed polygon since last point continues into first
 			FVector res = getProperIntersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);//intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
-			if (true || res.X != 0.0f) {
+			if (res.X != 0.0f) {
 				f.points.RemoveAt(0);
 				f.points.EmplaceAt(0, res);
 				f.points.Add(res);
@@ -479,7 +478,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 		polygons.Add(f);
 
 	}
-	float maxConnect = 3000;
+	float maxConnect = 4000;
 
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
@@ -543,13 +542,12 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FLine> &segments
 			f.open = false;
 		}
 		f.checkOrientation();
+		//while (FVector::Dist(f.points[f.points.Num() - 2], f.points[f.points.Num() - 1]) < 10.0f) {
+		//	f.points.RemoveAt(f.points.Num() - 1);
+		//}
+		f.clipEdges(-0.7f);
 	}
 
-	for (FPolygon &p : polygons) {
-		while (FVector::Dist(p.points[p.points.Num() - 2], p.points[p.points.Num() - 1]) < 10.0f) {
-			p.points.RemoveAt(p.points.Num() - 1);
-		}
-	}
 	//// delete impossible polygons if they exist, they shouldn't 
 	//for (int i = 0; i < polygons.Num(); i++) {
 	//	FMetaPolygon f = polygons[i];

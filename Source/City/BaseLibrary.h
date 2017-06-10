@@ -34,6 +34,14 @@ struct FPolygon
 	UPROPERTY(BlueprintReadWrite)
 		TArray<FVector> points;
 
+	bool getIsClockwise() {
+		double tot = 0;
+		for (int i = 1; i < points.Num(); i++) {
+			tot += (points[i].X - points[i - 1].X) * (points[i].Y + points[i - 1].Y);
+		}
+		return tot < 0;
+	}
+
 	FVector getCenter() {
 		FVector center = FVector(0, 0, 0);
 		double totLen = 0;
@@ -85,6 +93,78 @@ struct FPolygon
 		for (FVector &f : points) {
 			f = rotation.RotateVector(f - center) + center;
 		}
+	}
+
+	// removes corners that stick out in an ugly way
+	void clipEdges(float maxDot) {
+		//for (int i = 1; 1 < points.Num()-1; i++) {
+		//	FVector v1 = points[i] - points[i - 1];
+		//	v1.Normalize();
+		//	FVector v2 = points[i + 1] - points[i];
+		//	v2.Normalize();
+		//	float angle = FVector::DotProduct(v1, v2);
+
+		//}
+		bool clipped = true;
+		while (clipped) {
+			clipped = false;
+			for (int i = 1; i < points.Num()-1; i++) {
+				FVector tan1 = points[i] - points[i - 1];
+				FVector tan2 = points[i + 1] - points[i];
+				tan1.Normalize();
+				tan2.Normalize();
+				float dist = FMath::Acos(FVector::DotProduct(tan1, tan2));
+				if (dist < maxDot) {
+					points.RemoveAt(i);
+					i--;
+					clipped = true;
+					break;
+				}
+
+			}
+			//for (int i = 1; i < points.Num(); i++) {
+			//	FVector tangent = points[i] - points[i - 1];
+			//	tangent.Normalize();
+			//	FVector p1 = points[i - 1] - tangent*minLen;
+			//	FVector p2 = points[i] + tangent*minLen;
+			//	for (int j = i - 2; j < i - 1, j > 1; j++) {
+			//		FVector res = intersection(p1, points[i], points[j], points[j - 1]);
+			//		if (res.X != 0.0f) {
+			//			clipped = true;
+			//			points[i-1] = res;
+			//			if (i == 1)
+			//				points[points.Num() - 1] = res;
+			//			points.RemoveAt(j, i - j - 1);
+			//			break;
+			//		}
+			//	}
+			//	for (int j = i + 2; j < i + 3, j < points.Num()-1; j++) {
+			//		FVector res = intersection(points[i - 1], p2, points[j], points[j - 1]);
+			//		if (res.X != 0.0f) {
+			//			clipped = true;
+			//			points[i] = res;
+			//			if (i == points.Num() - 1) {
+			//				points[0] = res;
+			//			}
+			//			points.RemoveAt(i + 1, j - i - 1);
+			//			break;
+
+			//		}
+			//	}
+			//}
+		}
+
+
+			//prev2 = 
+			//for (int j = 1; j < points.Num(); j++) {
+			//	if (i == j)
+			//		continue;
+			//	FVector res = intersection(points[j - 1], points[j], p1, p2);
+			//	if (res.X != 0) {
+			//		points[j] = res;
+			//	}
+			//}
+		//}
 	}
 
 
@@ -444,19 +524,20 @@ struct FMetaPolygon : public FPolygon
 		bool buildLeft;
 
 	void checkOrientation() {
-		float totDiff = 0;
-		for (int i = 1; i < points.Num(); i++) {
-			FVector tangent = points[i] - points[i-1];
-			tangent = FRotator(0, 90, 0).RotateVector(tangent);
-			tangent.Normalize();
-			FVector middle = (points[i] + points[i - 1]) / 2;
-			FVector center = getCenter();
-			totDiff += FVector::Dist(middle, center) - FVector::Dist(middle + tangent * 50, center);
-		}
-
-		if (totDiff < 0) {
+		if (!getIsClockwise())
 			reverse();
-		}
+		//for (int i = 1; i < points.Num(); i++) {
+		//	FVector tangent = points[i] - points[i-1];
+		//	tangent = FRotator(0, 90, 0).RotateVector(tangent);
+		//	tangent.Normalize();
+		//	FVector middle = (points[i] + points[i - 1]) / 2;
+		//	FVector center = getCenter();
+		//	totDiff += FVector::Dist(middle, center) - FVector::Dist(middle + tangent * 50, center);
+		//}
+
+		//if (totDiff < 0) {
+		//	reverse();
+		//}
 		buildLeft = true;
 
 	}

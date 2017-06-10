@@ -271,7 +271,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	//newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X) / 2) * noiseScale, ((newRoad->p1.Y + newRoad->p2.Y) / 2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	//newRoadL->time = scaled_octave_noise_2d(4, 0.5, noiseScale, 0, 1, newRoad->p1.X, newRoad->p1.Y);
 	FVector mP = middle(newRoad->p1, newRoad->p2);
-	newRoadL->time = noise(noiseScale, mP.X, mP.Y) +((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + 0.1*previous->time;// +FMath::FRand() * 0.1;// ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	newRoadL->time = noise(noiseScale, mP.X, mP.Y) + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + 0.1*previous->time;// +FMath::FRand() * 0.1;// ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
@@ -544,7 +544,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FLine> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 150, 400, 200, 500);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 500, 500, 200, 50);
 }
 
 // Called when the game starts or when spawned
