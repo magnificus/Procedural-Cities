@@ -87,104 +87,6 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 		//newP.
 	}
 	return polygons;
-
-	//FVector start = outer.points[1];
-	//FVector end = outer.points[2];
-
-	//// sort holes according to dist to starting point so that they can be applied in order
-	//holes.Sort([start](const FPolygon &p1, const FPolygon &p2) {
-	//	return FVector::DistSquared(p1.points[1], start) < FVector::DistSquared(p2.points[1], start);
-	//});
-	//if (holes.Num() > 0) {
-
-	//	FVector sideTangent = outer.points[1] - outer.points[0];
-
-	//	FVector attach1 = outer.points[0];
-	//	FVector attach2 = (holes[0].points[0] - outer.points[0]).ProjectOnTo(sideTangent) + outer.points[0];
-	//	FVector attach3 = (holes[0].points[1] - outer.points[0]).ProjectOnTo(sideTangent) + outer.points[0];
-	//	FVector attach4 = outer.points[1];
-
-	//	FVector tangentUp = outer.points[3] - outer.points[0];
-	//	FVector tangentDown = outer.points[2] - outer.points[1];
-	//	//tangentUp.Normalize();
-	//	//tangentDown.Normalize();
-
-	//	int count = 0;
-	//	for (FPolygon p : holes) {
-	//		//UE_LOG(LogTemp, Warning, TEXT("attach1 %s, %i"), *attach1.ToString(), count++);
-	//		FMaterialPolygon p1 = FMaterialPolygon();
-	//		p1.points.Add(attach1);
-	//		p1.points.Add(p.points[3]);
-	//		p1.type = type;
-	//		p1.points.Add((p.points[3] - outer.points[0]).ProjectOnTo(tangentUp) + outer.points[0]);
-
-	//		FMaterialPolygon p2 = FMaterialPolygon();
-	//		p2.type = type;
-	//		p2.points.Add(attach1);
-	//		p2.points.Add(attach2);
-	//		p2.points.Add(p.points[3]);
-
-	//		FMaterialPolygon p3 = FMaterialPolygon();
-	//		p3.type = type;
-	//		p3.points.Add(attach2);
-	//		p3.points.Add(p.points[1]);
-	//		p3.points.Add(p.points[0]);
-
-	//		FMaterialPolygon p4 = FMaterialPolygon();
-	//		p4.type = type;
-	//		p4.points.Add(attach2);
-	//		p4.points.Add(attach3);
-	//		p4.points.Add(p.points[1]);
-
-	//		FMaterialPolygon p5 = FMaterialPolygon();
-	//		p5.type = type;
-	//		p5.points.Add(attach3);
-	//		p5.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
-	//		p5.points.Add(p.points[2]);
-
-	//		FMaterialPolygon p6 = FMaterialPolygon();
-	//		p6.type = type;
-	//		p6.points.Add(attach3);
-	//		p6.points.Add(attach4);
-	//		p6.points.Add((p.points[2] - outer.points[1]).ProjectOnTo(tangentDown) + outer.points[1]);
-
-	//		polygons.Add(p1);
-	//		polygons.Add(p2);
-	//		polygons.Add(p3);
-	//		polygons.Add(p4);
-	//		polygons.Add(p5);
-	//		polygons.Add(p6);
-
-	//		attach1 = p1.points[2];
-	//		attach2 = p1.points[1];
-	//		attach3 = p5.points[2];
-	//		attach4 = p5.points[1];
-	//	}
-	//	// attach to end of outer
-	//	//UE_LOG(LogTemp, Warning, TEXT("attach1 %s, %i"), *attach1.ToString(), count++);
-
-	//	FMaterialPolygon p7;
-	//	p7.type = type;
-	//	p7.points.Add(attach1);
-	//	p7.points.Add(attach4);
-	//	p7.points.Add(outer.points[2]);
-
-	//	FMaterialPolygon p8;
-	//	p8.type = type;
-	//	p8.points.Add(attach1);
-	//	p8.points.Add(outer.points[2]);
-	//	p8.points.Add(outer.points[3]);
-
-	//	polygons.Add(p7);
-	//	polygons.Add(p8);
-	//}
-	//else {
-	//	polygons.Add(outer);
-	//}
-
-
-
-	//return polygons;
 }
 
 TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float blockingLength) {
@@ -506,7 +408,7 @@ void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &me
 		for (int j = 1; j < numHeight; j++) {
 			FPolygon pol = getPolygon(normal.Rotation(), origin + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
 			// make sure it's fully inside the room
-			if (!testCollision(pol, placed, 0, *r2) && intersection(pol, *r2).X == 0.0f) {
+			if (!testCollision(pol, placed, 0, *r2)){// && intersection(pol, *r2).X == 0.0f) {
 				placed.Add(pol);
 				meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),origin + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)) });
 			}
@@ -549,12 +451,6 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	TArray<FPolygon> placed;
 	placed = getBlockingVolumes(r2, 200, 200);
 	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_table_position", 0.002, 0.0042, map);
-	//int target = 1;
-	//FVector start = middle(r2->points[target], r2->points[target - 1]);
-	//FVector end = 
-	//FVector end = ;
-	//for (int i = 0; i < )
-	// build cubicles
 	return meshes;
 }
 
@@ -567,14 +463,30 @@ RoomBlueprint getOfficeBlueprint(float areaScale) {
 	meetingRoom.type = SubRoomType::meeting;
 	RoomSpecification bathroom{ 30 * areaScale, 60 * areaScale, SubRoomType::bath };
 	needed.Add(meetingRoom);
-	//needed.Add(bathroom);
 
 	RoomSpecification workRoom{ 100 * areaScale, 200 * areaScale, SubRoomType::work };
 	TArray<RoomSpecification> optional;
 	optional.Add(workRoom);
+	optional.Add(workRoom);
+	optional.Add(workRoom);
+	needed.Add(bathroom);
+	optional.Add(workRoom);
 
 	return RoomBlueprint{ needed, optional };
 }
+
+RoomBlueprint getRestaurantBlueprint(float areaScale) {
+	// one meeting room, rest working rooms
+	TArray<RoomSpecification> needed;
+	RoomSpecification restaurant{ 50 * areaScale, 1000 * areaScale, SubRoomType::restaurant };
+	needed.Add(restaurant);
+
+	TArray<RoomSpecification> optional;
+	optional.Add(restaurant);
+	return RoomBlueprint{ needed, optional };
+
+}
+
 
 RoomBlueprint getStoreBlueprint(float areaScale) {
 	// one meeting room, rest working rooms
@@ -675,6 +587,16 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon *r2, TMap<FString, UHierarch
 	return meshes;
 }
 
+static TArray<FMeshInfo> getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	TArray<FMeshInfo> meshes;
+
+	TArray<FPolygon> placed;
+	placed.Append(getBlockingVolumes(r2, 200, 200));
+	//attemptPlace(r2, placed, meshes, true, 5, "restaurant_table", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
+	placeRows(r2, placed, meshes, FRotator(0, 0, 0), "restaurant_table", 0.005, 0.005, map);
+	return meshes;
+}
+
 static TArray<FMeshInfo> getBathRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	TArray<FMeshInfo> meshes;
 	
@@ -719,7 +641,7 @@ static TArray<FMeshInfo> getHallWay(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 
-	attemptPlace(r2, placed, meshes, true, 1, "hanger", FRotator(0, 0, 0), FVector(0, 0, 20), map, false);
+	attemptPlace(r2, placed, meshes, true, 1, "hanger", FRotator(50, 0, 0), FVector(0, 0, 20), map, false);
 	return meshes;
 }
 
@@ -739,7 +661,6 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 static TArray<FMeshInfo> getCorridor(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
-
 	placed.Append(getBlockingVolumes(r2, 200, 100));
 	attemptPlace(r2, placed, meshes, false, 5, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 
@@ -879,6 +800,40 @@ FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon *f, int floor, float height, fl
 	return r;
 }
 
+FRoomInfo ARoomBuilder::buildRestaurant(FRoomPolygon *f, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool shellOnly) {
+	FRoomInfo r;
+	TArray<FRoomPolygon*> roomPols = f->getRooms(getRestaurantBlueprint(1.0f));
+	for (FRoomPolygon* r2 : roomPols) {
+		for (int i : r2->windows) {
+			if (FVector::Dist(f->points[i], f->points[i-1]) > 150.0f)
+			r2->entrances.Add(i);
+		}
+		for (int i : r2->entrances) {
+			FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i], r2->points[i - 1]);
+			FVector dir1 = getNormal(r2->points[i], r2->points[i - 1], true);
+			dir1.Normalize();
+			FVector dir2 = r2->points[i] - r2->points[i - 1];
+			dir2.Normalize();
+			r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
+			//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
+		}
+		if (!shellOnly) {
+			//r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
+			switch (r2->type) {
+			case SubRoomType::restaurant: r.meshes.Append(getRestaurantRoom(r2, map));
+				r.meshes.Add(FMeshInfo{ "restaurant_room", FTransform(r2->getCenter()) });
+				break;
+			case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
+				r.meshes.Add(FMeshInfo{ "bath", FTransform(r2->getCenter()) });
+				break;
+			}
+		}
+	}
+	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, 300, 300, 0, shellOnly, true));
+	return r;
+}
+
+
 FRoomInfo ARoomBuilder::buildStore(FRoomPolygon *f, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool shellOnly) {
 	FRoomInfo r;
 
@@ -886,8 +841,9 @@ FRoomInfo ARoomBuilder::buildStore(FRoomPolygon *f, float height, TMap<FString, 
 
 	for (FRoomPolygon* r2 : roomPols) {
 		// stores always have entrances outwards
-		for (int i : r2->exteriorWalls) {
-			r2->entrances.Add(i);
+		for (int i : r2->windows) {
+			if (f->points.Num() > i && FVector::Dist(f->points[i], f->points[i - 1]) > 150.0f)
+				r2->entrances.Add(i);
 		}
 		for (int i : r2->entrances) {
 			FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i], r2->points[i - 1]);
@@ -901,9 +857,6 @@ FRoomInfo ARoomBuilder::buildStore(FRoomPolygon *f, float height, TMap<FString, 
 		if (!shellOnly) {
 			r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
 			switch (r2->type) {
-			case SubRoomType::storeBack: r.meshes.Append(getStoreBack(r2, map));
-				r.meshes.Add(FMeshInfo{ "store_back", FTransform(r2->getCenter()) });
-				break;
 			case SubRoomType::storeFront: r.meshes.Append(getStoreFront(r2, map));
 				r.meshes.Add(FMeshInfo{ "store_front", FTransform(r2->getCenter()) });
 				break;
@@ -915,7 +868,6 @@ FRoomInfo ARoomBuilder::buildStore(FRoomPolygon *f, float height, TMap<FString, 
 
 	}
 	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, 300, 300, 0, shellOnly, true));
-	// add 
 
 	return r;
 }
@@ -1023,6 +975,7 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, flo
 	case RoomType::office: return buildOffice(f, floor, height, 1/* 0.0042*/, 340.0f, 190.0f, map, shellOnly);
 	case RoomType::apartment: return buildApartment(f, floor, height, 0.003, 200.0f, 200.0f, map, potentialBalcony, shellOnly);
 	case RoomType::store: return buildStore(f, height, map, shellOnly);
+	case RoomType::restaurant: return buildRestaurant(f, height, map, shellOnly);
 	}
 	return FRoomInfo();
 }

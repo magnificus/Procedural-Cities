@@ -318,7 +318,8 @@ enum class RoomType : uint8
 {
 	office 	UMETA(DisplayName = "Office"),
 	apartment UMETA(DisplayName = "Apartment"),
-	store UMETA(DisplayName = "Store")
+	store UMETA(DisplayName = "Store"),
+	restaurant UMETA(DisplayName = "Restaurant")
 };
 
 UENUM(BlueprintType)
@@ -517,6 +518,7 @@ enum class SubRoomType : uint8
 	hallway UMETA(DisplayName = "Hallway"),
 	storeFront UMETA(DisplayName = "Store Front"),
 	storeBack UMETA(DisplayName = "Store Back"),
+	restaurant UMETA(DisplayName = "Restaurant")
 
 
 };

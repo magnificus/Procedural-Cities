@@ -722,7 +722,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			for (int i : p.windows) {
 				p.entrances.Add(i);
 			}
-			toUse = RoomType::store;
+			toUse = FMath::RandBool() ? RoomType::store : RoomType::restaurant;
 		}
 		FRoomInfo newR = ARoomBuilder::buildRoom(&p, toUse, 0, floorHeight, map, false, shellOnly);
 		newR.offset(FVector(0, 0, 30));
