@@ -550,7 +550,11 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		while (FVector::Dist(f.points[f.points.Num() - 2], f.points[f.points.Num() - 1]) < 10.0f) {
 			f.points.RemoveAt(f.points.Num() - 1);
 		}
-		f.clipEdges(-0.9f);
+		f.clipEdges(-0.79f);
+		if (f.points.Num() < 3) {
+			polygons.RemoveAt(i);
+			i--;
+		}
 	}
 
 	//// delete impossible polygons if they exist, they shouldn't 

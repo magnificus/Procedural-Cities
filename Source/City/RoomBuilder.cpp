@@ -333,25 +333,6 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 				int spaces = FMath::FloorToInt(std::min(windowDensity * len, len / (windowWidth + 20.0f)));
 				float jumpLen = len / (float)spaces;
 
-				
-				//if (floor == 0) {
-				//	FPolygon currWindow;
-				//	float currStart = 50;
-				//	float currEnd = FVector::Dist(rp->points[i - 1], rp->points[i]) - 50;
-				//	if (fitWindowAround(currStart, currEnd, doorStart, doorEnd)) {
-				//		FVector pw1 = rp->points[i - 1] + tangent * currStart + FVector(0, 0, 50 + windowHeight);
-				//		FVector pw2 = pw1 - FVector(0, 0, windowHeight);
-				//		FVector pw3 = rp->points[i - 1] + currEnd * tangent + FVector(0, 0, 50);
-				//		FVector pw4 = pw3 + FVector(0, 0, windowHeight);
-				//		currWindow.points.Add(pw1);
-				//		currWindow.points.Add(pw2);
-				//		currWindow.points.Add(pw3);
-				//		currWindow.points.Add(pw4);
-				//		//if (!testCollision(currWindow, holes, 0, *rp))
-				//		windows.Add(currWindow);
-				//	}
-				//}
-				//else {
 				for (int j = 1; j < spaces; j++) {
 					FPolygon currWindow;
 					float currStart = j * jumpLen - windowWidth/2;
@@ -934,7 +915,7 @@ FRoomInfo ARoomBuilder::buildStore(FRoomPolygon *f, float height, TMap<FString, 
 
 	}
 	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, 300, 300, 0, shellOnly, true));
-
+	// add 
 
 	return r;
 }

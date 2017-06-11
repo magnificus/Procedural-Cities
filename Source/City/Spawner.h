@@ -55,6 +55,11 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
 		float mainRoadAdvantage = 0.1;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
+		float mainRoadDetrimentRange = 1000000;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
+		float mainRoadDetrimentImpact = 0.01;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float collisionLeniency;
 

@@ -22,9 +22,6 @@ struct twoInt {
 	int32 b;
 };
 
-
-
-
 // VERY crudely checks which direction an array is going, it can wrap around 0 unfortunately
 bool increasing(std::vector<int> nbrs) {
 	for (int i = 1; i < nbrs.size(); i++) {

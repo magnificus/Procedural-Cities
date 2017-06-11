@@ -21,6 +21,9 @@ struct SplitStruct {
 	FVector p2;
 };
 
+static float noiseXOffset = 0;
+static float noiseYOffset = 0;
+
 
 
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
@@ -97,18 +100,10 @@ struct FPolygon
 
 	// removes corners that stick out in an ugly way
 	void clipEdges(float maxDot) {
-		//for (int i = 1; 1 < points.Num()-1; i++) {
-		//	FVector v1 = points[i] - points[i - 1];
-		//	v1.Normalize();
-		//	FVector v2 = points[i + 1] - points[i];
-		//	v2.Normalize();
-		//	float angle = FVector::DotProduct(v1, v2);
-
-		//}
-		bool clipped = true;
-		while (clipped) {
-			clipped = false;
-			for (int i = 1; i < points.Num()-1; i++) {
+		bool changed = true;
+		while (changed) {
+			changed = decreaseEdges();
+			for (int i = 1; i < points.Num() - 1; i++) {
 				FVector tan1 = points[i] - points[i - 1];
 				FVector tan2 = points[i + 1] - points[i];
 				tan1.Normalize();
@@ -117,54 +112,12 @@ struct FPolygon
 				if (dist < maxDot) {
 					points.RemoveAt(i);
 					i--;
-					clipped = true;
+					changed = true;
 					break;
 				}
 
 			}
-			//for (int i = 1; i < points.Num(); i++) {
-			//	FVector tangent = points[i] - points[i - 1];
-			//	tangent.Normalize();
-			//	FVector p1 = points[i - 1] - tangent*minLen;
-			//	FVector p2 = points[i] + tangent*minLen;
-			//	for (int j = i - 2; j < i - 1, j > 1; j++) {
-			//		FVector res = intersection(p1, points[i], points[j], points[j - 1]);
-			//		if (res.X != 0.0f) {
-			//			clipped = true;
-			//			points[i-1] = res;
-			//			if (i == 1)
-			//				points[points.Num() - 1] = res;
-			//			points.RemoveAt(j, i - j - 1);
-			//			break;
-			//		}
-			//	}
-			//	for (int j = i + 2; j < i + 3, j < points.Num()-1; j++) {
-			//		FVector res = intersection(points[i - 1], p2, points[j], points[j - 1]);
-			//		if (res.X != 0.0f) {
-			//			clipped = true;
-			//			points[i] = res;
-			//			if (i == points.Num() - 1) {
-			//				points[0] = res;
-			//			}
-			//			points.RemoveAt(i + 1, j - i - 1);
-			//			break;
-
-			//		}
-			//	}
-			//}
 		}
-
-
-			//prev2 = 
-			//for (int j = 1; j < points.Num(); j++) {
-			//	if (i == j)
-			//		continue;
-			//	FVector res = intersection(points[j - 1], points[j], p1, p2);
-			//	if (res.X != 0) {
-			//		points[j] = res;
-			//	}
-			//}
-		//}
 	}
 
 
@@ -172,13 +125,14 @@ struct FPolygon
 
 
 	// this method merges polygon sides when possible, and combines points
-	void decreaseEdges() {
-		float dirDiffAllowed = 0.07f;
+	bool decreaseEdges() {
+		float dirDiffAllowed = 0.001f;
 		float distDiffAllowed = 200;
-
+		bool hasModified = false;
 		for (int i = 1; i < points.Num(); i++) {
 			if (FVector::Dist(points[i - 1], points[i]) < distDiffAllowed) {
 				points.RemoveAt(i - 1);
+				hasModified = true;
 				i--;
 			}
 		}
@@ -191,9 +145,11 @@ struct FPolygon
 			//UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
 			if (FVector::Dist(curr, prev) < dirDiffAllowed) {
 				points.RemoveAt(i - 1);
+				hasModified = true;
 				i--;
 			}
 		}
+		return hasModified;
 	}
 
 	// assumes at least 3 points in polygon

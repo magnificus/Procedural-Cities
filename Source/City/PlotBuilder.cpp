@@ -62,7 +62,7 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.height = randFloat() * (maxFloors - minFloors) + minFloors;
-	if (raw_noise_2d((pol.housePosition.X)*noiseScale, (pol.housePosition.Y)*noiseScale) > 0.7) {
+	if (raw_noise_2d((pol.housePosition.X + noiseXOffset)*noiseScale, (pol.housePosition.Y + noiseYOffset)*noiseScale) > 0.7) {
 		pol.height *= 2;
 	}
 	pol.type = type;
@@ -90,7 +90,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			original.windows.Add(i);
 		}
 		FVector center = p.getCenter();
-		p.type = raw_noise_2d((center.X + 31000000)*noiseScale*2, (center.Y + 3000000)*noiseScale*2) < 0.5 ? RoomType::office : RoomType::apartment;
+		p.type = raw_noise_2d((center.X + noiseXOffset*2)*noiseScale*2, (center.Y + noiseYOffset*2)*noiseScale*2) < 0 ? RoomType::office : RoomType::apartment;
 
 		bool normalPlacement = !(p.getArea() > 4000 && FMath::FRand() < 0.3);
 		if (!normalPlacement) {
@@ -141,7 +141,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
 				r.height = randFloat() * (maxFloors - minFloors) + minFloors;
-				if (raw_noise_2d((r.housePosition.X)*noiseScale, (r.housePosition.Y)*noiseScale) > 0.5) {
+				if (raw_noise_2d((r.housePosition.X + noiseXOffset)*noiseScale, (r.housePosition.Y + noiseYOffset)*noiseScale) > 0.5) {
 					r.height *= 2;
 				}
 				r.type = p.type;
@@ -377,7 +377,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 
 FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
 	FPolygon polygon;
-	if (p.points.Num() > 2 && p.getArea() > 400) {
+	if (p.points.Num() > 2 && p.getArea() > 700) {
 		FVector center = p.getCenter();
 		for (int i = 1; i < p.points.Num(); i++) {
 			FVector tangent = p.points[i] - p.points[i - 1];
