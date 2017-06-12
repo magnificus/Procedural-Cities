@@ -25,10 +25,7 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 	for (FMetaPolygon p : plots) {
 		bool shouldAdd = true;
 		//for (FPolygon o : others) {
-		//	if (testCollision(p, o, 2000)) {
-		//		shouldAdd = false;
-		//		break;
-		//	}
+
 		//}
 		if (shouldAdd) {
 			for (FMetaPolygon a : added) {
@@ -141,7 +138,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
 				r.height = randFloat() * (maxFloors - minFloors) + minFloors;
-				if (raw_noise_2d((r.housePosition.X + noiseXOffset)*noiseScale, (r.housePosition.Y + noiseYOffset)*noiseScale) > 0.5) {
+				if (raw_noise_2d((r.housePosition.X + noiseXOffset)*noiseScale*10, (r.housePosition.Y + noiseYOffset)*noiseScale*10) > 0.7) {
 					r.height *= 2;
 				}
 				r.type = p.type;
@@ -377,7 +374,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 
 FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
 	FPolygon polygon;
-	if (p.points.Num() > 2 && p.getArea() > 700) {
+	if (p.getArea() > 1000) {
 		FVector center = p.getCenter();
 		for (int i = 1; i < p.points.Num(); i++) {
 			FVector tangent = p.points[i] - p.points[i - 1];
@@ -454,8 +451,10 @@ TArray<FMaterialPolygon> APlotBuilder::getSimplePlotPolygons(TArray<FSimplePlot>
 		type = plots[0].type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;
 	for (FSimplePlot p : plots) {
 		FMaterialPolygon newP;
-		//p.pol.points.RemoveAt(p.pol.points.Num() - 1);
+		p.pol.points.RemoveAt(p.pol.points.Num() - 1);
 		newP.points = p.pol.points;
+		if (newP.getIsClockwise())
+			newP.reverse();
 		newP.type = type;// simplePolygonType;//p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;;
 		toReturn.Add(newP);
 

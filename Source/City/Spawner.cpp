@@ -76,7 +76,8 @@ void ASpawner::addVertices(FRoadSegment* road) {
 
 
 float noise(float multiplier, float x, float y) {
-	return scaled_octave_noise_2d(2, 1.0, multiplier, 0, 1, x + noiseXOffset, y + noiseYOffset);
+	return raw_noise_2d(multiplier * (x + noiseXOffset), multiplier*(y + noiseYOffset));
+	return scaled_octave_noise_2d(1, 1.0, multiplier, 0, 1, x + noiseXOffset, y + noiseYOffset);
 }
 
 bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map){
@@ -157,17 +158,29 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 
 }
 
+float getValueOfRotation(FVector testPoint, float noiseScale, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
+	float val = noise(noiseScale, testPoint.X, testPoint.Y);
+	for (logicRoadSegment* t : others) {
+		if (FVector::Dist(t->segment->getMiddle(), testPoint) < maxDist)
+			val -= detriment * (FVector::Dist(t->segment->getMiddle(), testPoint))/maxDist;
+	}
+	return val;
+}
+
+
+
 FRotator getBestRotation(float maxDiffAllowed, FRotator original, FVector originalPoint, FVector step, float noiseScale, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
 	float bestVal = -1000000;
 	FRotator bestRotator;
 	for (int i = 0; i < 10; i++) {
 		FRotator curr = original + FRotator(0, FMath::FRandRange(-maxDiffAllowed, maxDiffAllowed), 0);
 		FVector testPoint = originalPoint + curr.RotateVector(step);
-		float val = noise(noiseScale, testPoint.X, testPoint.Y);
-		for (logicRoadSegment* t : others) {
-			if (FVector::Dist(t->segment->getMiddle(), testPoint) < maxDist)
-				val -= detriment;// * (FVector::Dist(t->segment->getMiddle(), testPoint))/maxDist;
-		}
+		float val = getValueOfRotation(testPoint, noiseScale, others, maxDist, detriment);
+		//float val = noise(noiseScale, testPoint.X, testPoint.Y);
+		//for (logicRoadSegment* t : others) {
+		//	if (FVector::Dist(t->segment->getMiddle(), testPoint) < maxDist)
+		//		val -= detriment;// * (FVector::Dist(t->segment->getMiddle(), testPoint))/maxDist;
+		//}
 		if (val > bestVal) {
 			bestRotator = curr;
 			bestVal = noise(noiseScale, testPoint.X, testPoint.Y);
@@ -189,14 +202,17 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->p1 = prevSeg->p2;
 	// set seconddegreerot to attempt to change towards that direction
 
-	TArray<logicRoadSegment*> otherMain;
-	for (logicRoadSegment* f : allsegments) {
-		if (f->segment->type == RoadType::main) {
-			otherMain.Add(f);
+	TArray<logicRoadSegment*> others;
+	if (prevSeg->type == RoadType::main) {
+		for (logicRoadSegment* f : allsegments) {
+			if (f->segment->type == RoadType::main) {
+				others.Add(f);
+			}
 		}
 	}
 
-	FRotator bestRotator = getBestRotation((prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity), previous->firstDegreeRot,newRoad->p1, stepLength, noiseScale, otherMain, mainRoadDetrimentRange, mainRoadDetrimentImpact);
+
+	FRotator bestRotator = getBestRotation((prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity), previous->firstDegreeRot,newRoad->p1, stepLength, noiseScale, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
 
 	newRoadL->firstDegreeRot = bestRotator;//previous->firstDegreeRot + newRoadL->secondDegreeRot;
 
@@ -208,8 +224,9 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->type = prevSeg->type;
 	newRoad->endTangent = newRoad->p2 - newRoad->p1;
 	newRoadL->segment = newRoad;
-	FVector mP = middle(newRoad->p1, newRoad->p2);
-	newRoadL->time = -noise(noiseScale, mP.X, mP.Y) + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.1*previous->time);// + FMath::FRand() * 0.1;
+	//FVector mP = middle(newRoad->p1, newRoad->p2);
+	float val = getValueOfRotation(newRoad->p2, noiseScale, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
+	newRoadL->time = -val + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.1*previous->time);// + FMath::FRand() * 0.1;
 	//newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X)/2)*noiseScale, ((newRoad->p1.Y + newRoad->p2.Y)/2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	newRoadL->roadLength = previous->roadLength + 1;
 	newRoadL->previous = previous;
@@ -229,23 +246,18 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	FRotator newRotation = left ? FRotator(0, 90, 0) : FRotator(0, 270, 0);
 	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRotation;
 	FVector startOffset = newRoadL->firstDegreeRot.RotateVector(FVector(standardWidth*previous->segment->width / 2, 0, 0));
-	newRoad->p1 = /*prevSeg->end - (standardWidth * (prevSeg->end - prevSeg->start).Normalize()/2) + startOffset; */prevSeg->p1 + (prevSeg->p2 - prevSeg->p1) / 2 + startOffset;
+	newRoad->p1 =prevSeg->p1 + (prevSeg->p2 - prevSeg->p1) / 2 + startOffset;
 
 
-	//float bestVal = 10000;
-	//FRotator bestRotator;
-	//float diffAllowed = 20;
-	// get best direction
-	//for (int i = 0; i < 5; i++) {
-	//	FRotator curr = newRoadL->firstDegreeRot + FRotator(0, FMath::FRandRange(-diffAllowed, diffAllowed), 0);
-	//	FVector testPoint = newRoad->p1 + curr.RotateVector(stepLength);
-	//	if (noise(noiseScale, testPoint.X, testPoint.Y) < bestVal) {
-	//		bestRotator = curr;
-	//		bestVal = noise(noiseScale, testPoint.X, testPoint.Y);
-	//	}
-	//}
-	TArray<logicRoadSegment*> segs;
-	FRotator bestRotator = getBestRotation((prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity), newRoadL->firstDegreeRot, newRoad->p1, stepLength, noiseScale, segs, 0, 0);
+	TArray<logicRoadSegment*> others;
+	if (newType == RoadType::main) {
+		for (logicRoadSegment* f : allsegments) {
+			if (f->segment->type == RoadType::main) {
+				others.Add(f);
+			}
+		}
+	}
+	FRotator bestRotator = getBestRotation(secondaryChangeIntensity, newRoadL->firstDegreeRot, newRoad->p1, stepLength, noiseScale, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
 	newRoadL->firstDegreeRot = bestRotator;//previous->firstDegreeRot + newRoadL->secondDegreeRot;
 
 
@@ -259,8 +271,9 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	newRoadL->segment = newRoad;
 	// every side track has less priority
 
-	FVector mP = middle(newRoad->p1, newRoad->p2);
-	newRoadL->time = -noise(noiseScale, mP.X, mP.Y) + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.01*previous->time);// +FMath::FRand() * 0.1;// ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
+	//FVector mP = middle(newRoad->p1, newRoad->p2);
+	float val = getValueOfRotation(newRoad->p2, noiseScale, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
+	newRoadL->time = -val + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.1*previous->time);// + FMath::FRand() * 0.1;
 
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
@@ -331,7 +344,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	std::vector<logicRoadSegment*> allSegments;
 	logicRoadSegment* start = new logicRoadSegment();
-	start->time = 0;
+	start->time = -10000;
 	FRoadSegment* startR = new FRoadSegment();
 	startR->beginTangent = primaryStepLength;
 
@@ -385,7 +398,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		}
 	}
 	startR->p2 = startR->p1 + bestRot.RotateVector(primaryStepLength);
-	startR->width = 5.0f;
+	startR->width = 4.0f;
 	startR->type = RoadType::main;
 	startR->endTangent = startR->p2 - startR->p1;
 
@@ -439,19 +452,20 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 				if (i == j) {
 					continue;
 				}
-				//if (FVector::Dist(f->p1, f2->p2) < 100 || FVector::Dist(f->p2, f2->p1) < 100) {
+				//if (FVector::Dist(f->p1, f2->p2) < 400 || FVector::Dist(f->p2, f2->p1) < 400) {
 				//	foundCollision = false;
 				//	break;
 				//}
 				FVector fTan = f->p2 - f->p1;
 				//FVector fTan = FVector(0,0,0);
 				fTan.Normalize();
-				FVector res = intersection(f2->p1, f2->p2, f->p1 - fTan * 100, f->p2 + fTan * 100);
-				if (res.X != 0.0f && FVector::Dist(f2->p1, res) < closestDist) {
-					closestDist = FVector::Dist(f2->p1, res);
+				FVector res = intersection(p2Prev, f2->p2, f->p1, f->p2);
+				if (res.X != 0.0f && FVector::Dist(p2Prev, res) < closestDist) {
+					closestDist = FVector::Dist(p2Prev, res);
 					closest = f;
 					impactP = res;
 					foundCollision = true;
+					//break;
 				}
 
 
@@ -551,8 +565,8 @@ TArray<FPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
 
 TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, float posMultiplier) {
 	TArray<FTransform> toReturn;
-	for (int i = 0; i < numSide; i++) {
-		for (int j = 0; j < numSide; j++) {
+	for (int i = -numSide/2; i < numSide/2; i++) {
+		for (int j = -numSide/2; j < numSide/2; j++) {
 			FTransform f;
 			f.SetLocation(FVector(posMultiplier * i, posMultiplier * j, 0));
 			//float x = f.GetLocation().X * noiseMultiplier;

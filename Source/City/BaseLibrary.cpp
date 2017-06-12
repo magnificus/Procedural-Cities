@@ -260,7 +260,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 
-	if (len < 1000) {
+	if (len < 200) {
 		delete inLine;
 		return;
 	}
@@ -284,7 +284,6 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 		FVector tangent = f.p2 - f.p1;
 		tangent.Normalize();
 		FVector intSec = getProperIntersection(f.p1 - tangent*extraRoadLen, f.p2 + tangent*extraRoadLen, inLine->line.p1, inLine->line.p2);
-		int counter = 0;
 		if (intSec.X != 0.0f) {
 			if (!allowSplit) {
 				delete inLine;
@@ -316,7 +315,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 		}
 	}
 	len = FVector::Dist(inLine->line.p1, inLine->line.p2);
-	if (len < 1000) {
+	if (len < 200) {
 		delete inLine;
 		return;
 	}
@@ -419,6 +418,15 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		left->buildLeft = true;
 		decidePolygonFate(segments, blocking, left, lines, true, extraRoadLen, width, middleOffset);
 
+		//if (!f.roadInFront) {
+		//	LinkedLine* top = new LinkedLine();
+		//	top->line.p1 = f.p2 + (extraRoadLen+5)*tangent - sideOffsetEnd*1.1;
+		//	top->line.p2 = f.p2 + (extraRoadLen+5)*tangent + sideOffsetEnd*1.1;
+		//	top->buildLeft = true;
+		//	decidePolygonFate(segments, blocking, top, lines, true, extraRoadLen, width, middleOffset);
+		//}
+
+
 		if (f.width != 0.0f) {
 			LinkedLine* right = new LinkedLine();
 			right->line.p1 = f.p1 - sideOffsetBegin - extraLength;
@@ -463,9 +471,9 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 			// closed polygon since last point continues into first
 			FVector res = getProperIntersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);//intersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
 			//if (res.X != 0.0f) {
-				f.points.RemoveAt(0);
-				f.points.EmplaceAt(0, res);
-				f.points.Add(res);
+			f.points.RemoveAt(0);
+			f.points.EmplaceAt(0, res);
+			f.points.Add(res);
 			//}
 			//else {
 			//	FVector first = f.points[0];
@@ -483,7 +491,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		polygons.Add(f);
 
 	}
-	float maxConnect = 5000;
+	float maxConnect = 4500;
 
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
@@ -542,15 +550,16 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 	// zip together open polygons where end and beginning are really close together, and check orientation
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
+		while (f.points.Num() > 1 && FVector::Dist(f.points[f.points.Num() - 2], f.points[f.points.Num() - 1]) < 10.0f) {
+			f.points.RemoveAt(f.points.Num() - 1);
+		}
 		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) < maxConnect) {
 			f.points.Add(FVector(f.points[0]));
 			f.open = false;
 		}
 		f.checkOrientation();
-		while (FVector::Dist(f.points[f.points.Num() - 2], f.points[f.points.Num() - 1]) < 10.0f) {
-			f.points.RemoveAt(f.points.Num() - 1);
-		}
-		f.clipEdges(-0.79f);
+
+		f.clipEdges(-0.85f);
 		if (f.points.Num() < 3) {
 			polygons.RemoveAt(i);
 			i--;

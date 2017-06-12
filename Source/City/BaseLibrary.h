@@ -40,7 +40,8 @@ struct FPolygon
 	bool getIsClockwise() {
 		double tot = 0;
 		for (int i = 1; i < points.Num(); i++) {
-			tot += (points[i].X - points[i - 1].X) * (points[i].Y + points[i - 1].Y);
+			tot += ((points[i].X*0.01) - (points[i - 1].X*0.01)) * ((points[i].Y*0.01) + (points[i - 1].Y*0.01));
+			//tot += points[i-1].X
 		}
 		return tot < 0;
 	}
@@ -137,18 +138,18 @@ struct FPolygon
 			}
 		}
 
-		for (int i = 2; i < points.Num(); i++) {
-			FVector prev = points[i - 1] - points[i - 2];
-			prev.Normalize();
-			FVector curr = points[i] - points[i - 1];
-			curr.Normalize();
-			//UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
-			if (FVector::Dist(curr, prev) < dirDiffAllowed) {
-				points.RemoveAt(i - 1);
-				hasModified = true;
-				i--;
-			}
-		}
+		//for (int i = 2; i < points.Num(); i++) {
+		//	FVector prev = points[i - 1] - points[i - 2];
+		//	prev.Normalize();
+		//	FVector curr = points[i] - points[i - 1];
+		//	curr.Normalize();
+		//	//UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
+		//	if (FVector::Dist(curr, prev) < dirDiffAllowed) {
+		//		points.RemoveAt(i - 1);
+		//		hasModified = true;
+		//		i--;
+		//	}
+		//}
 		return hasModified;
 	}
 
