@@ -356,6 +356,15 @@ struct FMeshInfo {
 		FTransform transform;
 };
 
+UENUM(BlueprintType)
+enum class WindowType : uint8
+{
+	rectangular 	UMETA(DisplayName = "Rectangular"),
+	cross UMETA(DisplayName = "Cross"),
+	rectangularHorizontalBigger UMETA(DisplayName = "Rectangular Horizontal Bigger"),
+	verticalLines UMETA(DisplayName = "Vertical Lines")
+};
+
 
 USTRUCT(BlueprintType)
 struct FRoomInfo {
@@ -367,6 +376,7 @@ struct FRoomInfo {
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<FMeshInfo> meshes;
+
 
 	void offset(FVector offset) {
 		for (FPolygon &p : pols)
@@ -578,6 +588,8 @@ struct FRoomPolygon : public FPolygon
 	TMap<int32, TSet<FRoomPolygon*>> passiveConnections;
 	// pointers to recievers of entrances from my end
 	TMap<FRoomPolygon*, int32> activeConnections;
+
+	WindowType windowType;
 
 	bool canRefine = true;
 	SubRoomType type = SubRoomType::empty;

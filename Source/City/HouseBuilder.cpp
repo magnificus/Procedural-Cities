@@ -718,6 +718,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	bool potentialBalcony = f.type == RoomType::apartment && floors < 10;
 	for (FRoomPolygon &p : roomPols) {
 		RoomType toUse = f.type;
+		p.windowType = WindowType::rectangular;
 		if (p.windows.Num() > 0 && f.type == RoomType::apartment) {
 			for (int i : p.windows) {
 				p.entrances.Add(i);
@@ -753,9 +754,13 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 		toReturn.roomInfo.pols.Add(floor);
 	}
 
-
+	int windowChangeCutoff = FMath::RandRange(1, 20);
+	WindowType currentWindowType = WindowType(rand() % 4);
 	bool facade = FMath::FRand() < 0.2;
 		for (int i = 1; i < floors; i++) {
+			if (i == windowChangeCutoff)
+				currentWindowType = WindowType(rand() % 4);
+
 			if (FMath::FRand() < 0.15 && f.canBeModified) {
 				TArray<FMaterialPolygon> res = potentiallyShrink(f, hole);
 				for (FMaterialPolygon &fm : res) {
@@ -769,11 +774,12 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 				toReturn.roomInfo.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol, true));
 				toReturn.roomInfo.meshes.Add(FMeshInfo{ "stair", FTransform(rot.Rotation(), stairPos + FVector(0, 0, floorHeight * (i - 1)), FVector(1.0f, 1.0f, 1.0f)) });
 			}
-			//if (facade)
-			//	addFacade(f, toReturn.roomInfo, floorHeight*i + 1, 70, 20);
+			if (facade)
+				addFacade(f, toReturn.roomInfo, floorHeight*i + 1, 70, 20);
 
 			roomPols = getInteriorPlan(f, hole, false, 300, 500);
 			for (FRoomPolygon &p : roomPols) {
+				p.windowType = currentWindowType;
 				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, map, potentialBalcony, shellOnly);
 				newR.offset(FVector(0, 0, floorHeight*i));
 				toReturn.roomInfo.pols.Append(newR.pols);

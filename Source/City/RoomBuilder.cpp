@@ -159,12 +159,95 @@ FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHe
 	float distToDoor = FVector::Dist(doorPos, p1) - doorWidth / 2;
 	FMaterialPolygon doorPolygon;
 	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
-	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 3));// + FVector(0, 0, 100));
-	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 3));// + FVector(0, 0, 100));
+	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 4));// + FVector(0, 0, 100));
+	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 4));// + FVector(0, 0, 100));
 	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, doorHeight));
 	//doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
 	//doorPolygon.reverse();
 	return doorPolygon;
+}
+
+
+TArray<FMaterialPolygon> getCrossWindow(FPolygon p, FVector center, float frameWidth, float frameLength, float frameDepth) {
+	TArray<FMaterialPolygon> toReturn;
+	for (int j = 1; j < 3; j++) {
+		FMaterialPolygon frame;
+		frame.type = PolygonType::windowFrame;
+		frame.width = frameDepth;
+		FVector tangent1 = center - p.points[j - 1];
+		FVector tangent2 = p.points[j+1] - p.points[j];
+		float tan2Len = tangent2.Size();
+		tangent1.Normalize();
+		tangent2.Normalize();
+		FVector windowNormal = getNormal(p.points[j], p.points[j - 1], true);
+		windowNormal.Normalize();
+		frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent1 * frameWidth/2);
+		frame.points.Add(middle(p.points[j - 1], p.points[j]) + tangent1 * frameWidth/2);
+		frame.points.Add(middle(p.points[j - 1], p.points[j]) + tangent1 * frameWidth/2 + tangent2*tan2Len);
+		frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent1 * frameWidth / 2 + tangent2*tan2Len);
+		frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent1 * frameWidth / 2);
+		FVector frameDir = frame.getDirection();
+		frame.offset(frameDir*(frameDepth / 2 - 20));
+		toReturn.Add(frame);
+	}
+	return toReturn;
+}
+
+
+TArray<FMaterialPolygon> getRectangularWindow(FPolygon p, FVector center, float frameWidth, float frameLength, float frameDepth) {
+	TArray<FMaterialPolygon> toReturn;
+	for (int j = 1; j < p.points.Num(); j++) {
+		FMaterialPolygon frame;
+		frame.type = PolygonType::windowFrame;
+		frame.width = frameDepth;
+		FVector tangent1 = center - p.points[j - 1];
+		FVector tangent2 = center - p.points[j];
+		tangent1.Normalize();
+		tangent2.Normalize();
+		FVector windowNormal = getNormal(p.points[j], p.points[j - 1], true);
+		windowNormal.Normalize();
+		frame.points.Add(p.points[j - 1]);
+		frame.points.Add(p.points[j]);
+		frame.points.Add(p.points[j] + tangent2 * frameWidth);
+		frame.points.Add(p.points[j - 1] + tangent1 * frameWidth);
+		frame.points.Add(p.points[j - 1]);
+		FVector frameDir = frame.getDirection();
+		frame.offset(frameDir*(frameDepth / 2 - 20));
+		toReturn.Add(frame);
+	}
+	return toReturn;
+}
+
+TArray<FMaterialPolygon> getAppropriateWindowFrame(FPolygon p, FVector center, WindowType type) {
+	float frameWidth = 15;
+	float frameLength = 20;
+	float frameDepth = 30;
+	TArray<FMaterialPolygon> toReturn;
+	p.points.Add(FVector(p.points[0]));
+
+	switch (type) {
+	case WindowType::rectangular: {
+		toReturn = getRectangularWindow(p, center, frameWidth, frameLength, frameDepth);
+	} break;
+	case WindowType::cross: {
+		toReturn = getRectangularWindow(p, center, frameWidth, frameLength, frameDepth);
+		toReturn.Append(getCrossWindow(p, center, frameWidth, frameLength, frameDepth));
+	} break;
+	case WindowType::verticalLines: {
+		toReturn = getRectangularWindow(p, center, frameWidth, frameLength, frameDepth);
+		for (int i = 0; i < toReturn.Num(); i++) {
+			toReturn.RemoveAt(i);
+		}
+	} break;
+	case WindowType::rectangularHorizontalBigger: {
+		toReturn = getRectangularWindow(p, center, frameWidth, frameLength, frameDepth);
+		for (int i = 1; i < toReturn.Num(); i++) {
+			toReturn.RemoveAt(i);
+		}
+	} break;
+	}
+
+	return toReturn;
 }
 
 bool fitWindowAround(float &wStart, float &wEnd, float otherStart, float otherEnd) {
@@ -198,6 +281,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 
 			int prev = i > 1 ? i - 1 : rp->points.Num() - 1;
 			int next = i < rp->points.Num() - 1 ? i + 1 : 1;
+			float extraBottom = 0;
 			if (!rp->exteriorWalls.Contains(i)) {
 				// this means that prev wall was exterior, move our back a little forward
 				if (rp->exteriorWalls.Contains(prev))
@@ -206,15 +290,16 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 				// this means that next wall is exterior, move our front a little back
 				if (rp->exteriorWalls.Contains(next))
 					extraBack = -tan * 20;
+				extraBottom = 2;
 			}
 
 
 			
-			newP.points.Add(p1 + FVector(0, 0, floorHeight - 1) + extraFront);
-			newP.points.Add(p1 + FVector(0, 0, 1) + extraFront);
-			newP.points.Add(p2 + FVector(0, 0, 1) + extraBack);
-			newP.points.Add(p2 + FVector(0, 0, floorHeight - 1) + extraBack);
-			newP.points.Add(p1 + FVector(0, 0, floorHeight - 1) + extraFront);
+			newP.points.Add(p1 + FVector(0, 0, floorHeight) + extraFront);
+			newP.points.Add(p1 + FVector(0, 0, extraBottom) + extraFront);
+			newP.points.Add(p2 + FVector(0, 0, extraBottom) + extraBack);
+			newP.points.Add(p2 + FVector(0, 0, floorHeight) + extraBack);
+			newP.points.Add(p1 + FVector(0, 0, floorHeight) + extraFront);
 
 			TArray<FPolygon> holes;
 			FVector entrancePos = FVector(-10000, -10000, -10000);
@@ -253,13 +338,6 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 					}
 					//}
 				}
-
-
-				// add window frame as well
-
-					float frameWidth = 15;
-					float frameLength = 20;
-					float frameDepth = 30;
 					for (FPolygon p : windows) {
 						FMaterialPolygon win;
 						win.points = p.points;
@@ -267,30 +345,10 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 						win.type = shellOnly ? PolygonType::occlusionWindow : PolygonType::window;
 						toReturn.Add(win);
 						FVector center = p.getCenter();
-						if (windowFrames) {
-							p.points.Add(FVector(p.points[0]));
-							for (int j = 1; j < p.points.Num(); j++) {
-								FMaterialPolygon frame;
-								frame.type = PolygonType::windowFrame;
-								frame.width = frameDepth;
-								FVector tangent1 = center - p.points[j - 1];
-								FVector tangent2 = center - p.points[j];
-								tangent1.Normalize();
-								tangent2.Normalize();
-								FVector windowNormal = getNormal(p.points[j], p.points[j - 1], true);
-								windowNormal.Normalize();
-								frame.points.Add(p.points[j - 1]);
-								frame.points.Add(p.points[j]);
-								frame.points.Add(p.points[j] + tangent2 * frameWidth);
-								frame.points.Add(p.points[j - 1] + tangent1 * frameWidth);
-								frame.points.Add(p.points[j - 1]);
-								FVector frameDir = frame.getDirection();
-								frame.offset(frameDir*(frameDepth / 2 - 20));
-								toReturn.Add(frame);
+						// potentially add window frame as well
 
-							}
-							p.points.RemoveAt(p.points.Num() - 1);
-						}
+						if (windowFrames)
+							toReturn.Append(getAppropriateWindowFrame(p, center, rp->windowType));
 
 				}
 				holes.Append(windows);
@@ -345,7 +403,7 @@ FTransform attemptGetPosition(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray
 				}
 			}
 			if (lenToMove != 0) {
-				pos += (lenToMove + 5)*dir;
+				pos += (lenToMove + 30)*dir;
 				pol = getPolygon(rot, pos, string, map);
 			}
 			if (onWall) {
@@ -353,7 +411,8 @@ FTransform attemptGetPosition(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray
 				int count = 0;
 				for (int k = 1; k < pol.points.Num(); k++) {
 					FVector curr = NearestPointOnLine(r2->points[i - 1], r2->points[i] - r2->points[i - 1], pol.points[k]);
-					if (FVector::DistSquared(curr, pol.points[k]) < 1500) { // pick a number that seems reasonable
+					float dist = FMath::Pow(curr.X - pol.points[k].X, 2) + FMath::Pow(curr.Y - pol.points[k].Y, 2);
+					if (dist < 1500) { // pick a number that seems reasonable
 						count++;
 					}
 				}
@@ -371,7 +430,21 @@ FTransform attemptGetPosition(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray
 	}
 	return FTransform(FRotator(0,0,0), FVector(0,0,0), FVector(0, 0, 0));
 }
+/**
+A simplified method for trying to find a wall in a room to place the mesh
+@param r2 the room to place mesh in
+@param placed other placed polygons, to check for collision
+@param meshes the array to which append the mesh if sucessful
+@param windowAllowed whether to allow the mesh to be placed in front of windows or not
+@param testsPerSide number of tries for placement on each side of the room
+@param string name of mesh in instanced mesh map
+@param offsetRot offset rotation for object
+@param offsetPos offset position for object'
+@param map the instanced mesh map for finding the bounding box for the object
+@param onwall whether the object is required to be strictly next to the wall (and not sticking out)
+@return whether the placement was successful or not
 
+*/
 bool attemptPlace(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, bool windowAllowed, int testsPerSide, FString string, FRotator offsetRot,FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool onWall) {
 	FTransform pos = attemptGetPosition(r2, placed, meshes, windowAllowed, testsPerSide, string, offsetRot, offsetPos, map, onWall);
 	if (pos.GetLocation().X != 0.0f) {
@@ -582,7 +655,19 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon *r2, TMap<FString, UHierarch
 	
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	attemptPlace(r2, placed, meshes, false, 5, "sofa", FRotator(0, 180, 0), FVector(0, 0, 10), map, true);
+	FTransform res = attemptGetPosition(r2, placed, meshes, false, 3, "tv", FRotator(0, 0, 0), FVector(35, 0, 130), map, true);
+	if (res.GetLocation().X != 0.0f) {
+		meshes.Add({ "tv", res });
+		placed.Add(getPolygon(res.Rotator(), res.GetLocation(), "tv", map));
+		FTransform sofaTrans = FTransform{ res.GetRotation(), res.GetLocation() + res.GetRotation().RotateVector(FVector(270, 0, 0)), FVector(1.0f, 1.0f, 1.0f) };
+		FPolygon pol = getPolygon(sofaTrans.Rotator() , sofaTrans.GetLocation(), "sofa", map);
+		if (!testCollision(pol, placed, 0, *r2)) {
+			placed.Add(pol);
+			meshes.Add({ "sofa", FTransform{sofaTrans.Rotator(), sofaTrans.GetLocation() - FVector(0,0,130), FVector(1,1,1)} });
+		}
+
+	}
+	meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
 
 	return meshes;
 }
@@ -641,7 +726,7 @@ static TArray<FMeshInfo> getHallWay(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 
-	attemptPlace(r2, placed, meshes, true, 1, "hanger", FRotator(50, 0, 0), FVector(0, 0, 20), map, false);
+	attemptPlace(r2, placed, meshes, true, 1, "hanger", FRotator(0, 0, 0), FVector(50, 0, 20), map, false);
 	return meshes;
 }
 
@@ -652,7 +737,7 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 	placed.Append(getBlockingVolumes(r2, 200, 100));
 	attemptPlace(r2, placed, meshes, false, 4, "kitchen", FRotator(0, 90, 0), FVector(-15, 0, 0), map, true);
 	meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
-	attemptPlace(r2, placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
+	attemptPlace(r2, placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, false);
 	attemptPlace(r2, placed, meshes, false, 3, "fridge", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
 	attemptPlace(r2, placed, meshes, false, 3, "oven", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	return meshes;
@@ -685,6 +770,9 @@ static TArray<FMeshInfo> getStoreFront(FRoomPolygon *r2, TMap<FString, UHierarch
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
+	for (int i = 0; i < 5; i++) {
+		attemptPlace(r2, placed, meshes, false, 3, "counter", FRotator(0, 270, 0), FVector(40, 0, 0), map, true);
+	}
 	//attemptPlace(r2, placed, meshes, 50, false, 5, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 	///attemptPlace(r2, placed, meshes, 45.0f, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
 
@@ -829,7 +917,7 @@ FRoomInfo ARoomBuilder::buildRestaurant(FRoomPolygon *f, float height, TMap<FStr
 			}
 		}
 	}
-	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, 300, 300, 0, shellOnly, true));
+	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, FMath::FRandRange(300,200), FMath::FRandRange(300, 200), 0, shellOnly, true));
 	return r;
 }
 
