@@ -538,11 +538,6 @@ void addFacade(FHousePolygon &f, FRoomInfo &toReturn, float beginHeight, float f
 void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 	if (FMath::FRand() < 0.5) {
 		// edge detail
-		//for (int i = 1; i < roof.points.Num()-1; i++) {
-		//	FVector cornerNormal = getNormal(roof.points[i - 1], roof.points[i], true) + getNormal(roof.points[i], roof.points[i + 1], true);
-		//	cornerNormal.Normalize();
-
-		//}
 		FMaterialPolygon shape = roof;
 		float size = FMath::FRandRange(100, 250);
 		shape.offset(FVector(0, 0, size));
@@ -550,62 +545,58 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 		toReturn.pols.Append(fillOutPolygons(sides));
 		toReturn.pols.Append(sides);
 
-		//for (int i = 1; i < roof.points.Num(); i++) {
-		//	FPolygon curr;
-		//	FVector normal = getNormal(roof.points[i], roof.points[i - 1], true);
-		//	normal.Normalize();
-
-
-		//}
 	}
-	float minHeight = 200;
-	float maxHeight = 600;
+	float minHeight = 100;
+	float maxHeight = 1000;
 	float len = 500;
 	float offset = FMath::FRandRange(minHeight, maxHeight);
 	if (FMath::FRand() < 0.6) {
-		// add box shape on top of room
-		FMaterialPolygon box;
-		bool found = true;
-		int count = 0;
-		do {
-			if (count > 4) {
-				found = false;
-				break;
-			}
-			box = FMaterialPolygon();
-			box.type = PolygonType::exteriorSnd;
-			FVector center = roof.getCenter();
-			FVector p1 = center + FVector(FMath::FRandRange(900, 2500) * FMath::RandBool() ? 1 : -1, FMath::FRandRange(900, 2500) * FMath::RandBool() ? 1 : -1, offset);
-			FVector tangent = roof.points[1] - roof.points[0];
-			float firstLen = FMath::FRandRange(900, 2500);
-			float sndLen = FMath::FRandRange(900, 2500);
-			tangent.Normalize();
-			FVector p2 = p1 + tangent * firstLen;
-			tangent = FRotator(0, 90, 0).RotateVector(tangent);
-			FVector p3 = p2 + tangent * sndLen;
-			tangent = FRotator(0, 90, 0).RotateVector(tangent);
-			FVector p4 = p3 + tangent * firstLen;
-			box.points.Add(p1);
-			box.points.Add(p4);
-			box.points.Add(p3);
-			box.points.Add(p2);
-			box.points.Add(p1);
-			count++;
+		int numBoxes = rand() % 4;
+		// add box shapes on top of roof
+		for (int i = 0; i < numBoxes; i++) {
+			FMaterialPolygon box;
+			bool found = true;
+			int count = 0;
+			do {
+				if (count > 4) {
+					found = false;
+					break;
+				}
+				box = FMaterialPolygon();
+				box.type = PolygonType::exteriorSnd;
+				FVector center = roof.getCenter();
+				FVector p1 = center + FVector(FMath::FRandRange(900, 2500) * FMath::RandBool() ? 1 : -1, FMath::FRandRange(900, 2500) * FMath::RandBool() ? 1 : -1, offset);
+				FVector tangent = roof.points[1] - roof.points[0];
+				float firstLen = FMath::FRandRange(900, 2500);
+				float sndLen = FMath::FRandRange(900, 2500);
+				tangent.Normalize();
+				FVector p2 = p1 + tangent * firstLen;
+				tangent = FRotator(0, 90, 0).RotateVector(tangent);
+				FVector p3 = p2 + tangent * sndLen;
+				tangent = FRotator(0, 90, 0).RotateVector(tangent);
+				FVector p4 = p3 + tangent * firstLen;
+				box.points.Add(p1);
+				box.points.Add(p4);
+				box.points.Add(p3);
+				box.points.Add(p2);
+				box.points.Add(p1);
+				count++;
 
-		} while (intersection(box, roof).X != 0.0f);
+			} while (intersection(box, roof).X != 0.0f);
 
-		if (found) {
-			for (int i = 1; i < box.points.Num(); i++) {
-				FMaterialPolygon side;
-				side.type = PolygonType::exteriorSnd;
-				side.points.Add(box.points[i - 1]);
-				side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
-				side.points.Add(box.points[i] - FVector(0, 0, offset));
-				side.points.Add(box.points[i]);
-				side.points.Add(box.points[i - 1]);
-				toReturn.pols.Add(side);
+			if (found) {
+				for (int i = 1; i < box.points.Num(); i++) {
+					FMaterialPolygon side;
+					side.type = PolygonType::exteriorSnd;
+					side.points.Add(box.points[i - 1]);
+					side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
+					side.points.Add(box.points[i] - FVector(0, 0, offset));
+					side.points.Add(box.points[i]);
+					side.points.Add(box.points[i - 1]);
+					toReturn.pols.Add(side);
+				}
+				toReturn.pols.Add(box);
 			}
-			toReturn.pols.Add(box);
 		}
 	}
 	else if (FMath::FRand() < 0.3){

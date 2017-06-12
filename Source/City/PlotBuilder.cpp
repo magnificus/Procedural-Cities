@@ -453,7 +453,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSimplePlotPolygons(TArray<FSimplePlot>
 		FMaterialPolygon newP;
 		p.pol.points.RemoveAt(p.pol.points.Num() - 1);
 		newP.points = p.pol.points;
-		if (newP.getIsClockwise())
+		if (!newP.getIsClockwise())
 			newP.reverse();
 		newP.type = type;// simplePolygonType;//p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;;
 		toReturn.Add(newP);

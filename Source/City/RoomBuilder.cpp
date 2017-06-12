@@ -677,8 +677,25 @@ static TArray<FMeshInfo> getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHier
 
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
+	attemptPlace(r2, placed, meshes, false, 4, "restaurant_bar", FRotator(0, 0, 0), FVector(100, 0, 0), map, true);
 	//attemptPlace(r2, placed, meshes, true, 5, "restaurant_table", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
-	placeRows(r2, placed, meshes, FRotator(0, 0, 0), "restaurant_table", 0.005, 0.005, map);
+	TArray<FMeshInfo> tables;
+
+	placeRows(r2, placed, tables, FRotator(0, 0, 0), "restaurant_table", FMath::FRandRange(0.0015, 0.003), FMath::FRandRange(0.0015, 0.003), map);
+	tables.RemoveAt(0, tables.Num() / 2);
+	for (FMeshInfo table : tables) {
+		FTransform trans = table.transform;
+		if (FMath::RandBool())
+			meshes.Add({ "restaurant_chair", trans });
+		trans.SetRotation(FQuat(trans.Rotator() + FRotator(0, 120, 0)));
+		if (FMath::RandBool())
+			meshes.Add({ "restaurant_chair", trans });
+		trans.SetRotation(FQuat(trans.Rotator() + FRotator(0, 120, 0)));
+		if (FMath::RandBool())
+			meshes.Add({ "restaurant_chair", trans });
+
+	}
+	meshes.Append(tables);
 	return meshes;
 }
 
@@ -969,19 +986,24 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 	if (balcony) {
 		for (FRoomPolygon *p : roomPols) {
 			if (splitableType(p->type)) {
-				// these are the balcony candidates
+				// these are the balcony candidate rooms
 				if (p->windows.Num() > 0) {
-					// this is the place
-					int place = *p->windows.CreateIterator();
-					p->entrances.Add(place);
-					FVector mid = middle(p->points[place], p->points[place - 1]);
-					p->specificEntrances.Add(place, mid);
-					r = placeBalcony(p, place, map);
-					break;
+					for (int place : p->windows) {
+						if (FVector::DistSquared(p->points[place], p->points[place - 1]) > 10000) {
+							p->entrances.Add(place);
+							FVector mid = middle(p->points[place], p->points[place - 1]);
+							p->specificEntrances.Add(place, mid);
+							r = placeBalcony(p, place, map);
+							goto balconyDone;
+						}
+
+					}
+
 				}
 			}
 		}
 	}
+	balconyDone:
 
 	if (!shellOnly) {
 		for (FRoomPolygon* r2 : roomPols) {
