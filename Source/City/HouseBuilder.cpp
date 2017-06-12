@@ -543,12 +543,20 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 		//	cornerNormal.Normalize();
 
 		//}
-		FPolygon shape = roof;
-		for (int i = 1; i < roof.points.Num(); i++) {
-			FPolygon curr;
+		FMaterialPolygon shape = roof;
+		float size = FMath::FRandRange(100, 250);
+		shape.offset(FVector(0, 0, size));
+		TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exteriorSnd, size);
+		toReturn.pols.Append(fillOutPolygons(sides));
+		toReturn.pols.Append(sides);
+
+		//for (int i = 1; i < roof.points.Num(); i++) {
+		//	FPolygon curr;
+		//	FVector normal = getNormal(roof.points[i], roof.points[i - 1], true);
+		//	normal.Normalize();
 
 
-		}
+		//}
 	}
 	float minHeight = 200;
 	float maxHeight = 600;
@@ -565,7 +573,7 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 				break;
 			}
 			box = FMaterialPolygon();
-			box.type = PolygonType::roof;
+			box.type = PolygonType::exteriorSnd;
 			FVector center = roof.getCenter();
 			FVector p1 = center + FVector(FMath::FRandRange(900, 2500) * FMath::RandBool() ? 1 : -1, FMath::FRandRange(900, 2500) * FMath::RandBool() ? 1 : -1, offset);
 			FVector tangent = roof.points[1] - roof.points[0];
@@ -589,7 +597,7 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 		if (found) {
 			for (int i = 1; i < box.points.Num(); i++) {
 				FMaterialPolygon side;
-				side.type = PolygonType::roof;
+				side.type = PolygonType::exteriorSnd;
 				side.points.Add(box.points[i - 1]);
 				side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
 				side.points.Add(box.points[i] - FVector(0, 0, offset));
@@ -602,7 +610,7 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 	}
 	else if (FMath::FRand() < 0.3){
 
-		// same shape as roof, but 
+		// same shape as roof, but smaller 
 		FMaterialPolygon shape = roof;
 		shape.type = PolygonType::roof;
 		shape.offset(FVector(0, 0, offset));
@@ -811,65 +819,66 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	roof.type = PolygonType::roof;
 	roof.reverse();
 
-	if (generateRoofs) {
-		toReturn.roomInfo.pols.Add(roof);
-		addRoofDetail(roof, toReturn.roomInfo);
-	}
+
 
 
 
 	if (!shellOnly) {
-		TArray<FMaterialPolygon> otherSides;
-		for (FMaterialPolygon &p : toReturn.roomInfo.pols) {
-			otherSides.Add(p);
-			FMaterialPolygon other = p;
-			// exterior walls are interiors on the inside
-			if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
-				other.type = PolygonType::interior;
-			}
+		TArray<FMaterialPolygon> otherSides = fillOutPolygons(toReturn.roomInfo.pols);
+		//for (FMaterialPolygon &p : toReturn.roomInfo.pols) {
+		//	otherSides.Add(p);
+		//	FMaterialPolygon other = p;
+		//	// exterior walls are interiors on the inside
+		//	if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
+		//		other.type = PolygonType::interior;
+		//	}
 
-			other.offset(p.getDirection() * p.width);
-			for (int i = 1; i < p.points.Num(); i++) {
-				FMaterialPolygon newP1;
-				newP1.type = p.type;
-				newP1.points.Add(other.points[i - 1]);
-				newP1.points.Add(p.points[i]);
-				newP1.points.Add(p.points[i - 1]);
-				otherSides.Add(newP1);
+		//	other.offset(p.getDirection() * p.width);
+		//	for (int i = 1; i < p.points.Num(); i++) {
+		//		FMaterialPolygon newP1;
+		//		newP1.type = p.type;
+		//		newP1.points.Add(other.points[i - 1]);
+		//		newP1.points.Add(p.points[i]);
+		//		newP1.points.Add(p.points[i - 1]);
+		//		otherSides.Add(newP1);
 
-				FMaterialPolygon newP2;
-				newP2.type = p.type;
-				newP2.points.Add(other.points[i - 1]);
-				newP2.points.Add(other.points[i]);
-				newP2.points.Add(p.points[i]);
-				otherSides.Add(newP2);
+		//		FMaterialPolygon newP2;
+		//		newP2.type = p.type;
+		//		newP2.points.Add(other.points[i - 1]);
+		//		newP2.points.Add(other.points[i]);
+		//		newP2.points.Add(p.points[i]);
+		//		otherSides.Add(newP2);
 
-			}
+		//	}
 
-			FMaterialPolygon newP1;
-			newP1.type = p.type;
-			newP1.points.Add(other.points[p.points.Num() - 1]);
-			newP1.points.Add(p.points[0]);
-			newP1.points.Add(p.points[p.points.Num() - 1]);
-			otherSides.Add(newP1);
+		//	FMaterialPolygon newP1;
+		//	newP1.type = p.type;
+		//	newP1.points.Add(other.points[p.points.Num() - 1]);
+		//	newP1.points.Add(p.points[0]);
+		//	newP1.points.Add(p.points[p.points.Num() - 1]);
+		//	otherSides.Add(newP1);
 
-			FMaterialPolygon newP2;
-			newP2.type = p.type;
-			newP2.points.Add(other.points[p.points.Num() - 1]);
-			newP2.points.Add(other.points[0]);
-			newP2.points.Add(p.points[0]);
-			otherSides.Add(newP2);
+		//	FMaterialPolygon newP2;
+		//	newP2.type = p.type;
+		//	newP2.points.Add(other.points[p.points.Num() - 1]);
+		//	newP2.points.Add(other.points[0]);
+		//	newP2.points.Add(p.points[0]);
+		//	otherSides.Add(newP2);
 
-			other.reverse();
-			otherSides.Add(other);
+		//	other.reverse();
+		//	otherSides.Add(other);
 
 
-		}
+		//}
 		toReturn.roomInfo.pols.Append(otherSides);
 		//toReturn.roomInfo.pols = otherSides;
 
 	}
 
+	if (generateRoofs) {
+		toReturn.roomInfo.pols.Add(roof);
+		addRoofDetail(roof, toReturn.roomInfo);
+	}
 	return toReturn;
 
 

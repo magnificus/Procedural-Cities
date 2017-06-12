@@ -598,3 +598,52 @@ TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float w
 	}
 	return toReturn;
 }
+
+TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
+	TArray<FMaterialPolygon> otherSides;
+	for (FMaterialPolygon &p : inPols) {
+		otherSides.Add(p);
+		FMaterialPolygon other = p;
+		// exterior walls are interiors on the inside
+		if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
+			other.type = PolygonType::interior;
+		}
+
+		other.offset(p.getDirection() * p.width);
+		for (int i = 1; i < p.points.Num(); i++) {
+			FMaterialPolygon newP1;
+			newP1.type = p.type;
+			newP1.points.Add(other.points[i - 1]);
+			newP1.points.Add(p.points[i]);
+			newP1.points.Add(p.points[i - 1]);
+			otherSides.Add(newP1);
+
+			FMaterialPolygon newP2;
+			newP2.type = p.type;
+			newP2.points.Add(other.points[i - 1]);
+			newP2.points.Add(other.points[i]);
+			newP2.points.Add(p.points[i]);
+			otherSides.Add(newP2);
+
+		}
+
+		FMaterialPolygon newP1;
+		newP1.type = p.type;
+		newP1.points.Add(other.points[p.points.Num() - 1]);
+		newP1.points.Add(p.points[0]);
+		newP1.points.Add(p.points[p.points.Num() - 1]);
+		otherSides.Add(newP1);
+
+		FMaterialPolygon newP2;
+		newP2.type = p.type;
+		newP2.points.Add(other.points[p.points.Num() - 1]);
+		newP2.points.Add(other.points[0]);
+		newP2.points.Add(p.points[0]);
+		otherSides.Add(newP2);
+
+		other.reverse();
+		otherSides.Add(other);
+
+	}
+	return otherSides;
+}

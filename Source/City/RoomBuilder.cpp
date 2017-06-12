@@ -655,7 +655,7 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon *r2, TMap<FString, UHierarch
 	
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	FTransform res = attemptGetPosition(r2, placed, meshes, false, 3, "tv", FRotator(0, 0, 0), FVector(35, 0, 130), map, true);
+	FTransform res = attemptGetPosition(r2, placed, meshes, false, 3, "tv", FRotator(0, 0, 0), FVector(35, 0, 150), map, true);
 	if (res.GetLocation().X != 0.0f) {
 		meshes.Add({ "tv", res });
 		placed.Add(getPolygon(res.Rotator(), res.GetLocation(), "tv", map));
@@ -663,7 +663,7 @@ static TArray<FMeshInfo> getLivingRoom(FRoomPolygon *r2, TMap<FString, UHierarch
 		FPolygon pol = getPolygon(sofaTrans.Rotator() , sofaTrans.GetLocation(), "sofa", map);
 		if (!testCollision(pol, placed, 0, *r2)) {
 			placed.Add(pol);
-			meshes.Add({ "sofa", FTransform{sofaTrans.Rotator(), sofaTrans.GetLocation() - FVector(0,0,130), FVector(1,1,1)} });
+			meshes.Add({ "sofa", FTransform{sofaTrans.Rotator(), sofaTrans.GetLocation() - FVector(0,0,140), FVector(1,1,1)} });
 		}
 
 	}

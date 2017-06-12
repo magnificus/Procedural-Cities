@@ -1449,6 +1449,7 @@ bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<F
 float randFloat();
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
 TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width);
+TArray<FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &first);
 
 class CITY_API BaseLibrary
 {
