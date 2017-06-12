@@ -523,7 +523,8 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 	placed = getBlockingVolumes(r2, 200, 200);
-	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_table_position", 0.002, 0.0042, map);
+	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_table_position", 0.004	, 0.005, map);
+	meshes.RemoveAt(meshes.Num() / 3, meshes.Num() / 3);
 	return meshes;
 }
 
@@ -677,7 +678,7 @@ static TArray<FMeshInfo> getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHier
 
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	attemptPlace(r2, placed, meshes, false, 4, "restaurant_bar", FRotator(0, 0, 0), FVector(100, 0, 0), map, true);
+	attemptPlace(r2, placed, meshes, false, 4, "restaurant_bar", FRotator(0, 0, 0), FVector(200, 0, 0), map, true);
 	//attemptPlace(r2, placed, meshes, true, 5, "restaurant_table", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
 	TArray<FMeshInfo> tables;
 
