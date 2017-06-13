@@ -39,10 +39,12 @@ struct FPolygon
 
 	bool getIsClockwise() {
 		long tot = 0;
-
+		FVector first = points[0];
+		offset(-first);
 		for (int i = 1; i < points.Num(); i++) {
 			tot += ((points[i].X) - (points[i - 1].X)) * ((points[i].Y) + (points[i - 1].Y));
 		}
+		offset(first);
 		UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %ld"), tot);
 		return tot < 0;
 	}
