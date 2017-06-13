@@ -3,7 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-//#include "PlotBuilder.h"
+#include "ProcMeshActor.h"
 #include "BaseLibrary.h"
 #include "RoomBuilder.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
@@ -25,9 +25,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 	bool generateRoofs = true;
 
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 	int makeInterestingAttempts = 2;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = ProcMesh)
+		TSubclassOf<class AProcMeshActor> procMeshActorClass;
+
+	AProcMeshActor *procMeshActor;
+	bool firstTime = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Info)
+		FHousePolygon housePol;
+
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	FHouseInfo getHouseInfoSimple(FHousePolygon f, float floorHeight, float maxRoomArea);
@@ -35,7 +44,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	FHouseInfo getHouseInfo(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly);
 
-	static void makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole);
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	TArray<FSimplePlot> buildHouse(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement);
+
+	static void makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream);
 
 	static TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height);
 

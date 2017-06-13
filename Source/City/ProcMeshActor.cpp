@@ -84,8 +84,8 @@ AProcMeshActor::AProcMeshActor()
 
 
 bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProceduralMeshComponent* mesh, UMaterialInterface *mat) {
-	if (pols.Num() == 0) {
-		return true;
+	if (mesh->GetNumSections() > 0 || pols.Num() == 0) {
+		return false;
 	}
 
 	//if (mat == greenMat)
@@ -102,7 +102,8 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	for (FPolygon &pol : pols) {
 
 		//pol.reverse();
-
+		if (pol.points.Num() < 3)
+			continue;
 		// local coordinates are found by getting the coordinates of points on the plane which they span up
 		FVector e1 = pol.points[1] - pol.points[0];
 		e1.Normalize();
@@ -130,6 +131,7 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 			vertices.Add(point);
 
 		}
+		//exteriorMesh->clear
 		TPPLPartition part;
 		poly.SetOrientation(TPPL_CCW);
 		int res = part.Triangulate_EC(&poly, &inTriangles);
@@ -154,6 +156,23 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	//mesh->SetCullDistance(100);
 
 	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
+	return true;
+}
+
+bool AProcMeshActor::clearMeshes(bool fullReplacement) {
+	if (fullReplacement) {
+		exteriorMesh->ClearAllMeshSections();
+		sndExteriorMesh->ClearAllMeshSections();
+		greenMesh->ClearAllMeshSections();
+		concreteMesh->ClearAllMeshSections();
+	}
+	interiorMesh->ClearAllMeshSections();
+	windowMesh->ClearAllMeshSections();
+	windowFrameMesh->ClearAllMeshSections();
+	occlusionWindowMesh->ClearAllMeshSections();
+	floorMesh->ClearAllMeshSections();
+	roofMesh->ClearAllMeshSections();
+	roadMiddleMesh->ClearAllMeshSections();
 	return true;
 }
 

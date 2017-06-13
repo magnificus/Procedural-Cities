@@ -1451,13 +1451,15 @@ FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
 TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width);
 TArray<FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &first);
 
+
 class CITY_API BaseLibrary
 {
 public:
 	BaseLibrary();
 	~BaseLibrary();
 
-
+	UFUNCTION(BlueprintCallable, Category = conversion)
+	static TArray<FMaterialPolygon> getSimplePlotPolygons(TArray<FSimplePlot> plots);
 	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset);
 
 

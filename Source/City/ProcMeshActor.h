@@ -19,6 +19,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	bool buildPolygons(TArray<FMaterialPolygon> pols, FVector offset);
 
+	bool clearMeshes(bool fullReplacement);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		UMaterial* exteriorMat;

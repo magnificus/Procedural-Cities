@@ -647,3 +647,21 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 	}
 	return otherSides;
 }
+
+TArray<FMaterialPolygon> BaseLibrary::getSimplePlotPolygons(TArray<FSimplePlot> plots) {
+	TArray<FMaterialPolygon> toReturn;
+	PolygonType type;
+	if (plots.Num() > 0)
+		type = plots[0].type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;
+	for (FSimplePlot p : plots) {
+		FMaterialPolygon newP;
+		p.pol.points.RemoveAt(p.pol.points.Num() - 1);
+		newP.points = p.pol.points;
+		//if (!newP.getIsClockwise())
+			newP.reverse();
+		newP.type = type;// simplePolygonType;//p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;;
+		toReturn.Add(newP);
+
+	}
+	return toReturn;
+}

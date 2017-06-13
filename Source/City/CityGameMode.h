@@ -10,6 +10,9 @@ class ACityGameMode : public AGameModeBase
 
 public:
 	ACityGameMode();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UClass* pawn;
 };
 
 

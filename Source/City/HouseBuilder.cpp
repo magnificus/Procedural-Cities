@@ -14,6 +14,12 @@ AHouseBuilder::AHouseBuilder()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	//static ConstructorHelpers::FObjectFinder<UClass> procFinder(TEXT("Blueprint'/Game/ProcMeshActorBp.ProcMeshActorBp'"));
+	//if (procFinder.Object)
+
+	
+	//}
+
 	//mapStatic = map;
 }
 
@@ -232,6 +238,8 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	f2.type = PolygonType::floor;
 	f2.points = f.points;
 	f2.points.RemoveAt(f2.points.Num() - 1);
+	f2.points.RemoveAt(f2.points.Num() - 1);
+
 	hole.points.RemoveAt(hole.points.Num() - 1);
 	//hole.reverse();
 	f2.offset(FVector(0, 0, floorBegin));
@@ -239,50 +247,6 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	TArray<FPolygon> holes;
 	holes.Add(hole);
 	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
-
-	hole.points.RemoveAt(hole.points.Num() - 1);
-
-	int closestNum = -1;
-	float closestDist = 10000000.0f;
-	for (int i = 0; i < hole.points.Num(); i++) {
-		FVector f3 = hole.points[i];
-		if (FVector::Dist(f3, f.points[0]) < closestDist) {
-			closestDist = FVector::Dist(f3, f.points[0]);
-			closestNum = i;
-		}
-	}
-
-
-	FMaterialPolygon pol;
-	pol.type = PolygonType::floor;
-	pol.width = 20;
-	for (int i = 0; i < f.points.Num(); i++) {
-		pol.points.Add(f.points[i] + FVector(0, 0, floorBegin));
-	}
-	//pol.points.Add(f.points[0] + FVector(0, 0, floorBegin));
-
-	// decide direction
-	int change = 1;
-	int neg = (closestNum - 1);
-	if (neg < 0) {
-		neg += hole.points.Num();
-	}
-	//if (FVector::Dist(hole.points[(closestNum + 1) % hole.points.Num()], f.points[f.points.Num() - 2]) > FVector::Dist(hole.points[neg], f.points[f.points.Num() - 2])) {
-	//	change = -1;
-	//}
-	int count = 0;
-	for (int i = closestNum; count < hole.points.Num(); i+=change, i %= hole.points.Num(), count++) {
-		if (i < 0)
-			i += hole.points.Num();
-		pol.points.Add(hole.points[i] + FVector(0, 0, floorBegin));
-	}
-	pol.points.Add(hole.points[closestNum] + FVector(0, 0, floorBegin));
-
-
-	pol.points.Add(f.points[0] + FVector(0, 0, floorBegin));
-	
-	polygons.Add(pol);
-	return polygons;
 
 
 }
@@ -345,18 +309,18 @@ FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHol
 }
 
 // this method changes the shape of the house to make it less cube-like, can be called several times for more "interesting" shapes 
-void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole) {
+void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream) {
 	//return;
-	int place = FMath::FRandRange(0, 0.99) * (f.points.Num() - 3) + 2; // number is smaller than 
-	if (randFloat() < 0.15f && f.points.Num() > 3) {
+	int place = stream.FRandRange(0, 0.99) * (f.points.Num() - 3) + 2; // number is smaller than 
+	if (stream.FRand() < 0.15f && f.points.Num() > 3) {
 		// move side inwards
-		float len = FMath::FRandRange(400, 1500);
+		float len = stream.FRandRange(400, 1500);
 		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
 		if (res.points.Num() > 0) {
 			FSimplePlot simplePlot;
 			simplePlot.pol = res;
-			simplePlot.type = f.simplePlotType;//FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
-			simplePlot.decorate();
+			simplePlot.type = f.simplePlotType;//stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+			//simplePlot.decorate();
 			toReturn.Add(simplePlot);
 
 		}
@@ -364,7 +328,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 
 	}
 
-	else if (randFloat() < 0.1f && f.points.Num() > 3) {
+	else if (stream.FRand() < 0.1f && f.points.Num() > 3) {
 		// remove corner
 		FVector p1 = middle(f.points[place - 1], f.points[place]);
 		FVector p2 = middle(f.points[place + 1], f.points[place]);
@@ -380,7 +344,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 			bool hadW = f.entrances.Contains(place);
 			bool hadE = f.entrances.Contains(place);
 
-			simplePlot.type = f.simplePlotType; // FMath::RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+			simplePlot.type = f.simplePlotType; // stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 
 			simplePlot.decorate();
 			toReturn.Add(simplePlot);
@@ -399,8 +363,8 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 
 
 	}
-	else if (randFloat() < 0.07f) {
-		float depth = FMath::FRandRange(500, 1500);
+	else if (stream.FRand() < 0.07f) {
+		float depth = stream.FRandRange(500, 1500);
 		// turn a side inwards into a U
 		FVector tangent = f.points[place] - f.points[place - 1];
 		float lenSide = tangent.Size();
@@ -494,25 +458,6 @@ void addStairInfo(FRoomInfo &info, float height, FPolygon &hole) {
 
 }
 
-//void buildRoof(FRoomInfo &info, FHousePolygon pol) {
-//	if (randFloat() < 0.5f) {
-//		// add angled roof
-//		float height = 1000;
-//		FVector center = pol.getCenter();
-//		center += FVector(0, 0, height);
-//		for (int i = 1; i < pol.points.Num(); i++) {
-//			FMaterialPolygon newP;
-//			newP.points.Add(pol.points[i - 1]);
-//			newP.points.Add(pol.points[i]);
-//			newP.points.Add(center);
-//			newP.points.Add(pol.points[i - 1]);
-//			newP.type = PolygonType::roof;
-//			info.pols.Add(newP);
-//		}
-//	}
-//}
-
-
 void addFacade(FHousePolygon &f, FRoomInfo &toReturn, float beginHeight, float facadeHeight, float width) {
 	for (int i = 1; i < f.points.Num(); i++) {
 		FMaterialPolygon fac;
@@ -535,11 +480,11 @@ void addFacade(FHousePolygon &f, FRoomInfo &toReturn, float beginHeight, float f
 	}
 }
 
-void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
-	if (FMath::FRand() < 0.5) {
+void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream) {
+	if (stream.FRand() < 0.5) {
 		// edge detail
 		FMaterialPolygon shape = roof;
-		float size = FMath::FRandRange(100, 250);
+		float size = stream.FRandRange(100, 250);
 		shape.offset(FVector(0, 0, size));
 		TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exteriorSnd, size);
 		toReturn.pols.Append(fillOutPolygons(sides));
@@ -549,11 +494,12 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 	float minHeight = 100;
 	float maxHeight = 1000;
 	float len = 500;
-	float offset = FMath::FRandRange(minHeight, maxHeight);
-	if (FMath::FRand() < 0.6) {
+	float offset = stream.FRandRange(minHeight, maxHeight);
+	if (stream.FRand() < 0.6) {
 		int numBoxes = rand() % 4;
 		// add box shapes on top of roof
-		for (int i = 0; i < numBoxes; i++) {
+		for (int j = 0; j < numBoxes; j++) {
+			offset = stream.FRandRange(minHeight, maxHeight);
 			FMaterialPolygon box;
 			bool found = true;
 			int count = 0;
@@ -565,10 +511,10 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 				box = FMaterialPolygon();
 				box.type = PolygonType::exteriorSnd;
 				FVector center = roof.getCenter();
-				FVector p1 = center + FVector(FMath::FRandRange(900, 2500) * FMath::RandBool() ? 1 : -1, FMath::FRandRange(900, 2500) * FMath::RandBool() ? 1 : -1, offset);
+				FVector p1 = center + FVector(stream.FRandRange(0, 1500) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 1500) * (stream.FRand() < 0.5 ? 1 : -1), offset);
 				FVector tangent = roof.points[1] - roof.points[0];
-				float firstLen = FMath::FRandRange(900, 2500);
-				float sndLen = FMath::FRandRange(900, 2500);
+				float firstLen = stream.FRandRange(900, 2500);
+				float sndLen = stream.FRandRange(900, 2500);
 				tangent.Normalize();
 				FVector p2 = p1 + tangent * firstLen;
 				tangent = FRotator(0, 90, 0).RotateVector(tangent);
@@ -582,7 +528,7 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 				box.points.Add(p1);
 				count++;
 
-			} while (intersection(box, roof).X != 0.0f);
+			} while (intersection(box, roof).X != 0.0f || !testCollision(box, roof, 0));
 
 			if (found) {
 				for (int i = 1; i < box.points.Num(); i++) {
@@ -599,7 +545,7 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 			}
 		}
 	}
-	else if (FMath::FRand() < 0.3){
+	else if (stream.FRand() < 0.3){
 
 		// same shape as roof, but smaller 
 		FMaterialPolygon shape = roof;
@@ -627,13 +573,13 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn) {
 }
 
 
-TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHole) {
+TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHole, FRandomStream stream) {
 	TArray<FMaterialPolygon> toReturn;
 	FHousePolygon newF = FHousePolygon(f);
-	if (FMath::FRand() < 0.3) {
+	if (stream.FRand() < 0.3) {
 		// only shrink one side
-		float len = FMath::FRandRange(400, 1500);
-		int place = FMath::FRandRange(0, 0.99) * (f.points.Num() - 3) + 2;
+		float len = stream.FRandRange(400, 1500);
+		int place = stream.FRandRange(0, 0.99) * (f.points.Num() - 3) + 2;
 		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,0));
 		if (res.points.Num() > 2) {
 			FMaterialPolygon pol;
@@ -644,8 +590,8 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		}
 	}
 	// shrink whole symmetrically
-	else if (FMath::FRand() < 0.3) {
-		float len = FMath::FRandRange(400, 1200);
+	else if (stream.FRand() < 0.3) {
+		float len = stream.FRandRange(400, 1200);
 		FHousePolygon cp = f;
 		cp.symmetricShrink(len, cp.buildLeft);
 		if (intersection(cp, centerHole).X == 0.0f && !selfIntersection(cp)) {
@@ -667,6 +613,42 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	}
 	return toReturn;
 }
+
+TArray<FSimplePlot> AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement) {
+	housePol = f;
+	if (procMeshActorClass) {
+		if (procMeshActor) {
+			//procMeshActor->Destroy();
+			procMeshActor->clearMeshes(fullReplacement);
+			for (auto pair : map)
+				pair.Value->ClearInstances();
+		}
+		else {
+			procMeshActor = GetWorld()->SpawnActor<AProcMeshActor>(procMeshActorClass, FActorSpawnParameters());
+		}
+		//UE_LOG(LogTemp, Log, TEXT("procmeshactor assigned"));
+	}
+	if (!procMeshActor)
+		return TArray<FSimplePlot>();
+	FHouseInfo res = simple ? getHouseInfoSimple(f, floorHeight, maxRoomArea) : getHouseInfo(f, floorHeight, maxRoomArea, shellOnly);
+	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
+	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
+
+	if (firstTime) {
+		firstTime = false;
+		for (FSimplePlot fs : res.remainingPlots) {
+			fs.decorate();
+		}
+	}
+
+	for (FMeshInfo mesh : res.roomInfo.meshes) {
+		if (map.Find(mesh.description))
+			map[mesh.description]->AddInstance(mesh.transform);
+	}
+
+	return res.remainingPlots;
+}
+
 FHouseInfo AHouseBuilder::getHouseInfoSimple(FHousePolygon f, float floorHeight, float maxRoomArea) {
 	FHouseInfo toReturn;
 	for (int i = 1; i < f.points.Num(); i++) {
@@ -694,6 +676,8 @@ FHouseInfo AHouseBuilder::getHouseInfoSimple(FHousePolygon f, float floorHeight,
 
 FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly)
 {
+	FRandomStream stream;
+	stream.Initialize(f.housePosition.X * 1000 + f.housePosition.Y);
 	if (f.points.Num() < 3) {
 		return FHouseInfo();
 	}
@@ -701,16 +685,17 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	FPolygon hole = getShaftHolePolygon(f);
 	FHouseInfo toReturn;
 	if (f.canBeModified) {
-		for (int i = 0; i < makeInterestingAttempts; i++)
-			makeInteresting(f, toReturn.remainingPlots, hole);
+		for (int i = 0; i < makeInterestingAttempts; i++) {
+			makeInteresting(f, toReturn.remainingPlots, hole, stream);
+		}
 	}
 	int floors = f.height;
 
 
-	float wDens = randFloat() * 0.0010 + 0.0005;
+	float wDens = stream.FRand() * 0.0010 + 0.0005;
 
-	float wWidth = randFloat() * 500 + 500;
-	float wHeight = randFloat() * 400 + 200;
+	float wWidth = stream.FRand() * 500 + 500;
+	float wHeight = stream.FRand() * 400 + 200;
 
 	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, 300, maxRoomArea);
 
@@ -722,7 +707,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			for (int i : p.windows) {
 				p.entrances.Add(i);
 			}
-			toUse = FMath::RandBool() ? RoomType::store : RoomType::restaurant;
+			toUse = stream.FRand() > 0.5 ? RoomType::store : RoomType::restaurant;
 		}
 		FRoomInfo newR = ARoomBuilder::buildRoom(&p, toUse, 0, floorHeight, map, false, shellOnly);
 		newR.offset(FVector(0, 0, 30));
@@ -753,21 +738,20 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 		toReturn.roomInfo.pols.Add(floor);
 	}
 
-	int windowChangeCutoff = FMath::RandRange(1, 20);
-	WindowType currentWindowType = WindowType(rand() % 4);
-	bool facade = FMath::FRand() < 0.2;
+	int windowChangeCutoff = stream.RandRange(1, 20);
+	WindowType currentWindowType = WindowType(stream.RandRange(0, 3));
+	bool facade = stream.FRand() < 0.2;
 		for (int i = 1; i < floors; i++) {
 			if (i == windowChangeCutoff)
 				currentWindowType = WindowType(rand() % 4);
 
-			if (FMath::FRand() < 0.15 && f.canBeModified) {
-				TArray<FMaterialPolygon> res = potentiallyShrink(f, hole);
-				for (FMaterialPolygon &fm : res) {
-					fm.offset(FVector(0,0,floorHeight*i));
-				}
-				toReturn.roomInfo.pols.Append(res);
-				//f.symmetricShrink(FMath::FRandRange(100.0f, 1000.0f), f.buildLeft);
-			}
+			//if (stream.FRand() < 0.15 && f.canBeModified) {
+			//	TArray<FMaterialPolygon> res = potentiallyShrink(f, hole,stream);
+			//	for (FMaterialPolygon &fm : res) {
+			//		fm.offset(FVector(0,0,floorHeight*i));
+			//	}
+			//	toReturn.roomInfo.pols.Append(res);
+			//}
 
 			if (!shellOnly) {
 				toReturn.roomInfo.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol, true));
@@ -806,69 +790,22 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 
 	FMaterialPolygon roof;
 	roof.points = f.points;
-	roof.offset(FVector(0, 0, floorHeight*floors));
+	roof.offset(FVector(0, 0, floorHeight*floors + 10));
 	roof.type = PolygonType::roof;
 	roof.reverse();
 
 
 
-
+	if (generateRoofs)
+		toReturn.roomInfo.pols.Add(roof);
 
 	if (!shellOnly) {
 		TArray<FMaterialPolygon> otherSides = fillOutPolygons(toReturn.roomInfo.pols);
-		//for (FMaterialPolygon &p : toReturn.roomInfo.pols) {
-		//	otherSides.Add(p);
-		//	FMaterialPolygon other = p;
-		//	// exterior walls are interiors on the inside
-		//	if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
-		//		other.type = PolygonType::interior;
-		//	}
-
-		//	other.offset(p.getDirection() * p.width);
-		//	for (int i = 1; i < p.points.Num(); i++) {
-		//		FMaterialPolygon newP1;
-		//		newP1.type = p.type;
-		//		newP1.points.Add(other.points[i - 1]);
-		//		newP1.points.Add(p.points[i]);
-		//		newP1.points.Add(p.points[i - 1]);
-		//		otherSides.Add(newP1);
-
-		//		FMaterialPolygon newP2;
-		//		newP2.type = p.type;
-		//		newP2.points.Add(other.points[i - 1]);
-		//		newP2.points.Add(other.points[i]);
-		//		newP2.points.Add(p.points[i]);
-		//		otherSides.Add(newP2);
-
-		//	}
-
-		//	FMaterialPolygon newP1;
-		//	newP1.type = p.type;
-		//	newP1.points.Add(other.points[p.points.Num() - 1]);
-		//	newP1.points.Add(p.points[0]);
-		//	newP1.points.Add(p.points[p.points.Num() - 1]);
-		//	otherSides.Add(newP1);
-
-		//	FMaterialPolygon newP2;
-		//	newP2.type = p.type;
-		//	newP2.points.Add(other.points[p.points.Num() - 1]);
-		//	newP2.points.Add(other.points[0]);
-		//	newP2.points.Add(p.points[0]);
-		//	otherSides.Add(newP2);
-
-		//	other.reverse();
-		//	otherSides.Add(other);
-
-
-		//}
 		toReturn.roomInfo.pols.Append(otherSides);
-		//toReturn.roomInfo.pols = otherSides;
-
 	}
 
 	if (generateRoofs) {
-		toReturn.roomInfo.pols.Add(roof);
-		addRoofDetail(roof, toReturn.roomInfo);
+		addRoofDetail(roof, toReturn.roomInfo, stream);
 	}
 	return toReturn;
 

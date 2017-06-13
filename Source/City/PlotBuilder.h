@@ -44,7 +44,7 @@ public:
 	static FSidewalkInfo getSideWalkInfo(FPolygon sidewalk);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	TArray<FMaterialPolygon> getSimplePlotPolygons(TArray<FSimplePlot> plots);
+	TArray<FMaterialPolygon> getSimplePlotPolygonsPB(TArray<FSimplePlot> plots);
 
 
 protected:
