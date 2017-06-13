@@ -132,8 +132,6 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 					fs.type = fm.type == PolygonType::concrete ? SimplePlotType::asphalt : SimplePlotType::green;
 					fs.decorate();
 					info.leftovers.Add(FSimplePlot(fs));
-					fs.pol.reverse();
-					info.leftovers.Add(fs);
 				}
 			}
 		}
@@ -159,9 +157,6 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 					fs.type = stream.FRand() < 0.5? SimplePlotType::green : SimplePlotType::asphalt;
 					fs.decorate();
 					info.leftovers.Add(FSimplePlot(fs));
-					fs.pol.reverse();
-					info.leftovers.Add(fs);
-
 				}
 				else {
 					r.checkOrientation();
