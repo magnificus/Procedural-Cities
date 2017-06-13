@@ -320,7 +320,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 		if (res.points.Num() > 0) {
 			FSimplePlot simplePlot;
 			simplePlot.pol = res;
-			res.reverse();
+			//simplePlot.pol.reverse();
 			simplePlot.type = f.simplePlotType;//stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 			//simplePlot.decorate();
 			toReturn.Add(simplePlot);
@@ -348,7 +348,8 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 
 			simplePlot.type = f.simplePlotType; // stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 
-			simplePlot.decorate();
+			//simplePlot.decorate();
+			//simplePlot.pol.reverse();
 			toReturn.Add(simplePlot);
 
 			f.addPoint(place, p1);
@@ -594,7 +595,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	// shrink whole symmetrically
 	else if (stream.FRand() < 0.3) {
 		float len = stream.FRandRange(400, 1200);
-		FHousePolygon cp = f;
+		FHousePolygon cp = FHousePolygon(f);
 		cp.symmetricShrink(len, cp.buildLeft);
 		if (intersection(cp, centerHole).X == 0.0f && !selfIntersection(cp)) {
 			f.points.RemoveAt(f.points.Num() - 1);
@@ -629,15 +630,22 @@ void AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight, float maxRoom
 	if (!procMeshActor)
 		return;
 	FHouseInfo res = simple ? getHouseInfoSimple(f, floorHeight, maxRoomArea) : getHouseInfo(f, floorHeight, maxRoomArea, shellOnly);
-	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
-	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
 
+	TArray<FSimplePlot> otherSides;
 	if (firstTime) {
 		firstTime = false;
 		for (FSimplePlot fs : res.remainingPlots) {
 			fs.decorate();
+			fs.pol.reverse();
+			otherSides.Add(fs);
 		}
 	}
+	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
+	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(otherSides));
+
+	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
+
+
 
 	for (FMeshInfo mesh : res.roomInfo.meshes) {
 		if (map.Find(mesh.description))

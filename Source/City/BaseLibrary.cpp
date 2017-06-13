@@ -52,7 +52,7 @@ FVector intersection(FPolygon &p1, FPolygon &p2) {
 // a pretty inefficient method for checking whether any of the lines in the polygon intersects another
 bool selfIntersection(FPolygon &p) {
 	for (int i = 1; i < p.points.Num(); i++) {
-		for (int j = i+1; j < p.points.Num(); j++) {
+		for (int j = i+2; j < p.points.Num(); j++) {
 			FVector tan1 = p.points[i] - p.points[i - 1];
 			tan1.Normalize();
 			FVector tan2 = p.points[j] - p.points[j - 1];
@@ -559,7 +559,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		}
 		f.checkOrientation();
 
-		f.clipEdges(-0.85f);
+		f.clipEdges(-0.9f);
 		if (f.points.Num() < 3) {
 			polygons.RemoveAt(i);
 			i--;

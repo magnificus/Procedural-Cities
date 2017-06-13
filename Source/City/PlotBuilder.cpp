@@ -128,12 +128,11 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				for (FMaterialPolygon fm : results) {
 					FSimplePlot fs;
 					fs.pol = fm;
-					//if (fs.pol.getIsClockwise()) {
-					//	fs.pol.reverse();
-					//}
 					fs.pol.offset(FVector(0, 0, 30));
 					fs.type = fm.type == PolygonType::concrete ? SimplePlotType::asphalt : SimplePlotType::green;
 					fs.decorate();
+					info.leftovers.Add(FSimplePlot(fs));
+					fs.pol.reverse();
 					info.leftovers.Add(fs);
 				}
 			}
@@ -155,12 +154,12 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				if (area < minArea || area > maxArea) {
 					FSimplePlot fs;
 					fs.pol = r;
-					//if (fs.pol.getIsClockwise()) {
-					//	fs.pol.reverse();
-					//}
+
 					fs.pol.offset(FVector(0, 0, 30));
 					fs.type = stream.FRand() < 0.5? SimplePlotType::green : SimplePlotType::asphalt;
 					fs.decorate();
+					info.leftovers.Add(FSimplePlot(fs));
+					fs.pol.reverse();
 					info.leftovers.Add(fs);
 
 				}

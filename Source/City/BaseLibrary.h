@@ -38,12 +38,12 @@ struct FPolygon
 		TArray<FVector> points;
 
 	bool getIsClockwise() {
-		double tot = 0;
+		long tot = 0;
 
 		for (int i = 1; i < points.Num(); i++) {
 			tot += ((points[i].X) - (points[i - 1].X)) * ((points[i].Y) + (points[i - 1].Y));
 		}
-		UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %lf"), tot);
+		UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %ld"), tot);
 		return tot < 0;
 	}
 
