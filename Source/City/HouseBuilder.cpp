@@ -238,7 +238,8 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	f2.type = PolygonType::floor;
 	f2.points = f.points;
 	f2.points.RemoveAt(f2.points.Num() - 1);
-	f2.points.RemoveAt(f2.points.Num() - 1);
+	//if (f2.points.Num() > 3)
+	//	f2.points.RemoveAt(f2.points.Num() - 1);
 
 	hole.points.RemoveAt(hole.points.Num() - 1);
 	//hole.reverse();
@@ -319,6 +320,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 		if (res.points.Num() > 0) {
 			FSimplePlot simplePlot;
 			simplePlot.pol = res;
+			res.reverse();
 			simplePlot.type = f.simplePlotType;//stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 			//simplePlot.decorate();
 			toReturn.Add(simplePlot);
@@ -597,14 +599,10 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		if (intersection(cp, centerHole).X == 0.0f && !selfIntersection(cp)) {
 			f.points.RemoveAt(f.points.Num() - 1);
 			f.reverse();
-			//cp.reverse();
 			TArray<FPolygon> holes;
-			//cp.points.RemoveAt(cp.points.Num() - 1);
 			holes.Add(cp);
 			toReturn = ARoomBuilder::getSideWithHoles(f, holes, PolygonType::roof);
-			//for (FMaterialPolygon &fm : toReturn) {
-			//	fm.reverse();
-			//}
+
 			f = cp;
 			for (int i = 1; i < f.points.Num(); i++) {
 				f.windows.Add(i);
@@ -614,7 +612,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	return toReturn;
 }
 
-TArray<FSimplePlot> AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement) {
+void AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement) {
 	housePol = f;
 	if (procMeshActorClass) {
 		if (procMeshActor) {
@@ -629,7 +627,7 @@ TArray<FSimplePlot> AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight
 		//UE_LOG(LogTemp, Log, TEXT("procmeshactor assigned"));
 	}
 	if (!procMeshActor)
-		return TArray<FSimplePlot>();
+		return;
 	FHouseInfo res = simple ? getHouseInfoSimple(f, floorHeight, maxRoomArea) : getHouseInfo(f, floorHeight, maxRoomArea, shellOnly);
 	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
 	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
@@ -645,8 +643,6 @@ TArray<FSimplePlot> AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight
 		if (map.Find(mesh.description))
 			map[mesh.description]->AddInstance(mesh.transform);
 	}
-
-	return res.remainingPlots;
 }
 
 FHouseInfo AHouseBuilder::getHouseInfoSimple(FHousePolygon f, float floorHeight, float maxRoomArea) {
@@ -743,15 +739,15 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	bool facade = stream.FRand() < 0.2;
 		for (int i = 1; i < floors; i++) {
 			if (i == windowChangeCutoff)
-				currentWindowType = WindowType(rand() % 4);
+				currentWindowType = WindowType(stream.RandRange(0,4));
 
-			//if (stream.FRand() < 0.15 && f.canBeModified) {
-			//	TArray<FMaterialPolygon> res = potentiallyShrink(f, hole,stream);
-			//	for (FMaterialPolygon &fm : res) {
-			//		fm.offset(FVector(0,0,floorHeight*i));
-			//	}
-			//	toReturn.roomInfo.pols.Append(res);
-			//}
+			if (stream.FRand() < 0.15 && f.canBeModified) {
+				TArray<FMaterialPolygon> res = potentiallyShrink(f, hole,stream);
+				for (FMaterialPolygon &fm : res) {
+					fm.offset(FVector(0,0,floorHeight*i));
+				}
+				toReturn.roomInfo.pols.Append(res);
+			}
 
 			if (!shellOnly) {
 				toReturn.roomInfo.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol, true));
@@ -794,8 +790,6 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	roof.type = PolygonType::roof;
 	roof.reverse();
 
-
-
 	if (generateRoofs)
 		toReturn.roomInfo.pols.Add(roof);
 
@@ -808,9 +802,6 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 		addRoofDetail(roof, toReturn.roomInfo, stream);
 	}
 	return toReturn;
-
-
-
 }
 
 // Called when the game starts or when spawned

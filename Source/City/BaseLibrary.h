@@ -39,10 +39,11 @@ struct FPolygon
 
 	bool getIsClockwise() {
 		double tot = 0;
+
 		for (int i = 1; i < points.Num(); i++) {
-			tot += ((points[i].X*0.01) - (points[i - 1].X*0.01)) * ((points[i].Y*0.01) + (points[i - 1].Y*0.01));
-			//tot += points[i-1].X
+			tot += ((points[i].X) - (points[i - 1].X)) * ((points[i].Y) + (points[i - 1].Y));
 		}
+		UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %lf"), tot);
 		return tot < 0;
 	}
 
@@ -119,6 +120,22 @@ struct FPolygon
 
 			}
 		}
+
+		// clip intersections
+		//for (int i = 1; i < points.Num(); i++) {
+		//	FVector tan1 = points[i] - points[i - 1];
+		//	tan1.Normalize();
+		//	for (int j = i + 2; j < points.Num(); j++) {
+		//		FVector tan2 = points[j] - points[j-1];
+		//		tan2.Normalize();
+		//		FVector res = intersection(points[i - 1] + tan1, points[i] - tan1, points[j - 1] + tan2, points[j] - tan2);
+		//		if (res.X != 0.0f) {
+		//			points[j - 1] = res;
+		//			points.RemoveAt(i + 1, j - i - 2);
+
+		//		}
+		//	}
+		//}
 	}
 
 
