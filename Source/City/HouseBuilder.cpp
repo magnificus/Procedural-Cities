@@ -631,6 +631,10 @@ void AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight, float maxRoom
 		return;
 	FHouseInfo res = simple ? getHouseInfoSimple(f, floorHeight, maxRoomArea) : getHouseInfo(f, floorHeight, maxRoomArea, shellOnly);
 
+	buildHouseFromInfo(res);
+}
+
+void AHouseBuilder::buildHouseFromInfo(FHouseInfo res) {
 	TArray<FSimplePlot> otherSides;
 	if (firstTime) {
 		firstTime = false;
@@ -644,9 +648,6 @@ void AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight, float maxRoom
 	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(otherSides));
 
 	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
-
-
-
 	for (FMeshInfo mesh : res.roomInfo.meshes) {
 		if (map.Find(mesh.description))
 			map[mesh.description]->AddInstance(mesh.transform);

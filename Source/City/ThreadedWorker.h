@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "HouseBuilder.h"
 //~~~~~ Multi Threading ~~~
 class ThreadedWorker : public FRunnable
 {
@@ -14,31 +15,31 @@ class ThreadedWorker : public FRunnable
 	/** The Data Ptr */
 	TArray<uint32>* PrimeNumbers;
 
+	AHouseBuilder &houseBuilder;
+	FHousePolygon &housePol;
 	/** The PC */
 	//AVictoryGamePlayerController* ThePC;
+	FHouseInfo resultingInfo;
 
 	/** Stop this thread? Uses Thread Safe Counter */
 	FThreadSafeCounter StopTaskCounter;
-
-	//The actual finding of prime numbers
-	int32 FindNextPrimeNumber();
 
 private:
 	int32				PrimesFoundCount;
 public:
 
-	int32				TotalPrimesToFind;
+	bool done = false;
 
 	//Done?
 	bool IsFinished() const
 	{
-		return PrimesFoundCount >= TotalPrimesToFind;
+		return done;
 	}
 
 	//~~~ Thread Core Functions ~~~
 
 	//Constructor / Destructor
-	ThreadedWorker(TArray<uint32>& TheArray, const int32 IN_PrimesToFindPerTick);
+	ThreadedWorker(AHouseBuilder& house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple);
 	virtual ~ThreadedWorker();
 
 	// Begin FRunnable interface.
@@ -61,7 +62,7 @@ public:
 	This code ensures only 1 Prime Number thread will be able to run at a time.
 	This function returns a handle to the newly started instance.
 	*/
-	static ThreadedWorker* JoyInit(TArray<uint32>& TheArray, const int32 IN_TotalPrimesToFind);
+	static ThreadedWorker* JoyInit(AHouseBuilder& house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple);
 
 	/** Shuts down the thread. Static so it can easily be called from outside the thread context */
 	static void Shutdown();

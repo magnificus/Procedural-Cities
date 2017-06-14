@@ -47,6 +47,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	void buildHouse(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement);
 
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	void buildHouseFromInfo(FHouseInfo res);
+
 	static void makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream);
 
 	static TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height);
