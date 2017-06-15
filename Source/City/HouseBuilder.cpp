@@ -4,7 +4,7 @@
 //#include "simplexnoise.h"
 #include "polypartition.h"
 #include "HouseBuilder.h"
-
+//#include "ThreadedWorker.h"
 struct FPolygon;
 
 
@@ -12,13 +12,7 @@ struct FPolygon;
 AHouseBuilder::AHouseBuilder()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-
-	//static ConstructorHelpers::FObjectFinder<UClass> procFinder(TEXT("Blueprint'/Game/ProcMeshActorBp.ProcMeshActorBp'"));
-	//if (procFinder.Object)
-
-	
-	//}
+	PrimaryActorTick.bCanEverTick = true;
 
 	//mapStatic = map;
 }
@@ -615,9 +609,19 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 
 void AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement) {
 	housePol = f;
+
+	//FHouseInfo res = simple ? getHouseInfoSimple(f, floorHeight, maxRoomArea) : getHouseInfo(f, floorHeight, maxRoomArea, shellOnly);
+	//FSin work = ThreadedWorker::GetSingleThreadInterface();
+	worker = new ThreadedWorker(this, f, floorHeight, maxRoomArea, shellOnly, simple, fullReplacement);
+	workerWorking = true;
+	//worker.
+	//PrimaryActorTick.bCanEverTick = true;
+	//buildHouseFromInfo(res, fullReplacement);
+}
+
+void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
 	if (procMeshActorClass) {
 		if (procMeshActor) {
-			//procMeshActor->Destroy();
 			procMeshActor->clearMeshes(fullReplacement);
 			for (auto pair : map)
 				pair.Value->ClearInstances();
@@ -629,23 +633,17 @@ void AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight, float maxRoom
 	}
 	if (!procMeshActor)
 		return;
-	FHouseInfo res = simple ? getHouseInfoSimple(f, floorHeight, maxRoomArea) : getHouseInfo(f, floorHeight, maxRoomArea, shellOnly);
-
-	buildHouseFromInfo(res);
-}
-
-void AHouseBuilder::buildHouseFromInfo(FHouseInfo res) {
 	TArray<FSimplePlot> otherSides;
 	if (firstTime) {
 		firstTime = false;
 		for (FSimplePlot fs : res.remainingPlots) {
 			fs.decorate();
-			fs.pol.reverse();
-			otherSides.Add(fs);
+			//fs.pol.reverse();
+			//otherSides.Add(fs);
 		}
 	}
 	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
-	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(otherSides));
+	//res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(otherSides));
 
 	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
 	for (FMeshInfo mesh : res.roomInfo.meshes) {
@@ -824,6 +822,11 @@ void AHouseBuilder::BeginPlay()
 void AHouseBuilder::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (workerWorking && worker->IsFinished()) {
+		buildHouseFromInfo(worker->resultingInfo, worker->fullReplacement);
+		workerWorking = false;
+	}
+
 
 }
 

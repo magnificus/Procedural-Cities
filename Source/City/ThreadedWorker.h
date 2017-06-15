@@ -3,6 +3,8 @@
 #pragma once
 
 #include "HouseBuilder.h"
+
+class AHouseBuilder;
 //~~~~~ Multi Threading ~~~
 class ThreadedWorker : public FRunnable
 {
@@ -12,14 +14,14 @@ class ThreadedWorker : public FRunnable
 	/** Thread to run the worker FRunnable on */
 	FRunnableThread* Thread;
 
-	/** The Data Ptr */
-	TArray<uint32>* PrimeNumbers;
-
-	AHouseBuilder &houseBuilder;
-	FHousePolygon &housePol;
+	AHouseBuilder *houseBuilder;
+	FHousePolygon housePol;
+	float floorHeight;
+	float maxRoomArea;
+	bool shellOnly;
+	bool simple;
 	/** The PC */
 	//AVictoryGamePlayerController* ThePC;
-	FHouseInfo resultingInfo;
 
 	/** Stop this thread? Uses Thread Safe Counter */
 	FThreadSafeCounter StopTaskCounter;
@@ -27,7 +29,8 @@ class ThreadedWorker : public FRunnable
 private:
 	int32				PrimesFoundCount;
 public:
-
+	FHouseInfo resultingInfo;
+	bool fullReplacement;
 	bool done = false;
 
 	//Done?
@@ -39,7 +42,7 @@ public:
 	//~~~ Thread Core Functions ~~~
 
 	//Constructor / Destructor
-	ThreadedWorker(AHouseBuilder& house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple);
+	ThreadedWorker(AHouseBuilder *house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement);
 	virtual ~ThreadedWorker();
 
 	// Begin FRunnable interface.
@@ -62,7 +65,7 @@ public:
 	This code ensures only 1 Prime Number thread will be able to run at a time.
 	This function returns a handle to the newly started instance.
 	*/
-	static ThreadedWorker* JoyInit(AHouseBuilder& house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple);
+	static ThreadedWorker* JoyInit(AHouseBuilder *house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement);
 
 	/** Shuts down the thread. Static so it can easily be called from outside the thread context */
 	static void Shutdown();

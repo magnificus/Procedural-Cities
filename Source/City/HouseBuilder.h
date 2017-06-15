@@ -7,8 +7,11 @@
 #include "BaseLibrary.h"
 #include "RoomBuilder.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "ThreadedWorker.h"
+
 #include "HouseBuilder.generated.h"
 
+class ThreadedWorker;
 
 UCLASS()
 class CITY_API AHouseBuilder : public AActor
@@ -48,7 +51,7 @@ public:
 	void buildHouse(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void buildHouseFromInfo(FHouseInfo res);
+	void buildHouseFromInfo(FHouseInfo res, bool fullReplacement);
 
 	static void makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream);
 
@@ -56,6 +59,9 @@ public:
 
 	static FPolygon getShaftHolePolygon(FHousePolygon f);
 
+	ThreadedWorker *worker;
+
+	bool workerWorking = false;
 
 protected:
 	// Called when the game starts or when spawned

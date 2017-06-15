@@ -18,9 +18,14 @@
 ThreadedWorker* ThreadedWorker::Runnable = NULL;
 //***********************************************************
 
-ThreadedWorker::ThreadedWorker(AHouseBuilder& house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple)
+ThreadedWorker::ThreadedWorker(AHouseBuilder* house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement)
 	: houseBuilder(house)
 	, housePol(p)
+	, floorHeight(floorHeight)
+	, maxRoomArea(maxRoomArea)
+	, shellOnly(shellOnly)
+	, simple(simple)
+	, fullReplacement(fullReplacement)
 {
 	//Link to where data should be stored
 	Thread = FRunnableThread::Create(this, TEXT("ThreadedWorker"), 0, TPri_AboveNormal); //windows default = 8mb for thread, could specify more
@@ -36,10 +41,6 @@ ThreadedWorker::~ThreadedWorker()
 bool ThreadedWorker::Init()
 {
 	//Init the Data 
-	PrimeNumbers->Empty();
-	PrimeNumbers->Add(2);
-	PrimeNumbers->Add(3);
-
 	return true;
 }
 
@@ -50,7 +51,7 @@ uint32 ThreadedWorker::Run()
 	//Initial wait before starting
 	FPlatformProcess::Sleep(0.03);
 
-	//resultingInfo = houseBuilder.getHouseInfo()
+	resultingInfo = houseBuilder->getHouseInfo(housePol, floorHeight, maxRoomArea, shellOnly);
 	//While not told to stop this thread 
 	//		and not yet finished finding Prime Numbers
 	//while (StopTaskCounter.GetValue() == 0 && !IsFinished())
@@ -77,7 +78,7 @@ uint32 ThreadedWorker::Run()
 
 	//Run ThreadedWorker::Shutdown() from the timer in Game Thread that is watching
 	//to see when ThreadedWorker::IsThreadFinished()
-
+	done = true;
 	return 0;
 }
 
@@ -87,13 +88,13 @@ void ThreadedWorker::Stop()
 	StopTaskCounter.Increment();
 }
 
-ThreadedWorker* ThreadedWorker::JoyInit(AHouseBuilder& house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple)
+ThreadedWorker* ThreadedWorker::JoyInit(AHouseBuilder* house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement)
 {
 	//Create new instance of thread if it does not exist
 	//		and the platform supports multi threading!
 	if (!Runnable && FPlatformProcess::SupportsMultithreading())
 	{
-		Runnable = new ThreadedWorker(house, p, floorHeight, maxRoomArea, shellOnly, simple);
+		Runnable = new ThreadedWorker(house, p, floorHeight, maxRoomArea, shellOnly, simple, fullReplacement);
 	}
 	return Runnable;
 }

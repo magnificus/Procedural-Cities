@@ -48,6 +48,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		float texScaleMultiplier = 1.0f;
 
+	//TArray<
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
