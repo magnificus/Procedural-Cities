@@ -906,7 +906,7 @@ FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon *f, int floor, float height, fl
 	return r;
 }
 
-FRoomInfo ARoomBuilder::buildRestaurant(FRoomPolygon *f, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool shellOnly) {
+FRoomInfo ARoomBuilder::buildRestaurant(FRoomPolygon *f, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool shellOnly, FRandomStream stream) {
 	FRoomInfo r;
 	TArray<FRoomPolygon*> roomPols = f->getRooms(getRestaurantBlueprint(1.0f));
 	for (FRoomPolygon* r2 : roomPols) {
@@ -935,7 +935,7 @@ FRoomInfo ARoomBuilder::buildRestaurant(FRoomPolygon *f, float height, TMap<FStr
 			}
 		}
 	}
-	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, FMath::FRandRange(300,200), FMath::FRandRange(300, 200), 0, shellOnly, true));
+	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, stream.FRandRange(300,200), stream.FRandRange(300, 200), 0, shellOnly, true));
 	return r;
 }
 
@@ -1066,7 +1066,7 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 }
 
 
-FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly) {
+FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly, FRandomStream stream) {
 	if (!f->canRefine) {
 		FRoomInfo r;
 		//r.beginning = beginning;
@@ -1078,6 +1078,9 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, flo
 			break;
 			case RoomType::apartment: r.pols = interiorPlanToPolygons(pols, height, 0.003, 200, 200, floor, shellOnly, true);
 			break;
+			default: r.pols = interiorPlanToPolygons(pols, height, 0.003, 200, 200, floor, shellOnly, true);
+				break;
+
 		}
 
 		return r;
@@ -1086,7 +1089,7 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, flo
 	case RoomType::office: return buildOffice(f, floor, height, 1/* 0.0042*/, 340.0f, 190.0f, map, shellOnly);
 	case RoomType::apartment: return buildApartment(f, floor, height, 0.003, 200.0f, 200.0f, map, potentialBalcony, shellOnly);
 	case RoomType::store: return buildStore(f, height, map, shellOnly);
-	case RoomType::restaurant: return buildRestaurant(f, height, map, shellOnly);
+	case RoomType::restaurant: return buildRestaurant(f, height, map, shellOnly, stream);
 	}
 	return FRoomInfo();
 }

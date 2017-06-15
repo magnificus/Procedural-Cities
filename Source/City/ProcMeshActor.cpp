@@ -8,21 +8,42 @@
 AProcMeshActor::AProcMeshActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-	exteriorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("exteriorMesh"));
-	sndExteriorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("sndExteriorMesh"));
-	interiorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("interiorMesh"));
-	windowMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("windowMesh"));
-	windowFrameMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("windowFrameMesh"));
-	occlusionWindowMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("occlusionWindowMesh"));
-	floorMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("floorMesh"));
-	roofMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("roofMesh"));
-	greenMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("greenMesh"));
-	concreteMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("concreteMesh"));
-	roadMiddleMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("roadMiddleMesh"));
+	PrimaryActorTick.bCanEverTick = true;
+	exteriorMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("exteriorMesh"));
+	sndExteriorMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("sndExteriorMesh"));
+	interiorMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("interiorMesh"));
+	windowMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("windowMesh"));
+	windowFrameMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("windowFrameMesh"));
+	occlusionWindowMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("occlusionWindowMesh"));
+	floorMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("floorMesh"));
+	roofMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("roofMesh"));
+	greenMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("greenMesh"));
+	concreteMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("concreteMesh"));
+	roadMiddleMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("roadMiddleMesh"));
 
+	//components.Add(exteriorMesh);
+	//components.Add(sndExteriorMesh);
+	//components.Add(interiorMesh);
+	//components.Add(windowMesh);
+	//components.Add(windowFrameMesh);
+	//components.Add(occlusionWindowMesh);
+	//components.Add(floorMesh);
+	//components.Add(roofMesh);
+	//components.Add(greenMesh);
+	//components.Add(concreteMesh);
+	//components.Add(roadMiddleMesh);
 
-	RootComponent = exteriorMesh;
+	//materials.Add(exteriorMat);
+	//materials.Add(sndExteriorMat);
+	//materials.Add(interiorMat);
+	//materials.Add(windowMat);
+	//materials.Add(windowFrameMat);
+	//materials.Add(occlusionWindowMat);
+	//materials.Add(floorMat);
+	//materials.Add(roofMat);
+	//materials.Add(greenMat);
+	//materials.Add(concreteMat);
+	//materials.Add(roadMiddleMat);
 	/**
 	*	Create/replace a section for this procedural mesh component.
 	*	@param	SectionIndex		Index of the section to create or replace.
@@ -38,65 +59,41 @@ AProcMeshActor::AProcMeshActor()
 	//	void CreateMeshSection(int32 SectionIndex, const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals,
 	// const TArray<FVector2D>& UV0, const TArray<FColor>& VertexColors, const TArray<FProcMeshTangent>& Tangents, bool bCreateCollision);
 
-	//TArray<FVector> vertices;
-
-	//vertices.Add(FVector(0, 0, 0));
-	//vertices.Add(FVector(0, 1000, 0));
-	//vertices.Add(FVector(0, 0, 1000));
-
-	//TArray<int32> Triangles;
-	//Triangles.Add(0);
-	//Triangles.Add(1);
-	//Triangles.Add(2);
-
-	//TArray<FVector> normals;
-	//normals.Add(FVector(1, 0, 0));
-	//normals.Add(FVector(1, 0, 0));
-	//normals.Add(FVector(1, 0, 0));
-
-	//TArray<FVector2D> UV0;
-	//UV0.Add(FVector2D(0, 0));
-	//UV0.Add(FVector2D(10, 0));
-	//UV0.Add(FVector2D(0, 10));
-
-	//TArray<FLinearColor> vertexColors;
-	//vertexColors.Add(FLinearColor(0.75, 0.75, 0.75, 1.0));
-	//vertexColors.Add(FLinearColor(0.75, 0.75, 0.75, 1.0));
-	//vertexColors.Add(FLinearColor(0.75, 0.75, 0.75, 1.0));
-
-	//TArray<FProcMeshTangent> tangents;
-	//tangents.Add(FProcMeshTangent(0, 1, 0));
-	//tangents.Add(FProcMeshTangent(0, 1, 0));
-	//tangents.Add(FProcMeshTangent(0, 1, 0));
-
-
-	//mesh->SetMaterial(1, mat);
-	//exteriorMesh->SetMaterial(1, exteriorMat);
-	//interiorMesh->SetMaterial(1, interiorMat);
-	//windowMesh->SetMaterial(1, windowMat);
-	//floorMesh->SetMaterial(1, floorMat);
-	//roofMesh->SetMaterial(1, roofMat);
-
-
-	//mesh->CreateMeshSection_LinearColor(1, vertices, Triangles, normals, UV0, vertexColors, tangents, false);
 }
 
+//bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URuntimeMeshComponent* mesh, UMaterialInterface *mat, int start, int end) {
+//	TArray<FPolygon> toBuild;
+//	if (end > pols.Num() - 1) {
+//		currentlyWorkingIndex = 0;
+//		end = pols.Num() - 1;
+//		currentlyWorkingArray++;
+//		if (currentlyWorkingArray > components.Num() - 1) {
+//			isWorking = false;
+//		}
+//	}
+//	else {
+//		currentlyWorkingIndex = end;
+//	}
+//	for (int i = start; i < end; i++) {
+//		toBuild.Add(pols[i]);
+//	}
+//	
+//	return buildPolygons(pols, offset, mesh, mat);
+//}
 
 
-bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProceduralMeshComponent* mesh, UMaterialInterface *mat) {
+
+bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URuntimeMeshComponent* mesh, UMaterialInterface *mat) {
 	if (mesh->GetNumSections() > 0 || pols.Num() == 0) {
 		return false;
 	}
-
-	//if (mat == greenMat)
-	//	UE_LOG(LogTemp, Warning, TEXT("BUILDING GREEN POLYGONS"));
 
 	TArray<FVector> vertices;
 	TArray<int32> triangles;
 	TArray<FVector2D> UV;
 
 	TArray<FColor> vertexColors;
-	TArray<FProcMeshTangent> tangents;
+	TArray<FRuntimeMeshTangent> tangents;
 
 	int current = 0;
 	for (FPolygon &pol : pols) {
@@ -153,8 +150,6 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, UProc
 	TArray<FVector> normals;
 
 	mesh->SetMaterial(1, mat);
-	//mesh->SetCullDistance(100);
-
 	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
 	return true;
 }
@@ -165,13 +160,13 @@ bool AProcMeshActor::clearMeshes(bool fullReplacement) {
 		sndExteriorMesh->ClearAllMeshSections();
 		greenMesh->ClearAllMeshSections();
 		concreteMesh->ClearAllMeshSections();
+		roofMesh->ClearAllMeshSections();
 	}
 	interiorMesh->ClearAllMeshSections();
 	windowMesh->ClearAllMeshSections();
 	windowFrameMesh->ClearAllMeshSections();
 	occlusionWindowMesh->ClearAllMeshSections();
 	floorMesh->ClearAllMeshSections();
-	roofMesh->ClearAllMeshSections();
 	roadMiddleMesh->ClearAllMeshSections();
 	return true;
 }
@@ -231,17 +226,60 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 			break;
 		}
 	}
-	int a = buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
-	a += buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
-	a += buildPolygons(interior, offset, interiorMesh, interiorMat);
-	a += buildPolygons(windows, offset, windowMesh, windowMat);
-	a += buildPolygons(floors, offset, floorMesh, floorMat);
-	a += buildPolygons(roofs, offset, roofMesh, roofMat);
-	a += buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
-	a += buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
-	a += buildPolygons(concrete, offset, concreteMesh, concreteMat);
-	a += buildPolygons(green, offset, greenMesh, greenMat);
-	a += buildPolygons(roadMiddle, offset, roadMiddleMesh, roadMiddleMat);
+	polygons.Empty();
+	polygons.Add(exterior);
+	polygons.Add(exteriorSnd);
+	polygons.Add(interior);
+	polygons.Add(windows);
+	polygons.Add(windowFrames);
+	polygons.Add(occlusionWindows);
+	polygons.Add(floors);
+	polygons.Add(roofs);
+	polygons.Add(green);
+	polygons.Add(concrete);
+	polygons.Add(roadMiddle);
+
+	components.Empty();
+	components.Add(exteriorMesh);
+	components.Add(sndExteriorMesh);
+	components.Add(interiorMesh);
+	components.Add(windowMesh);
+	components.Add(windowFrameMesh);
+	components.Add(occlusionWindowMesh);
+	components.Add(floorMesh);
+	components.Add(roofMesh);
+	components.Add(greenMesh);
+	components.Add(concreteMesh);
+	components.Add(roadMiddleMesh);
+
+	materials.Empty();
+	materials.Add(exteriorMat);
+	materials.Add(sndExteriorMat);
+	materials.Add(interiorMat);
+	materials.Add(windowMat);
+	materials.Add(windowFrameMat);
+	materials.Add(occlusionWindowMat);
+	materials.Add(floorMat);
+	materials.Add(roofMat);
+	materials.Add(greenMat);
+	materials.Add(concreteMat);
+	materials.Add(roadMiddleMat);
+
+
+
+	currentlyWorkingArray = 0;
+	isWorking = true;
+	//int a = buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
+	//a += buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
+	//a += buildPolygons(interior, offset, interiorMesh, interiorMat);
+	//a += buildPolygons(windows, offset, windowMesh, windowMat);
+	//a += buildPolygons(floors, offset, floorMesh, floorMat);
+	//a += buildPolygons(roofs, offset, roofMesh, roofMat);
+	//a += buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
+	//a += buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
+	//a += buildPolygons(concrete, offset, concreteMesh, concreteMat);
+	//a += buildPolygons(green, offset, greenMesh, greenMat);
+	//a += buildPolygons(roadMiddle, offset, roadMiddleMesh, roadMiddleMat);
 
 	//if (a < 11) {
 	//	//UE_LOG(LogTemp, Warning, TEXT("a: %i"), a);
@@ -265,6 +303,14 @@ void AProcMeshActor::BeginPlay()
 void AProcMeshActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (isWorking) {
+		TArray<FPolygon> &current = polygons[currentlyWorkingArray];
+		buildPolygons(current, FVector(0, 0, 0), components[currentlyWorkingArray], materials[currentlyWorkingArray]);
+		currentlyWorkingArray++;
+		if (currentlyWorkingArray >= polygons.Num() - 1)
+			isWorking = false;
+		//buildPolygons(current, FVector(0,0,0), components[currentlyWorkingArray], materials[currentlyWorkingArray], currentlyWorkingIndex, currentlyWorkingIndex + buildPerTick);
+	}
 
 }
 

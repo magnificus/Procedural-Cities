@@ -489,11 +489,11 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream st
 
 	}
 	float minHeight = 100;
-	float maxHeight = 1000;
+	float maxHeight = 60;
 	float len = 500;
 	float offset = stream.FRandRange(minHeight, maxHeight);
 	if (stream.FRand() < 0.6) {
-		int numBoxes = rand() % 4;
+		int numBoxes = stream.RandRange(0,4);
 		// add box shapes on top of roof
 		for (int j = 0; j < numBoxes; j++) {
 			offset = stream.FRandRange(minHeight, maxHeight);
@@ -712,7 +712,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			}
 			toUse = stream.FRand() > 0.5 ? RoomType::store : RoomType::restaurant;
 		}
-		FRoomInfo newR = ARoomBuilder::buildRoom(&p, toUse, 0, floorHeight, map, false, shellOnly);
+		FRoomInfo newR = ARoomBuilder::buildRoom(&p, toUse, 0, floorHeight, map, false, shellOnly, stream);
 		newR.offset(FVector(0, 0, 30));
 		toReturn.roomInfo.pols.Append(newR.pols);
 		toReturn.roomInfo.meshes.Append(newR.meshes);
@@ -766,7 +766,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			roomPols = getInteriorPlan(f, hole, false, 300, 500);
 			for (FRoomPolygon &p : roomPols) {
 				p.windowType = currentWindowType;
-				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, map, potentialBalcony, shellOnly);
+				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, map, potentialBalcony, shellOnly, stream);
 				newR.offset(FVector(0, 0, floorHeight*i));
 				toReturn.roomInfo.pols.Append(newR.pols);
 				toReturn.roomInfo.meshes.Append(newR.meshes);
