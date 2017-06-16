@@ -75,7 +75,6 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 
 	float maxArea = 4500.0f;
 	float minArea = 1200.0f;
-
 	if (!p.open) {
 		FHousePolygon original;
 		original.points = p.points;
@@ -92,7 +91,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 		FVector center = p.getCenter();
 		p.type = raw_noise_2d((center.X + noiseXOffset*2)*noiseScale*2, (center.Y + noiseYOffset*2)*noiseScale*2) < 0 ? RoomType::office : RoomType::apartment;
 
-		bool normalPlacement = !(p.getArea() > 4000 && stream.FRand() < 0.3);
+		bool normalPlacement = !(p.getArea() > 5500 && stream.FRand() < 0.2);
 		if (!normalPlacement) {
 			// create a special plot with several identical houses placed around a green area, this happens in real cities sometimes
 			FHousePolygon model = getRandomModel(3500,6000, minFloors, maxFloors, noiseScale, p.type, stream);
@@ -105,7 +104,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			}
 
 			TArray<FPolygon> placed;
-			for (int i = 0; i < 30; i++) {
+			for (int i = 0; i < 20; i++) {
 				FHousePolygon newH = model;
 				newH.rotate(FRotator(0, stream.FRandRange(0, 360), 0));
 				newH.offset(p.getRandomPoint(true, 2000));
@@ -119,20 +118,45 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				normalPlacement = true;
 			}
 			else {
-				TArray<FPolygon> holesWithoutLastPoint;
-				for (FPolygon h :placed) {
-					h.points.RemoveAt(h.points.Num() - 1);
-					holesWithoutLastPoint.Add(h);
-				}
-				TArray<FMaterialPolygon> results = ARoomBuilder::getSideWithHoles(p, holesWithoutLastPoint, p.type == RoomType::apartment ? PolygonType::green : PolygonType::concrete);
-				for (FMaterialPolygon fm : results) {
 					FSimplePlot fs;
-					fs.pol = fm;
+
+					//fm.points.RemoveAt(fm.points.Num() - 1);
+					fs.pol = p;
 					fs.pol.offset(FVector(0, 0, 30));
-					fs.type = fm.type == PolygonType::concrete ? SimplePlotType::asphalt : SimplePlotType::green;
-					fs.decorate();
-					info.leftovers.Add(FSimplePlot(fs));
-				}
+					fs.type = p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
+					fs.decorate(placed);
+					info.leftovers.Add(fs);
+				//TArray<FPolygon> holesWithoutLastPoint;
+				//for (FPolygon h :placed) {
+				//	h.points.RemoveAt(h.points.Num() - 1);
+				//	h.reverse();
+				//	holesWithoutLastPoint.Add(h);
+				//}
+				//cp.points.RemoveAt(cp.points.Num() - 1);
+				//cp.reverse();
+				//FPolygon cp = p;
+				//cp.points.RemoveAt(cp.points.Num() - 1);
+				//TArray<FMaterialPolygon> results = ARoomBuilder::getSideWithHoles(cp, holesWithoutLastPoint, p.type == RoomType::apartment ? PolygonType::green : PolygonType::concrete);
+
+				//cp.reverse();
+				//holesWithoutLastPoint.Empty();
+				//for (FPolygon h : placed) {
+				//	h.points.RemoveAt(h.points.Num() - 1);
+				//	//h.reverse();
+				//	holesWithoutLastPoint.Add(h);
+				//}
+				//results.Append(ARoomBuilder::getSideWithHoles(cp, holesWithoutLastPoint, p.type == RoomType::apartment ? PolygonType::green : PolygonType::concrete));
+				//for (FMaterialPolygon fm : results) {
+				//	FSimplePlot fs;
+
+				//	//fm.points.RemoveAt(fm.points.Num() - 1);
+				//	fs.pol = fm;
+				//	fs.pol.offset(FVector(0, 0, 30));
+				//	fs.type = fm.type == PolygonType::concrete ? SimplePlotType::asphalt : SimplePlotType::green;
+				//	fs.decorate();
+				//	info.leftovers.Add(fs);
+
+				//}
 			}
 		}
 		if (normalPlacement) {
@@ -150,13 +174,16 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				//UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
 
 				if (area < minArea || area > maxArea) {
+
+					//if (r.getIsClockwise())
+					//	r.reverse();
+					//r.points.RemoveAt(r.points.Num() - 1);
 					FSimplePlot fs;
 					fs.pol = r;
-
 					fs.pol.offset(FVector(0, 0, 30));
 					fs.type = stream.FRand() < 0.5? SimplePlotType::green : SimplePlotType::asphalt;
 					fs.decorate();
-					info.leftovers.Add(FSimplePlot(fs));
+					info.leftovers.Add(fs);
 				}
 				else {
 					r.checkOrientation();

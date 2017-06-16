@@ -88,6 +88,13 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 		return false;
 	}
 
+	//TArray<FPolygon> cp;
+	//for (FPolygon t : pols) {
+	//	t.reverse();
+	//	cp.Add(t);
+	//}
+	//pols.Append(cp);
+
 	TArray<FVector> vertices;
 	TArray<int32> triangles;
 	TArray<FVector2D> UV;
@@ -134,7 +141,7 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 		int res = part.Triangulate_EC(&poly, &inTriangles);
 
 		if (res == 0) {
-			UE_LOG(LogTemp, Warning, TEXT("Triangulation failed!"));
+			//UE_LOG(LogTemp, Warning, TEXT("Triangulation failed!"));
 			//return false;
 		}
 		for (auto i : inTriangles) {

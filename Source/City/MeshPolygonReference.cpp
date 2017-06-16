@@ -11,8 +11,10 @@ FPolygon MeshPolygonReference::getStairPolygon(FVector origin, FRotator dir) {
 	FPolygon pol;
 	pol.points.Add(origin + dir.RotateVector(FVector(190, -213, 0)));
 	pol.points.Add(origin + dir.RotateVector(FVector(-190, -213, 0)));
+
 	pol.points.Add(origin + dir.RotateVector(FVector(-190, 213, 0)));
 	pol.points.Add(origin + dir.RotateVector(FVector(190, 213, 0)));
+
 	pol.points.Add(origin + dir.RotateVector(FVector(190, -213, 0)));
 	return pol;
 }

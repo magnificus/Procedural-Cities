@@ -305,7 +305,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 			FVector entrancePos = FVector(-10000, -10000, -10000);
 			float doorStart = 100000;
 			float doorEnd = -1000000;
-			if (rp->entrances.Contains(i)) {
+			if (rp->entrances.Contains(i) && FVector::Dist(rp->points[i-1], rp->points[i]) > 150) {
 				entrancePos = rp->specificEntrances.Contains(i) ?  rp->specificEntrances[i] : middle(rp->points[i - 1], rp->points[i]);
 				doorStart = FVector::Dist(rp->points[i - 1], entrancePos) - 137/2;
 				doorEnd = doorStart + 137;
@@ -702,16 +702,9 @@ static TArray<FMeshInfo> getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHier
 
 static TArray<FMeshInfo> getBathRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	TArray<FMeshInfo> meshes;
-	
-	r2->windows.Empty();
 	TArray<FPolygon> placed;
 
 	TArray<FPolygon> blocking = getBlockingVolumes(r2, 200, 100);
-	//for (FPolygon p : blocking) {
-	//	for (FVector f : p.points) {
-	//		meshes.Add(FMeshInfo{ "visualizer", FTransform(f) });
-	//	}
-	//}
 	placed.Append(blocking);
 	attemptPlace(r2, placed, meshes, false, 2, "toilet" , FRotator(0, 270, 0), FVector(0, 0, 0), map, false);
 	FTransform res = attemptGetPosition(r2, placed, meshes, false, 2, "sink", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);

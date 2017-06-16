@@ -146,8 +146,14 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				FVector naturalTangent = current->segment->p2 - current->segment->p1;
 				naturalTangent.Normalize();
 				FVector pot1 = FRotator(0, 90, 0).RotateVector(f->p2 - f->p1);
+				pot1.Normalize();
 				FVector pot2 = FRotator(0, 270, 0).RotateVector(f->p2 - f->p1);
+				pot2.Normalize();
 				addVertices(current->segment);
+				//if (FVector::DotProduct(pot1, naturalTangent) > 0.7)
+				//	current->segment->endTangent = pot1;
+				//else if (FVector::DotProduct(pot2, naturalTangent) > 0.7)
+				//	current->segment->endTangent = pot2;
 		}
 
 
@@ -286,7 +292,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 
 void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments) {
 	float mainRoadSize = 4.0f;
-	float sndRoadMinSize = 1.5f;
+	float sndRoadMinSize = 1.7f;
 	float sndRoadSize = std::max(sndRoadMinSize, current->segment->width - 2.0f);
 	FVector tangent = current->segment->p2 - current->segment->p1;
 	if (current->segment->type == RoadType::main) {
@@ -586,7 +592,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FRoadSegment> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 500, 100, 200, 50);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 300, 50, 100, 50);
 }
 
 // Called when the game starts or when spawned

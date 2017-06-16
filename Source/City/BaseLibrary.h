@@ -24,6 +24,56 @@ struct SplitStruct {
 static float noiseXOffset = 0;
 static float noiseYOffset = 0;
 
+struct FPolygon;
+struct FMaterialPolygon;
+
+UENUM(BlueprintType)
+enum class RoadType : uint8
+{
+	main 	UMETA(DisplayName = "Main Road"),
+	secondary UMETA(DisplayName = "Secondary Road")
+};
+
+UENUM(BlueprintType)
+enum class RoomType : uint8
+{
+	office 	UMETA(DisplayName = "Office"),
+	apartment UMETA(DisplayName = "Apartment"),
+	store UMETA(DisplayName = "Store"),
+	restaurant UMETA(DisplayName = "Restaurant")
+};
+
+UENUM(BlueprintType)
+enum class PolygonType : uint8
+{
+	interior 	UMETA(DisplayName = "Interior"),
+	exterior UMETA(DisplayName = "Exterior"),
+	exteriorSnd UMETA(DisplayName = "Exterior Secondary"),
+	floor UMETA(DisplayName = "Floor"),
+	window UMETA(DisplayName = "Window"),
+	windowFrame UMETA(DisplayName = "Window Frame"),
+	occlusionWindow UMETA(DisplayName = "Occlusion Window"),
+	roof UMETA(DisplayName = "Roof"),
+	green UMETA(DisplayName = "Green"),
+	concrete UMETA(DisplayName = "Concrete"),
+	roadMiddle UMETA(DisplayName = "Middle of road line")
+};
+
+void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points);
+
+//void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
+FVector intersection(FPolygon &p1, TArray<FPolygon> &p2);
+FVector intersection(FPolygon &p1, FPolygon &p2);
+FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
+FVector intersection(FVector p1, FVector p2, FPolygon p);
+bool selfIntersection(FPolygon &p1);
+bool testCollision(FPolygon &, TArray<FPolygon> &, float leniency, FPolygon &);
+bool testCollision(FPolygon &, FPolygon &, float leniency);
+bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
+float randFloat();
+FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
+TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width);
+TArray<FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &first);
 
 
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
@@ -38,15 +88,15 @@ struct FPolygon
 		TArray<FVector> points;
 
 	bool getIsClockwise() {
-		long tot = 0;
+		float tot = 0;
 		FVector first = points[0];
-		offset(-first);
+		//offset(-first);
 		for (int i = 1; i < points.Num(); i++) {
-			tot += ((points[i].X) - (points[i - 1].X)) * ((points[i].Y) + (points[i - 1].Y));
+			tot += (points[i-1].X * points[i].Y - points[i].X * points[i-1].Y);
 		}
-		offset(first);
-		UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %ld"), tot);
-		return tot < 0;
+		//offset(first);
+			//UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %f"), tot);
+		return tot > 0;
 	}
 
 	FVector getCenter() {
@@ -127,13 +177,15 @@ struct FPolygon
 		//for (int i = 1; i < points.Num(); i++) {
 		//	FVector tan1 = points[i] - points[i - 1];
 		//	tan1.Normalize();
+		//	tan1 *= 20;
 		//	for (int j = i + 2; j < points.Num(); j++) {
 		//		FVector tan2 = points[j] - points[j-1];
 		//		tan2.Normalize();
+		//		tan2 *= 20;
 		//		FVector res = intersection(points[i - 1] + tan1, points[i] - tan1, points[j - 1] + tan2, points[j] - tan2);
 		//		if (res.X != 0.0f) {
 		//			points[j - 1] = res;
-		//			points.RemoveAt(i + 1, j - i - 2);
+		//			points.RemoveAt(i + 1, j - i - 1);
 
 		//		}
 		//	}
@@ -326,37 +378,7 @@ struct FPolygon
 };
 
 
-UENUM(BlueprintType)
-enum class RoadType : uint8
-{
-	main 	UMETA(DisplayName = "Main Road"),
-	secondary UMETA(DisplayName = "Secondary Road")
-};
 
-UENUM(BlueprintType)
-enum class RoomType : uint8
-{
-	office 	UMETA(DisplayName = "Office"),
-	apartment UMETA(DisplayName = "Apartment"),
-	store UMETA(DisplayName = "Store"),
-	restaurant UMETA(DisplayName = "Restaurant")
-};
-
-UENUM(BlueprintType)
-enum class PolygonType : uint8
-{
-	interior 	UMETA(DisplayName = "Interior"),
-	exterior UMETA(DisplayName = "Exterior"),
-	exteriorSnd UMETA(DisplayName = "Exterior Secondary"),
-	floor UMETA(DisplayName = "Floor"),
-	window UMETA(DisplayName = "Window"),
-	windowFrame UMETA(DisplayName = "Window Frame"),
-	occlusionWindow UMETA(DisplayName = "Occlusion Window"),
-	roof UMETA(DisplayName = "Roof"),
-	green UMETA(DisplayName = "Green"),
-	concrete UMETA(DisplayName = "Concrete"),
-	roadMiddle UMETA(DisplayName = "Middle of road line")
-};
 
 
 USTRUCT(BlueprintType)
@@ -429,21 +451,51 @@ struct FSimplePlot {
 
 
 	void decorate() {
+		decorate(TArray<FPolygon>());
+	}
+
+
+	void decorate(TArray<FPolygon> blocking) {
 		float area = pol.getArea();
 		switch (type) {
 		case SimplePlotType::undecided:
 		case SimplePlotType::green: {
-			float treeAreaRatio = 0.001;
-			for (int i = 0; i < treeAreaRatio * area; i++) {
-				FVector point = pol.getRandomPoint(false, 150);
-				if (point.X != 0.0f)
-					meshes.Add(FMeshInfo{ "tree", FTransform(point) });
+			float treeAreaRatio = 0.01;
+			UE_LOG(LogTemp, Warning, TEXT("TRYING WITH AREA: %f"), area);
+			for (int i = 0; i < treeAreaRatio*area; i++) {
+				//int count = 0;
+			//	while (count++ < 5) {
+				FVector point = pol.getRandomPoint(true, 150);
+				//FVector point = pol.getCenter();
+				if (point.X != 0.0f) {
+					FPolygon temp;
+					temp.points.Add(point);
+					temp.points.Add(point + FVector(1, 1, 0));
+					temp.points.Add(point + FVector(0, 1, 0));
+					temp.points.Add(point + FVector(1, 0, 0));
+					temp.points.Add(point);
+
+
+
+					bool collision = false;
+					for (FPolygon &p : blocking) {
+						if (testCollision(p, temp, 0)) {
+							collision = true;
+							break;
+						}
+					}
+					if (!collision)
+						meshes.Add(FMeshInfo{ "tree", FTransform(point) });
+					//UE_LOG(LogTemp, Warning, TEXT("Adding tree"));
+				//	break;
+				}
 			}
+					//}
+
 			break;
 		}
 		case SimplePlotType::asphalt:break;
 		}
-
 	}
 };
 USTRUCT(BlueprintType)
@@ -924,6 +976,10 @@ struct FRoomPolygon : public FPolygon
 		points.EmplaceAt(p.min + 1, p.p2);
 
 		//toIgnore.Empty();
+		if (newP->getIsClockwise())
+			newP->reverse();
+		if (getIsClockwise())
+			reverse();
 		return newP;
 	}
 
@@ -1124,7 +1180,7 @@ struct FRoomPolygon : public FPolygon
 		for (auto &a : blueprint.needed) {
 			neededTypes.Add(a.type);
 		}
-		//postFit(rooms, blueprint.needed, blueprint.optional);
+		postFit(rooms, blueprint.needed, blueprint.optional);
 
 
 
@@ -1453,22 +1509,6 @@ Get min and max value projected on FVector tangent, used in SAT collision detect
 Calculate whether two lines intersect and where
 */
 
-
-void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points);
-
-//void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
-FVector intersection(FPolygon &p1, TArray<FPolygon> &p2);
-FVector intersection(FPolygon &p1, FPolygon &p2);
-FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
-FVector intersection(FVector p1, FVector p2, FPolygon p);
-bool selfIntersection(FPolygon &p1);
-bool testCollision(FPolygon &, TArray<FPolygon> &, float leniency, FPolygon &);
-bool testCollision(FPolygon &, FPolygon &, float leniency);
-bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
-float randFloat();
-FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
-TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width);
-TArray<FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &first);
 
 
 class CITY_API BaseLibrary

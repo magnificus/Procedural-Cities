@@ -260,7 +260,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 
-	if (len < 200) {
+	if (len < 500) {
 		delete inLine;
 		return;
 	}
@@ -315,7 +315,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 		}
 	}
 	len = FVector::Dist(inLine->line.p1, inLine->line.p2);
-	if (len < 200) {
+	if (len < 500) {
 		delete inLine;
 		return;
 	}
@@ -604,42 +604,49 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 	for (FMaterialPolygon &p : inPols) {
 		otherSides.Add(p);
 		FMaterialPolygon other = p;
+		bool polygonSides = true;
 		// exterior walls are interiors on the inside
 		if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
 			other.type = PolygonType::interior;
 		}
+		if (p.type == PolygonType::floor || p.type == PolygonType::roof)
+			polygonSides = false;
 
 		other.offset(p.getDirection() * p.width);
-		for (int i = 1; i < p.points.Num(); i++) {
+		if (polygonSides) {
+			for (int i = 1; i < p.points.Num(); i++) {
+				FMaterialPolygon newP1;
+				newP1.type = p.type;
+				newP1.points.Add(other.points[i - 1]);
+				newP1.points.Add(p.points[i]);
+				newP1.points.Add(p.points[i - 1]);
+				otherSides.Add(newP1);
+
+				FMaterialPolygon newP2;
+				newP2.type = p.type;
+				newP2.points.Add(other.points[i - 1]);
+				newP2.points.Add(other.points[i]);
+				newP2.points.Add(p.points[i]);
+				otherSides.Add(newP2);
+
+			}
 			FMaterialPolygon newP1;
 			newP1.type = p.type;
-			newP1.points.Add(other.points[i - 1]);
-			newP1.points.Add(p.points[i]);
-			newP1.points.Add(p.points[i - 1]);
+			newP1.points.Add(other.points[p.points.Num() - 1]);
+			newP1.points.Add(p.points[0]);
+			newP1.points.Add(p.points[p.points.Num() - 1]);
 			otherSides.Add(newP1);
 
 			FMaterialPolygon newP2;
 			newP2.type = p.type;
-			newP2.points.Add(other.points[i - 1]);
-			newP2.points.Add(other.points[i]);
-			newP2.points.Add(p.points[i]);
+			newP2.points.Add(other.points[p.points.Num() - 1]);
+			newP2.points.Add(other.points[0]);
+			newP2.points.Add(p.points[0]);
 			otherSides.Add(newP2);
-
 		}
 
-		FMaterialPolygon newP1;
-		newP1.type = p.type;
-		newP1.points.Add(other.points[p.points.Num() - 1]);
-		newP1.points.Add(p.points[0]);
-		newP1.points.Add(p.points[p.points.Num() - 1]);
-		otherSides.Add(newP1);
 
-		FMaterialPolygon newP2;
-		newP2.type = p.type;
-		newP2.points.Add(other.points[p.points.Num() - 1]);
-		newP2.points.Add(other.points[0]);
-		newP2.points.Add(p.points[0]);
-		otherSides.Add(newP2);
+
 
 		other.reverse();
 		otherSides.Add(other);
@@ -658,7 +665,7 @@ TArray<FMaterialPolygon> BaseLibrary::getSimplePlotPolygons(TArray<FSimplePlot> 
 		p.pol.points.RemoveAt(p.pol.points.Num() - 1);
 		newP.points = p.pol.points;
 		//if (!newP.getIsClockwise())
-			newP.reverse();
+		newP.reverse();
 		newP.type = type;// simplePolygonType;//p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;;
 		toReturn.Add(newP);
 

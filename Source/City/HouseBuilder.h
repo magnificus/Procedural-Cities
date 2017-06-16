@@ -29,7 +29,7 @@ public:
 	bool generateRoofs = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
-	int makeInterestingAttempts = 2;
+	int makeInterestingAttempts = 4;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = ProcMesh)
 		TSubclassOf<class AProcMeshActor> procMeshActorClass;
