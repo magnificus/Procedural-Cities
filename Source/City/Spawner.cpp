@@ -150,10 +150,10 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				FVector pot2 = FRotator(0, 270, 0).RotateVector(f->p2 - f->p1);
 				pot2.Normalize();
 				addVertices(current->segment);
-				//if (FVector::DotProduct(pot1, naturalTangent) > 0.7)
-				//	current->segment->endTangent = pot1;
-				//else if (FVector::DotProduct(pot2, naturalTangent) > 0.7)
-				//	current->segment->endTangent = pot2;
+				if (FVector::DotProduct(pot1, naturalTangent) > 0.7)
+					current->segment->endTangent = pot1;
+				else if (FVector::DotProduct(pot2, naturalTangent) > 0.7)
+					current->segment->endTangent = pot2;
 		}
 
 
@@ -489,7 +489,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 				FVector pot2 = FRotator(0, 270, 0).RotateVector(closest->p2 - closest->p1);
 				pot2.Normalize();
 				addVertices(f2);
-				//f2->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
+				f2->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
 				f2->roadInFront = true;
 			}
 			else {
