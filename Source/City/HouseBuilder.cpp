@@ -662,8 +662,18 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
 		for (FSimplePlot fs : res.remainingPlots) {
 			fs.decorate();
 			for (FMeshInfo mesh : fs.meshes) {
-						if (map.Find(mesh.description))
-							map[mesh.description]->AddInstance(mesh.transform);
+				if (mesh.instanced) {
+					if (map.Find(mesh.description))
+						map[mesh.description]->AddInstance(mesh.transform);
+				}
+				else {
+					if (staticMap.Find(mesh.description)) {
+						auto object = NewObject<UStaticMeshComponent>(staticMap[mesh.description]);
+						//object->transform
+						object->SetWorldTransform(mesh.transform);
+					}
+
+				}
 			}
 			//fs.pol.reverse();
 			//otherSides.Add(fs);

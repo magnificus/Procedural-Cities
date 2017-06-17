@@ -26,6 +26,9 @@ public:
 	TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+	TMap<FString, UStaticMesh*> staticMap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 	bool generateRoofs = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))

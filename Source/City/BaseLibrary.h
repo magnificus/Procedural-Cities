@@ -392,10 +392,27 @@ struct FMaterialPolygon : public FPolygon {
 USTRUCT(BlueprintType)
 struct FMeshInfo {
 	GENERATED_USTRUCT_BODY();
+
+	FMeshInfo() :
+		description(""),
+		transform(FTransform()),
+		instanced(true) {}
+	FMeshInfo(const FString &description,const FTransform &transform, const bool &instanced) :
+		description(description),
+		transform(transform),
+		instanced(instanced) {}
+	FMeshInfo(const FString &description, const FTransform &transform) :
+		description(description),
+		transform(transform),
+		instanced(true) {}
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FString description;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FTransform transform;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool instanced;
 };
 
 UENUM(BlueprintType)
@@ -474,9 +491,6 @@ struct FSimplePlot {
 					temp.points.Add(point + FVector(0, 1, 0));
 					temp.points.Add(point + FVector(1, 0, 0));
 					temp.points.Add(point);
-
-
-
 					bool collision = false;
 					for (FPolygon &p : blocking) {
 						if (testCollision(p, temp, 0)) {
@@ -484,8 +498,13 @@ struct FSimplePlot {
 							break;
 						}
 					}
-					if (!collision)
-						meshes.Add(FMeshInfo{ "tree", FTransform(point) });
+					if (!collision) {
+						FMeshInfo toAdd;
+						toAdd.description = "tree";
+						toAdd.transform = FTransform(point);
+						toAdd.instanced = false;
+						meshes.Add(toAdd);
+					}
 					//UE_LOG(LogTemp, Warning, TEXT("Adding tree"));
 				//	break;
 				}
