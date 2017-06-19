@@ -592,7 +592,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FRoadSegment> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 300, 50, 100, 50);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 100, 500, 100, 50);
 }
 
 // Called when the game starts or when spawned

@@ -173,19 +173,19 @@ struct FPolygon
 			}
 		}
 
-		// clip intersections
 		//for (int i = 1; i < points.Num(); i++) {
 		//	FVector tan1 = points[i] - points[i - 1];
 		//	tan1.Normalize();
-		//	tan1 *= 20;
+		//	tan1 *= -100;
 		//	for (int j = i + 2; j < points.Num(); j++) {
 		//		FVector tan2 = points[j] - points[j-1];
 		//		tan2.Normalize();
-		//		tan2 *= 20;
+		//		//tan2 *= 20;
 		//		FVector res = intersection(points[i - 1] + tan1, points[i] - tan1, points[j - 1] + tan2, points[j] - tan2);
 		//		if (res.X != 0.0f) {
-		//			points[j - 1] = res;
-		//			points.RemoveAt(i + 1, j - i - 1);
+		//			points.Add(FVector(0, 0, 0));
+		//			//points.Empty();
+		//			return;
 
 		//		}
 		//	}

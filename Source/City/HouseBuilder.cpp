@@ -402,6 +402,8 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 		simplePlot.pol.points.Add(snd2);
 		simplePlot.pol.points.Add(first2);
 		simplePlot.pol.points.Add(first);
+
+		FHousePolygon cp = f;
 		if (intersection(simplePlot.pol, centerHole).X == 0.0f && !selfIntersection(simplePlot.pol)){
 			simplePlot.pol.offset(FVector(0, 0, 30));
 			simplePlot.type = f.simplePlotType;
@@ -421,6 +423,8 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 			f.windows.Add(place + 3);
 			f.windows.Add(place + 4);
 		}
+		if (selfIntersection(f))
+			f = cp;
 	}
 	// since last and first points are supposed to be the same we have to adjust the other if one is changed
 	if (place == 1) {
