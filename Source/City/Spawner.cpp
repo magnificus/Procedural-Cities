@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "City.h"
-#include "simplexnoise.h"
+#include "NoiseSingleton.h"
 #include "Spawner.h"
 
 
@@ -75,10 +75,9 @@ void ASpawner::addVertices(FRoadSegment* road) {
 }
 
 
-float noise(float multiplier, float x, float y) {
-	return raw_noise_2d(multiplier * (x + noiseXOffset), multiplier*(y + noiseYOffset));
-	return scaled_octave_noise_2d(1, 1.0, multiplier, 0, 1, x + noiseXOffset, y + noiseYOffset);
-}
+//float noise(float multiplier, float x, float y) {
+//	return raw_noise_2d(multiplier * (x + noiseXOffset), multiplier*(y + noiseYOffset));
+//}
 
 bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map){
 
@@ -165,7 +164,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 }
 
 float getValueOfRotation(FVector testPoint, float noiseScale, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
-	float val = noise(noiseScale, testPoint.X, testPoint.Y);
+	float val = NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y, noiseScale);//noise(noiseScale, testPoint.X, testPoint.Y);
 	for (logicRoadSegment* t : others) {
 		if (FVector::Dist(t->segment->getMiddle(), testPoint) < maxDist)
 			val -= detriment * (FVector::Dist(t->segment->getMiddle(), testPoint))/maxDist;
@@ -182,14 +181,9 @@ FRotator getBestRotation(float maxDiffAllowed, FRotator original, FVector origin
 		FRotator curr = original + FRotator(0, FMath::FRandRange(-maxDiffAllowed, maxDiffAllowed), 0);
 		FVector testPoint = originalPoint + curr.RotateVector(step);
 		float val = getValueOfRotation(testPoint, noiseScale, others, maxDist, detriment);
-		//float val = noise(noiseScale, testPoint.X, testPoint.Y);
-		//for (logicRoadSegment* t : others) {
-		//	if (FVector::Dist(t->segment->getMiddle(), testPoint) < maxDist)
-		//		val -= detriment;// * (FVector::Dist(t->segment->getMiddle(), testPoint))/maxDist;
-		//}
 		if (val > bestVal) {
 			bestRotator = curr;
-			bestVal = noise(noiseScale, testPoint.X, testPoint.Y);
+			bestVal = NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y, noiseScale);
 		}
 	}
 	return bestRotator;
@@ -230,10 +224,8 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->type = prevSeg->type;
 	newRoad->endTangent = newRoad->p2 - newRoad->p1;
 	newRoadL->segment = newRoad;
-	//FVector mP = middle(newRoad->p1, newRoad->p2);
 	float val = getValueOfRotation(newRoad->p2, noiseScale, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
 	newRoadL->time = -val + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.1*previous->time);// + FMath::FRand() * 0.1;
-	//newRoadL->time = - raw_noise_2d(((newRoad->p1.X + newRoad->p2.X)/2)*noiseScale, ((newRoad->p1.Y + newRoad->p2.Y)/2)*noiseScale) - ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0);
 	newRoadL->roadLength = previous->roadLength + 1;
 	newRoadL->previous = previous;
 	addVertices(newRoad);
@@ -356,17 +348,17 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	FVector point = FVector(0, 0, 0);
 
-	float curr = noise(point.X, point.Y, noiseScale);
+	float curr = NoiseSingleton::getInstance()->noise(point.X, point.Y, noiseScale);
 	float stepLen = 10000;
 	while (true) {
 		FVector alt1 = point + FVector(stepLen, 0, 0);
 		FVector alt2 = point + FVector(-stepLen, 0, 0);
 		FVector alt3 = point + FVector(0, stepLen, 0);
 		FVector alt4 = point + FVector(0, -stepLen, 0);
-		float res1 = noise(alt1.X, alt1.Y, noiseScale);
-		float res2 = noise(alt2.X, alt2.Y, noiseScale);
-		float res3 = noise(alt3.X, alt3.Y, noiseScale);
-		float res4 = noise(alt4.X, alt4.Y, noiseScale);
+		float res1 = NoiseSingleton::getInstance()->noise(alt1.X, alt1.Y, noiseScale);
+		float res2 = NoiseSingleton::getInstance()->noise(alt2.X, alt2.Y, noiseScale);
+		float res3 = NoiseSingleton::getInstance()->noise(alt3.X, alt3.Y, noiseScale);
+		float res4 = NoiseSingleton::getInstance()->noise(alt4.X, alt4.Y, noiseScale);
 
 		if (res1 > curr) {
 			curr = res1;
@@ -398,8 +390,8 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	FRotator bestRot;
 	for (int i = 0; i < 360; i++) {
 		FVector testPoint = point + FRotator(0, i, 0).RotateVector(primaryStepLength);
-		if (noise(noiseScale, point.X, point.Y) > bestVal) {
-			bestVal = noise(noiseScale, point.X, point.Y);
+		if (NoiseSingleton::getInstance()->noise(point.X, point.Y, noiseScale) > bestVal) {
+			bestVal = NoiseSingleton::getInstance()->noise(point.X, point.Y, noiseScale);
 			bestRot = FRotator(0, i, 0);
 		}
 	}
@@ -458,12 +450,8 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 				if (i == j) {
 					continue;
 				}
-				//if (FVector::Dist(f->p1, f2->p2) < 400 || FVector::Dist(f->p2, f2->p1) < 400) {
-				//	foundCollision = false;
-				//	break;
-				//}
+
 				FVector fTan = f->p2 - f->p1;
-				//FVector fTan = FVector(0,0,0);
 				fTan.Normalize();
 				FVector res = intersection(p2Prev, f2->p2, f->p1, f->p2);
 				if (res.X != 0.0f && FVector::Dist(p2Prev, res) < closestDist) {
@@ -575,11 +563,8 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 		for (int j = -numSide/2; j < numSide/2; j++) {
 			FTransform f;
 			f.SetLocation(FVector(posMultiplier * i, posMultiplier * j, 0));
-			//float x = f.GetLocation().X * noiseMultiplier;
-			//float y = f.GetLocation().Y * noiseMultiplier;
-			//float res = raw_noise_2d(x, y);
-			float res = noise(noiseMultiplier, f.GetLocation().X, f.GetLocation().Y);
-			//res = octave_noise_2d(5, 0.5, 1.0, x, y);
+			float res = NoiseSingleton::getInstance()->noise(f.GetLocation().X, f.GetLocation().Y, noiseMultiplier);
+
 			f.SetScale3D(FVector(posMultiplier/100, posMultiplier/100,  res* posMultiplier/10));
 			toReturn.Add(f);
 		}
@@ -592,7 +577,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FRoadSegment> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 100, 500, 100, 50);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 400, 500, 100, 50);
 }
 
 // Called when the game starts or when spawned

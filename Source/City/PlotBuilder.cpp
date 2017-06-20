@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "City.h"
-#include "simplexnoise.h"
+#include "NoiseSingleton.h"
 #include "PlotBuilder.h"
 
 
@@ -59,7 +59,7 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.height = randFloat() * (maxFloors - minFloors) + minFloors;
-	if (raw_noise_2d((pol.housePosition.X + noiseXOffset)*noiseScale, (pol.housePosition.Y + noiseYOffset)*noiseScale) > 0.7) {
+	if (NoiseSingleton::getInstance()->noise((pol.housePosition.X + noiseXOffset)*noiseScale, (pol.housePosition.Y + noiseYOffset)*noiseScale) > 0.7) {
 		pol.height *= 2;
 	}
 	pol.type = type;
@@ -89,7 +89,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			original.windows.Add(i);
 		}
 		FVector center = p.getCenter();
-		p.type = raw_noise_2d((center.X + noiseXOffset*2)*noiseScale*2, (center.Y + noiseYOffset*2)*noiseScale*2) < 0 ? RoomType::office : RoomType::apartment;
+		p.type = NoiseSingleton::getInstance()->noise((center.X + noiseXOffset*2)*noiseScale*2, (center.Y + noiseYOffset*2)*noiseScale*2) < 0 ? RoomType::office : RoomType::apartment;
 
 		bool normalPlacement = !(p.getArea() > 5500 && stream.FRand() < 0.2);
 		if (!normalPlacement) {
@@ -164,9 +164,9 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			for (FHousePolygon r : refinedPolygons) {
 				r.height = randFloat() * (maxFloors - minFloors) + minFloors;
 				r.housePosition = r.getCenter();
-				if (raw_noise_2d((r.housePosition.X + noiseXOffset)*noiseScale*10, (r.housePosition.Y + noiseYOffset)*noiseScale*10) > 0.7) {
-					r.height *= 2;
-				}
+				//if (raw_noise_2d((r.housePosition.X + noiseXOffset)*noiseScale*10, (r.housePosition.Y + noiseYOffset)*noiseScale*10) > 0.7) {
+				//	r.height *= 2;
+				//}
 				r.type = p.type;
 				r.simplePlotType = r.type == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
 
