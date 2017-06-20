@@ -536,7 +536,6 @@ TArray<FMaterialPolygon> ASpawner::getRoadLines(TArray<FRoadSegment> segments)
 				line.points.Add(endPos + normal*lineWidth);
 				line.offset(FVector(0, 0, 20));
 				lines.Add(line);
-				//lines.Add(FLine{ startPos, endPos,5});
 			}
 		}
 	}

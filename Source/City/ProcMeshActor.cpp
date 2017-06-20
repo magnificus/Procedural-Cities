@@ -314,7 +314,7 @@ void AProcMeshActor::Tick(float DeltaTime)
 		TArray<FPolygon> &current = polygons[currentlyWorkingArray];
 		buildPolygons(current, FVector(0, 0, 0), components[currentlyWorkingArray], materials[currentlyWorkingArray]);
 		currentlyWorkingArray++;
-		if (currentlyWorkingArray >= polygons.Num() - 1)
+		if (currentlyWorkingArray >= polygons.Num())
 			isWorking = false;
 		//buildPolygons(current, FVector(0,0,0), components[currentlyWorkingArray], materials[currentlyWorkingArray], currentlyWorkingIndex, currentlyWorkingIndex + buildPerTick);
 	}
