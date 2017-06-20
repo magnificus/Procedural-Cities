@@ -284,8 +284,8 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 
 void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> &queue, logicRoadSegment* current, std::vector<logicRoadSegment*> &allsegments) {
 	float mainRoadSize = 4.0f;
-	float sndRoadMinSize = 1.7f;
-	float sndRoadSize = std::max(sndRoadMinSize, current->segment->width - 2.0f);
+	float sndRoadMinSize = 1.9f;
+	float sndRoadSize = std::max(sndRoadMinSize, current->segment->width - 1.5f);
 	FVector tangent = current->segment->p2 - current->segment->p1;
 	if (current->segment->type == RoadType::main) {
 		// on the main road
@@ -327,14 +327,16 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 
 TArray<FRoadSegment> ASpawner::determineRoadSegments()
 {
+
+	if (useTexture)
+		NoiseSingleton::getInstance()->setUseTexture(noiseTexture, noiseTextureScale);
+	else {
+		noiseXOffset = FMath::FRandRange(-1000000, 1000000);
+		noiseYOffset = FMath::FRandRange(-1000000, 1000000);
+	}
 	FVector origin;
-
-
 	TArray<FRoadSegment*> determinedSegments;
 	TArray<FRoadSegment> finishedSegments;
-
-	noiseXOffset = FMath::FRandRange(-1000000, 1000000);
-	noiseYOffset = FMath::FRandRange(-1000000, 1000000);
 
 
 	std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> queue;
@@ -577,7 +579,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FRoadSegment> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 400, 500, 100, 50);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 800, 50, 100, 100);
 }
 
 // Called when the game starts or when spawned

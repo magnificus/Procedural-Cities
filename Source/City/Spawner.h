@@ -48,8 +48,6 @@ class CITY_API ASpawner : public AActor
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
 		float mainRoadBranchChance;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
-	//	float secondaryRoadBranchChance;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
 		float noiseScale = 0.00003;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
@@ -84,7 +82,13 @@ class CITY_API ASpawner : public AActor
 		USplineMeshComponent* PathSpline;
 
 	TArray<USplineMeshComponent*> splineComponents;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = noise, meta = (AllowPrivateAccess = "true"))
+		bool useTexture;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = noise, meta = (AllowPrivateAccess = "true"))
+		UTexture2D* noiseTexture;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = noise, meta = (AllowPrivateAccess = "true"))
+		float noiseTextureScale;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
 		float	offsetSize = 500;

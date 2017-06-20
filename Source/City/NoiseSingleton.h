@@ -11,7 +11,7 @@ private:
 	NoiseSingleton();// {}
 	static NoiseSingleton* instance;
 	UTexture2D* image;
-
+	float noiseTextureScale;
 public:
 
 	static NoiseSingleton* getInstance() {
@@ -23,9 +23,10 @@ public:
 	float noise(float x, float y, float noiseScale = 1.0f, float xOffset = 0, float yOffset = 0);
 	bool useTexture = false;
 
-	void setUseTexture(UTexture2D* inImage) {
+	void setUseTexture(UTexture2D* inImage, float noiseTextureScale) {
 		useTexture = true;
 		this->image = inImage;
+		this->noiseTextureScale = noiseTextureScale;
 	}
 	~NoiseSingleton();
 
