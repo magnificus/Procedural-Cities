@@ -46,6 +46,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	TArray<FMaterialPolygon> getSimplePlotPolygonsPB(TArray<FSimplePlot> plots);
 
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	static FCityDecoration getCityDecoration(TArray<FMetaPolygon> plots, TArray<FPolygon> roads);
 
 protected:
 	// Called when the game starts or when spawned

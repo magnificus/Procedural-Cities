@@ -49,7 +49,7 @@ uint32 ThreadedWorker::Run()
 {
 	//house
 	//Initial wait before starting
-	FPlatformProcess::Sleep(0.03);
+	//FPlatformProcess::Sleep(0.03);
 
 	resultingInfo = houseBuilder->getHouseInfo(housePol, floorHeight, maxRoomArea, shellOnly);
 	//While not told to stop this thread 
@@ -88,16 +88,16 @@ void ThreadedWorker::Stop()
 	StopTaskCounter.Increment();
 }
 
-ThreadedWorker* ThreadedWorker::JoyInit(AHouseBuilder* house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement)
-{
-	//Create new instance of thread if it does not exist
-	//		and the platform supports multi threading!
-	if (!Runnable && FPlatformProcess::SupportsMultithreading())
-	{
-		Runnable = new ThreadedWorker(house, p, floorHeight, maxRoomArea, shellOnly, simple, fullReplacement);
-	}
-	return Runnable;
-}
+//ThreadedWorker* ThreadedWorker::JoyInit(AHouseBuilder* house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement)
+//{
+//	//Create new instance of thread if it does not exist
+//	//		and the platform supports multi threading!
+//	if (!Runnable && FPlatformProcess::SupportsMultithreading())
+//	{
+//		Runnable = new ThreadedWorker(house, p, floorHeight, maxRoomArea, shellOnly, simple, fullReplacement);
+//	}
+//	return Runnable;
+//}
 
 void ThreadedWorker::EnsureCompletion()
 {

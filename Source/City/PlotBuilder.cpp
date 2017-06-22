@@ -40,7 +40,91 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 	}
 	return added;
 }
+FLine getSideWalkLine(float dist, FPolygon road) {
+	FVector tanL = road.points[2] - road.points[1];
+	float totLen = tanL.Size();
+	tanL.Normalize();
+	FVector startP = road.points[1] + totLen*dist*tanL;
+	FVector endP = intersection(startP, startP + FRotator(0, 90, 0).RotateVector(tanL) * 10000, road.points[0], road.points[3]);
+	if (endP.X == 0.0f)
+		return{ FVector(0,0,0),FVector(0,0,0)};
+	return{ startP, endP };
+}
 
+
+TArray<FMaterialPolygon> getSideWalkAt(float dist, FPolygon road, float lineWidth) {
+	//FVector startP = middle(road.points[1], road.points[2]);
+	//FVector endP = middle(road.points[0], road.points[3]);
+	FLine line = getSideWalkLine(dist, road);
+	if (line.p1.X == 0.0f)
+		return TArray<FMaterialPolygon>();
+	float lineInterval = 200;
+	float lineLen = 100;
+	TArray<FMaterialPolygon> lines;
+	FVector tangent = line.p2 - line.p1;
+	tangent.Normalize();
+	int spaces = FVector::Dist(line.p1, line.p2) / (lineInterval + 1);
+	for (int i = 1; i < spaces; i++) {
+		FVector startPos = tangent * lineInterval * i + line.p1;
+		FVector endPos = startPos + tangent*lineLen;
+		FVector normal = getNormal(endPos, startPos, true);
+		normal.Normalize();
+		FMaterialPolygon line;
+		line.type = PolygonType::roadMiddle;
+		line.points.Add(startPos + normal*lineWidth);
+		line.points.Add(startPos - normal*lineWidth);
+		line.points.Add(endPos - normal*lineWidth);
+		line.points.Add(endPos + normal*lineWidth);
+		line.offset(FVector(0, 0, 20));
+		lines.Add(line);
+					
+	}
+	return lines;
+}
+
+FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArray<FPolygon> roads) {
+	FCityDecoration dec;
+	TMap<FMetaPolygon*, TSet<FMetaPolygon*>> connectionsMap;
+
+	for (FPolygon road : roads) {
+		FMetaPolygon *firstHit = nullptr;
+		FMetaPolygon *sndHit = nullptr;
+		FLine line = getSideWalkLine(0.25, road);
+		FLine testLine;
+		FVector tan = line.p2 - line.p1;
+		tan.Normalize();
+		testLine.p1 = line.p1 - tan * 100;
+		testLine.p2 = line.p2 + tan * 100;
+		for (FMetaPolygon &plot : plots) {
+			if (intersection(testLine.p1, testLine.p2, plot).X != 0.0f) {
+				if (firstHit) {
+					sndHit = &plot;
+					// if these two plots werent previously connected, connections are added and sidewalk is placed, otherwise discard
+					if (!connectionsMap[firstHit].Contains(sndHit)) {
+						if (!connectionsMap.Contains(sndHit)) {
+							connectionsMap.Add(sndHit, TSet<FMetaPolygon*>());
+						}
+						connectionsMap[firstHit].Add(sndHit);
+						connectionsMap[sndHit].Add(firstHit);
+						//UE_LOG(LogTemp, Warning, TEXT("Adding sidewalk"));
+						dec.polygons.Append(getSideWalkAt(0.25, road, 300));
+						break;
+
+					}
+				}
+				else {
+					firstHit = &plot;
+					if (!connectionsMap.Contains(firstHit)) {
+						connectionsMap.Add(firstHit, TSet<FMetaPolygon*>());
+					}
+				}
+			}
+		}
+	}
+	//UE_LOG(LogTemp, Warning, TEXT("Added %i sidewalks"), dec.polygons.Num())
+
+	return dec;
+}
 FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int maxFloors, float noiseScale, RoomType type, FRandomStream stream) {
 	FHousePolygon pol;
 	float xLen = stream.FRandRange(minSize, maxSize);
@@ -257,10 +341,8 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 			pols.Add(currentOuterLine);
 			pols.Add(corner);
 		}
-		//if (i != p.points.Num() - 1) {
-			prevP1 = p.points[i];
-			prevP2 = p.points[i] + width*normal;
-		//}
+		prevP1 = p.points[i];
+		prevP2 = p.points[i] + width*normal;
 		pols.Add(current);
 
 	}
@@ -274,6 +356,19 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 	corner.points.Add(p.points[0] + width*normal);
 	corner.points.Add(prevP2);
 	corner.points.Add(prevP1);
+
+	FVector otherTan = prevP2 - prevP1;
+	otherTan.Normalize();
+	FMaterialPolygon currentOuterLine;
+	currentOuterLine.type = PolygonType::concrete;
+	currentOuterLine.points.Add(prevP2);
+	currentOuterLine.points.Add(p.points[p.points.Num()-1] + width*normal);
+	currentOuterLine.points.Add(p.points[p.points.Num() - 1] + (width + endWidth)*normal);
+	currentOuterLine.points.Add(prevP2 + (endWidth)*otherTan);
+	currentOuterLine.points.Add(prevP2);
+	currentOuterLine.offset(FVector(0, 0, endHeight));
+	pols.Append(getSidesOfPolygon(currentOuterLine, PolygonType::concrete, endHeight));
+	pols.Add(currentOuterLine);
 
 	corner.offset(FVector(0, 0, 30));
 	pols.Add(corner);
@@ -291,10 +386,6 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 			polygon.points.Add(p.points[i - 1] + offset);
 			polygon.points.Add(p.points[i] + offset);
 		}
-		//if (FVector::Dist(p.points[p.points.Num() - 1], p.points[p.points.Num() - 2]) > 100.0f) {
-		//	polygon.points.Add(p.points[p.points.Num() - 1]);
-		//}
-
 		if (!p.open) {
 			//polygon.points.RemoveAt(polygon.points.Num() - 1);
 			//polygon.points.Add(FVector(polygon.points[0]));

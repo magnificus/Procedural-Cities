@@ -1490,6 +1490,16 @@ struct roadComparator {
 	}
 };
 
+USTRUCT(BlueprintType)
+struct FCityDecoration {
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FMaterialPolygon> polygons;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<FMeshInfo> meshes;
+
+};
 
 USTRUCT(BlueprintType)
 struct FPlotInfo {

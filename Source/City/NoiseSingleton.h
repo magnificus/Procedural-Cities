@@ -23,10 +23,10 @@ public:
 	float noise(float x, float y, float noiseScale = 1.0f, float xOffset = 0, float yOffset = 0);
 	bool useTexture = false;
 
-	void setUseTexture(UTexture2D* inImage, float noiseTextureScale) {
+	void setUseTexture(UTexture2D* inImage, float scale) {
 		useTexture = true;
 		this->image = inImage;
-		this->noiseTextureScale = noiseTextureScale;
+		this->noiseTextureScale = scale;
 	}
 	~NoiseSingleton();
 

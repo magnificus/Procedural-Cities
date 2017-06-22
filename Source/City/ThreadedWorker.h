@@ -60,12 +60,7 @@ public:
 
 
 
-	/*
-	Start the thread and the worker from static (easy access)!
-	This code ensures only 1 Prime Number thread will be able to run at a time.
-	This function returns a handle to the newly started instance.
-	*/
-	static ThreadedWorker* JoyInit(AHouseBuilder *house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement);
+	//static ThreadedWorker* JoyInit(AHouseBuilder *house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement);
 
 	/** Shuts down the thread. Static so it can easily be called from outside the thread context */
 	static void Shutdown();
