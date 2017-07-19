@@ -260,7 +260,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 
-	if (len < 1000) {
+	if (len < 300) {
 		delete inLine;
 		return;
 	}
@@ -315,7 +315,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 		}
 	}
 	len = FVector::Dist(inLine->line.p1, inLine->line.p2);
-	if (len < 1000) {
+	if (len < 300) {
 		delete inLine;
 		return;
 	}

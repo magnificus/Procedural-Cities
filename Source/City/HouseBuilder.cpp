@@ -212,34 +212,23 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	TArray<FMaterialPolygon> polygons;
 
 
-	 //move a little to avoid z fighting
-	//if (toMiddle) {
-	//	FVector middle = f.getCenter();
-	//	for (int i = 0; i < f.points.Num(); i++) {
-	//		FVector dir = f.getPointDirection(i, true, true);
-	//		f.points[i] += dir * 2;
-	//	}
-	//	//for (FVector &p : f.points) {
-	//	//	f.getPointDirection();
-	//	//	FVector tan = middle - p;
-	//	//	tan.Normalize();
-	//	//	p += tan * 2;
-	//	//}
-	//}
-
-
 	FMaterialPolygon f2;
 	f2.type = PolygonType::floor;
 	f2.points = f.points;
+
+	for (int i = 1; i < f2.points.Num(); i++) {
+		if (FVector::Dist(f2.points[i], f2.points[i - 1]) < 100.0f)
+			f2.points.RemoveAt(i);
+	}
 	f2.points.RemoveAt(f2.points.Num() - 1);
-	//if (f2.points.Num() > 3)
-	//	f2.points.RemoveAt(f2.points.Num() - 1);
+
 
 	hole.points.RemoveAt(hole.points.Num() - 1);
 	//hole.reverse();
 	f2.offset(FVector(0, 0, floorBegin));
 	hole.offset(FVector(0, 0, floorBegin));
 	TArray<FPolygon> holes;
+	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 	holes.Add(hole);
 	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 	//FMaterialPolygon toAdd;
@@ -362,7 +351,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 		//simplePlot.pol.points.Add(p1);
 		simplePlot.pol.offset(FVector(0, 0, 30));
 		if (intersection(simplePlot.pol, centerHole).X == 0.0f) {
-			bool hadW = f.entrances.Contains(place);
+			bool hadW = f.windows.Contains(place);
 			bool hadE = f.entrances.Contains(place);
 
 			simplePlot.type = f.simplePlotType; // stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
@@ -721,6 +710,7 @@ FHouseInfo AHouseBuilder::getHouseInfoSimple(FHousePolygon f, float floorHeight,
 FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly)
 {
 	FRandomStream stream;
+	float corrWidth = 300;
 	stream.Initialize(f.housePosition.X * 1000 + f.housePosition.Y);
 	if (f.points.Num() < 3) {
 		return FHouseInfo();
@@ -741,9 +731,9 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	float wWidth = stream.FRand() * 500 + 500;
 	float wHeight = stream.FRand() * 400 + 200;
 
-	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, 300, maxRoomArea);
+	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, corrWidth, maxRoomArea);
 
-	bool potentialBalcony = f.type == RoomType::apartment && floors < 10;
+	bool potentialBalcony = f.type == RoomType::apartment && floors < 10 && stream.FRand() < 0.3;
 	for (FRoomPolygon &p : roomPols) {
 		RoomType toUse = f.type;
 		p.windowType = WindowType::rectangular;
@@ -806,7 +796,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			if (facade)
 				addFacade(f, toReturn.roomInfo, floorHeight*i + 1, 70, 20);
 
-			roomPols = getInteriorPlan(f, hole, false, 300, 500);
+			roomPols = getInteriorPlan(f, hole, false, corrWidth, maxRoomArea);
 			for (FRoomPolygon &p : roomPols) {
 				p.windowType = currentWindowType;
 				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, map, potentialBalcony, shellOnly, stream);
@@ -819,7 +809,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			for (int i = 1; i <= floors; i++) {
 				FVector elDir = elevatorPol.points[2] - elevatorPol.points[1];
 				elDir.Normalize();
-				toReturn.roomInfo.meshes.Add(FMeshInfo{ "elevator", FTransform(rot.Rotation() + FRotator(0, 90, 0), elevatorPos + FVector(0, 0, floorHeight * (i - 1)) + elDir * 180, FVector(1.0f, 1.0f, 1.0f)) }); // elevator doors
+				toReturn.roomInfo.meshes.Add(FMeshInfo{ "elevator", FTransform(rot.Rotation(), elevatorPos + FVector(0, 0, floorHeight * (i - 1)) + elDir * 180, FVector(1.0f, 1.0f, 1.0f)) }); // elevator doors
 				FMaterialPolygon above; // space above elevator
 				above.type = PolygonType::interior;
 				above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 290));

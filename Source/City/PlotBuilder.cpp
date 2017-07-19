@@ -106,7 +106,6 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 						}
 						connectionsMap[firstHit].Add(sndHit);
 						connectionsMap[sndHit].Add(firstHit);
-						//UE_LOG(LogTemp, Warning, TEXT("Adding sidewalk"));
 						dec.polygons.Append(getSideWalkAt(0.25, road, 300));
 						break;
 

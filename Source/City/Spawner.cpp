@@ -149,9 +149,9 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				FVector pot2 = FRotator(0, 270, 0).RotateVector(f->p2 - f->p1);
 				pot2.Normalize();
 				addVertices(current->segment);
-				if (FVector::DotProduct(pot1, naturalTangent) > 0.7)
+				if (FVector::Dist(pot1, naturalTangent) < FVector::Dist(pot2, naturalTangent))//(FVector::DotProduct(pot1, naturalTangent) > 0.7)
 					current->segment->endTangent = pot1;
-				else if (FVector::DotProduct(pot2, naturalTangent) > 0.7)
+				else// if (FVector::DotProduct(pot2, naturalTangent) > 0.7)
 					current->segment->endTangent = pot2;
 		}
 
@@ -577,7 +577,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FRoadSegment> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 800, 50, 100, 100);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, 500, 50, 100, 100);
 }
 
 // Called when the game starts or when spawned

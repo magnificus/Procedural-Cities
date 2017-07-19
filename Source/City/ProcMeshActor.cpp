@@ -103,6 +103,7 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 	TArray<FRuntimeMeshTangent> tangents;
 
 	int current = 0;
+
 	for (FPolygon &pol : pols) {
 
 		//pol.reverse();
@@ -115,6 +116,7 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 		//	e1 = -e1;
 		//}
 		FVector n = FVector::CrossProduct(e1, pol.points[2] - pol.points[0]);
+		n.Normalize();
 		FVector e2 = FVector::CrossProduct(e1, n);
 		e2.Normalize();
 
@@ -133,17 +135,19 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 			TPPLPoint newP{ x, y, current + i};
 			poly[i] = newP;
 			vertices.Add(point);
-
 		}
 		//exteriorMesh->clear
 		TPPLPartition part;
 		poly.SetOrientation(TPPL_CCW);
 		int res = part.Triangulate_EC(&poly, &inTriangles);
 
-		if (res == 0) {
-			//UE_LOG(LogTemp, Warning, TEXT("Triangulation failed!"));
-			//return false;
-		}
+		//if (res == 0) {
+		//	UE_LOG(LogTemp, Warning, TEXT("Triangulation failed for polygon: "));
+		//	for (FVector f : pol.points) {
+		//		UE_LOG(LogTemp, Warning, TEXT("%s"), *(f.ToString()));
+		//	}
+		//	//return false;
+		//}
 		for (auto i : inTriangles) {
 			triangles.Add(i[0].id);
 			triangles.Add(i[1].id);
