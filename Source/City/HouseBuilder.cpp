@@ -22,7 +22,7 @@ struct twoInt {
 	int32 b;
 };
 
-// VERY crudely checks which direction an array is going, it can wrap around 0 unfortunately
+// very crudely checks which direction an array is going, needs to be checked in this way because it can wrap around 0 unfortunately
 bool increasing(std::vector<int> nbrs) {
 	for (int i = 1; i < nbrs.size(); i++) {
 		if (nbrs[i] == nbrs[i - 1] + 1) {
@@ -207,26 +207,30 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 
 
 
-// this returns polygons corresponding to a hole with the shape "hole" in the polygon f, using the keyhole triangulation algorithm
+// this returns polygons corresponding to a hole with the shape "hole" in the polygon f
 TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, FPolygon hole, bool toMiddle) {
 	TArray<FMaterialPolygon> polygons;
-
 
 	FMaterialPolygon f2;
 	f2.type = PolygonType::floor;
 	f2.points = f.points;
 
-	for (int i = 1; i < f2.points.Num(); i++) {
-		if (FVector::Dist(f2.points[i], f2.points[i - 1]) < 100.0f)
+	for (int i = 1; i < f2.points.Num(); i++){
+		if (FVector::DistSquared(f2.points[i], f2.points[i - 1]) < 10.0f)
 			f2.points.RemoveAt(i);
 	}
+	//if (f2.getIsClockwise())
+	//	f2.reverse();
 	f2.points.RemoveAt(f2.points.Num() - 1);
-
 
 	hole.points.RemoveAt(hole.points.Num() - 1);
 	//hole.reverse();
 	f2.offset(FVector(0, 0, floorBegin));
 	hole.offset(FVector(0, 0, floorBegin));
+	polygons.Add(f2);
+
+	return polygons;
+
 	TArray<FPolygon> holes;
 	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 	holes.Add(hole);
@@ -443,13 +447,13 @@ TArray<FMaterialPolygon> AHouseBuilder::getShaftSides(FPolygon hole, int openSid
 	}
 
 	// move a little to avoid z fighting
-	for (FPolygon &p : sides) {
-		for (FVector &f : p.points) {
-			FVector tan = center - f;
-			tan.Normalize();
-			f += tan * 2;
-		}
-	}
+	//for (FPolygon &p : sides) {
+	//	for (FVector &f : p.points) {
+	//		FVector tan = center - f;
+	//		tan.Normalize();
+	//		f += tan * 2;
+	//	}
+	//}
 
 	return sides;
 }

@@ -1,7 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "City.h"
-#include "polypartition.h"
+//#include "polypartition.h"
+#include "gpc.h"
 #include "RoomBuilder.h"
 
 
@@ -45,47 +46,48 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 	FVector origin = outer.points[0];
 	TArray<FVector> allPoints;
 	int current = 0;
-	std::list<TPPLPoly> inPolys;
-	std::list<TPPLPoly> outPolys;
-	TPPLPoly outerP;
-	outerP.SetHole(false);
-	outerP.Init(outer.points.Num());
+	//std::list<TPPLPoly> inPolys;
+	//std::list<TPPLPoly> outPolys;
+	//TPPLPoly outerP;
+	//outerP.SetHole(false);
+	//outerP.Init(outer.points.Num());
 
 	for (int i = 0; i < outer.points.Num(); i++) {
 		FVector point = outer.points[i];
 		float y = FVector::DotProduct(e1, point - origin);
 		float x = FVector::DotProduct(e2, point - origin);
-		outerP[i] = TPPLPoint{ x, y, current++};
+		//outerP[i] = TPPLPoint{ x, y, current++};
 		allPoints.Add(point);
 	}
-	outerP.SetOrientation(TPPL_CCW);
-	inPolys.push_back(outerP);
+	//gpc_polygon_clip(GPC_DIFF,);
+	//outerP.SetOrientation(TPPL_CCW);
+	//inPolys.push_back(outerP);
 	for (FPolygon p : holes) {
-		TPPLPoly holeP;
-		holeP.Init(p.points.Num());
-		holeP.SetHole(true);
+		//TPPLPoly holeP;
+		//holeP.Init(p.points.Num());
+		//holeP.SetHole(true);
 		for (int i = 0; i < p.points.Num(); i++) {
 			FVector point = p.points[i];
 			float y = FVector::DotProduct(e1, point - origin);
 			float x = FVector::DotProduct(e2, point - origin);
-			holeP[p.points.Num() - 1 - i] = TPPLPoint{ x, y, current++ };
+			//holeP[p.points.Num() - 1 - i] = TPPLPoint{ x, y, current++ };
 			allPoints.Add(point);
 		}
-		holeP.SetOrientation(TPPL_CW);
-		inPolys.push_back(holeP);
+		//holeP.SetOrientation(TPPL_CW);
+		//inPolys.push_back(holeP);
 	}
 
-	TPPLPartition part;
-	part.RemoveHoles(&inPolys, &outPolys);
-	for (TPPLPoly t : outPolys) {
-		FMaterialPolygon newP;
-		for (int i = 0; i < t.GetNumPoints(); i++) {
-			newP.points.Add(allPoints[t[i].id]);
-		}
-		newP.type = type;
-		polygons.Add(newP);
-		//newP.
-	}
+	//TPPLPartition part;
+	//part.RemoveHoles(&inPolys, &outPolys);
+	//for (TPPLPoly t : outPolys) {
+	//	FMaterialPolygon newP;
+	//	for (int i = 0; i < t.GetNumPoints(); i++) {
+	//		newP.points.Add(allPoints[t[i].id]);
+	//	}
+	//	newP.type = type;
+	//	polygons.Add(newP);
+	//	//newP.
+	//}
 	return polygons;
 }
 

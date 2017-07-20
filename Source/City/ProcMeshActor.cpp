@@ -1,9 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "City.h"
-#include "ProcMeshActor.h"
-#include "polypartition.h"
+#pragma once
 
+#include "City.h"
+#include "gpc.h"
+//#include "gpc.c"
+#include "ProcMeshActor.h"
+//#include "polypartition.h"
 // Sets default values
 AProcMeshActor::AProcMeshActor()
 {
@@ -88,13 +91,6 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 		return false;
 	}
 
-	//TArray<FPolygon> cp;
-	//for (FPolygon t : pols) {
-	//	t.reverse();
-	//	cp.Add(t);
-	//}
-	//pols.Append(cp);
-
 	TArray<FVector> vertices;
 	TArray<int32> triangles;
 	TArray<FVector2D> UV;
@@ -112,48 +108,65 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 		// local coordinates are found by getting the coordinates of points on the plane which they span up
 		FVector e1 = pol.points[1] - pol.points[0];
 		e1.Normalize();
-		//if (FVector::DotProduct(e1, FVector(1, 0, 0)) < 0) {
-		//	e1 = -e1;
-		//}
 		FVector n = FVector::CrossProduct(e1, pol.points[2] - pol.points[0]);
 		n.Normalize();
 		FVector e2 = FVector::CrossProduct(e1, n);
 		e2.Normalize();
 
 
-		FVector origin = pol.points[0]; //FVector(0, 0, 0);
+		FVector origin = pol.points[0];
 
-		std::list<TPPLPoly> inTriangles;
+		//std::list<TPPLPoly> inTriangles;
 
-		TPPLPoly poly;
-		poly.Init(pol.points.Num());
+		//TPPLPoly poly;
+		//poly.Init(pol.points.Num());
+		gpc_polygon poly;
+		gpc_tristrip tris;
+
+		gpc_vertex_list vertListPol;
+		//gpc_vertex_list vertListTri;
+		//vertListTri.num_vertices = pol.points.Num();
+		//vertListTri.vertex = vertex;
+		//tris.strip = new gpc_vertex[];
+
+		vertListPol.vertex = new gpc_vertex[pol.points.Num()];
+		vertListPol.num_vertices = pol.points.Num();
+		//poly.contour->vertex
+		poly.num_contours = 1;
 		for (int i = 0; i < pol.points.Num(); i++) {
 			FVector point = pol.points[i];
 			float y = FVector::DotProduct(e1, point - origin);
 			float x = FVector::DotProduct(e2, point - origin);
-			UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
-			TPPLPoint newP{ x, y, current + i};
-			poly[i] = newP;
-			vertices.Add(point);
+			vertListPol.vertex[i] = gpc_vertex{ x, y };
+			//TPPLPoint newP{ x, y, current + i};
+			//poly[i] = newP;
+			//vertices.Add(point);
 		}
-		//exteriorMesh->clear
-		TPPLPartition part;
-		poly.SetOrientation(TPPL_CCW);
-		int res = part.Triangulate_EC(&poly, &inTriangles);
+		poly.contour = &vertListPol;
+		gpc_polygon_to_tristrip(&poly, &tris);
+		for (int j = 0; j < tris.num_strips; j++) {
+			for (int i = 0; i < tris.strip[j].num_vertices; i++) {
+				gpc_vertex curr = tris.strip->vertex[i];
+				triangles.Add(current++);
+				UV.Add(FVector2D(curr.x*texScaleMultiplier, curr.y*texScaleMultiplier));
+				FVector realPos = e1 * curr.x + e2 * curr.y;
+				vertices.Add(realPos);
+			}
+		}
 
-		//if (res == 0) {
-		//	UE_LOG(LogTemp, Warning, TEXT("Triangulation failed for polygon: "));
-		//	for (FVector f : pol.points) {
-		//		UE_LOG(LogTemp, Warning, TEXT("%s"), *(f.ToString()));
-		//	}
-		//	//return false;
+		gpc_free_polygon(&poly);
+		gpc_free_tristrip(&tris);
+
+		//TPPLPartition part;
+		//poly.SetOrientation(TPPL_CCW);
+		///int res = part.Triangulate_EC(&poly, &inTriangles);
+
+		//for (auto i : inTriangles) {
+		//	triangles.Add(i[0].id);
+		//	triangles.Add(i[1].id);
+		//	triangles.Add(i[2].id);
 		//}
-		for (auto i : inTriangles) {
-			triangles.Add(i[0].id);
-			triangles.Add(i[1].id);
-			triangles.Add(i[2].id);
-		}
-		current += pol.points.Num();
+		//current += pol.points.Num();
 	}
 
 

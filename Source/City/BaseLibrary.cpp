@@ -645,9 +645,6 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 			otherSides.Add(newP2);
 		}
 
-
-
-
 		other.reverse();
 		otherSides.Add(other);
 

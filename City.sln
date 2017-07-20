@@ -10,6 +10,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UE4", "Intermediate\ProjectFiles\UE4.vcxproj", "{EEF5B14A-205D-469D-BA6E-B6C75B5A231C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "City", "Intermediate\ProjectFiles\City.vcxproj", "{4AA6DEF0-D4D2-4521-BF61-445709859D43}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EEF5B14A-205D-469D-BA6E-B6C75B5A231C} = {EEF5B14A-205D-469D-BA6E-B6C75B5A231C}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
