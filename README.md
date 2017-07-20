@@ -7,26 +7,26 @@ TODO:
   * ground level details
   * <strike>room subdivision</strike>
   * <strike>windows</strike>
-   * different types of windows for different levels
+   * <strike>different types of windows for different levels</strike>
   * types
    * <strike>offices</strike>
    * <strike>living apartments</strike>
-   * stores
-   * cafes
+   * <strike>stores</strike>
+   * <strike>cafes</strike>
 * heatmaps
  * <strike>road placement heatmap (same as population heatmap?)</strike>
- * population heatmap
+ * <strike>population heatmap</strike>
  * heightmap
- * building type heatmap
+ * <strike>building type heatmap</strike>
  * road type heatmap
 * optimize interior load - in
-* trees, vegetation
+* <strike>trees</strike>, vegetation
 * <strike>optimize sidewalks</strike>
 * add details to sidewalks
 * <strike>proper polygon splits</strike>
-* make building shapes more interesting
+* <strike>make building shapes more interesting</strike>
 * add detail to building exterior
  * facades
  * roofs
-* make buildings with several "levels" with different roomPolygons.
+* <strike>make buildings with several "levels" with different roomPolygons.</strike>
 * <strike>window mesh details<strike>
