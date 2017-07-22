@@ -173,23 +173,33 @@ struct FPolygon
 			}
 		}
 
-		//for (int i = 1; i < points.Num(); i++) {
-		//	FVector tan1 = points[i] - points[i - 1];
-		//	tan1.Normalize();
-		//	tan1 *= -100;
-		//	for (int j = i + 2; j < points.Num(); j++) {
-		//		FVector tan2 = points[j] - points[j-1];
-		//		tan2.Normalize();
-		//		//tan2 *= 20;
-		//		FVector res = intersection(points[i - 1] + tan1, points[i] - tan1, points[j - 1] + tan2, points[j] - tan2);
-		//		if (res.X != 0.0f) {
-		//			points.Add(FVector(0, 0, 0));
-		//			//points.Empty();
-		//			return;
+		// untangle
 
-		//		}
-		//	}
-		//}
+		for (int i = 1; i < points.Num(); i++) {
+			FVector tan1 = points[i] - points[i - 1];
+			tan1.Normalize();
+			for (int j = i + 2; j < points.Num() - 1; j++) {
+				FVector tan2 = points[j] - points[j-1];
+				tan2.Normalize();
+				FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j]);
+				if (res.X != 0.0f) {
+					TArray<FVector> newPoints;
+					for (int k = 0; k < i; k++) {
+						newPoints.Add(points[k]);
+					}
+					newPoints.Add(res);
+					for (int k = j; k < points.Num(); k++) {
+						newPoints.Add(points[k]);
+					}
+					//points.Add(FVector(0, 0, 0));
+					//points.Empty();
+					points = newPoints;
+					i = 0;
+					//return;
+
+				}
+			}
+		}
 	}
 
 
@@ -199,11 +209,11 @@ struct FPolygon
 	// this method merges polygon sides when possible, and combines points
 	bool decreaseEdges() {
 		float dirDiffAllowed = 0.001f;
-		float distDiffAllowed = 200;
+		float distDiffAllowed = 40000;
 		bool hasModified = false;
 		for (int i = 1; i < points.Num(); i++) {
-			if (FVector::Dist(points[i - 1], points[i]) < distDiffAllowed) {
-				points.RemoveAt(i - 1);
+			if (FVector::DistSquared(points[i - 1], points[i]) < distDiffAllowed) {
+				points.RemoveAt(i);
 				hasModified = true;
 				i--;
 			}
@@ -226,6 +236,8 @@ struct FPolygon
 
 	// assumes at least 3 points in polygon
 	FVector getDirection() {
+		//if (points.Num() < 3)
+		//	return FVector();
 		FVector res = FVector::CrossProduct(points[1] - points[0], points[2] - points[0]);
 		res.Normalize();
 		return res;
@@ -301,7 +313,7 @@ struct FPolygon
 		//}
 
 		if (p2.X == 0.0f || p1.X == 0.0f) {
-			UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT"));
+			//(LogTemp, Warning, TEXT("UNABLE TO SPLIT"));
 			// cant split, no target, this shouldn't happen unless the polygons are poorly constructed
 			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
 

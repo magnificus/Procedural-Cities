@@ -2,7 +2,7 @@
 
 #include "City.h"
 //#include "simplexnoise.h"
-#include "polypartition.h"
+//#include "polypartition.h"
 #include "HouseBuilder.h"
 //#include "ThreadedWorker.h"
 struct FPolygon;
@@ -208,7 +208,7 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 
 
 // this returns polygons corresponding to a hole with the shape "hole" in the polygon f
-TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, FPolygon hole, bool toMiddle) {
+TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, FPolygon hole) {
 	TArray<FMaterialPolygon> polygons;
 
 	FMaterialPolygon f2;
@@ -216,11 +216,14 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	f2.points = f.points;
 
 	for (int i = 1; i < f2.points.Num(); i++){
-		if (FVector::DistSquared(f2.points[i], f2.points[i - 1]) < 10.0f)
+		if (FVector::DistSquared(f2.points[i], f2.points[i - 1]) < 10000.0f) {
 			f2.points.RemoveAt(i);
+			i--;
+		}
 	}
 	//if (f2.getIsClockwise())
 	//	f2.reverse();
+	//f2.points.RemoveAt(f2.points.Num() - 1);
 	f2.points.RemoveAt(f2.points.Num() - 1);
 
 	hole.points.RemoveAt(hole.points.Num() - 1);
@@ -232,7 +235,7 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	return polygons;
 
 	TArray<FPolygon> holes;
-	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
+	//return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 	holes.Add(hole);
 	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 	//FMaterialPolygon toAdd;
@@ -377,7 +380,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 
 
 	}
-	else if (stream.FRand() < 0.07f) {
+	else if (stream.FRand() < 0.0f) {
 		float depth = stream.FRandRange(500, 1500);
 		// turn a side inwards into a U
 		FVector tangent = f.points[place] - f.points[place - 1];
@@ -794,7 +797,12 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			}
 
 			if (!shellOnly) {
-				toReturn.roomInfo.pols.Append(getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol, true));
+				TArray<FMaterialPolygon> floor = getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol);
+				for (auto &pol : floor) {
+					if(pol.getIsClockwise())
+						pol.reverse();
+				}
+				toReturn.roomInfo.pols.Append(floor);
 				toReturn.roomInfo.meshes.Add(FMeshInfo{ "stair", FTransform(rot.Rotation(), stairPos + FVector(0, 0, floorHeight * (i - 1)), FVector(1.0f, 1.0f, 1.0f)) });
 			}
 			if (facade)
@@ -813,7 +821,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			for (int i = 1; i <= floors; i++) {
 				FVector elDir = elevatorPol.points[2] - elevatorPol.points[1];
 				elDir.Normalize();
-				toReturn.roomInfo.meshes.Add(FMeshInfo{ "elevator", FTransform(rot.Rotation(), elevatorPos + FVector(0, 0, floorHeight * (i - 1)) + elDir * 180, FVector(1.0f, 1.0f, 1.0f)) }); // elevator doors
+				toReturn.roomInfo.meshes.Add(FMeshInfo{ "elevator", FTransform(rot.Rotation() + FRotator(0, 180, 0), elevatorPos + FVector(0, 0, floorHeight * (i - 1)) + elDir * 180, FVector(1.0f, 1.0f, 1.0f)) }); // elevator doors
 				FMaterialPolygon above; // space above elevator
 				above.type = PolygonType::interior;
 				above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 290));

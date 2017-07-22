@@ -260,7 +260,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 
-	if (len < 300) {
+	if (len < 1000) {
 		delete inLine;
 		return;
 	}
@@ -315,7 +315,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 		}
 	}
 	len = FVector::Dist(inLine->line.p1, inLine->line.p2);
-	if (len < 300) {
+	if (len < 2000) {
 		delete inLine;
 		return;
 	}
@@ -559,7 +559,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		}
 		f.checkOrientation();
 
-		f.clipEdges(-0.9f);
+		f.clipEdges(-0.95f);
 		if (f.points.Num() < 3) {
 			polygons.RemoveAt(i);
 			i--;

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "City.h"
-//#include "polypartition.h"
+#include "polypartition.h"
 #include "gpc.h"
 #include "RoomBuilder.h"
 
@@ -27,12 +27,6 @@ void ARoomBuilder::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-
-/*
-no hole is allowed to overlap another or WEIRD things happen
-*/
-
-
 TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon> holes, PolygonType type) {
 
 	TArray<FMaterialPolygon> polygons;
@@ -40,56 +34,144 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 	FVector e1 = outer.points[1] - outer.points[0];
 	e1.Normalize();
 	FVector n = FVector::CrossProduct(e1, outer.points[2] - outer.points[0]);
+	n.Normalize();
 	FVector e2 = FVector::CrossProduct(e1, n);
 	e2.Normalize();
 
 	FVector origin = outer.points[0];
 	TArray<FVector> allPoints;
 	int current = 0;
-	//std::list<TPPLPoly> inPolys;
-	//std::list<TPPLPoly> outPolys;
-	//TPPLPoly outerP;
-	//outerP.SetHole(false);
-	//outerP.Init(outer.points.Num());
+	std::list<TPPLPoly> inPolys;
+	std::list<TPPLPoly> outPolys;
+	TPPLPoly outerP;
+	outerP.SetHole(false);
+	outerP.Init(outer.points.Num());
 
 	for (int i = 0; i < outer.points.Num(); i++) {
 		FVector point = outer.points[i];
 		float y = FVector::DotProduct(e1, point - origin);
 		float x = FVector::DotProduct(e2, point - origin);
-		//outerP[i] = TPPLPoint{ x, y, current++};
+		outerP[i] = TPPLPoint{ x, y, current++ };
 		allPoints.Add(point);
 	}
-	//gpc_polygon_clip(GPC_DIFF,);
-	//outerP.SetOrientation(TPPL_CCW);
-	//inPolys.push_back(outerP);
+	outerP.SetOrientation(TPPL_CCW);
+	inPolys.push_back(outerP);
 	for (FPolygon p : holes) {
-		//TPPLPoly holeP;
-		//holeP.Init(p.points.Num());
-		//holeP.SetHole(true);
+		TPPLPoly holeP;
+		holeP.Init(p.points.Num());
+		holeP.SetHole(true);
 		for (int i = 0; i < p.points.Num(); i++) {
 			FVector point = p.points[i];
 			float y = FVector::DotProduct(e1, point - origin);
 			float x = FVector::DotProduct(e2, point - origin);
-			//holeP[p.points.Num() - 1 - i] = TPPLPoint{ x, y, current++ };
+			holeP[p.points.Num() - 1 - i] = TPPLPoint{ x, y, current++ };
 			allPoints.Add(point);
 		}
-		//holeP.SetOrientation(TPPL_CW);
-		//inPolys.push_back(holeP);
+		holeP.SetOrientation(TPPL_CW);
+		inPolys.push_back(holeP);
 	}
 
-	//TPPLPartition part;
-	//part.RemoveHoles(&inPolys, &outPolys);
-	//for (TPPLPoly t : outPolys) {
-	//	FMaterialPolygon newP;
-	//	for (int i = 0; i < t.GetNumPoints(); i++) {
-	//		newP.points.Add(allPoints[t[i].id]);
-	//	}
-	//	newP.type = type;
-	//	polygons.Add(newP);
-	//	//newP.
-	//}
+	TPPLPartition part;
+	part.RemoveHoles(&inPolys, &outPolys);
+	for (TPPLPoly t : outPolys) {
+		FMaterialPolygon newP;
+		for (int i = 0; i < t.GetNumPoints(); i++) {
+			newP.points.Add(allPoints[t[i].id]);
+		}
+		newP.type = type;
+		polygons.Add(newP);
+		//newP.
+	}
 	return polygons;
 }
+
+//TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon> holes, PolygonType type) {
+//
+//	TArray<FMaterialPolygon> polygons;
+//	FVector e1 = outer.points[1] - outer.points[0];
+//	e1.Normalize();
+//	FVector n = FVector::CrossProduct(e1, outer.points[2] - outer.points[0]);
+//	n.Normalize();
+//	FVector e2 = FVector::CrossProduct(e1, n);
+//	e2.Normalize();
+//
+//	FVector origin = outer.points[0];
+//	int current = 0;
+//
+//	gpc_polygon outerP;
+//	gpc_vertex_list* outerPList = new gpc_vertex_list();
+//	outerPList->num_vertices = outer.points.Num();
+//	outerPList->vertex = new gpc_vertex[outer.points.Num()];
+//	for (int i = 0; i < outer.points.Num(); i++) {
+//		FVector point = outer.points[i];
+//		float y = FVector::DotProduct(e1, point - origin);
+//		float x = FVector::DotProduct(e2, point - origin);
+//		outerPList->vertex[i] = gpc_vertex{ x,y };
+//	}
+//	outerP.num_contours = 1;
+//	outerP.contour = outerPList;
+//
+//
+//	gpc_polygon holesP;// = new gpc_polygon();
+//
+//	holesP.hole = new int[holes.Num()];
+//	for (int i = 0; i < holes.Num(); i++)
+//		holesP.hole[i] = 1;
+//	holesP.num_contours = holes.Num();
+//	holesP.contour = new gpc_vertex_list[holes.Num()];
+//	for (int j = 0; j < holes.Num(); j++) {
+//		FPolygon p = holes[j];
+//		gpc_vertex_list currHoleList;
+//		currHoleList.num_vertices = p.points.Num();
+//		gpc_vertex* currVerts = new gpc_vertex[p.points.Num()];
+//		for (int i = 0; i < p.points.Num(); i++) {
+//			FVector point = p.points[i];
+//			float x = FVector::DotProduct(e1, point - origin);
+//			float y = FVector::DotProduct(e2, point - origin);
+//			currVerts[i] = gpc_vertex{ x,y };
+//			//holeP[p.points.Num() - 1 - i] = TPPLPoint{ x, y, current++ };
+//			//allPoints.Add(point);
+//		}
+//		currHoleList.vertex = currVerts;
+//		holesP.contour[j] = currHoleList;
+//		//holeP.SetOrientation(TPPL_CW);
+//		//inPolys.push_back(holeP);
+//	}
+//	gpc_polygon resultP;// = new gpc_polygon();
+//	gpc_polygon_clip(GPC_DIFF, &outerP, &holesP, &resultP);
+//
+//
+//	for (int i = 0; i < resultP.num_contours; i++) {
+//			//if (resultP.hole[i] == 1)
+//			//	continue;
+//		FMaterialPolygon newPolygon;
+//		newPolygon.type = type;
+//		for (int j = 0; j < resultP.contour[i].num_vertices; j++) {
+//			gpc_vertex currVertex = resultP.contour[i].vertex[j];
+//			newPolygon.points.Add(origin + currVertex.x * e1 + currVertex.y * e2);
+//		}
+//		if (newPolygon.points.Num() > 2)
+//			polygons.Add(newPolygon);
+//	}
+//
+//	//TPPLPartition part;
+//	//part.RemoveHoles(&inPolys, &outPolys);
+//	//for (TPPLPoly t : outPolys) {
+//	//	FMaterialPolygon newP;
+//	//	for (int i = 0; i < t.GetNumPoints(); i++) {
+//	//		newP.points.Add(allPoints[t[i].id]);
+//	//	}
+//	//	newP.type = type;
+//	//	polygons.Add(newP);
+//	//	//newP.
+//	//}
+//
+//
+//	//gpc_free_polygon(outerP);
+//	//gpc_free_polygon(holesP);
+//
+//	return polygons;
+//}
 
 TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float blockingLength) {
 	TArray<FPolygon> blocking;

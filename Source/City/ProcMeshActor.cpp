@@ -6,7 +6,7 @@
 #include "gpc.h"
 //#include "gpc.c"
 #include "ProcMeshActor.h"
-//#include "polypartition.h"
+#include "polypartition.h"
 // Sets default values
 AProcMeshActor::AProcMeshActor()
 {
@@ -86,20 +86,145 @@ AProcMeshActor::AProcMeshActor()
 
 
 
+//bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URuntimeMeshComponent* mesh, UMaterialInterface *mat) {
+//	if (mesh->GetNumSections() > 0 || pols.Num() == 0) {
+//		return false;
+//	}
+//
+//	TArray<FVector> vertices;
+//	TArray<int32> triangles;
+//	TArray<FVector> normals;
+//	TArray<FVector2D> UV;
+//
+//	TArray<FColor> vertexColors;
+//	TArray<FRuntimeMeshTangent> tangents;
+//
+//	int current = 0;
+//
+//	for (FPolygon &pol : pols) {
+//
+//		//pol.reverse();
+//		if (pol.points.Num() < 3)
+//			continue;
+//
+//		// local coordinates are found by getting the coordinates of points on the plane which they span up
+//		FVector e1 = pol.points[1] - pol.points[0];
+//		e1.Normalize();
+//		FVector n = FVector::CrossProduct(e1, pol.points[2] - pol.points[0]);
+//		n.Normalize();
+//		//n.Z = -std::abs(n.Z);
+//		//n = FVector(0, 0, -1);
+//		FVector e2 = FVector::CrossProduct(e1, n);
+//		e2.Normalize();
+//
+//		FVector origin = pol.points[0];
+//
+//		gpc_polygon poly;
+//		gpc_tristrip tris;
+//
+//		gpc_vertex_list vertListPol;
+//
+//		vertListPol.vertex = new gpc_vertex[pol.points.Num()];
+//		vertListPol.num_vertices = pol.points.Num();
+//		//poly.contour->vertex
+//		for (int i = 0; i < pol.points.Num(); i++) {
+//			FVector point = pol.points[i];
+//			float x = FVector::DotProduct(e1, point - origin);
+//			float y = FVector::DotProduct(e2, point - origin);
+//			//x = point.X;
+//			//y = point.Y;
+//			vertListPol.vertex[i] = gpc_vertex{ x, y};
+//			//TPPLPoint newP{ x, y, current + i};
+//			//poly[i] = newP;
+//			//vertices.Add(point);
+//			//UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
+//
+//		}
+//		poly.contour = &vertListPol;
+//		poly.num_contours = 1;
+//		//poly.hole = new int[pol.points.Num()];
+//		//for (int i = 0; i < pol.points.Num(); i++)
+//		//	poly.hole[i] = 0;
+//
+//		gpc_polygon_to_tristrip(&poly, &tris);
+//		for (int j = 0; j < tris.num_strips; j++) {
+//			for (int i = 0; i < tris.strip[j].num_vertices; i++) {
+//				gpc_vertex curr = tris.strip[j].vertex[i];
+//				FVector realPos = origin + (e1 * curr.x) + (e2 * curr.y);
+//				vertices.Add(realPos);
+//				UV.Add(FVector2D(curr.x*texScaleMultiplier, curr.y*texScaleMultiplier));
+//				normals.Add(n);
+//			}
+//
+//			for (int i = 2; i < tris.strip[j].num_vertices; i++) {
+//				//gpc_vertex curr = tris.strip[j].vertex[i];
+//				if (i % 2 == 1) {
+//					triangles.Add(current + i - 2);
+//					triangles.Add(current + i - 1);
+//					triangles.Add(current + i);
+//				}
+//				else {
+//					triangles.Add(current + i - 2);
+//					triangles.Add(current + i);
+//					triangles.Add(current + i - 1);
+//				}
+//
+//				//FVector realPos = origin + (e1 * curr.x) + (e2 * curr.y);
+//				//vertices.Add(realPos);
+//
+//
+//			}
+//			current += tris.strip[j].num_vertices;
+//
+//		}
+//
+//
+//
+//		//free(vertListPol.vertex);
+//		//free(tris.strip);
+//		//gpc_free_tristrip(&tris);
+//
+//		//TPPLPartition part;
+//		//poly.SetOrientation(TPPL_CCW);
+//		///int res = part.Triangulate_EC(&poly, &inTriangles);
+//
+//		//for (auto i : inTriangles) {
+//		//	triangles.Add(i[0].id);
+//		//	triangles.Add(i[1].id);
+//		//	triangles.Add(i[2].id);
+//		//}
+//		//current += pol.points.Num();
+//	}
+//
+//
+//
+//
+//	mesh->SetMaterial(1, mat);
+//	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
+//	return true;
+//}
+
 bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URuntimeMeshComponent* mesh, UMaterialInterface *mat) {
 	if (mesh->GetNumSections() > 0 || pols.Num() == 0) {
 		return false;
 	}
 
+	//TArray<FPolygon> cp;
+	//for (FPolygon t : pols) {
+	//	t.reverse();
+	//	cp.Add(t);
+	//}
+	//pols.Append(cp);
+
 	TArray<FVector> vertices;
 	TArray<int32> triangles;
 	TArray<FVector2D> UV;
+	TArray<FVector> normals;
 
 	TArray<FColor> vertexColors;
 	TArray<FRuntimeMeshTangent> tangents;
 
 	int current = 0;
-
 	for (FPolygon &pol : pols) {
 
 		//pol.reverse();
@@ -108,75 +233,57 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 		// local coordinates are found by getting the coordinates of points on the plane which they span up
 		FVector e1 = pol.points[1] - pol.points[0];
 		e1.Normalize();
+		//if (FVector::DotProduct(e1, FVector(1, 0, 0)) < 0) {
+		//	e1 = -e1;
+		//}
 		FVector n = FVector::CrossProduct(e1, pol.points[2] - pol.points[0]);
-		n.Normalize();
 		FVector e2 = FVector::CrossProduct(e1, n);
 		e2.Normalize();
 
 
-		FVector origin = pol.points[0];
+		FVector origin = pol.points[0]; //FVector(0, 0, 0);
 
-		//std::list<TPPLPoly> inTriangles;
+		std::list<TPPLPoly> inTriangles;
 
-		//TPPLPoly poly;
-		//poly.Init(pol.points.Num());
-		gpc_polygon poly;
-		gpc_tristrip tris;
-
-		gpc_vertex_list vertListPol;
-		//gpc_vertex_list vertListTri;
-		//vertListTri.num_vertices = pol.points.Num();
-		//vertListTri.vertex = vertex;
-		//tris.strip = new gpc_vertex[];
-
-		vertListPol.vertex = new gpc_vertex[pol.points.Num()];
-		vertListPol.num_vertices = pol.points.Num();
-		//poly.contour->vertex
-		poly.num_contours = 1;
+		TPPLPoly poly;
+		poly.Init(pol.points.Num());
 		for (int i = 0; i < pol.points.Num(); i++) {
 			FVector point = pol.points[i];
 			float y = FVector::DotProduct(e1, point - origin);
 			float x = FVector::DotProduct(e2, point - origin);
-			vertListPol.vertex[i] = gpc_vertex{ x, y };
-			//TPPLPoint newP{ x, y, current + i};
-			//poly[i] = newP;
-			//vertices.Add(point);
+			UV.Add(FVector2D(x*texScaleMultiplier, y*texScaleMultiplier));
+			TPPLPoint newP{ x, y, current + i };
+			poly[i] = newP;
+			vertices.Add(point);
+			normals.Add(-n);
+
 		}
-		poly.contour = &vertListPol;
-		gpc_polygon_to_tristrip(&poly, &tris);
-		for (int j = 0; j < tris.num_strips; j++) {
-			for (int i = 0; i < tris.strip[j].num_vertices; i++) {
-				gpc_vertex curr = tris.strip->vertex[i];
-				triangles.Add(current++);
-				UV.Add(FVector2D(curr.x*texScaleMultiplier, curr.y*texScaleMultiplier));
-				FVector realPos = e1 * curr.x + e2 * curr.y;
-				vertices.Add(realPos);
-			}
+		//exteriorMesh->clear
+		TPPLPartition part;
+		poly.SetOrientation(TPPL_CCW);
+		int res = part.Triangulate_EC(&poly, &inTriangles);
+
+		if (res == 0) {
+			//UE_LOG(LogTemp, Warning, TEXT("Triangulation failed!"));
+			//return false;
 		}
-
-		gpc_free_polygon(&poly);
-		gpc_free_tristrip(&tris);
-
-		//TPPLPartition part;
-		//poly.SetOrientation(TPPL_CCW);
-		///int res = part.Triangulate_EC(&poly, &inTriangles);
-
-		//for (auto i : inTriangles) {
-		//	triangles.Add(i[0].id);
-		//	triangles.Add(i[1].id);
-		//	triangles.Add(i[2].id);
-		//}
-		//current += pol.points.Num();
+		for (auto i : inTriangles) {
+			triangles.Add(i[0].id);
+			triangles.Add(i[1].id);
+			triangles.Add(i[2].id);
+		}
+		current += pol.points.Num();
 	}
 
 
 
-	TArray<FVector> normals;
 
 	mesh->SetMaterial(1, mat);
 	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
 	return true;
 }
+
+
 
 bool AProcMeshActor::clearMeshes(bool fullReplacement) {
 	if (fullReplacement) {
@@ -194,6 +301,7 @@ bool AProcMeshActor::clearMeshes(bool fullReplacement) {
 	roadMiddleMesh->ClearAllMeshSections();
 	return true;
 }
+
 
 // divides the polygon into the different materials used by the house
 bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset) {
