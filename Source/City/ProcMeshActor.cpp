@@ -260,7 +260,7 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 		}
 		//exteriorMesh->clear
 		TPPLPartition part;
-		poly.SetOrientation(TPPL_CCW);
+		//poly.SetOrientation(TPPL_CCW);
 		int res = part.Triangulate_EC(&poly, &inTriangles);
 
 		if (res == 0) {

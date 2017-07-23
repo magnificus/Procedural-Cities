@@ -799,7 +799,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			if (!shellOnly) {
 				TArray<FMaterialPolygon> floor = getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol);
 				for (auto &pol : floor) {
-					if(pol.getIsClockwise())
+					if(!pol.getIsClockwise())
 						pol.reverse();
 				}
 				toReturn.roomInfo.pols.Append(floor);

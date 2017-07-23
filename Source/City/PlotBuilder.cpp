@@ -173,7 +173,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			original.windows.Add(i);
 		}
 		FVector center = p.getCenter();
-		p.type = NoiseSingleton::getInstance()->noise((center.X + noiseXOffset*2)*noiseScale*2, (center.Y + noiseYOffset*2)*noiseScale*2) < 0 ? RoomType::office : RoomType::apartment;
+		p.type = NoiseSingleton::getInstance()->noise((center.X + noiseXOffset*20)*noiseScale*20, (center.Y + noiseYOffset*20)*noiseScale*20) < 0.3 ? RoomType::office : RoomType::apartment;
 
 		bool normalPlacement = !(p.getArea() > 5500 && stream.FRand() < 0.2);
 		if (!normalPlacement) {

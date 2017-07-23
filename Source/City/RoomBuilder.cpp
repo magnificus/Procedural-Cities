@@ -561,16 +561,19 @@ void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &me
 
 	float intervalWidth = width / numWidth;
 	float intervalHeight = height / numHeight;
+	TArray<FPolygon> toPlace;
 	for (int i = 1; i < numWidth; i++) {
 		for (int j = 1; j < numHeight; j++) {
 			FPolygon pol = getPolygon(normal.Rotation(), origin + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
 			// make sure it's fully inside the room
 			if (!testCollision(pol, placed, 0, *r2)){// && intersection(pol, *r2).X == 0.0f) {
-				placed.Add(pol);
+				//placed.Add(pol);
+				toPlace.Add(pol);
 				meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),origin + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)), true});
 			}
 		}
 	}
+	placed.Append(toPlace);
 	//FVector start =
 }
 
@@ -603,12 +606,14 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	return meshes;
 }
 
+
+
 static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 	placed = getBlockingVolumes(r2, 200, 200);
-	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_table_position", 0.004, 0.005, map);
-	meshes.RemoveAt(meshes.Num() / 3, meshes.Num() / 3);
+	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_cubicle", 0.0055, 0.004, map);
+	//meshes.RemoveAt(meshes.Num() / 3, meshes.Num() / 3);
 	return meshes;
 }
 

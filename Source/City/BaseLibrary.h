@@ -195,6 +195,7 @@ struct FPolygon
 					//points.Empty();
 					points = newPoints;
 					i = 0;
+					break;
 					//return;
 
 				}
