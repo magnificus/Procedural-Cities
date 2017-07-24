@@ -2,6 +2,7 @@
 TODO:
 * <strike>optimize road attachment</strike>
 * fix open polygon house placement
+* building entrances
 * interiors
   * <strike>general purpose algorithm for interiors that "makes sense", should take the requirement for rooms as input.</strike>
   * ground level details
@@ -10,9 +11,12 @@ TODO:
    * <strike>different types of windows for different levels</strike>
   * types
    * <strike>offices</strike>
+    * improved offices
    * <strike>living apartments</strike>
    * <strike>stores</strike>
    * <strike>cafes</strike>
+     * signs
+    
 * heatmaps
  * <strike>road placement heatmap (same as population heatmap?)</strike>
  * <strike>population heatmap</strike>
@@ -29,4 +33,8 @@ TODO:
  * facades
  * roofs
 * <strike>make buildings with several "levels" with different roomPolygons.</strike>
-* <strike>window mesh details<strike>
+* <strike>window mesh details</strike>
+* water
+  * bridges
+  * docks
+  * water heatmap
