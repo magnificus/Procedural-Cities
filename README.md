@@ -32,6 +32,6 @@ TODO:
 * <strike>make buildings with several "levels" with different roomPolygons.</strike>
 * <strike>window mesh details</strike>
 * water
- * bridges
- * docks
- * water heatmap
+  * bridges
+  * docks
+  * water heatmap
