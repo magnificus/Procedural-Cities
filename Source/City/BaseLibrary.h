@@ -99,6 +99,10 @@ struct FPolygon
 		return tot > 0;
 	}
 
+	FVector& operator[] (int index) {
+		return points[index];
+	}
+
 	FVector getCenter() {
 		FVector center = FVector(0, 0, 0);
 		double totLen = 0;

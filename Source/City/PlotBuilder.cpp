@@ -109,13 +109,15 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 						float width = 300;
 						dec.polygons.Append(getCrossingAt(0.25, road, width));
 						// add traffic lights
-						FLine line = getCrossingLine(0.25, road);
-						FRotator lookingDir = getNormal(line.p1, line.p2, true).Rotation() + FRotator(0, 90, 0);
-						FVector offset = line.p2 - line.p1;
+						FLine crossingLine = getCrossingLine(0.25, road);
+						FRotator lookingDir = getNormal(crossingLine.p1, crossingLine.p2, true).Rotation();
+						FVector offset = crossingLine.p2 - crossingLine.p1;
 						offset.Normalize();
 						offset *= 300;
-						offset += lookingDir.RotateVector(FVector(200, 0, 0));
-						dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir, line.p1 + offset, FVector(1.0,1.0,1.0)}});
+						offset += lookingDir.RotateVector(FVector(1000, 0, 0));
+						dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,90,0), crossingLine.p1 - offset, FVector(1.0,1.0,1.0)}});
+						dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,270,0), crossingLine.p2 + offset, FVector(1.0,1.0,1.0) } });
+
 						break;
 
 					}
@@ -151,7 +153,7 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.housePosition = pol.getCenter();
-	pol.height = FMath::FRandRange(minFloors, maxFloors * NoiseSingleton::getInstance()->noise(pol.housePosition.X, pol.housePosition.Y, noiseScale));//randFloat() * (maxFloors - minFloors) + minFloors;
+	pol.height = FMath::FRandRange(minFloors, minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(pol.housePosition.X, pol.housePosition.Y, noiseScale));//randFloat() * (maxFloors - minFloors) + minFloors;
 	//if (NoiseSingleton::getInstance()->noise((pol.housePosition.X + noiseXOffset)*noiseScale, (pol.housePosition.Y + noiseYOffset)*noiseScale) > 0.7) {
 	//	pol.height *= 2;
 	//}
@@ -213,7 +215,6 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			}
 			else {
 					FSimplePlot fs;
-
 					//fm.points.RemoveAt(fm.points.Num() - 1);
 					fs.pol = p;
 					fs.pol.offset(FVector(0, 0, 30));
@@ -227,7 +228,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
 				r.housePosition = r.getCenter();
-				r.height = FMath::FRandRange(minFloors, maxFloors * NoiseSingleton::getInstance()->noise(r.housePosition.X, r.housePosition.Y, noiseScale));//randFloat() * (maxFloors - minFloors) + minFloors;
+				r.height = FMath::FRandRange(minFloors, minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(r.housePosition.X, r.housePosition.Y, noiseScale));
 
 				if (stream.FRand() < 0.2) {
 					r.height *= 2;
@@ -385,6 +386,9 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 {
 	FSidewalkInfo toReturn;
+
+	if (sidewalk.points.Num() < 2)
+		return toReturn;
 	// trees
 	if (FMath::FRand() < 0.1f) {
 		float placeRatio = 0.001;
@@ -415,6 +419,18 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 			toReturn.staticMeshes.Add(FMeshInfo{ "lamppost", FTransform(normal.Rotation(), origin + j * tan * (len / toPlace)) });
 		}
 	}
+
+	// fire hydrants
+	float placeChance = 0.4;
+	if (FMath::FRand() < placeChance) {
+		int place = FMath::FRandRange(1, sidewalk.points.Num()-1);
+		FVector rot = getNormal(sidewalk[place - 1], sidewalk[place], true);
+		rot.Normalize();
+		FVector loc = sidewalk[place - 1] + (sidewalk[place] - sidewalk.points[place - 1]) * FMath::FRand() + rot * 200 + FVector(0,0,15);
+		toReturn.staticMeshes.Add(FMeshInfo{ "fire_hydrant", FTransform(rot.Rotation(), loc) });
+
+	}
+
 
 
 	return toReturn;
