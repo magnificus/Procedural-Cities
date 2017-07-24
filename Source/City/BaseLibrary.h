@@ -103,6 +103,10 @@ struct FPolygon
 		return points[index];
 	}
 
+	void operator+= (FVector toAdd) {
+		points.Add(toAdd);
+	}
+
 	FVector getCenter() {
 		FVector center = FVector(0, 0, 0);
 		double totLen = 0;

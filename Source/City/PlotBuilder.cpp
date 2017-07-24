@@ -113,10 +113,13 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 						FRotator lookingDir = getNormal(crossingLine.p1, crossingLine.p2, true).Rotation();
 						FVector offset = crossingLine.p2 - crossingLine.p1;
 						offset.Normalize();
-						offset *= 300;
+						offset *= 200;
 						offset += lookingDir.RotateVector(FVector(1000, 0, 0));
-						dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,90,0), crossingLine.p1 - offset, FVector(1.0,1.0,1.0)}});
-						dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,270,0), crossingLine.p2 + offset, FVector(1.0,1.0,1.0) } });
+						if (randFloat() < 0.5) {
+							dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,90,0), crossingLine.p1 - offset, FVector(1.0,1.0,1.0) } });
+							dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,270,0), crossingLine.p2 + offset, FVector(1.0,1.0,1.0) } });
+						}
+
 
 						break;
 

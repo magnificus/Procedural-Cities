@@ -42,8 +42,27 @@ bool increasing(TArray<twoInt> ints) {
 	return false;
 }
 
+TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float height) {
+	FMaterialPolygon roof;
+
+	float len = 500;
+	FVector dir = getNormal(begin, end, true);
+	dir.Normalize();
+	roof.type = PolygonType::exteriorSnd;
+	roof.width = height;
+	roof += begin + FVector(0,0,height);
+	roof += end + FVector(0, 0, height);
+	roof += end + FVector(0, 0, height) + dir * len;
+	roof += begin + FVector(0, 0, height) + dir * len;
+
+	TArray<FMaterialPolygon> pols;
+	pols.Add(roof);
+	fillOutPolygons(pols);
+	return pols;
+}
+
 // this function returns all of the first grade Room Polygons, these can later be expanded upon when finalizing the room in RoomBuilder
-TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth, float maxRoomArea){
+TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth, float maxRoomArea, FRandomStream &stream, TArray<FMaterialPolygon> &pols){
 	TArray<FLine> lines;
 	
 	TArray<FRoomPolygon> roomPols;
@@ -74,11 +93,13 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			}
 
 		}
+		FVector prevAttach;
 		if (sndAttach.X == 0.0f)
 			return TArray<FRoomPolygon>();
-		if (!ground || !f.entrances.Contains(conn))
+		if (!ground || !f.entrances.Contains(conn)) {
 			corners.points.Add(sndAttach);
-
+			prevAttach = sndAttach;
+		}
 		connections[i - 1].b = conn;
 		roomPols[i - 1].points.Add(hole.points[i-1]);
 		roomPols[i - 1].points.Add(firstAttach);
@@ -100,6 +121,9 @@ TArray<FRoomPolygon> getInteriorPlan(FHousePolygon &f, FPolygon hole, bool groun
 			if (f.windows.Contains(conn))
 				corners.windows.Add(corners.points.Num());
 			corners.points.Add(sndAttach);
+		}
+		else {
+			pols.Append(getEntrancePolygons(prevAttach, sndAttach, 400));
 		}
 
 		if (i == (hole.points.Num() - 1)) {
@@ -752,7 +776,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	float wWidth = stream.FRand() * 500 + 500;
 	float wHeight = stream.FRand() * 400 + 200;
 
-	TArray<FRoomPolygon> roomPols = getInteriorPlan(f, hole, true, corrWidth, maxRoomArea);
+	TArray<FRoomPolygon> roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, true, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
 
 	bool potentialBalcony = f.type == RoomType::apartment && floors < 10 && stream.FRand() < 0.3;
 	for (FRoomPolygon &p : roomPols) {
@@ -822,7 +846,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			if (facade)
 				addFacade(f, toReturn.roomInfo, floorHeight*i + 1, 70, 20);
 
-			roomPols = getInteriorPlan(f, hole, false, corrWidth, maxRoomArea);
+			roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
 			for (FRoomPolygon &p : roomPols) {
 				p.windowType = currentWindowType;
 				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, map, potentialBalcony, shellOnly, stream);
