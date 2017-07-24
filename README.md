@@ -10,6 +10,7 @@ TODO:
    * <strike>different types of windows for different levels</strike>
   * types
    * <strike>offices</strike>
+    * improved offices
    * <strike>living apartments</strike>
    * <strike>stores</strike>
    * <strike>cafes</strike>
@@ -30,3 +31,7 @@ TODO:
  * roofs
 * <strike>make buildings with several "levels" with different roomPolygons.</strike>
 * <strike>window mesh details<strike>
+* water
+ * bridges
+ * docks
+ * water heatmap
