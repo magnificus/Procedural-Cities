@@ -612,7 +612,7 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 	placed = getBlockingVolumes(r2, 200, 200);
-	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_cubicle", 0.0055, 0.004, map);
+	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_cubicle", 0.0025, 0.0025, map);
 	//meshes.RemoveAt(meshes.Num() / 3, meshes.Num() / 3);
 	return meshes;
 }

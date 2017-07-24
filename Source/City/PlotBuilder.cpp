@@ -40,7 +40,7 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 	}
 	return added;
 }
-FLine getSideWalkLine(float dist, FPolygon road) {
+FLine getCrossingLine(float dist, FPolygon road) {
 	FVector tanL = road.points[2] - road.points[1];
 	float totLen = tanL.Size();
 	tanL.Normalize();
@@ -52,10 +52,10 @@ FLine getSideWalkLine(float dist, FPolygon road) {
 }
 
 
-TArray<FMaterialPolygon> getSideWalkAt(float dist, FPolygon road, float lineWidth) {
+TArray<FMaterialPolygon> getCrossingAt(float dist, FPolygon road, float lineWidth) {
 	//FVector startP = middle(road.points[1], road.points[2]);
 	//FVector endP = middle(road.points[0], road.points[3]);
-	FLine line = getSideWalkLine(dist, road);
+	FLine line = getCrossingLine(dist, road);
 	if (line.p1.X == 0.0f)
 		return TArray<FMaterialPolygon>();
 	float lineInterval = 200;
@@ -69,14 +69,14 @@ TArray<FMaterialPolygon> getSideWalkAt(float dist, FPolygon road, float lineWidt
 		FVector endPos = startPos + tangent*lineLen;
 		FVector normal = getNormal(endPos, startPos, true);
 		normal.Normalize();
-		FMaterialPolygon line;
-		line.type = PolygonType::roadMiddle;
-		line.points.Add(startPos + normal*lineWidth);
-		line.points.Add(startPos - normal*lineWidth);
-		line.points.Add(endPos - normal*lineWidth);
-		line.points.Add(endPos + normal*lineWidth);
-		line.offset(FVector(0, 0, 20));
-		lines.Add(line);
+		FMaterialPolygon newLine;
+		newLine.type = PolygonType::roadMiddle;
+		newLine.points.Add(startPos + normal*lineWidth);
+		newLine.points.Add(startPos - normal*lineWidth);
+		newLine.points.Add(endPos - normal*lineWidth);
+		newLine.points.Add(endPos + normal*lineWidth);
+		newLine.offset(FVector(0, 0, 11));
+		lines.Add(newLine);
 					
 	}
 	return lines;
@@ -89,7 +89,7 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 	for (FPolygon road : roads) {
 		FMetaPolygon *firstHit = nullptr;
 		FMetaPolygon *sndHit = nullptr;
-		FLine line = getSideWalkLine(0.25, road);
+		FLine line = getCrossingLine(0.25, road);
 		FLine testLine;
 		FVector tan = line.p2 - line.p1;
 		tan.Normalize();
@@ -99,14 +99,23 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 			if (intersection(testLine.p1, testLine.p2, plot).X != 0.0f) {
 				if (firstHit) {
 					sndHit = &plot;
-					// if these two plots werent previously connected, connections are added and sidewalk is placed, otherwise discard
+					// if these two plots werent previously connected, connections are added and crossing is placed, otherwise discard
 					if (!connectionsMap[firstHit].Contains(sndHit)) {
 						if (!connectionsMap.Contains(sndHit)) {
 							connectionsMap.Add(sndHit, TSet<FMetaPolygon*>());
 						}
 						connectionsMap[firstHit].Add(sndHit);
 						connectionsMap[sndHit].Add(firstHit);
-						dec.polygons.Append(getSideWalkAt(0.25, road, 300));
+						float width = 300;
+						dec.polygons.Append(getCrossingAt(0.25, road, width));
+						// add traffic lights
+						FLine line = getCrossingLine(0.25, road);
+						FRotator lookingDir = getNormal(line.p1, line.p2, true).Rotation() + FRotator(0, 90, 0);
+						FVector offset = line.p2 - line.p1;
+						offset.Normalize();
+						offset *= 300;
+						offset += lookingDir.RotateVector(FVector(200, 0, 0));
+						dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir, line.p1 + offset, FVector(1.0,1.0,1.0)}});
 						break;
 
 					}
@@ -159,6 +168,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 
 	float maxArea = 4500.0f;
 	float minArea = 1200.0f;
+ 
 	if (!p.open) {
 		FHousePolygon original;
 		original.points = p.points;
@@ -173,7 +183,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			original.windows.Add(i);
 		}
 		FVector center = p.getCenter();
-		p.type = NoiseSingleton::getInstance()->noise((center.X + noiseXOffset*20)*noiseScale*20, (center.Y + noiseYOffset*20)*noiseScale*20) < 0.3 ? RoomType::office : RoomType::apartment;
+		p.type = stream.FRand() < 0.5 ? RoomType::office : RoomType::apartment;// NoiseSingleton::getInstance()->noise(original.housePosition.X, original.housePosition.Y, noiseScale) > 0.5 ? RoomType::office : RoomType::apartment;
 
 		bool normalPlacement = !(p.getArea() > 5500 && stream.FRand() < 0.2);
 		if (!normalPlacement) {
@@ -210,49 +220,18 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 					fs.type = p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
 					fs.decorate(placed);
 					info.leftovers.Add(fs);
-				//TArray<FPolygon> holesWithoutLastPoint;
-				//for (FPolygon h :placed) {
-				//	h.points.RemoveAt(h.points.Num() - 1);
-				//	h.reverse();
-				//	holesWithoutLastPoint.Add(h);
-				//}
-				//cp.points.RemoveAt(cp.points.Num() - 1);
-				//cp.reverse();
-				//FPolygon cp = p;
-				//cp.points.RemoveAt(cp.points.Num() - 1);
-				//TArray<FMaterialPolygon> results = ARoomBuilder::getSideWithHoles(cp, holesWithoutLastPoint, p.type == RoomType::apartment ? PolygonType::green : PolygonType::concrete);
 
-				//cp.reverse();
-				//holesWithoutLastPoint.Empty();
-				//for (FPolygon h : placed) {
-				//	h.points.RemoveAt(h.points.Num() - 1);
-				//	//h.reverse();
-				//	holesWithoutLastPoint.Add(h);
-				//}
-				//results.Append(ARoomBuilder::getSideWithHoles(cp, holesWithoutLastPoint, p.type == RoomType::apartment ? PolygonType::green : PolygonType::concrete));
-				//for (FMaterialPolygon fm : results) {
-				//	FSimplePlot fs;
-
-				//	//fm.points.RemoveAt(fm.points.Num() - 1);
-				//	fs.pol = fm;
-				//	fs.pol.offset(FVector(0, 0, 30));
-				//	fs.type = fm.type == PolygonType::concrete ? SimplePlotType::asphalt : SimplePlotType::green;
-				//	fs.decorate();
-				//	info.leftovers.Add(fs);
-
-				//}
 			}
 		}
 		if (normalPlacement) {
 			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
-				//r.height = randFloat() * (maxFloors - minFloors) + minFloors;
 				r.housePosition = r.getCenter();
 				r.height = FMath::FRandRange(minFloors, maxFloors * NoiseSingleton::getInstance()->noise(r.housePosition.X, r.housePosition.Y, noiseScale));//randFloat() * (maxFloors - minFloors) + minFloors;
 
-				//if (raw_noise_2d((r.housePosition.X + noiseXOffset)*noiseScale*10, (r.housePosition.Y + noiseYOffset)*noiseScale*10) > 0.7) {
-				//	r.height *= 2;
-				//}
+				if (stream.FRand() < 0.2) {
+					r.height *= 2;
+				}
 				r.type = p.type;
 				r.simplePlotType = r.type == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
 
@@ -314,7 +293,6 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 
 		currentOuterLine.offset(FVector(0, 0, endHeight));
 		pols.Append(getSidesOfPolygon(currentOuterLine, PolygonType::concrete, endHeight));
-		//currentOuterLine.width = 
 		pols.Add(currentOuterLine);
 		if (i != 1) {
 			// add the corner

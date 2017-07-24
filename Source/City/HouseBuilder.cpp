@@ -232,7 +232,7 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	hole.offset(FVector(0, 0, floorBegin));
 	polygons.Add(f2);
 
-	return polygons;
+	//return polygons;
 
 	TArray<FPolygon> holes;
 	//return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
@@ -327,7 +327,7 @@ FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHol
 // this method changes the shape of the house to make it less cube-like, can be called several times for more "interesting" shapes 
 void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream) {
 	//return;
-	int place = stream.FRandRange(0, 0.99) * (f.points.Num() - 3) + 2; // number is smaller than 
+	int place = stream.FRandRange(0, 0.99) * (f.points.Num() - 2) + 1; // number is smaller than 
 	if (stream.FRand() < 0.15f && f.points.Num() > 3) {
 		// move side inwards
 		float len = stream.FRandRange(400, 1500);
@@ -380,7 +380,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 
 
 	}
-	else if (stream.FRand() < 0.0f) {
+	else if (stream.FRand() < 0.1f) {
 		float depth = stream.FRandRange(500, 1500);
 		// turn a side inwards into a U
 		FVector tangent = f.points[place] - f.points[place - 1];
@@ -500,10 +500,15 @@ void addFacade(FHousePolygon &f, FRoomInfo &toReturn, float beginHeight, float f
 	}
 }
 
-void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream) {
+
+// recursive method for adding details to part of a roof
+void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon pol, FRoomInfo &toReturn, FRandomStream stream) {
+	if (depth == maxDepth)
+		return;
+	TArray<FMaterialPolygon> nextShapes;
 	if (stream.FRand() < 0.5) {
 		// edge detail
-		FMaterialPolygon shape = roof;
+		FMaterialPolygon shape = pol;
 		float size = stream.FRandRange(100, 250);
 		shape.offset(FVector(0, 0, size));
 		TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exteriorSnd, size);
@@ -512,12 +517,12 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream st
 
 	}
 	float minHeight = 100;
-	float maxHeight = 60;
+	float maxHeight = 1000;
 	float len = 500;
 	float offset = stream.FRandRange(minHeight, maxHeight);
-	if (stream.FRand() < 0.6) {
-		int numBoxes = stream.RandRange(0,4);
-		// add box shapes on top of roof
+	if (stream.FRand() < 0.9) {
+		int numBoxes = stream.RandRange(0, maxBoxes);
+		// add box shapes on top of pol
 		for (int j = 0; j < numBoxes; j++) {
 			offset = stream.FRandRange(minHeight, maxHeight);
 			FMaterialPolygon box;
@@ -530,11 +535,11 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream st
 				}
 				box = FMaterialPolygon();
 				box.type = PolygonType::exteriorSnd;
-				FVector center = roof.getCenter();
-				FVector p1 = center + FVector(stream.FRandRange(0, 1500) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 1500) * (stream.FRand() < 0.5 ? 1 : -1), offset);
-				FVector tangent = roof.points[1] - roof.points[0];
-				float firstLen = stream.FRandRange(900, 2500);
-				float sndLen = stream.FRandRange(900, 2500);
+				FVector center = pol.getCenter();
+				FVector p1 = center + FVector(stream.FRandRange(0, 10000) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 10000) * (stream.FRand() < 0.5 ? 1 : -1), offset);
+				FVector tangent = pol.points[1] - pol.points[0];
+				float firstLen = stream.FRandRange(500, 5000);
+				float sndLen = stream.FRandRange(500, 5000);
 				tangent.Normalize();
 				FVector p2 = p1 + tangent * firstLen;
 				tangent = FRotator(0, 90, 0).RotateVector(tangent);
@@ -548,7 +553,7 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream st
 				box.points.Add(p1);
 				count++;
 
-			} while (intersection(box, roof).X != 0.0f || !testCollision(box, roof, 0));
+			} while (intersection(box, pol).X != 0.0f || !testCollision(box, pol, 0));
 
 			if (found) {
 				for (int i = 1; i < box.points.Num(); i++) {
@@ -562,21 +567,22 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream st
 					toReturn.pols.Add(side);
 				}
 				toReturn.pols.Add(box);
+				nextShapes.Add(box);
 			}
 		}
 	}
-	else if (stream.FRand() < 0.3){
+	else if (stream.FRand() < 0.4) {
 
-		// same shape as roof, but smaller 
-		FMaterialPolygon shape = roof;
-		shape.type = PolygonType::roof;
+		// same shape as pol, but smaller 
+		FMaterialPolygon shape = pol;
+		shape.type = pol.type;
 		shape.offset(FVector(0, 0, offset));
 
 		FVector center = shape.getCenter();
 		for (FVector &point : shape.points) {
 			FVector tangent = center - point;
 			//tangent.Normalize();
-			point += tangent / 3;
+			point += tangent / 4;
 		}
 		for (int i = 1; i < shape.points.Num(); i++) {
 			FMaterialPolygon side;
@@ -589,7 +595,104 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream st
 			toReturn.pols.Add(side);
 		}
 		toReturn.pols.Add(shape);
+		nextShapes.Add(shape);
 	}
+
+	for (FMaterialPolygon p : nextShapes)
+		addDetailOnPolygon(depth++, maxDepth, 1, p, toReturn, stream);
+}
+
+void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream) {
+	addDetailOnPolygon(0, 3, 1, roof, toReturn, stream);
+	//if (stream.FRand() < 0.5) {
+	//	// edge detail
+	//	FMaterialPolygon shape = roof;
+	//	float size = stream.FRandRange(100, 250);
+	//	shape.offset(FVector(0, 0, size));
+	//	TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exteriorSnd, size);
+	//	toReturn.pols.Append(fillOutPolygons(sides));
+	//	toReturn.pols.Append(sides);
+
+	//}
+	//float minHeight = 100;
+	//float maxHeight = 60;
+	//float len = 500;
+	//float offset = stream.FRandRange(minHeight, maxHeight);
+	//if (stream.FRand() < 0.6) {
+	//	int numBoxes = stream.RandRange(0,4);
+	//	// add box shapes on top of roof
+	//	for (int j = 0; j < numBoxes; j++) {
+	//		offset = stream.FRandRange(minHeight, maxHeight);
+	//		FMaterialPolygon box;
+	//		bool found = true;
+	//		int count = 0;
+	//		do {
+	//			if (count > 4) {
+	//				found = false;
+	//				break;
+	//			}
+	//			box = FMaterialPolygon();
+	//			box.type = PolygonType::exteriorSnd;
+	//			FVector center = roof.getCenter();
+	//			FVector p1 = center + FVector(stream.FRandRange(0, 1500) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 1500) * (stream.FRand() < 0.5 ? 1 : -1), offset);
+	//			FVector tangent = roof.points[1] - roof.points[0];
+	//			float firstLen = stream.FRandRange(900, 2500);
+	//			float sndLen = stream.FRandRange(900, 2500);
+	//			tangent.Normalize();
+	//			FVector p2 = p1 + tangent * firstLen;
+	//			tangent = FRotator(0, 90, 0).RotateVector(tangent);
+	//			FVector p3 = p2 + tangent * sndLen;
+	//			tangent = FRotator(0, 90, 0).RotateVector(tangent);
+	//			FVector p4 = p3 + tangent * firstLen;
+	//			box.points.Add(p1);
+	//			box.points.Add(p4);
+	//			box.points.Add(p3);
+	//			box.points.Add(p2);
+	//			box.points.Add(p1);
+	//			count++;
+
+	//		} while (intersection(box, roof).X != 0.0f || !testCollision(box, roof, 0));
+
+	//		if (found) {
+	//			for (int i = 1; i < box.points.Num(); i++) {
+	//				FMaterialPolygon side;
+	//				side.type = PolygonType::exteriorSnd;
+	//				side.points.Add(box.points[i - 1]);
+	//				side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
+	//				side.points.Add(box.points[i] - FVector(0, 0, offset));
+	//				side.points.Add(box.points[i]);
+	//				side.points.Add(box.points[i - 1]);
+	//				toReturn.pols.Add(side);
+	//			}
+	//			toReturn.pols.Add(box);
+	//		}
+	//	}
+	//}
+	//else if (stream.FRand() < 0.3){
+
+	//	// same shape as roof, but smaller 
+	//	FMaterialPolygon shape = roof;
+	//	shape.type = PolygonType::roof;
+	//	shape.offset(FVector(0, 0, offset));
+
+	//	FVector center = shape.getCenter();
+	//	for (FVector &point : shape.points) {
+	//		FVector tangent = center - point;
+	//		//tangent.Normalize();
+	//		point += tangent / 3;
+	//	}
+	//	for (int i = 1; i < shape.points.Num(); i++) {
+	//		FMaterialPolygon side;
+	//		side.type = PolygonType::roof;
+	//		side.points.Add(shape.points[i - 1]);
+	//		side.points.Add(shape.points[i - 1] - FVector(0, 0, offset));
+	//		side.points.Add(shape.points[i] - FVector(0, 0, offset));
+	//		side.points.Add(shape.points[i]);
+	//		side.points.Add(shape.points[i - 1]);
+	//		toReturn.pols.Add(side);
+	//	}
+	//	toReturn.pols.Add(shape);
+	//}
 }
 
 
