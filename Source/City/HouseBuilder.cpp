@@ -98,6 +98,8 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 			return TArray<FRoomPolygon>();
 		if (!ground || !f.entrances.Contains(conn)) {
 			corners.points.Add(sndAttach);
+		}
+		else {
 			prevAttach = sndAttach;
 		}
 		connections[i - 1].b = conn;
