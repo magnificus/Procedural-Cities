@@ -348,40 +348,40 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	FRoadSegment* startR = new FRoadSegment();
 	startR->beginTangent = primaryStepLength;
 
-	FVector point = FVector(0, 0, 0);
+	FVector point = NoiseSingleton::getInstance()->getStartSuggestion(noiseScale);
 
-	float curr = NoiseSingleton::getInstance()->noise(point.X, point.Y, noiseScale);
-	float stepLen = 10000;
-	while (true) {
-		FVector alt1 = point + FVector(stepLen, 0, 0);
-		FVector alt2 = point + FVector(-stepLen, 0, 0);
-		FVector alt3 = point + FVector(0, stepLen, 0);
-		FVector alt4 = point + FVector(0, -stepLen, 0);
-		float res1 = NoiseSingleton::getInstance()->noise(alt1.X, alt1.Y, noiseScale);
-		float res2 = NoiseSingleton::getInstance()->noise(alt2.X, alt2.Y, noiseScale);
-		float res3 = NoiseSingleton::getInstance()->noise(alt3.X, alt3.Y, noiseScale);
-		float res4 = NoiseSingleton::getInstance()->noise(alt4.X, alt4.Y, noiseScale);
+	//float curr = NoiseSingleton::getInstance()->noise(point.X, point.Y, noiseScale);
+	//float stepLen = 10000;
+	//while (true) {
+	//	FVector alt1 = point + FVector(stepLen, 0, 0);
+	//	FVector alt2 = point + FVector(-stepLen, 0, 0);
+	//	FVector alt3 = point + FVector(0, stepLen, 0);
+	//	FVector alt4 = point + FVector(0, -stepLen, 0);
+	//	float res1 = NoiseSingleton::getInstance()->noise(alt1.X, alt1.Y, noiseScale);
+	//	float res2 = NoiseSingleton::getInstance()->noise(alt2.X, alt2.Y, noiseScale);
+	//	float res3 = NoiseSingleton::getInstance()->noise(alt3.X, alt3.Y, noiseScale);
+	//	float res4 = NoiseSingleton::getInstance()->noise(alt4.X, alt4.Y, noiseScale);
 
-		if (res1 > curr) {
-			curr = res1;
-			point = alt1;
-		}
-		else if (res2 > curr) {
-			curr = res2;
-			point = alt2;
-		}
-		else if (res3 > curr) {
-			curr = res3;
-			point = alt3;
-		}
-		else if (res4 > curr) {
-			curr = res4;
-			point = alt4;
-		}
-		else {
-			break;
-		}
-	}
+	//	if (res1 > curr) {
+	//		curr = res1;
+	//		point = alt1;
+	//	}
+	//	else if (res2 > curr) {
+	//		curr = res2;
+	//		point = alt2;
+	//	}
+	//	else if (res3 > curr) {
+	//		curr = res3;
+	//		point = alt3;
+	//	}
+	//	else if (res4 > curr) {
+	//		curr = res4;
+	//		point = alt4;
+	//	}
+	//	else {
+	//		break;
+	//	}
+	//}
 
 
 	startR->p1 = point;

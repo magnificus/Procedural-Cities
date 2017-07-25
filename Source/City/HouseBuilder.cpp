@@ -46,7 +46,7 @@ TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float h
 	FMaterialPolygon roof;
 
 	float len = 500;
-	FVector dir = getNormal(begin, end, true);
+	FVector dir = FVector(end.Y - begin.Y, end.X - begin.X, 0); //(begin, end, true);
 	dir.Normalize();
 	roof.type = PolygonType::exteriorSnd;
 	roof.width = height;
@@ -57,7 +57,7 @@ TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float h
 
 	TArray<FMaterialPolygon> pols;
 	pols.Add(roof);
-	fillOutPolygons(pols);
+	//fillOutPolygons(pols);
 	return pols;
 }
 
@@ -125,7 +125,8 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 			corners.points.Add(sndAttach);
 		}
 		else {
-			pols.Append(getEntrancePolygons(prevAttach, sndAttach, 400));
+			if (stream.FRand() < 0.2)
+				pols.Append(getEntrancePolygons(prevAttach, sndAttach, 50));
 		}
 
 		if (i == (hole.points.Num() - 1)) {

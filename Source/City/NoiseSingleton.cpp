@@ -45,3 +45,18 @@ float NoiseSingleton::noise(float x, float y, float noiseScale, float xOffset, f
 
 	}
 }
+
+FVector NoiseSingleton::getStartSuggestion(float noiseScale) {
+	if (!useTexture)
+		return FVector(0, 0, 0);
+	else {
+		FTexture2DMipMap* MyMipMap = &image->PlatformData->Mips[0];
+		FByteBulkData* RawImageData = &MyMipMap->BulkData;
+		FColor* FormatedImageData = static_cast<FColor*>(RawImageData->Lock(LOCK_READ_ONLY));
+		uint32 TextureWidth = MyMipMap->SizeX, TextureHeight = MyMipMap->SizeY;
+		RawImageData->Unlock();
+
+		UE_LOG(LogTemp, Warning, TEXT("start x,y: %f, %f"), (TextureWidth / (noiseTextureScale * noiseScale)), (TextureHeight / (noiseTextureScale * noiseScale)));
+		return FVector((TextureWidth / (noiseTextureScale * noiseScale)) / 2, (TextureHeight / (noiseTextureScale * noiseScale)) / 2, 0);
+	}
+}

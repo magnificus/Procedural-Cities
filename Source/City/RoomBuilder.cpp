@@ -614,20 +614,25 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	placed = getBlockingVolumes(r2, 200, 200);
 	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_cubicle", 0.0023, 0.0022, map);
 	//meshes.RemoveAt(meshes.Num() / 3, meshes.Num() / 3);
-	return meshes;
+	TArray<FMeshInfo> finalMeshes;
+	for (FMeshInfo mesh : meshes) {
+		finalMeshes.Add(mesh);
+		FVector compUserOffset = FVector(90, 0, 120);
+		FRotator compUserRot = FRotator(0, -90, 0);
+		FVector compBoxOffset = FVector(90, 100, -30);
+		finalMeshes.Add(FMeshInfo{ "comp_user", FTransform{mesh.transform.Rotator() + compUserRot, mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compUserOffset) } });
+		finalMeshes.Add(FMeshInfo{ "comp_box", FTransform{ mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compBoxOffset) } });
+	}
+	return finalMeshes;
 }
 
 RoomBlueprint getOfficeBlueprint(float areaScale) {
 	// one meeting room, rest working rooms
 	TArray<RoomSpecification> needed;
-	RoomSpecification meetingRoom;
-	meetingRoom.maxArea = 200 * areaScale;
-	meetingRoom.minArea = 100 * areaScale;
-	meetingRoom.type = SubRoomType::meeting;
-	RoomSpecification bathroom{ 30 * areaScale, 60 * areaScale, SubRoomType::bath };
+	RoomSpecification meetingRoom{ 100 * areaScale, 200 * areaScale, SubRoomType::meeting };
 	needed.Add(meetingRoom);
-
-	RoomSpecification workRoom{ 100 * areaScale, 200 * areaScale, SubRoomType::work };
+	RoomSpecification bathroom{ 30 * areaScale, 60 * areaScale, SubRoomType::bath };
+	RoomSpecification workRoom{ 40 * areaScale, 200 * areaScale, SubRoomType::work };
 	TArray<RoomSpecification> optional;
 	optional.Add(workRoom);
 	optional.Add(workRoom);
@@ -814,8 +819,8 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 	//placed.Add(r2);
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	attemptPlace(r2, placed, meshes, true, 2, "bed", FRotator(0, 270, 0), FVector(0, 40, 70), map, false);
-	attemptPlace(r2, placed, meshes, true, 1, "small_table", FRotator(0, 0, 0), FVector(0, 0, -50), map, false);
+	attemptPlace(r2, placed, meshes, true, 2, "bed", FRotator(0, 270, 0), FVector(0, 50, 60), map, false);
+	attemptPlace(r2, placed, meshes, true, 1, "small_table", FRotator(0, 0, 0), FVector(0, 10, -50), map, false);
 	attemptPlace(r2, placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	attemptPlace(r2, placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 

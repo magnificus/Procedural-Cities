@@ -156,7 +156,7 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.housePosition = pol.getCenter();
-	pol.height = FMath::FRandRange(minFloors, minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(pol.housePosition.X, pol.housePosition.Y, noiseScale));//randFloat() * (maxFloors - minFloors) + minFloors;
+	pol.height = stream.RandRange(minFloors, minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(pol.housePosition.X, pol.housePosition.Y, noiseScale));//randFloat() * (maxFloors - minFloors) + minFloors;
 	//if (NoiseSingleton::getInstance()->noise((pol.housePosition.X + noiseXOffset)*noiseScale, (pol.housePosition.Y + noiseYOffset)*noiseScale) > 0.7) {
 	//	pol.height *= 2;
 	//}
@@ -231,7 +231,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
 				r.housePosition = r.getCenter();
-				r.height = FMath::FRandRange(minFloors, minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(r.housePosition.X, r.housePosition.Y, noiseScale));
+				r.height = stream.FRandRange(minFloors, minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(r.housePosition.X, r.housePosition.Y, noiseScale));
 
 				if (stream.FRand() < 0.2) {
 					r.height *= 2;
