@@ -598,7 +598,7 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 
 	if (randFloat() < 0.5) {
 		// add whiteboard
-		attemptPlace(r2, placed, meshes, false, 1, "office_whiteboard", FRotator(0, 180, 0), FVector(0, 0, 100), map, true);
+		attemptPlace(r2, placed, meshes, false, 1, "office_whiteboard", FRotator(0, 180, 0), FVector(0, 30, 100), map, true);
 	}
 
 	attemptPlace(r2, placed, meshes, true, 1, "dispenser", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
@@ -623,6 +623,7 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 		finalMeshes.Add(FMeshInfo{ "comp_user", FTransform{mesh.transform.Rotator() + compUserRot, mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compUserOffset) } });
 		finalMeshes.Add(FMeshInfo{ "comp_box", FTransform{ mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compBoxOffset) } });
 	}
+	attemptPlace(r2, placed, meshes, true, 1, "trash_can", FRotator(90, 0, 0), FVector(0, 0, 0), map, false);
 	return finalMeshes;
 }
 
