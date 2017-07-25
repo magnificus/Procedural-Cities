@@ -113,8 +113,8 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 						FRotator lookingDir = getNormal(crossingLine.p1, crossingLine.p2, true).Rotation();
 						FVector offset = crossingLine.p2 - crossingLine.p1;
 						offset.Normalize();
-						offset *= 200;
-						offset += lookingDir.RotateVector(FVector(1000, 0, 0));
+						offset *= -300;
+						offset += lookingDir.RotateVector(FVector(700, 0, 0));
 						if (randFloat() < 0.5) {
 							dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,90,0), crossingLine.p1 - offset, FVector(1.0,1.0,1.0) } });
 							dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,270,0), crossingLine.p2 + offset, FVector(1.0,1.0,1.0) } });
@@ -203,11 +203,12 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			}
 
 			TArray<FPolygon> placed;
-			for (int i = 0; i < 20; i++) {
+			for (int i = 0; i < 10; i++) {
 				FHousePolygon newH = model;
 				newH.rotate(FRotator(0, stream.FRandRange(0, 360), 0));
 				newH.offset(p.getRandomPoint(true, 2000));
 				newH.housePosition = newH.getCenter();
+				newH.type = p.type;
 				if (!testCollision(newH, placed, 0, p)) {
 					info.houses.Add(newH);
 					placed.Add(newH);
@@ -217,13 +218,13 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				normalPlacement = true;
 			}
 			else {
-					FSimplePlot fs;
-					//fm.points.RemoveAt(fm.points.Num() - 1);
-					fs.pol = p;
-					fs.pol.offset(FVector(0, 0, 30));
-					fs.type = p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
-					fs.decorate(placed);
-					info.leftovers.Add(fs);
+				FSimplePlot fs;
+				//fm.points.RemoveAt(fm.points.Num() - 1);
+				fs.pol = p;
+				fs.pol.offset(FVector(0, 0, 30));
+				fs.type = p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
+				fs.decorate(placed);
+				info.leftovers.Add(fs);
 
 			}
 		}
@@ -240,7 +241,6 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				r.simplePlotType = r.type == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
 
 				float area = r.getArea();
-				//UE_LOG(LogTemp, Log, TEXT("area of new house polygon: %f"), area);
 
 				if (area < minArea || area > maxArea) {
 
@@ -250,7 +250,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 					FSimplePlot fs;
 					fs.pol = r;
 					fs.pol.offset(FVector(0, 0, 30));
-					fs.type = stream.FRand() < 0.5? SimplePlotType::green : SimplePlotType::asphalt;
+					fs.type = p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
 					fs.decorate();
 					info.leftovers.Add(fs);
 				}

@@ -499,12 +499,9 @@ struct FSimplePlot {
 		case SimplePlotType::undecided:
 		case SimplePlotType::green: {
 			float treeAreaRatio = 0.01;
-			UE_LOG(LogTemp, Warning, TEXT("TRYING WITH AREA: %f"), area);
+			//UE_LOG(LogTemp, Warning, TEXT("TRYING WITH AREA: %f"), area);
 			for (int i = 0; i < treeAreaRatio*area; i++) {
-				//int count = 0;
-			//	while (count++ < 5) {
 				FVector point = pol.getRandomPoint(true, 150);
-				//FVector point = pol.getCenter();
 				if (point.X != 0.0f) {
 					FPolygon temp;
 					temp.points.Add(point);
@@ -526,15 +523,14 @@ struct FSimplePlot {
 						toAdd.instanced = false;
 						meshes.Add(toAdd);
 					}
-					//UE_LOG(LogTemp, Warning, TEXT("Adding tree"));
-				//	break;
 				}
 			}
-					//}
+			break;
+		}
+		case SimplePlotType::asphalt: {
 
 			break;
 		}
-		case SimplePlotType::asphalt:break;
 		}
 	}
 };

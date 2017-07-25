@@ -45,15 +45,18 @@ bool increasing(TArray<twoInt> ints) {
 TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float height, float thickness) {
 	FMaterialPolygon roof;
 
-	float len = 300;
+	float len = 200;
 	FVector dir = getNormal(begin, end, false);
 	dir.Normalize();
 	roof.type = PolygonType::exteriorSnd;
 	roof.width = thickness;
-	roof += begin + FVector(0,0,height);
-	roof += end + FVector(0, 0, height);
-	roof += end + FVector(0, 0, height) + dir * len;
-	roof += begin + FVector(0, 0, height) + dir * len;
+	FVector mainDir = end - begin;
+	mainDir.Normalize();
+	roof += begin + FVector(0, 0, height) - mainDir * 50;
+	roof += end + FVector(0, 0, height) + mainDir * 50;
+	roof += end + FVector(0, 0, height) + dir * len + mainDir * 50;
+	roof += begin + FVector(0, 0, height) + dir * len - mainDir * 50;
+
 
 	TArray<FMaterialPolygon> pols;
 	pols.Add(roof);
@@ -119,13 +122,14 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 				break;
 			}
 		}
+
 		if (!ground || !f.entrances.Contains(conn)) {
 			if (f.windows.Contains(conn))
 				corners.windows.Add(corners.points.Num());
 			corners.points.Add(sndAttach);
 		}
 		else {
-			if (stream.FRand() < 0.2)
+			if (stream.FRand() < 0.2 && sndAttach.X != 0.0f && FVector::Dist(prevAttach, sndAttach) < 20000.0f)
 				pols.Append(getEntrancePolygons(prevAttach, sndAttach, 450, 50));
 		}
 
@@ -254,42 +258,15 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	f2.points.RemoveAt(f2.points.Num() - 1);
 
 	hole.points.RemoveAt(hole.points.Num() - 1);
-	//hole.reverse();
 	f2.offset(FVector(0, 0, floorBegin));
 	hole.offset(FVector(0, 0, floorBegin));
 	polygons.Add(f2);
 
-	//return polygons;
 
 	TArray<FPolygon> holes;
-	//return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 	holes.Add(hole);
 	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
-	//FMaterialPolygon toAdd;
-	//toAdd.type = PolygonType::floor;
-	//for (FVector p : f2.points) {
-	//	toAdd.points.Add(p);
 
-	//}
-	//int closest = -1;
-	//float closestDist = 100000;
-	//for (int i = 0; i < hole.points.Num() - 1; i++) {
-	//	float currDist = FVector::Dist(f2.points[0], hole.points[i]);
-	//	if (currDist < closestDist) {
-	//		closestDist = currDist;
-	//		closest = i;
-	//	}
-	//}
-	//int i = closest;
-	////do {
-	////	toAdd.points.Add(hole.points[i]);
-	////	i++;
-	////	//if (i < 0)
-	////	//	i += hole.points.Num() - 1;
-	////	i %= hole.points.Num();
-	////} while (i != closest);
-	//polygons.Add(toAdd);
-	//return polygons;
 
 
 }
@@ -476,15 +453,6 @@ TArray<FMaterialPolygon> AHouseBuilder::getShaftSides(FPolygon hole, int openSid
 		sides.Add(side);
 	}
 
-	// move a little to avoid z fighting
-	//for (FPolygon &p : sides) {
-	//	for (FVector &f : p.points) {
-	//		FVector tan = center - f;
-	//		tan.Normalize();
-	//		f += tan * 2;
-	//	}
-	//}
-
 	return sides;
 }
 
@@ -547,7 +515,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	float maxHeight = 1000;
 	float len = 500;
 	float offset = stream.FRandRange(minHeight, maxHeight);
-	if (stream.FRand() < 0.9) {
+	if (stream.FRand() < 0.5) {
 		int numBoxes = stream.RandRange(0, maxBoxes);
 		// add box shapes on top of pol
 		for (int j = 0; j < numBoxes; j++) {
@@ -563,10 +531,10 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 				box = FMaterialPolygon();
 				box.type = PolygonType::exteriorSnd;
 				FVector center = pol.getCenter();
-				FVector p1 = center + FVector(stream.FRandRange(0, 5000) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 5000) * (stream.FRand() < 0.5 ? 1 : -1), offset);
+				FVector p1 = center + FVector(stream.FRandRange(0, 4000) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 4000) * (stream.FRand() < 0.5 ? 1 : -1), offset);
 				FVector tangent = pol.points[1] - pol.points[0];
-				float firstLen = stream.FRandRange(500, 5000);
-				float sndLen = stream.FRandRange(500, 5000);
+				float firstLen = stream.FRandRange(500, 4000);
+				float sndLen = stream.FRandRange(500, 4000);
 				tangent.Normalize();
 				FVector p2 = p1 + tangent * firstLen;
 				tangent = FRotator(0, 90, 0).RotateVector(tangent);
@@ -598,7 +566,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 			}
 		}
 	}
-	else if (stream.FRand() < 0.4) {
+	else if (stream.FRand() < 0.5) {
 
 		// same shape as pol, but smaller 
 		FMaterialPolygon shape = pol;
@@ -630,7 +598,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 }
 
 void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream) {
-	addDetailOnPolygon(0, 3, 2, roof, toReturn, stream);
+	addDetailOnPolygon(0, 2, 2, roof, toReturn, stream);
 }
 
 

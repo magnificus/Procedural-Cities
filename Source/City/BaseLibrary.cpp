@@ -49,7 +49,7 @@ FVector intersection(FPolygon &p1, FPolygon &p2) {
 	return FVector(0.0f, 0.0f, 0.0f);
 }
 
-// a pretty inefficient method for checking whether any of the lines in the polygon intersects another
+// a pretty inefficient method for checking whether any of the lines in the polygon intersects another (n^2)
 bool selfIntersection(FPolygon &p) {
 	for (int i = 1; i < p.points.Num(); i++) {
 		for (int j = i+2; j < p.points.Num(); j++) {

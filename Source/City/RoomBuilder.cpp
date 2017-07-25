@@ -514,6 +514,8 @@ FTransform attemptGetPosition(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray
 	}
 	return FTransform(FRotator(0,0,0), FVector(0,0,0), FVector(0, 0, 0));
 }
+
+
 /**
 A simplified method for trying to find a wall in a room to place the mesh
 @param r2 the room to place mesh in
@@ -584,21 +586,20 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	TArray<FPolygon> placed = getBlockingVolumes(r2, 200, 200);
 	FVector dir = r2->getRoomDirection();
 	FVector center = r2->getCenter();
-	meshes.Add(FMeshInfo{"office_meeting_table", FTransform(dir.Rotation(), center + FVector(0, 0, 2), FVector(1.0, 1.0, 1.0))});
+
+	FPolygon pol = getPolygon(dir.Rotation() + FRotator(0, 180, 0), center, "office_meeting_table", map);
+	if (!testCollision(pol, placed, 0, *r2)) {
+		meshes.Add(FMeshInfo{ "office_meeting_table", FTransform(dir.Rotation(), center + FVector(0,0,10), FVector(1.0, 1.0, 1.0)) });
+	}
 	float offsetLen = 100;
-	//for (int i = 1; i < 4; i+=2) {
-	//	FRotator curr = FRotator(0, 90 * i, 0);
-	//	FVector chairPos = curr.Vector() * offsetLen + center + FVector(0, 0, 2);
-	//	meshes.Add(FMeshInfo{ "office_meeting_chair", FTransform(curr.GetInverse(), chairPos, FVector(1.0, 1.0, 1.0)) });
-	//}
 
 	if (randFloat() < 0.5) {
-		attemptPlace(r2, placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
+		attemptPlace(r2, placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(50, 0, 10), map, true);
 	}
 
 	if (randFloat() < 0.5) {
 		// add whiteboard
-		attemptPlace(r2, placed, meshes, false, 1, "office_whiteboard", FRotator(0, 180, 0), FVector(0, 30, 100), map, true);
+		attemptPlace(r2, placed, meshes, false, 1, "office_whiteboard", FRotator(0, 180, 0), FVector(30, 0, 180), map, true);
 	}
 
 	attemptPlace(r2, placed, meshes, true, 1, "dispenser", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
@@ -623,7 +624,7 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 		finalMeshes.Add(FMeshInfo{ "comp_user", FTransform{mesh.transform.Rotator() + compUserRot, mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compUserOffset) } });
 		finalMeshes.Add(FMeshInfo{ "comp_box", FTransform{ mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compBoxOffset) } });
 	}
-	attemptPlace(r2, placed, meshes, true, 1, "trash_can", FRotator(90, 0, 0), FVector(0, 0, 0), map, false);
+	attemptPlace(r2, placed, finalMeshes, true, 1, "trash_can", FRotator(90, 0, 0), FVector(50, 20, 0), map, false);
 	return finalMeshes;
 }
 
@@ -821,7 +822,7 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchica
 	//placed.Add(r2);
 	placed.Append(getBlockingVolumes(r2, 200, 200));
 	attemptPlace(r2, placed, meshes, true, 2, "bed", FRotator(0, 270, 0), FVector(0, 50, 60), map, false);
-	attemptPlace(r2, placed, meshes, true, 1, "small_table", FRotator(0, 0, 0), FVector(0, 10, -50), map, false);
+	attemptPlace(r2, placed, meshes, true, 1, "small_table", FRotator(0, 0, 0), FVector(0, 10, -40), map, false);
 	attemptPlace(r2, placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	attemptPlace(r2, placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 
@@ -853,7 +854,7 @@ static TArray<FMeshInfo> getCorridor(FRoomPolygon *r2, TMap<FString, UHierarchic
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	attemptPlace(r2, placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
+	attemptPlace(r2, placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 10), map, true);
 
 	return meshes;
 }
@@ -864,7 +865,7 @@ static TArray<FMeshInfo> getCloset(FRoomPolygon *r2, TMap<FString, UHierarchical
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	attemptPlace(r2, placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
+	attemptPlace(r2, placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 10), map, true);
 	attemptPlace(r2, placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
 
 
