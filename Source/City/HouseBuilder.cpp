@@ -42,14 +42,14 @@ bool increasing(TArray<twoInt> ints) {
 	return false;
 }
 
-TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float height) {
+TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float height, float thickness) {
 	FMaterialPolygon roof;
 
-	float len = 500;
-	FVector dir = FVector(end.Y - begin.Y, end.X - begin.X, 0); //(begin, end, true);
+	float len = 300;
+	FVector dir = getNormal(begin, end, false);
 	dir.Normalize();
 	roof.type = PolygonType::exteriorSnd;
-	roof.width = height;
+	roof.width = thickness;
 	roof += begin + FVector(0,0,height);
 	roof += end + FVector(0, 0, height);
 	roof += end + FVector(0, 0, height) + dir * len;
@@ -126,7 +126,7 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 		}
 		else {
 			if (stream.FRand() < 0.2)
-				pols.Append(getEntrancePolygons(prevAttach, sndAttach, 50));
+				pols.Append(getEntrancePolygons(prevAttach, sndAttach, 450, 50));
 		}
 
 		if (i == (hole.points.Num() - 1)) {
