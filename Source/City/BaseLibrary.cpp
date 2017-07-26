@@ -622,16 +622,16 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 				newP1.points.Add(p.points[i - 1]);
 
 
-				newP1.points.Add(other.points[i]);
+				//newP1.points.Add(other.points[i]);
 
 				otherSides.Add(newP1);
 
-				//FMaterialPolygon newP2;
-				//newP2.type = p.type;
-				//newP2.points.Add(other.points[i - 1]);
-				//newP2.points.Add(other.points[i]);
-				//newP2.points.Add(p.points[i]);
-				//otherSides.Add(newP2);
+				FMaterialPolygon newP2;
+				newP2.type = p.type;
+				newP2.points.Add(other.points[i - 1]);
+				newP2.points.Add(other.points[i]);
+				newP2.points.Add(p.points[i]);
+				otherSides.Add(newP2);
 
 			}
 			FMaterialPolygon newP1;
@@ -639,15 +639,15 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 			newP1.points.Add(other.points[p.points.Num() - 1]);
 			newP1.points.Add(p.points[0]);
 			newP1.points.Add(p.points[p.points.Num() - 1]);
-			newP1.points.Add(other.points[0]);
+			//newP1.points.Add(other.points[0]);
 			otherSides.Add(newP1);
 
-			//FMaterialPolygon newP2;
-			//newP2.type = p.type;
-			//newP2.points.Add(other.points[p.points.Num() - 1]);
-			//newP2.points.Add(other.points[0]);
-			//newP2.points.Add(p.points[0]);
-			//otherSides.Add(newP2);
+			FMaterialPolygon newP2;
+			newP2.type = p.type;
+			newP2.points.Add(other.points[p.points.Num() - 1]);
+			newP2.points.Add(other.points[0]);
+			newP2.points.Add(p.points[0]);
+			otherSides.Add(newP2);
 		}
 		other.normal = -p.normal;
 
