@@ -613,6 +613,7 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 			polygonSides = false;
 
 		other.offset(p.getDirection() * p.width);
+		other.normal = -p.normal;
 		if (polygonSides) {
 			for (int i = 1; i < p.points.Num(); i++) {
 				FMaterialPolygon newP1;

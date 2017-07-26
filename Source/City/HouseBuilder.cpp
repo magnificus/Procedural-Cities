@@ -246,12 +246,12 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	f2.type = PolygonType::floor;
 	f2.points = f.points;
 
-	for (int i = 1; i < f2.points.Num(); i++){
-		if (FVector::DistSquared(f2.points[i], f2.points[i - 1]) < 10000.0f) {
-			f2.points.RemoveAt(i);
-			i--;
-		}
-	}
+	//for (int i = 1; i < f2.points.Num(); i++){
+	//	if (FVector::DistSquared(f2.points[i], f2.points[i - 1]) < 10000.0f) {
+	//		f2.points.RemoveAt(i);
+	//		i--;
+	//	}
+	//}
 	//if (f2.getIsClockwise())
 	//	f2.reverse();
 	//f2.points.RemoveAt(f2.points.Num() - 1);
@@ -260,14 +260,19 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	hole.points.RemoveAt(hole.points.Num() - 1);
 	f2.offset(FVector(0, 0, floorBegin));
 	hole.offset(FVector(0, 0, floorBegin));
+
+	//f2.normal = FVector(0, 0, -1);
 	polygons.Add(f2);
 
 
 	TArray<FPolygon> holes;
 	holes.Add(hole);
-	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
+	auto pols = ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 
+	 for (auto &pol : pols)
+		 pol.normal = FVector(0, 0, -1);
 
+	 return pols;
 
 }
 
@@ -849,7 +854,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	roof.points = f.points;
 	roof.offset(FVector(0, 0, floorHeight*floors + 10));
 	roof.type = PolygonType::roof;
-	roof.reverse();
+	//roof.reverse();
 
 	if (generateRoofs)
 		toReturn.roomInfo.pols.Add(roof);

@@ -383,7 +383,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 			newP.points.Add(p1 + FVector(0, 0, extraBottom) + extraFront);
 			newP.points.Add(p2 + FVector(0, 0, extraBottom) + extraBack);
 			newP.points.Add(p2 + FVector(0, 0, floorHeight) + extraBack);
-			newP.points.Add(p1 + FVector(0, 0, floorHeight) + extraFront);
+			//newP.points.Add(p1 + FVector(0, 0, floorHeight) + extraFront);
 
 			TArray<FPolygon> holes;
 			FVector entrancePos = FVector(-10000, -10000, -10000);
@@ -617,6 +617,7 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	//meshes.RemoveAt(meshes.Num() / 3, meshes.Num() / 3);
 	TArray<FMeshInfo> finalMeshes;
 	for (FMeshInfo mesh : meshes) {
+		mesh.transform.SetLocation(mesh.transform.GetLocation() + FVector(0, 0, 15));
 		finalMeshes.Add(mesh);
 		FVector compUserOffset = FVector(90, 0, 120);
 		FRotator compUserRot = FRotator(0, -90, 0);

@@ -84,6 +84,8 @@ struct FPolygon
 {
 	GENERATED_USTRUCT_BODY();
 
+	FVector normal = FVector(0, 0, 0);
+
 	UPROPERTY(BlueprintReadWrite)
 		TArray<FVector> points;
 
@@ -92,10 +94,10 @@ struct FPolygon
 		FVector first = points[0];
 		//offset(-first);
 		for (int i = 1; i < points.Num(); i++) {
-			tot += (points[i-1].X * points[i].Y - points[i].X * points[i-1].Y);
+			tot += (points[i-1].X*0.01 * points[i].Y*0.01 - points[i].X*0.01 * points[i-1].Y*0.01);
 		}
 		//offset(first);
-			//UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %f"), tot);
+			UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %f"), tot);
 		return tot > 0;
 	}
 
