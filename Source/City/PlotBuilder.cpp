@@ -284,7 +284,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 		current.points.Add(p.points[i]);
 		current.points.Add(p.points[i] + width*normal);
 		current.points.Add(p.points[i - 1] + width*normal);
-		current.points.Add(p.points[i - 1]);
+		//current.points.Add(p.points[i - 1]);
 		current.offset(FVector(0, 0, 30));
 
 		FMaterialPolygon currentOuterLine;
@@ -293,7 +293,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 		currentOuterLine.points.Add(p.points[i] + (width + endWidth)*normal);
 		currentOuterLine.points.Add(p.points[i - 1] + (width+endWidth)*normal);
 		currentOuterLine.points.Add(p.points[i - 1] + width*normal);
-		currentOuterLine.points.Add(p.points[i] + width*normal);
+		//currentOuterLine.points.Add(p.points[i] + width*normal);
 
 		currentOuterLine.offset(FVector(0, 0, endHeight));
 		pols.Append(getSidesOfPolygon(currentOuterLine, PolygonType::concrete, endHeight));
@@ -305,7 +305,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 			corner.points.Add(prevP1);
 			corner.points.Add(p.points[i - 1] + width*normal);
 			corner.points.Add(prevP2);
-			corner.points.Add(prevP1);
+			//corner.points.Add(prevP1);
 			corner.offset(FVector(0, 0, 30));
 
 			FVector otherTan = prevP2 - prevP1;
@@ -316,7 +316,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 			currentOuterLine.points.Add(p.points[i - 1] + width*normal);
 			currentOuterLine.points.Add(p.points[i - 1] + (width+endWidth)*normal);
 			currentOuterLine.points.Add(prevP2 + (endWidth)*otherTan);
-			currentOuterLine.points.Add(prevP2);
+			//currentOuterLine.points.Add(prevP2);
 			currentOuterLine.offset(FVector(0, 0, endHeight));
 			pols.Append(getSidesOfPolygon(currentOuterLine, PolygonType::concrete, endHeight));
 			pols.Add(currentOuterLine);

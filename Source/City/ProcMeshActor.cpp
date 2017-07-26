@@ -98,7 +98,7 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 		//if (FVector::DotProduct(e1, FVector(1, 0, 0)) < 0) {
 		//	e1 = -e1;
 		//}
-		FVector n = FVector::CrossProduct(e1, pol.points[2] - pol.points[0]);
+		FVector n = FVector::CrossProduct(e1, pol.points[pol.points.Num() - 1] - pol.points[0]);
 		//n = FVector(0, 0, -1);
 		FVector e2 = FVector::CrossProduct(e1, n);
 		e2.Normalize();

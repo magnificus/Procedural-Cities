@@ -454,7 +454,7 @@ TArray<FMaterialPolygon> AHouseBuilder::getShaftSides(FPolygon hole, int openSid
 		side.points.Add(hole.points[i - 1] + FVector(0, 0, height));
 		side.points.Add(hole.points[i] + FVector(0, 0, height));
 		side.points.Add(hole.points[i]);
-		side.points.Add(hole.points[i - 1]);
+		//side.points.Add(hole.points[i - 1]);
 		sides.Add(side);
 	}
 
@@ -550,7 +550,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 				box.points.Add(p4);
 				box.points.Add(p3);
 				box.points.Add(p2);
-				box.points.Add(p1);
+				//box.points.Add(p1);
 				count++;
 
 			} while (intersection(box, pol).X != 0.0f || !testCollision(box, pol, 0));
@@ -563,7 +563,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 					side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
 					side.points.Add(box.points[i] - FVector(0, 0, offset));
 					side.points.Add(box.points[i]);
-					side.points.Add(box.points[i - 1]);
+					//side.points.Add(box.points[i - 1]);
 					toReturn.pols.Add(side);
 				}
 				toReturn.pols.Add(box);
@@ -591,7 +591,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 			side.points.Add(shape.points[i - 1] - FVector(0, 0, offset));
 			side.points.Add(shape.points[i] - FVector(0, 0, offset));
 			side.points.Add(shape.points[i]);
-			side.points.Add(shape.points[i - 1]);
+			//side.points.Add(shape.points[i - 1]);
 			toReturn.pols.Add(side);
 		}
 		toReturn.pols.Add(shape);
@@ -712,7 +712,7 @@ FHouseInfo AHouseBuilder::getHouseInfoSimple(FHousePolygon f, float floorHeight,
 		side.points.Add(f.points[i - 1]);
 		side.points.Add(f.points[i]);
 		side.points.Add(f.points[i] + FVector(0, 0, f.height*floorHeight));
-		side.points.Add(f.points[i - 1] + FVector(0, 0, f.height*floorHeight));
+		//side.points.Add(f.points[i - 1] + FVector(0, 0, f.height*floorHeight));
 		side.reverse();
 		toReturn.roomInfo.pols.Add(side);
 	}
@@ -852,6 +852,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 
 	FMaterialPolygon roof;
 	roof.points = f.points;
+	roof.points.RemoveAt(roof.points.Num() - 1);
 	roof.offset(FVector(0, 0, floorHeight*floors + 10));
 	roof.type = PolygonType::roof;
 	//roof.reverse();

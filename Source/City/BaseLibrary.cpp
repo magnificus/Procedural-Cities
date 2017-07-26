@@ -559,7 +559,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		}
 		f.checkOrientation();
 
-		f.clipEdges(-0.95f);
+		f.clipEdges(-0.9f);
 		if (f.points.Num() < 3) {
 			polygons.RemoveAt(i);
 			i--;
@@ -593,7 +593,7 @@ TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float w
 		side.points.Add(p.points[i - 1] - FVector(0, 0, width));
 		side.points.Add(p.points[i] - FVector(0, 0, width));
 		side.points.Add(p.points[i]);
-		side.points.Add(p.points[i - 1]);
+		//side.points.Add(p.points[i - 1]);
 		toReturn.Add(side);
 	}
 	return toReturn;
