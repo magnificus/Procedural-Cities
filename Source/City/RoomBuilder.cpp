@@ -48,8 +48,8 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 	outerP.SetHole(false);
 	outerP.Init(outer.points.Num());
 
-	for (int i = 0; i < outer.points.Num()+1; i++) {
-		FVector point = outer.points[i%outer.points.Num()];
+	for (int i = 0; i < outer.points.Num(); i++) {
+		FVector point = outer.points[i];
 		float y = FVector::DotProduct(e1, point - origin);
 		float x = FVector::DotProduct(e2, point - origin);
 		outerP[i] = TPPLPoint{ x, y, current++ };
@@ -61,8 +61,8 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 		TPPLPoly holeP;
 		holeP.Init(p.points.Num());
 		holeP.SetHole(true);
-		for (int i = 0; i < p.points.Num()+1; i++) {
-			FVector point = p.points[i%p.points.Num()];
+		for (int i = 0; i < p.points.Num(); i++) {
+			FVector point = p.points[i];
 			float y = FVector::DotProduct(e1, point - origin);
 			float x = FVector::DotProduct(e2, point - origin);
 			holeP[p.points.Num() - 1 - i] = TPPLPoint{ x, y, current++ };
