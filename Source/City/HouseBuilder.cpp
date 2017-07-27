@@ -293,7 +293,7 @@ FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f) {
 	hole.points.Add(center - 0.5 * tangent1 * holeSizeX + 0.5 * tangent2 * holeSizeY);
 	hole.points.Add(center - 0.5 * tangent1 * holeSizeX - 0.5 * tangent2 * holeSizeY);
 	hole.points.Add(center + 0.5 * tangent1 * holeSizeX - 0.5 * tangent2 * holeSizeY);
-	hole.points.Add(center + 0.5 * tangent1 * holeSizeX + 0.5 * tangent2 * holeSizeY);
+	//hole.points.Add(center + 0.5 * tangent1 * holeSizeX + 0.5 * tangent2 * holeSizeY);
 
 
 
@@ -336,7 +336,7 @@ FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHol
 // this method changes the shape of the house to make it less cube-like, can be called several times for more "interesting" shapes 
 void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream) {
 	//return;
-	int place = stream.FRandRange(0, 0.99) * (f.points.Num() - 2) + 1; // number is smaller than 
+	int place = stream.FRandRange(0, 0.99) * (f.points.Num() - 2) + 1; 
 	if (stream.FRand() < 0.15f && f.points.Num() > 3) {
 		// move side inwards
 		float len = stream.FRandRange(400, 1500);
@@ -406,7 +406,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 		simplePlot.pol.points.Add(snd);
 		simplePlot.pol.points.Add(snd2);
 		simplePlot.pol.points.Add(first2);
-		simplePlot.pol.points.Add(first);
+		//simplePlot.pol.points.Add(first);
 
 		FHousePolygon cp = f;
 		if (intersection(simplePlot.pol, centerHole).X == 0.0f && !selfIntersection(simplePlot.pol)){
@@ -430,14 +430,6 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 		}
 		if (selfIntersection(f))
 			f = cp;
-	}
-	// since last and first points are supposed to be the same we have to adjust the other if one is changed
-	if (place == 1) {
-		f.points[f.points.Num() - 1] = f.points[0];
-	}
-	else if (place == f.points.Num() - 1) {
-		f.points[0] = f.points[f.points.Num() - 1];
-
 	}
 }
 
@@ -471,7 +463,7 @@ void addStairInfo(FRoomInfo &info, float height, FPolygon &hole) {
 		side.points.Add(hole.points[i - 1] + FVector(0, 0, height));
 		side.points.Add(hole.points[i] + FVector(0, 0, height));
 		side.points.Add(hole.points[i]);
-		side.points.Add(hole.points[i - 1]);
+		//side.points.Add(hole.points[i - 1]);
 		sides.Add(side);
 	}
 	info.pols.Append(sides);
@@ -493,7 +485,7 @@ void addFacade(FHousePolygon &f, FRoomInfo &toReturn, float beginHeight, float f
 		fac.points.Add(fac.points[0] + FVector(0, 0, facadeHeight));
 		fac.points.Add(f.points[i] + tangent2 * width + FVector(0, 0, beginHeight + facadeHeight));
 		fac.points.Add(fac.points[2] - FVector(0, 0, facadeHeight));
-		fac.points.Add(f.points[i - 1] + tangent1 * width + FVector(0, 0, beginHeight));
+		//fac.points.Add(f.points[i - 1] + tangent1 * width + FVector(0, 0, beginHeight));
 
 		toReturn.pols.Add(fac);
 
@@ -591,9 +583,17 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 			side.points.Add(shape.points[i - 1] - FVector(0, 0, offset));
 			side.points.Add(shape.points[i] - FVector(0, 0, offset));
 			side.points.Add(shape.points[i]);
-			//side.points.Add(shape.points[i - 1]);
 			toReturn.pols.Add(side);
 		}
+		FMaterialPolygon side;
+		side.type = PolygonType::roof;
+		side.points.Add(shape.points[shape.points.Num()-1]);
+		side.points.Add(shape.points[shape.points.Num() - 1] - FVector(0, 0, offset));
+		side.points.Add(shape.points[0] - FVector(0, 0, offset));
+		side.points.Add(shape.points[0]);
+		toReturn.pols.Add(side);
+
+
 		toReturn.pols.Add(shape);
 		nextShapes.Add(shape);
 	}
@@ -647,13 +647,8 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 void AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement) {
 	housePol = f;
 
-	//FHouseInfo res = simple ? getHouseInfoSimple(f, floorHeight, maxRoomArea) : getHouseInfo(f, floorHeight, maxRoomArea, shellOnly);
-	//FSin work = ThreadedWorker::GetSingleThreadInterface();
 	worker = new ThreadedWorker(this, f, floorHeight, maxRoomArea, shellOnly, simple, fullReplacement);
 	workerWorking = true;
-	//worker.
-	//PrimaryActorTick.bCanEverTick = true;
-	//buildHouseFromInfo(res, fullReplacement);
 }
 
 void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
@@ -694,7 +689,6 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
 		}
 	}
 	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
-	//res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(otherSides));
 
 	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
 	for (FMeshInfo mesh : res.roomInfo.meshes) {

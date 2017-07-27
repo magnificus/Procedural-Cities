@@ -93,8 +93,8 @@ struct FPolygon
 		float tot = 0;
 		FVector first = points[0];
 		//offset(-first);
-		for (int i = 1; i < points.Num(); i++) {
-			tot += (points[i-1].X*0.01 * points[i].Y*0.01 - points[i].X*0.01 * points[i-1].Y*0.01);
+		for (int i = 1; i < points.Num() + 1; i++) {
+			tot += (points[i-1].X*0.01 * points[i%points.Num()].Y*0.01 - points[i%points.Num()].X*0.01 * points[i-1].Y*0.01);
 		}
 		//offset(first);
 			UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %f"), tot);
@@ -112,9 +112,9 @@ struct FPolygon
 	FVector getCenter() {
 		FVector center = FVector(0, 0, 0);
 		double totLen = 0;
-		for (int i = 1; i < points.Num(); i++) {
-			float len = (points[i] - points[i - 1]).Size();
-			center += ((points[i] - points[i - 1]) / 2 + points[i - 1])*len;
+		for (int i = 1; i < points.Num() + 1; i++) {
+			float len = (points[i%points.Num()] - points[i - 1]).Size();
+			center += ((points[i%points.Num()] - points[i - 1]) / 2 + points[i - 1])*len;
 			totLen += len;
 		}
 		center /= totLen;
@@ -123,8 +123,8 @@ struct FPolygon
 
 	// not totally random, favors placement closer to the sides a bit, but good enough
 	FVector getRandomPoint(bool left, float minDist) {
-		int place = FMath::Rand() % (points.Num() - 1) + 1;
-		FVector tangent = (points[place] - points[place - 1]);
+		int place = FMath::RandRange(0, 0.99) % points.Num() + 1;
+		FVector tangent = (points[place%points.Num()] - points[place - 1]);
 		FVector beginPlace = FMath::FRand() * tangent + points[place - 1];
 		tangent.Normalize();
 		FVector normal = FRotator(0, left ? 90 : 270, 0).RotateVector(tangent);
@@ -141,10 +141,11 @@ struct FPolygon
 	double getArea() {
 		double tot = 0;
 
-		for (int i = 0; i < points.Num() - 1; i++) {
-			tot += 0.0001*(points[i].X * points[i + 1].Y);
-			tot -= 0.0001*(points[i].Y * points[i + 1].X);
+		for (int i = 0; i < points.Num(); i++) {
+			tot += 0.0001*(points[i].X * points[(i + 1) % points.Num()].Y);
+			tot -= 0.0001*(points[i].Y * points[(i + 1) % points.Num()].X);
 		}
+
 		tot *= 0.5;
 		return std::abs(tot);
 	}
@@ -230,25 +231,11 @@ struct FPolygon
 			}
 		}
 
-		//for (int i = 2; i < points.Num(); i++) {
-		//	FVector prev = points[i - 1] - points[i - 2];
-		//	prev.Normalize();
-		//	FVector curr = points[i] - points[i - 1];
-		//	curr.Normalize();
-		//	//UE_LOG(LogTemp, Warning, TEXT("DIST: %f"), FVector::Dist(curr, prev));
-		//	if (FVector::Dist(curr, prev) < dirDiffAllowed) {
-		//		points.RemoveAt(i - 1);
-		//		hasModified = true;
-		//		i--;
-		//	}
-		//}
 		return hasModified;
 	}
 
 	// assumes at least 3 points in polygon
 	FVector getDirection() {
-		//if (points.Num() < 3)
-		//	return FVector();
 		FVector res = FVector::CrossProduct(points[1] - points[0], points[2] - points[0]);
 		res.Normalize();
 		return res;
@@ -260,17 +247,18 @@ struct FPolygon
 
 	void getSplitCorrespondingPoint(int begin, FVector point, FVector tangent, FVector normal, int &split, FVector &p2) {
 		float closest = 10000000.0f;
-		for (int i = 1; i < points.Num(); i++) {
+		for (int i = 1; i < points.Num()+1; i++) {
 			if (i == begin) {
 				continue;
 			}
-			FVector curr = intersection(point, point + normal * 100000, points[i - 1], points[i]);
+			FVector curr = intersection(point, point + normal * 100000, points[i - 1], points[i%points.Num()]);
 			if (curr.X != 0.0f && FVector::Dist(curr, point) < closest) {
 				closest = FVector::Dist(curr, point);
 				split = i;
 				p2 = curr;
 			}
 		}
+
 	}
 
 	SplitStruct getSplitProposal(bool buildLeft, float approxRatio) {
@@ -278,19 +266,19 @@ struct FPolygon
 		if (points.Num() < 3) {
 			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
 		}
-		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
-			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN SPLITSTRUCT, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
-			FVector first = points[0];
-			points.Add(first);
-		}
+		//if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
+		//	UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN SPLITSTRUCT, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
+		//	FVector first = points[0];
+		//	points.Add(first);
+		//}
 
 		int longest = -1;
 
 		float longestLen = 0.0f;
 
 		FVector curr;
-		for (int i = 1; i < points.Num(); i++) {
-			float dist = FVector::DistSquared(points[i], points[i - 1]);
+		for (int i = 1; i < points.Num()+1; i++) {
+			float dist = FVector::DistSquared(points[i%points.Num()], points[i - 1]);
 			if (dist > longestLen) {
 				longestLen = dist;
 				longest = i;
@@ -299,10 +287,10 @@ struct FPolygon
 		if (longest == -1) {
 			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
 		}
-		curr = points[longest] - points[longest - 1];
+		curr = points[longest%points.Num()] - points[longest - 1];
 		curr.Normalize();
 
-		FVector middle = (points[longest] - points[longest - 1]) * approxRatio + points[longest - 1];
+		FVector middle = (points[longest%points.Num()] - points[longest - 1]) * approxRatio + points[longest - 1];
 		FVector p1 = middle;
 		int split = 0;
 		FVector p2 = FVector(0.0f, 0.0f, 0.0f);
@@ -324,7 +312,7 @@ struct FPolygon
 		//}
 
 		if (p2.X == 0.0f || p1.X == 0.0f) {
-			//(LogTemp, Warning, TEXT("UNABLE TO SPLIT"));
+			UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT, NO CORRESPONDING SPLIT POINT FOR POLYGON"));
 			// cant split, no target, this shouldn't happen unless the polygons are poorly constructed
 			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
 
@@ -349,37 +337,37 @@ struct FPolygon
 
 	// combined lengths will be sqrt(2) longer than single lengths because otherwise the corners look bad
 	FVector getPointDirection(int place, bool left, bool wrapAround) {
-		if (place == 0) {
-			FVector dir1 = points[1] - points[0];
-			dir1.Normalize();
-			dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
-			if (wrapAround) {
-				FVector dir2 = points[points.Num() - 1] - points[points.Num() - 2];
-				dir2.Normalize();
-				dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
-				FVector totDir = dir1 + dir2;
-				totDir.Normalize();
-				return totDir;
-			}
-			return dir1;
-		}
-		else if (place == points.Num() - 1) {
-			FVector dir2 = points[points.Num() - 1] - points[points.Num() - 2];
-			dir2.Normalize();
-			dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
-			if (wrapAround) {
-				FVector dir1 = points[1] - points[0];
-				dir1.Normalize();
-				dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
-				FVector totDir = dir1 + dir2;
-				totDir.Normalize();
-				return totDir;
-			}
-			return dir2;
-		}
-		else {
+		//if (place == 0) {
+		//	FVector dir1 = points[1] - points[0];
+		//	dir1.Normalize();
+		//	dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
+		//	if (wrapAround) {
+		//		FVector dir2 = points[points.Num() - 1] - points[points.Num() - 2];
+		//		dir2.Normalize();
+		//		dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
+		//		FVector totDir = dir1 + dir2;
+		//		totDir.Normalize();
+		//		return totDir;
+		//	}
+		//	return dir1;
+		//}
+		//else if (place == points.Num() - 1) {
+		//	FVector dir2 = points[points.Num() - 1] - points[points.Num() - 2];
+		//	dir2.Normalize();
+		//	dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
+		//	if (wrapAround) {
+		//		FVector dir1 = points[1] - points[0];
+		//		dir1.Normalize();
+		//		dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
+		//		FVector totDir = dir1 + dir2;
+		//		totDir.Normalize();
+		//		return totDir;
+		//	}
+		//	return dir2;
+		//}
+		//else {
 			FVector dir1 = points[place] - points[place - 1];
-			FVector dir2 = points[place + 1] - points[place];
+			FVector dir2 = points[(place + 1)%points.Num()] - points[place];
 			dir1.Normalize();
 			dir2.Normalize();
 			dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
@@ -388,7 +376,7 @@ struct FPolygon
 			FVector totDir = dir1 + dir2;
 			totDir.Normalize();
 			return totDir;
-		}
+		//}
 
 	}
 
@@ -510,7 +498,7 @@ struct FSimplePlot {
 					temp.points.Add(point + FVector(1, 1, 0));
 					temp.points.Add(point + FVector(0, 1, 0));
 					temp.points.Add(point + FVector(1, 0, 0));
-					temp.points.Add(point);
+					//temp.points.Add(point);
 					bool collision = false;
 					for (FPolygon &p : blocking) {
 						if (testCollision(p, temp, 0)) {
@@ -882,7 +870,7 @@ struct FRoomPolygon : public FPolygon
 
 
 		if (entrances.Contains(p.max)){// && !nonDuplicatingEntrances.Contains(p.max)) {
-			FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max]);
+			FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max%points.Num()]);
 			if (isOnLine(entrancePoint, p.p2, points[p.max-1])) {
 				if (specificEntrances.Contains(p.max))
 					newP->specificEntrances.Add(newP->points.Num(), entrancePoint);
@@ -1006,18 +994,19 @@ struct FRoomPolygon : public FPolygon
 			newP->activeConnections.Add(this, newP->points.Num());
 		}
 
-		newP->points.Add(p.p1);
+		//newP->points.Add(p.p1);
 
 
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
-		points.EmplaceAt(p.min + 1, p.p2);
+		if (p.max != points.Num())
+			points.EmplaceAt(p.min + 1, p.p2);
 
 		//toIgnore.Empty();
-		if (newP->getIsClockwise())
-			newP->reverse();
-		if (getIsClockwise())
-			reverse();
+		//if (newP->getIsClockwise())
+		//	newP->reverse();
+		//if (getIsClockwise())
+		//	reverse();
 		return newP;
 	}
 
@@ -1319,14 +1308,8 @@ struct FHousePolygon : public FMetaPolygon {
 
 	FHousePolygon splitAlongMax(float spaceBetween) {
 
-
-		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
-			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN splitAlongMax, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
-		}
-
 		SplitStruct p = getSplitProposal(true, 0.5);
 		if (p.p1.X == 0.0f) {
-			height = 50;
 			return FHousePolygon();
 		}
 
@@ -1391,7 +1374,7 @@ struct FHousePolygon : public FMetaPolygon {
 
 
 		newP.points.Add(p.p2);
-		newP.points.Add(p.p1);
+		//newP.points.Add(p.p1);
 		
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
@@ -1432,11 +1415,6 @@ struct FHousePolygon : public FMetaPolygon {
 	}
 
 	TArray<FHousePolygon> refine(float maxArea, float minArea, float spaceBetween) {
-
-
-		if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
-			UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN refine, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
-		}
 
 		decreaseEdges();
 		TArray<FHousePolygon> toReturn;

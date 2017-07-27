@@ -183,7 +183,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 		original.population = p.population;
 		original.type = p.type;
 		original.housePosition = original.getCenter();
-		for (int32 i = 1; i < original.points.Num(); i++) {
+		for (int32 i = 1; i < original.points.Num()+1; i++) {
 			original.entrances.Add(i);
 			original.windows.Add(i);
 		}
@@ -274,25 +274,26 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 
 	float endWidth = 40;
 	float endHeight = 40;
-	for (int i = 1; i < p.points.Num(); i++) {
+	for (int i = 1; i < p.points.Num()+1; i++) {
+		FVector p1 = p.points[i-1];
+		FVector p2 = p.points[i%p.points.Num()];
 		// add the straight part
 		FMaterialPolygon current;
 		current.type = PolygonType::concrete;
-		FVector normal = getNormal(p.points[i - 1], p.points[i], !p.buildLeft);
+		FVector normal = getNormal(p1, p2, !p.buildLeft);
 		normal.Normalize();
-		current.points.Add(p.points[i - 1]);
-		current.points.Add(p.points[i]);
-		current.points.Add(p.points[i] + width*normal);
-		current.points.Add(p.points[i - 1] + width*normal);
-		//current.points.Add(p.points[i - 1]);
+		current.points.Add(p1);
+		current.points.Add(p2);
+		current.points.Add(p2 + width*normal);
+		current.points.Add(p1 + width*normal);
 		current.offset(FVector(0, 0, 30));
 
 		FMaterialPolygon currentOuterLine;
 		currentOuterLine.type = PolygonType::concrete;
-		currentOuterLine.points.Add(p.points[i] + width*normal);
-		currentOuterLine.points.Add(p.points[i] + (width + endWidth)*normal);
-		currentOuterLine.points.Add(p.points[i - 1] + (width+endWidth)*normal);
-		currentOuterLine.points.Add(p.points[i - 1] + width*normal);
+		currentOuterLine.points.Add(p2 + width*normal);
+		currentOuterLine.points.Add(p2 + (width + endWidth)*normal);
+		currentOuterLine.points.Add(p1 + (width+endWidth)*normal);
+		currentOuterLine.points.Add(p1 + width*normal);
 		//currentOuterLine.points.Add(p.points[i] + width*normal);
 
 		currentOuterLine.offset(FVector(0, 0, endHeight));
@@ -303,7 +304,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 			FMaterialPolygon corner;
 			corner.type = PolygonType::concrete;
 			corner.points.Add(prevP1);
-			corner.points.Add(p.points[i - 1] + width*normal);
+			corner.points.Add(p1 + width*normal);
 			corner.points.Add(prevP2);
 			//corner.points.Add(prevP1);
 			corner.offset(FVector(0, 0, 30));
@@ -313,8 +314,8 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 			currentOuterLine.points.Empty();
 			currentOuterLine.type = PolygonType::concrete;
 			currentOuterLine.points.Add(prevP2);
-			currentOuterLine.points.Add(p.points[i - 1] + width*normal);
-			currentOuterLine.points.Add(p.points[i - 1] + (width+endWidth)*normal);
+			currentOuterLine.points.Add(p1 + width*normal);
+			currentOuterLine.points.Add(p1 + (width+endWidth)*normal);
 			currentOuterLine.points.Add(prevP2 + (endWidth)*otherTan);
 			//currentOuterLine.points.Add(prevP2);
 			currentOuterLine.offset(FVector(0, 0, endHeight));
@@ -322,8 +323,8 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 			pols.Add(currentOuterLine);
 			pols.Add(corner);
 		}
-		prevP1 = p.points[i];
-		prevP2 = p.points[i] + width*normal;
+		prevP1 = p2;
+		prevP2 = p2 + width*normal;
 		pols.Add(current);
 
 	}
@@ -356,35 +357,35 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 	return pols;
 }
 
-FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
-	FPolygon polygon;
-	if (!p.open && p.getArea() > 700) {
-		FVector center = p.getCenter();
-		for (int i = 1; i < p.points.Num(); i++) {
-			FVector tangent = p.points[i] - p.points[i - 1];
-			tangent.Normalize();
-			FVector offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
-			polygon.points.Add(p.points[i - 1] + offset);
-			polygon.points.Add(p.points[i] + offset);
-		}
-		if (!p.open) {
-			//polygon.points.RemoveAt(polygon.points.Num() - 1);
-			//polygon.points.Add(FVector(polygon.points[0]));
-			polygon.points.Add(FVector(polygon.points[1]));
-
-			//polygon.points.Add(FVector(polygon.points[2]));
-
-
-		}
-		else {
-			FVector last = p.points[p.points.Num() - 1];
-			polygon.points.Add(last);
-			//polygon.points.Add(last);
-
-		}
-	}
-	return polygon;
-}
+//FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
+//	FPolygon polygon;
+//	if (!p.open && p.getArea() > 700) {
+//		FVector center = p.getCenter();
+//		for (int i = 1; i < p.points.Num(); i++) {
+//			FVector tangent = p.points[i] - p.points[i - 1];
+//			tangent.Normalize();
+//			FVector offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
+//			polygon.points.Add(p.points[i - 1] + offset);
+//			polygon.points.Add(p.points[i] + offset);
+//		}
+//		if (!p.open) {
+//			//polygon.points.RemoveAt(polygon.points.Num() - 1);
+//			//polygon.points.Add(FVector(polygon.points[0]));
+//			polygon.points.Add(FVector(polygon.points[1]));
+//
+//			//polygon.points.Add(FVector(polygon.points[2]));
+//
+//
+//		}
+//		else {
+//			FVector last = p.points[p.points.Num() - 1];
+//			polygon.points.Add(last);
+//			//polygon.points.Add(last);
+//
+//		}
+//	}
+//	return polygon;
+//}
 
 FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 {
