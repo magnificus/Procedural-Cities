@@ -251,13 +251,46 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	polygons.Add(f2);
 
 
+	TArray<FMaterialPolygon> pols;
 	TArray<FPolygon> holes;
-	holes.Add(hole);
-	auto pols = ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
+	//holes.Add(hole);
+	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 
-	for (auto &pol : pols)
-		pol.normal = FVector(0, 0, -1);
+	//for (auto &pol : pols)
+	//	pol.normal = FVector(0, 0, -1);
 
+	FMaterialPolygon floorP;
+	floorP.points = f.points;
+	floorP.type = PolygonType::floor;
+	floorP.offset(FVector(0, 0, floorBegin));
+	//hole.offset(FVector(0, 0, floorBegin));
+	//hole.reverse();
+	int closestH = 0;
+	float closestHDist = FVector::Dist(hole[0], floorP[0]);;
+	for (int i = 1; i < hole.points.Num(); i++) {
+		float currDist = FVector::Dist(hole[i], floorP[0]);
+		if (currDist < closestHDist) {
+			closestHDist = currDist;
+			closestH = i;
+		}
+	}
+	floorP.normal = FVector(0, 0, -1);
+	floorP.points.Add(FVector(floorP[0]));
+	floorP.points.Add(hole[closestH]);
+	//int start = closestH == hole.points.Num() - 1 ? 0 : closestH + 1;
+	//for (int i = start; i != closestH; i++, i %= hole.points.Num()/*i = i == 0 ? hole.points.Num()-1 : i-1*/) {
+	//	floorP.points.Add(hole[i]);
+	//}
+	int start = closestH == 0 ? hole.points.Num()-1: closestH + 1;
+	for (int i = start; i != closestH; i--) {
+		if (i < 0)
+			i = hole.points.Num() - 1;
+		floorP.points.Add(hole[i]);
+	}
+
+	floorP.points.Add(hole[closestH]);
+
+	pols.Add(floorP);
 	 return pols;
 
 }
@@ -714,7 +747,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	FHouseInfo toReturn;
 	if (f.canBeModified) {
 		for (int i = 0; i < makeInterestingAttempts; i++) {
-		//	makeInteresting(f, toReturn.remainingPlots, hole, stream);
+			makeInteresting(f, toReturn.remainingPlots, hole, stream);
 		}
 	}
 	int floors = f.height;
@@ -775,20 +808,20 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 			if (i == windowChangeCutoff)
 				currentWindowType = WindowType(stream.RandRange(0,3));
 
-			//if (stream.FRand() < 0.15 && f.canBeModified) {
-			//	TArray<FMaterialPolygon> res = potentiallyShrink(f, hole,stream);
-			//	for (FMaterialPolygon &fm : res) {
-			//		fm.offset(FVector(0,0,floorHeight*i));
-			//	}
-			//	toReturn.roomInfo.pols.Append(res);
-			//}
+			if (stream.FRand() < 0.15 && f.canBeModified) {
+				TArray<FMaterialPolygon> res = potentiallyShrink(f, hole,stream);
+				for (FMaterialPolygon &fm : res) {
+					fm.offset(FVector(0,0,floorHeight*i));
+				}
+				toReturn.roomInfo.pols.Append(res);
+			}
 
 			if (!shellOnly) {
 				TArray<FMaterialPolygon> floor = getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol);
-				for (auto &pol : floor) {
-					if(!pol.getIsClockwise())
-						pol.reverse();
-				}
+				//for (auto &pol : floor) {
+				//	if(!pol.getIsClockwise())
+				//		pol.reverse();
+				//}
 				toReturn.roomInfo.pols.Append(floor);
 				toReturn.roomInfo.meshes.Add(FMeshInfo{ "stair", FTransform(rot.Rotation(), stairPos + FVector(0, 0, floorHeight * (i - 1)), FVector(1.0f, 1.0f, 1.0f)) });
 			}

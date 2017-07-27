@@ -456,8 +456,8 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		if (curr->child && taken.Contains(curr->child)) {
 			// closed polygon since last point continues into first
 			FVector res = getProperIntersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
-			f.points.EmplaceAt(0, res);
-			//f.points.Add(res);
+			//f.points.EmplaceAt(0, res);
+			f.points.Add(res);
 
 			f.open = false;
 		}
@@ -523,14 +523,14 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 
 	}
 	polygons.Append(prevOpen);
-	// remoeve redundant points, zip together open polygons where end and beginning are really close together, and check orientation, and remove very pointy edges
+	// remove redundant points, zip together open polygons where end and beginning are really close together, and check orientation, and remove very pointy edges
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
 		while (f.points.Num() > 1 && FVector::Dist(f.points[f.points.Num() - 2], f.points[f.points.Num() - 1]) < 10.0f) {
 			f.points.RemoveAt(f.points.Num() - 1);
 		}
 		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) < maxConnect) {
-			f.points.Add(FVector(f.points[0]));
+			//f.points.Add(FVector(f.points[0]));
 			f.open = false;
 		}
 		f.checkOrientation();
