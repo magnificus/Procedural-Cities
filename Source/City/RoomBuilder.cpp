@@ -30,10 +30,11 @@ void ARoomBuilder::Tick(float DeltaTime)
 TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon> holes, PolygonType type) {
 
 	TArray<FMaterialPolygon> polygons;
-
+	//if (outer.points.Num() < 3)
+	//	return polygons;
 	FVector e1 = outer.points[1] - outer.points[0];
 	e1.Normalize();
-	FVector n = FVector::CrossProduct(e1, outer.points[2] - outer.points[0]);
+	FVector n = FVector::CrossProduct(e1, outer.points[outer.points.Num()-1] - outer.points[0]);
 	n.Normalize();
 	FVector e2 = FVector::CrossProduct(e1, n);
 	e2.Normalize();
@@ -47,8 +48,8 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 	outerP.SetHole(false);
 	outerP.Init(outer.points.Num());
 
-	for (int i = 0; i < outer.points.Num(); i++) {
-		FVector point = outer.points[i];
+	for (int i = 0; i < outer.points.Num()+1; i++) {
+		FVector point = outer.points[i%outer.points.Num()];
 		float y = FVector::DotProduct(e1, point - origin);
 		float x = FVector::DotProduct(e2, point - origin);
 		outerP[i] = TPPLPoint{ x, y, current++ };
@@ -60,8 +61,8 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 		TPPLPoly holeP;
 		holeP.Init(p.points.Num());
 		holeP.SetHole(true);
-		for (int i = 0; i < p.points.Num(); i++) {
-			FVector point = p.points[i];
+		for (int i = 0; i < p.points.Num()+1; i++) {
+			FVector point = p.points[i%p.points.Num()];
 			float y = FVector::DotProduct(e1, point - origin);
 			float x = FVector::DotProduct(e2, point - origin);
 			holeP[p.points.Num() - 1 - i] = TPPLPoint{ x, y, current++ };
@@ -85,93 +86,6 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 	return polygons;
 }
 
-//TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon> holes, PolygonType type) {
-//
-//	TArray<FMaterialPolygon> polygons;
-//	FVector e1 = outer.points[1] - outer.points[0];
-//	e1.Normalize();
-//	FVector n = FVector::CrossProduct(e1, outer.points[2] - outer.points[0]);
-//	n.Normalize();
-//	FVector e2 = FVector::CrossProduct(e1, n);
-//	e2.Normalize();
-//
-//	FVector origin = outer.points[0];
-//	int current = 0;
-//
-//	gpc_polygon outerP;
-//	gpc_vertex_list* outerPList = new gpc_vertex_list();
-//	outerPList->num_vertices = outer.points.Num();
-//	outerPList->vertex = new gpc_vertex[outer.points.Num()];
-//	for (int i = 0; i < outer.points.Num(); i++) {
-//		FVector point = outer.points[i];
-//		float y = FVector::DotProduct(e1, point - origin);
-//		float x = FVector::DotProduct(e2, point - origin);
-//		outerPList->vertex[i] = gpc_vertex{ x,y };
-//	}
-//	outerP.num_contours = 1;
-//	outerP.contour = outerPList;
-//
-//
-//	gpc_polygon holesP;// = new gpc_polygon();
-//
-//	holesP.hole = new int[holes.Num()];
-//	for (int i = 0; i < holes.Num(); i++)
-//		holesP.hole[i] = 1;
-//	holesP.num_contours = holes.Num();
-//	holesP.contour = new gpc_vertex_list[holes.Num()];
-//	for (int j = 0; j < holes.Num(); j++) {
-//		FPolygon p = holes[j];
-//		gpc_vertex_list currHoleList;
-//		currHoleList.num_vertices = p.points.Num();
-//		gpc_vertex* currVerts = new gpc_vertex[p.points.Num()];
-//		for (int i = 0; i < p.points.Num(); i++) {
-//			FVector point = p.points[i];
-//			float x = FVector::DotProduct(e1, point - origin);
-//			float y = FVector::DotProduct(e2, point - origin);
-//			currVerts[i] = gpc_vertex{ x,y };
-//			//holeP[p.points.Num() - 1 - i] = TPPLPoint{ x, y, current++ };
-//			//allPoints.Add(point);
-//		}
-//		currHoleList.vertex = currVerts;
-//		holesP.contour[j] = currHoleList;
-//		//holeP.SetOrientation(TPPL_CW);
-//		//inPolys.push_back(holeP);
-//	}
-//	gpc_polygon resultP;// = new gpc_polygon();
-//	gpc_polygon_clip(GPC_DIFF, &outerP, &holesP, &resultP);
-//
-//
-//	for (int i = 0; i < resultP.num_contours; i++) {
-//			//if (resultP.hole[i] == 1)
-//			//	continue;
-//		FMaterialPolygon newPolygon;
-//		newPolygon.type = type;
-//		for (int j = 0; j < resultP.contour[i].num_vertices; j++) {
-//			gpc_vertex currVertex = resultP.contour[i].vertex[j];
-//			newPolygon.points.Add(origin + currVertex.x * e1 + currVertex.y * e2);
-//		}
-//		if (newPolygon.points.Num() > 2)
-//			polygons.Add(newPolygon);
-//	}
-//
-//	//TPPLPartition part;
-//	//part.RemoveHoles(&inPolys, &outPolys);
-//	//for (TPPLPoly t : outPolys) {
-//	//	FMaterialPolygon newP;
-//	//	for (int i = 0; i < t.GetNumPoints(); i++) {
-//	//		newP.points.Add(allPoints[t[i].id]);
-//	//	}
-//	//	newP.type = type;
-//	//	polygons.Add(newP);
-//	//	//newP.
-//	//}
-//
-//
-//	//gpc_free_polygon(outerP);
-//	//gpc_free_polygon(holesP);
-//
-//	return polygons;
-//}
 
 TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float blockingLength) {
 	TArray<FPolygon> blocking;
@@ -179,15 +93,15 @@ TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float
 		//
 		FPolygon entranceBlock;
 
-		FVector inMiddle = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i], r2->points[i - 1]);
-		FVector tangent = r2->points[i] - r2->points[i - 1];
+		FVector inMiddle = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
+		FVector tangent = r2->points[i%r2->points.Num()] - r2->points[i - 1];
 		tangent.Normalize();
 		FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
 		entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
 		entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 - altTangent*blockingLength);
 		entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 - altTangent*blockingLength);
 		entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 + altTangent*blockingLength);
-		entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
+		//entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
 		blocking.Add(entranceBlock);
 
 	}
@@ -196,15 +110,15 @@ TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float
 		for (FRoomPolygon *p : pair.Value) {
 			FPolygon entranceBlock;
 			int32 num = p->activeConnections[r2];
-			FVector inMiddle = p->specificEntrances.Contains(num) ? p->specificEntrances[num] : middle(p->points[num], p->points[num - 1]);
-			FVector tangent = p->points[num] - p->points[num - 1];
+			FVector inMiddle = p->specificEntrances.Contains(num) ? p->specificEntrances[num] : middle(p->points[num%p->points.Num()], p->points[num - 1]);
+			FVector tangent = p->points[num%p->points.Num()] - p->points[(num - 1) % p->points.Num()];
 			tangent.Normalize();
 			FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
 			entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
 			entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 - altTangent*blockingLength);
 			entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 - altTangent*blockingLength);
 			entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 + altTangent*blockingLength);
-			entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
+			//entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
 			blocking.Add(entranceBlock);
 		}
 
@@ -231,7 +145,7 @@ FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHier
 	pol.points.Add(rot.RotateVector(FVector(max.X, min.Y, 0.0f)) + pos);
 	pol.points.Add(rot.RotateVector(FVector(max.X, max.Y, 0.0f)) + pos);
 	pol.points.Add(rot.RotateVector(FVector(min.X, max.Y, 0.0f)) + pos);
-	pol.points.Add(rot.RotateVector(FVector(min.X, min.Y, 0.0f)) + pos);
+	//pol.points.Add(rot.RotateVector(FVector(min.X, min.Y, 0.0f)) + pos);
 	return pol;
 }
 
@@ -269,7 +183,7 @@ TArray<FMaterialPolygon> getCrossWindow(FPolygon p, FVector center, float frameW
 		frame.points.Add(middle(p.points[j - 1], p.points[j]) + tangent1 * frameWidth/2);
 		frame.points.Add(middle(p.points[j - 1], p.points[j]) + tangent1 * frameWidth/2 + tangent2*tan2Len);
 		frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent1 * frameWidth / 2 + tangent2*tan2Len);
-		frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent1 * frameWidth / 2);
+		//frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent1 * frameWidth / 2);
 		FVector frameDir = frame.getDirection();
 		frame.offset(frameDir*(frameDepth / 2 - 20));
 		toReturn.Add(frame);
@@ -294,7 +208,7 @@ TArray<FMaterialPolygon> getRectangularWindow(FPolygon p, FVector center, float 
 		frame.points.Add(p.points[j]);
 		frame.points.Add(p.points[j] + tangent2 * frameWidth);
 		frame.points.Add(p.points[j - 1] + tangent1 * frameWidth);
-		frame.points.Add(p.points[j - 1]);
+		//frame.points.Add(p.points[j - 1]);
 		FVector frameDir = frame.getDirection();
 		frame.offset(frameDir*(frameDepth / 2 - 20));
 		toReturn.Add(frame);
@@ -348,14 +262,14 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 	TArray<FMaterialPolygon> toReturn;
 
 	for (FRoomPolygon *rp : roomPols) {
-		for (int i = 1; i < rp->points.Num(); i++) {
+		for (int i = 1; i < rp->points.Num() + 1; i++) {
 			if (rp->toIgnore.Contains(i) || (shellOnly && !rp->exteriorWalls.Contains(i))) {
 				continue;
 			}
 			FMaterialPolygon newP;
 			newP.type = rp->exteriorWalls.Contains(i) ? PolygonType::exterior : PolygonType::interior;
 			FVector p1 = rp->points[i - 1];
-			FVector p2 = rp->points[i];
+			FVector p2 = rp->points[i%rp->points.Num()];
 
 			// this extra offset is to avoid z-fighting between walls
 			FVector tan = p2 - p1;
@@ -389,14 +303,14 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 			FVector entrancePos = FVector(-10000, -10000, -10000);
 			float doorStart = 100000;
 			float doorEnd = -1000000;
-			if (rp->entrances.Contains(i) && FVector::Dist(rp->points[i-1], rp->points[i]) > 150) {
-				entrancePos = rp->specificEntrances.Contains(i) ?  rp->specificEntrances[i] : middle(rp->points[i - 1], rp->points[i]);
+			if (rp->entrances.Contains(i) && FVector::Dist(rp->points[i-1], rp->points[i%rp->points.Num()]) > 150) {
+				entrancePos = rp->specificEntrances.Contains(i) ?  rp->specificEntrances[i] : middle(rp->points[i - 1], rp->points[i%rp->points.Num()]);
 				doorStart = FVector::Dist(rp->points[i - 1], entrancePos) - 137/2;
 				doorEnd = doorStart + 137;
-				holes.Add(getEntranceHole(rp->points[i - 1], rp->points[i], floorHeight, 297, 137, entrancePos));
+				holes.Add(getEntranceHole(rp->points[i - 1], rp->points[i%rp->points.Num()], floorHeight, 297, 137, entrancePos));
 			}
 			if (rp->windows.Contains(i)) {
-				FVector tangent = rp->points[i] - rp->points[i - 1];
+				FVector tangent = rp->points[i%rp->points.Num()] - rp->points[i - 1];
 				float len = tangent.Size();
 				tangent.Normalize();
 
@@ -908,8 +822,8 @@ FRoomInfo placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalIn
 	float length = 200;
 	float height = 150;
 
-	FVector tangent = p->points[place] - p->points[place - 1];
-	FVector normal = getNormal(p->points[place], p->points[place - 1], false);
+	FVector tangent = p->points[place%p->points.Num()] - p->points[place - 1];
+	FVector normal = getNormal(p->points[place%p->points.Num()], p->points[place - 1], false);
 	normal.Normalize();
 	float len = tangent.Size();
 	width = std::min(width, len);
@@ -971,9 +885,9 @@ FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon *f, int floor, float height, fl
 			if (shellOnly && !r2->exteriorWalls.Contains(i))
 				continue;
 			FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i], r2->points[i - 1]);
-			FVector dir1 = getNormal(r2->points[i], r2->points[i - 1], true);
+			FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
 			dir1.Normalize();
-			FVector dir2 = r2->points[i] - r2->points[i - 1];
+			FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
 			dir2.Normalize();
 			r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
 			//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
@@ -1001,14 +915,14 @@ FRoomInfo ARoomBuilder::buildRestaurant(FRoomPolygon *f, float height, TMap<FStr
 	TArray<FRoomPolygon*> roomPols = f->getRooms(getRestaurantBlueprint(1.0f));
 	for (FRoomPolygon* r2 : roomPols) {
 		for (int i : r2->windows) {
-			if (FVector::Dist(f->points[i], f->points[i-1]) > 150.0f)
+			if (FVector::Dist(f->points[i%f->points.Num()], f->points[i-1]) > 150.0f)
 			r2->entrances.Add(i);
 		}
 		for (int i : r2->entrances) {
-			FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i], r2->points[i - 1]);
-			FVector dir1 = getNormal(r2->points[i], r2->points[i - 1], true);
+			FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
+			FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
 			dir1.Normalize();
-			FVector dir2 = r2->points[i] - r2->points[i - 1];
+			FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
 			dir2.Normalize();
 			r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
 			//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
@@ -1042,10 +956,10 @@ FRoomInfo ARoomBuilder::buildStore(FRoomPolygon *f, float height, TMap<FString, 
 				r2->entrances.Add(i);
 		}
 		for (int i : r2->entrances) {
-			FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i], r2->points[i - 1]);
-			FVector dir1 = getNormal(r2->points[i], r2->points[i - 1], true);
+			FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
+			FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
 			dir1.Normalize();
-			FVector dir2 = r2->points[i] - r2->points[i - 1];
+			FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
 			dir2.Normalize();
 			r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
 			//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
@@ -1080,9 +994,9 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 				// these are the balcony candidate rooms
 				if (p->windows.Num() > 0) {
 					for (int place : p->windows) {
-						if (FVector::DistSquared(p->points[place], p->points[place - 1]) > 10000) {
+						if (FVector::DistSquared(p->points[place%p->points.Num()], p->points[place - 1]) > 10000) {
 							p->entrances.Add(place);
-							FVector mid = middle(p->points[place], p->points[place - 1]);
+							FVector mid = middle(p->points[place%p->points.Num()], p->points[place - 1]);
 							p->specificEntrances.Add(place, mid);
 							r = placeBalcony(p, place, map);
 							goto balconyDone;
@@ -1100,9 +1014,9 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 		for (FRoomPolygon* r2 : roomPols) {
 			for (int i : r2->entrances) {
 				FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i], r2->points[i - 1]);
-				FVector dir1 = getNormal(r2->points[i], r2->points[i - 1], true);
+				FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
 				dir1.Normalize();
-				FVector dir2 = r2->points[i] - r2->points[i - 1];
+				FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
 				dir2.Normalize();
 				r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
 

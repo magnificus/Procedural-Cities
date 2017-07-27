@@ -366,7 +366,8 @@ struct FPolygon
 		//	return dir2;
 		//}
 		//else {
-			FVector dir1 = points[place] - points[place - 1];
+		int prev = place == 0 ? points.Num() - 1 : place - 1;
+			FVector dir1 = points[place] - points[prev];
 			FVector dir2 = points[(place + 1)%points.Num()] - points[place];
 			dir1.Normalize();
 			dir2.Normalize();
@@ -701,7 +702,7 @@ struct FRoomPolygon : public FPolygon
 		if (specificEntrances.Contains(num)) {
 			//FVector entrancePoint = specificEntrances.Contains(num) ? specificEntrances[num] : middle(points[num], points[num - 1]);
 			if (FVector::Dist(inPoint, specificEntrances[num]) < 100) {
-				FVector tangent = points[num] - points[num - 1];
+				FVector tangent = points[num%points.Num()] - points[num - 1];
 				tangent.Normalize();
 				float toMove = FVector::Dist(inPoint, specificEntrances[num] - tangent * 100);
 				inPoint -= toMove * tangent;
@@ -717,7 +718,7 @@ struct FRoomPolygon : public FPolygon
 			FVector point = p1->specificEntrances[loc]; //middle(p1->points[loc], p1->points[loc - 1]);
 			float dist = FVector::Dist(point, inPoint);
 			if (dist < 100) {
-				FVector tangent = points[num] - points[num - 1];
+				FVector tangent = points[num%points.Num()] - points[num - 1];
 				tangent.Normalize();
 				float toMove = FVector::Dist(inPoint, point - tangent * 100);
 				inPoint -= toMove * tangent;
@@ -795,7 +796,7 @@ struct FRoomPolygon : public FPolygon
 		}
 
 		// move intersection to make more sense if possible
-		FVector res = intersection(p.p1, p.p1 + FRotator(0, 270, 0).RotateVector(points[p.min] - points[p.min - 1]) * 50, points[p.max], points[p.max - 1]);
+		FVector res = intersection(p.p1, p.p1 + FRotator(0, 270, 0).RotateVector(points[p.min] - points[p.min - 1]) * 50, points[p.max%points.Num()], points[p.max - 1]);
 		if (res.X != 0.0f)
 			p.p2 = res;
 		if (toIgnore.Contains(p.min)) {
@@ -999,13 +1000,13 @@ struct FRoomPolygon : public FPolygon
 
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
-		if (p.max != points.Num())
+		//if (p.max != points.Num())
 			points.EmplaceAt(p.min + 1, p.p2);
 
 		//toIgnore.Empty();
-		//if (newP->getIsClockwise())
+		//if (!newP->getIsClockwise())
 		//	newP->reverse();
-		//if (getIsClockwise())
+		//if (!getIsClockwise())
 		//	reverse();
 		return newP;
 	}

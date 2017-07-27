@@ -38,9 +38,9 @@ FVector intersection(FPolygon &p1, TArray<FPolygon> &p2) {
 
 // finds the first intersection point (if any) between two polygons via brute force (n^2)
 FVector intersection(FPolygon &p1, FPolygon &p2) {
-	for (int i = 1; i < p1.points.Num(); i++) {
-		for (int j = 1; j < p2.points.Num(); j++) {
-			FVector res = intersection(p1.points[i - 1], p1.points[i], p2.points[j - 1], p2.points[j]);
+	for (int i = 1; i < p1.points.Num()+1; i++) {
+		for (int j = 1; j < p2.points.Num()+1; j++) {
+			FVector res = intersection(p1.points[i - 1], p1.points[i%p1.points.Num()], p2.points[j - 1], p2.points[j%p2.points.Num()]);
 			if (res.X != 0.0f) {
 				return res;
 			}
@@ -51,13 +51,13 @@ FVector intersection(FPolygon &p1, FPolygon &p2) {
 
 // a pretty inefficient method for checking whether any of the lines in the polygon intersects another (n^2)
 bool selfIntersection(FPolygon &p) {
-	for (int i = 1; i < p.points.Num(); i++) {
-		for (int j = i+2; j < p.points.Num(); j++) {
-			FVector tan1 = p.points[i] - p.points[i - 1];
+	for (int i = 1; i < p.points.Num()+1; i++) {
+		for (int j = i+2; j < p.points.Num()+1; j++) {
+			FVector tan1 = p.points[i%p.points.Num()] - p.points[i - 1];
 			tan1.Normalize();
-			FVector tan2 = p.points[j] - p.points[j - 1];
+			FVector tan2 = p.points[j%p.points.Num()] - p.points[j - 1];
 			tan2.Normalize();
-			if (intersection(p.points[i - 1] + tan1, p.points[i] - tan1, p.points[j - 1] + tan2, p.points[j] - tan2).X != 0.0f)
+			if (intersection(p.points[i - 1] + tan1, p.points[i%p.points.Num()] - tan1, p.points[j - 1] + tan2, p.points[j%p.points.Num()] - tan2).X != 0.0f)
 				return true;
 		}
 	}
@@ -121,13 +121,13 @@ bool testAxis(FVector axis, FPolygon &p1, FPolygon &p2, float leniency) {
 
 // check whether two polygons overlap with potential collision leniency
 bool testCollision(FPolygon &p1, FPolygon &p2, float leniency) {
-	for (int i = 1; i < p1.points.Num(); i++) {
-		if (!testAxis(getNormal(p1.points[i], p1.points[i-1], true), p1, p2, leniency)) {
+	for (int i = 1; i < p1.points.Num()+1; i++) {
+		if (!testAxis(getNormal(p1.points[i%p1.points.Num()], p1.points[i-1], true), p1, p2, leniency)) {
 			return false;
 		}
 	}
-	for (int i = 1; i < p2.points.Num(); i++) {
-		if (!testAxis(getNormal(p2.points[i], p2.points[i-1], true), p1, p2, leniency)){//FRotator(0, 90, 0).RotateVector(p2.points[i] - p2.points[i-1]), p1, p2, leniency)) {
+	for (int i = 1; i < p2.points.Num()+1; i++) {
+		if (!testAxis(getNormal(p2.points[i%p2.points.Num()], p2.points[i-1], true), p1, p2, leniency)){//FRotator(0, 90, 0).RotateVector(p2.points[i] - p2.points[i-1]), p1, p2, leniency)) {
 			return false;
 		}
 	}
@@ -475,9 +475,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
 		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) < maxConnect) {
-			//if (FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) > 1.0f) {
-				//f.points.Add(FVector(f.points[0]));
-			//}
 			f.open = false;
 		}
 		f.checkOrientation();
@@ -556,13 +553,13 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 
 TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width) {
 	TArray<FMaterialPolygon> toReturn;
-	for (int i = 1; i < p.points.Num(); i++) {
+	for (int i = 1; i < p.points.Num()+1; i++) {
 		FMaterialPolygon side;
 		side.type = type;
 		side.points.Add(p.points[i - 1]);
 		side.points.Add(p.points[i - 1] - FVector(0, 0, width));
-		side.points.Add(p.points[i] - FVector(0, 0, width));
-		side.points.Add(p.points[i]);
+		side.points.Add(p.points[i%p.points.Num()] - FVector(0, 0, width));
+		side.points.Add(p.points[i%p.points.Num()]);
 		//side.points.Add(p.points[i - 1]);
 		toReturn.Add(side);
 	}
@@ -584,11 +581,11 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 
 		other.offset(p.getDirection() * p.width);
 		if (polygonSides) {
-			for (int i = 1; i < p.points.Num(); i++) {
+			for (int i = 1; i < p.points.Num()+1; i++) {
 				FMaterialPolygon newP1;
 				newP1.type = p.type;
 				newP1.points.Add(other.points[i - 1]);
-				newP1.points.Add(p.points[i]);
+				newP1.points.Add(p.points[i%p.points.Num()]);
 				newP1.points.Add(p.points[i - 1]);
 
 
@@ -599,8 +596,8 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 				FMaterialPolygon newP2;
 				newP2.type = p.type;
 				newP2.points.Add(other.points[i - 1]);
-				newP2.points.Add(other.points[i]);
-				newP2.points.Add(p.points[i]);
+				newP2.points.Add(other.points[i%other.points.Num()]);
+				newP2.points.Add(p.points[i%p.points.Num()]);
 				otherSides.Add(newP2);
 
 			}
@@ -619,7 +616,7 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 			newP2.points.Add(p.points[0]);
 			otherSides.Add(newP2);
 		}
-		other.normal = -p.normal;
+		//other.normal = -p.normal;
 
 		other.reverse();
 		otherSides.Add(other);
@@ -635,7 +632,7 @@ TArray<FMaterialPolygon> BaseLibrary::getSimplePlotPolygons(TArray<FSimplePlot> 
 		type = plots[0].type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;
 	for (FSimplePlot p : plots) {
 		FMaterialPolygon newP;
-		p.pol.points.RemoveAt(p.pol.points.Num() - 1);
+		//p.pol.points.RemoveAt(p.pol.points.Num() - 1);
 		newP.points = p.pol.points;
 		//if (!newP.getIsClockwise())
 		newP.reverse();

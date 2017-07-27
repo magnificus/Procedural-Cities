@@ -357,35 +357,35 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 	return pols;
 }
 
-//FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
-//	FPolygon polygon;
-//	if (!p.open && p.getArea() > 700) {
-//		FVector center = p.getCenter();
-//		for (int i = 1; i < p.points.Num(); i++) {
-//			FVector tangent = p.points[i] - p.points[i - 1];
-//			tangent.Normalize();
-//			FVector offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
-//			polygon.points.Add(p.points[i - 1] + offset);
-//			polygon.points.Add(p.points[i] + offset);
-//		}
-//		if (!p.open) {
-//			//polygon.points.RemoveAt(polygon.points.Num() - 1);
-//			//polygon.points.Add(FVector(polygon.points[0]));
-//			polygon.points.Add(FVector(polygon.points[1]));
-//
-//			//polygon.points.Add(FVector(polygon.points[2]));
-//
-//
-//		}
-//		else {
-//			FVector last = p.points[p.points.Num() - 1];
-//			polygon.points.Add(last);
-//			//polygon.points.Add(last);
-//
-//		}
-//	}
-//	return polygon;
-//}
+FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize) {
+	FPolygon polygon;
+	if (!p.open && p.getArea() > 700) {
+		FVector center = p.getCenter();
+		for (int i = 1; i < p.points.Num(); i++) {
+			FVector tangent = p.points[i] - p.points[i - 1];
+			tangent.Normalize();
+			FVector offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
+			polygon.points.Add(p.points[i - 1] + offset);
+			polygon.points.Add(p.points[i] + offset);
+		}
+		if (!p.open) {
+			//polygon.points.RemoveAt(polygon.points.Num() - 1);
+			//polygon.points.Add(FVector(polygon.points[0]));
+			polygon.points.Add(FVector(polygon.points[1]));
+
+			//polygon.points.Add(FVector(polygon.points[2]));
+
+
+		}
+		else {
+			FVector last = p.points[p.points.Num() - 1];
+			polygon.points.Add(last);
+			//polygon.points.Add(last);
+
+		}
+	}
+	return polygon;
+}
 
 FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 {
