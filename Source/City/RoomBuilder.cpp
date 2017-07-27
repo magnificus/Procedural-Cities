@@ -34,7 +34,7 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 	//	return polygons;
 	FVector e1 = outer.points[1] - outer.points[0];
 	e1.Normalize();
-	FVector n = FVector::CrossProduct(e1, outer.points[outer.points.Num()-1] - outer.points[0]);
+	FVector n = /*outer.normal.Size() < 1.0f*/ true ? FVector::CrossProduct(e1, outer.points[outer.points.Num()-1] - outer.points[0]) : outer.normal;
 	n.Normalize();
 	FVector e2 = FVector::CrossProduct(e1, n);
 	e2.Normalize();

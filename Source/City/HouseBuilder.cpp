@@ -247,13 +247,18 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	f2.offset(FVector(0, 0, floorBegin));
 	hole.offset(FVector(0, 0, floorBegin));
 
-	//f2.normal = FVector(0, 0, -1);
+	f2.normal = FVector(0, 0, -1);
 	polygons.Add(f2);
 
 
 	TArray<FMaterialPolygon> pols;
 	TArray<FPolygon> holes;
-	//holes.Add(hole);
+	//if (!f2.getIsClockwise())
+	//	f2.reverse();
+
+	if (hole.getIsClockwise())
+		hole.reverse();
+	holes.Add(hole);
 	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 
 	//for (auto &pol : pols)
@@ -277,16 +282,16 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	floorP.normal = FVector(0, 0, -1);
 	floorP.points.Add(FVector(floorP[0]));
 	floorP.points.Add(hole[closestH]);
-	//int start = closestH == hole.points.Num() - 1 ? 0 : closestH + 1;
-	//for (int i = start; i != closestH; i++, i %= hole.points.Num()/*i = i == 0 ? hole.points.Num()-1 : i-1*/) {
-	//	floorP.points.Add(hole[i]);
-	//}
-	int start = closestH == 0 ? hole.points.Num()-1: closestH + 1;
-	for (int i = start; i != closestH; i--) {
-		if (i < 0)
-			i = hole.points.Num() - 1;
+	int start = closestH == hole.points.Num() - 1 ? 0 : closestH + 1;
+	for (int i = start; i != closestH; i++, i %= hole.points.Num()/*i = i == 0 ? hole.points.Num()-1 : i-1*/) {
 		floorP.points.Add(hole[i]);
 	}
+	//int start = closestH == 0 ? hole.points.Num()-1: closestH + 1;
+	//for (int i = start; i != closestH; i--) {
+	//	if (i < 0)
+	//		i = hole.points.Num() - 1;
+	//	floorP.points.Add(hole[i]);
+	//}
 
 	floorP.points.Add(hole[closestH]);
 
@@ -574,6 +579,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 					side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
 					side.points.Add(box.points[i%box.points.Num()] - FVector(0, 0, offset));
 					side.points.Add(box.points[i%box.points.Num()]);
+
 					//side.points.Add(box.points[i - 1]);
 					toReturn.pols.Add(side);
 				}
@@ -598,10 +604,11 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 		for (int i = 1; i < shape.points.Num() + 1; i++) {
 			FMaterialPolygon side;
 			side.type = PolygonType::roof;
-			side.points.Add(shape.points[i - 1]);
-			side.points.Add(shape.points[i - 1] - FVector(0, 0, offset));
-			side.points.Add(shape.points[i%shape.points.Num()] - FVector(0, 0, offset));
 			side.points.Add(shape.points[i%shape.points.Num()]);
+			side.points.Add(shape.points[i%shape.points.Num()] - FVector(0, 0, offset));
+			side.points.Add(shape.points[i - 1] - FVector(0, 0, offset));
+
+			side.points.Add(shape.points[i - 1]);
 			toReturn.pols.Add(side);
 		}
 
@@ -641,7 +648,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		FHousePolygon cp = FHousePolygon(f);
 		cp.symmetricShrink(len, cp.buildLeft);
 		if (intersection(cp, centerHole).X == 0.0f && !selfIntersection(cp)) {
-			f.points.RemoveAt(f.points.Num() - 1);
+			//f.points.RemoveAt(f.points.Num() - 1);
 			f.reverse();
 			TArray<FPolygon> holes;
 			holes.Add(cp);
@@ -736,6 +743,8 @@ FHouseInfo AHouseBuilder::getHouseInfoSimple(FHousePolygon f, float floorHeight,
 
 FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly)
 {
+	float dist = FVector::Dist(f[0], f[f.points.Num() - 1]);
+	UE_LOG(LogTemp, Warning, TEXT("dist between start and end: %f"), dist);
 	FRandomStream stream;
 	float corrWidth = 300;
 	stream.Initialize(f.housePosition.X * 1000 + f.housePosition.Y);
@@ -783,12 +792,6 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	//if (!stairPol.getIsClockwise())
 	//	stairPol.reverse();
 	FVector elevatorPos = elevatorPol.getCenter();
-
-	FPolygon hole2;
-	hole2.points = hole.points;
-	FVector extra = hole.points[hole.points.Num() - 1];
-
-	hole2.points.Add(extra);
 
 	if (!shellOnly) {
 		toReturn.roomInfo.pols.Append(getShaftSides(elevatorPol, 3, floorHeight * floors));

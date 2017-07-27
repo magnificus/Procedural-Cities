@@ -457,6 +457,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 			// closed polygon since last point continues into first
 			FVector res = getProperIntersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
 			//f.points.EmplaceAt(0, res);
+			f.points.RemoveAt(0);
 			f.points.Add(res);
 
 			f.open = false;
@@ -556,10 +557,10 @@ TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float w
 	for (int i = 1; i < p.points.Num()+1; i++) {
 		FMaterialPolygon side;
 		side.type = type;
-		side.points.Add(p.points[i - 1]);
-		side.points.Add(p.points[i - 1] - FVector(0, 0, width));
-		side.points.Add(p.points[i%p.points.Num()] - FVector(0, 0, width));
 		side.points.Add(p.points[i%p.points.Num()]);
+		side.points.Add(p.points[i%p.points.Num()] - FVector(0, 0, width));
+		side.points.Add(p.points[i - 1] - FVector(0, 0, width));
+		side.points.Add(p.points[i - 1]);
 		//side.points.Add(p.points[i - 1]);
 		toReturn.Add(side);
 	}
