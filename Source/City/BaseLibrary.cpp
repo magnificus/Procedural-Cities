@@ -577,7 +577,7 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 		if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
 			other.type = PolygonType::interior;
 		}
-		if (p.type == PolygonType::floor || p.type == PolygonType::roof)
+		if (p.type == PolygonType::floor)// || p.type == PolygonType::roof)
 			polygonSides = false;
 
 		other.offset(p.getDirection() * p.width);
@@ -617,7 +617,7 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 			newP2.points.Add(p.points[0]);
 			otherSides.Add(newP2);
 		}
-		//other.normal = -p.normal;
+		other.normal = -p.normal;
 
 		other.reverse();
 		otherSides.Add(other);

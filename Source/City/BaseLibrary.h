@@ -189,10 +189,10 @@ struct FPolygon
 		for (int i = 1; i < points.Num(); i++) {
 			FVector tan1 = points[i] - points[i - 1];
 			tan1.Normalize();
-			for (int j = i + 2; j < points.Num() - 1; j++) {
-				FVector tan2 = points[j] - points[j-1];
+			for (int j = i + 2; j < points.Num() + 1; j++) {
+				FVector tan2 = points[j%points.Num()] - points[j-1];
 				tan2.Normalize();
-				FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j]);
+				FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j%points.Num()] - tan2*10);
 				if (res.X != 0.0f) {
 					TArray<FVector> newPoints;
 					for (int k = 0; k < i; k++) {
@@ -236,7 +236,7 @@ struct FPolygon
 
 	// assumes at least 3 points in polygon
 	FVector getDirection() {
-		FVector res = FVector::CrossProduct(points[1] - points[0], points[2] - points[0]);
+		FVector res = normal.Size() < 1.0f ? FVector::CrossProduct(points[1] - points[0], points[points.Num()-1] - points[0]) : normal;
 		res.Normalize();
 		return res;
 	}

@@ -259,11 +259,12 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	if (hole.getIsClockwise())
 		hole.reverse();
 	holes.Add(hole);
-	return ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
+	pols = ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 
-	//for (auto &pol : pols)
-	//	pol.normal = FVector(0, 0, -1);
+	for (auto &pol : pols)
+		pol.normal = FVector(0, 0, -1);
 
+	return pols;
 	FMaterialPolygon floorP;
 	floorP.points = f.points;
 	floorP.type = PolygonType::floor;
@@ -572,15 +573,18 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 			} while (intersection(box, pol).X != 0.0f || !testCollision(box, pol, 0));
 
 			if (found) {
+				//TArray<FMaterialPolygon> boxA;
+				//box.width = offset;
+				//boxA.Add(box);
+				//toReturn.pols.Append(fillOutPolygons(boxA));
 				for (int i = 1; i < box.points.Num()+1; i++) {
 					FMaterialPolygon side;
 					side.type = PolygonType::exteriorSnd;
-					side.points.Add(box.points[i - 1]);
-					side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
-					side.points.Add(box.points[i%box.points.Num()] - FVector(0, 0, offset));
 					side.points.Add(box.points[i%box.points.Num()]);
+					side.points.Add(box.points[i%box.points.Num()] - FVector(0, 0, offset));
+					side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
+					side.points.Add(box.points[i - 1]);
 
-					//side.points.Add(box.points[i - 1]);
 					toReturn.pols.Add(side);
 				}
 				toReturn.pols.Add(box);
@@ -601,14 +605,18 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 			//tangent.Normalize();
 			point += tangent / 4;
 		}
+		//TArray<FMaterialPolygon> shapeA;
+		//shape.width = offset;
+		//shapeA.Add(shape);
+		//toReturn.pols.Append(fillOutPolygons(shapeA));
+
 		for (int i = 1; i < shape.points.Num() + 1; i++) {
 			FMaterialPolygon side;
 			side.type = PolygonType::roof;
-			side.points.Add(shape.points[i%shape.points.Num()]);
-			side.points.Add(shape.points[i%shape.points.Num()] - FVector(0, 0, offset));
-			side.points.Add(shape.points[i - 1] - FVector(0, 0, offset));
-
 			side.points.Add(shape.points[i - 1]);
+			side.points.Add(shape.points[i - 1] - FVector(0, 0, offset));
+			side.points.Add(shape.points[i%shape.points.Num()] - FVector(0, 0, offset));
+			side.points.Add(shape.points[i%shape.points.Num()]);
 			toReturn.pols.Add(side);
 		}
 
@@ -637,7 +645,9 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		if (res.points.Num() > 2) {
 			FMaterialPolygon pol;
 			pol.points = res.points;
+			pol.offset(FVector(0, 0, 20));
 			pol.type = PolygonType::roof;
+			pol.normal = FVector(0, 0, 1);
 			toReturn.Add(pol);
 			return toReturn;
 		}
@@ -653,7 +663,10 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 			TArray<FPolygon> holes;
 			holes.Add(cp);
 			toReturn = ARoomBuilder::getSideWithHoles(f, holes, PolygonType::roof);
-
+			for (auto &a : toReturn) {
+				a.offset(FVector(0, 0, 20));
+				a.normal = FVector(0, 0, 1);
+			}
 			f = cp;
 			for (int i = 1; i < f.points.Num(); i++) {
 				f.windows.Add(i);
@@ -862,7 +875,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float
 	FMaterialPolygon roof;
 	roof.points = f.points;
 	//roof.points.RemoveAt(roof.points.Num() - 1);
-	roof.offset(FVector(0, 0, floorHeight*floors + 10));
+	roof.offset(FVector(0, 0, floorHeight*floors));
 	roof.type = PolygonType::roof;
 	//roof.reverse();
 

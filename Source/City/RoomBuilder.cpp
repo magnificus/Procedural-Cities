@@ -157,8 +157,8 @@ FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHe
 	float distToDoor = FVector::Dist(doorPos, p1) - doorWidth / 2;
 	FMaterialPolygon doorPolygon;
 	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
-	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 4));// + FVector(0, 0, 100));
-	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 4));// + FVector(0, 0, 100));
+	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 2));// + FVector(0, 0, 100));
+	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 2));// + FVector(0, 0, 100));
 	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, doorHeight));
 	//doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
 	//doorPolygon.reverse();
@@ -307,7 +307,14 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 				entrancePos = rp->specificEntrances.Contains(i) ?  rp->specificEntrances[i] : middle(rp->points[i - 1], rp->points[i%rp->points.Num()]);
 				doorStart = FVector::Dist(rp->points[i - 1], entrancePos) - 137/2;
 				doorEnd = doorStart + 137;
-				holes.Add(getEntranceHole(rp->points[i - 1], rp->points[i%rp->points.Num()], floorHeight, 297, 137, entrancePos));
+				//holes.Add(getEntranceHole(rp->points[i - 1], rp->points[i%rp->points.Num()], floorHeight, 297, 137, entrancePos));
+				// 2 1 4 3
+				auto entH = getEntranceHole(rp->points[i - 1], rp->points[i%rp->points.Num()], floorHeight, 297, 137, entrancePos);
+				newP.points.EmplaceAt(2, entH[1]);
+				newP.points.EmplaceAt(3, entH[0]);
+				newP.points.EmplaceAt(4, entH[3]);
+				newP.points.EmplaceAt(5, entH[2]);
+
 			}
 			if (rp->windows.Contains(i)) {
 				FVector tangent = rp->points[i%rp->points.Num()] - rp->points[i - 1];
@@ -737,7 +744,7 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchica
 	//placed.Add(r2);
 	placed.Append(getBlockingVolumes(r2, 200, 200));
 	attemptPlace(r2, placed, meshes, true, 2, "bed", FRotator(0, 270, 0), FVector(0, 50, 60), map, false);
-	attemptPlace(r2, placed, meshes, true, 1, "small_table", FRotator(0, 0, 0), FVector(0, 10, -40), map, false);
+	attemptPlace(r2, placed, meshes, true, 1, "small_table", FRotator(0, 0, 0), FVector(0, 10, -50), map, false);
 	attemptPlace(r2, placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	attemptPlace(r2, placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 
@@ -748,7 +755,7 @@ static TArray<FMeshInfo> getHallWay(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 
-	attemptPlace(r2, placed, meshes, true, 1, "hanger", FRotator(0, 0, 0), FVector(100, 0, 20), map, false);
+	attemptPlace(r2, placed, meshes, true, 1, "hanger", FRotator(0, 90, 0), FVector(100, 0, 10), map, false);
 	return meshes;
 }
 

@@ -100,6 +100,13 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = rooms, meta = (AllowPrivateAccess = "true"))
 		float maxRoomSize = 200;
 		
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = plotCreation, meta = (AllowPrivateAccess = "true"))
+		float extraLen = 500;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = plotCreation, meta = (AllowPrivateAccess = "true"))
+		float extraBlockingLen = 100;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = plotCreation, meta = (AllowPrivateAccess = "true"))
+	//	float extraLen;
 public:	
 	// Sets default values for this actor's properties
 	ASpawner();
