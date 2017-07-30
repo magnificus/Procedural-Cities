@@ -557,11 +557,10 @@ TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float w
 	for (int i = 1; i < p.points.Num()+1; i++) {
 		FMaterialPolygon side;
 		side.type = type;
-		side.points.Add(p.points[i%p.points.Num()]);
-		side.points.Add(p.points[i%p.points.Num()] - FVector(0, 0, width));
-		side.points.Add(p.points[i - 1] - FVector(0, 0, width));
 		side.points.Add(p.points[i - 1]);
-		//side.points.Add(p.points[i - 1]);
+		side.points.Add(p.points[i - 1] - FVector(0, 0, width));
+		side.points.Add(p.points[i%p.points.Num()] - FVector(0, 0, width));
+		side.points.Add(p.points[i%p.points.Num()]);
 		toReturn.Add(side);
 	}
 	return toReturn;
@@ -583,15 +582,12 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 		other.offset(p.getDirection() * p.width);
 		if (polygonSides) {
 			for (int i = 1; i < p.points.Num()+1; i++) {
+				//otherSides.Append(getSidesOfPolygon(p, p.type, 20));
 				FMaterialPolygon newP1;
 				newP1.type = p.type;
 				newP1.points.Add(other.points[i - 1]);
 				newP1.points.Add(p.points[i%p.points.Num()]);
 				newP1.points.Add(p.points[i - 1]);
-
-
-				//newP1.points.Add(other.points[i]);
-
 				otherSides.Add(newP1);
 
 				FMaterialPolygon newP2;
@@ -602,20 +598,20 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 				otherSides.Add(newP2);
 
 			}
-			FMaterialPolygon newP1;
-			newP1.type = p.type;
-			newP1.points.Add(other.points[p.points.Num() - 1]);
-			newP1.points.Add(p.points[0]);
-			newP1.points.Add(p.points[p.points.Num() - 1]);
-			//newP1.points.Add(other.points[0]);
-			otherSides.Add(newP1);
+			//FMaterialPolygon newP1;
+			//newP1.type = p.type;
+			//newP1.points.Add(other.points[p.points.Num() - 1]);
+			//newP1.points.Add(p.points[0]);
+			//newP1.points.Add(p.points[p.points.Num() - 1]);
+			////newP1.points.Add(other.points[0]);
+			//otherSides.Add(newP1);
 
-			FMaterialPolygon newP2;
-			newP2.type = p.type;
-			newP2.points.Add(other.points[p.points.Num() - 1]);
-			newP2.points.Add(other.points[0]);
-			newP2.points.Add(p.points[0]);
-			otherSides.Add(newP2);
+			//FMaterialPolygon newP2;
+			//newP2.type = p.type;
+			//newP2.points.Add(other.points[p.points.Num() - 1]);
+			//newP2.points.Add(other.points[0]);
+			//newP2.points.Add(p.points[0]);
+			//otherSides.Add(newP2);
 		}
 		other.normal = -p.normal;
 

@@ -1097,7 +1097,7 @@ FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, flo
 		return r;
 	}
 	switch (type) {
-	case RoomType::office: return buildOffice(f, floor, height, 1/* 0.0042*/, 340.0f, 190.0f, map, shellOnly);
+	case RoomType::office: return buildOffice(f, floor, height, 1/* 0.0042*/, 320.0f, 190.0f, map, shellOnly);
 	case RoomType::apartment: return buildApartment(f, floor, height, 0.003, 200.0f, 200.0f, map, potentialBalcony, shellOnly);
 	case RoomType::store: return buildStore(f, height, map, shellOnly);
 	case RoomType::restaurant: return buildRestaurant(f, height, map, shellOnly, stream);

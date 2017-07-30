@@ -331,8 +331,6 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 
 	FVector normal = getNormal(p.points[1], p.points[0], p.buildLeft);
 	normal.Normalize();
-	//prevP1 = p.points[p.points.Num() - 2];
-	//prevP2 = p.points[p.points.Num() - 1] + width*normal;
 	FMaterialPolygon corner;
 	corner.type = PolygonType::concrete;
 	corner.points.Add(p.points[0] + width*normal);
@@ -344,10 +342,9 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 	FMaterialPolygon currentOuterLine;
 	currentOuterLine.type = PolygonType::concrete;
 	currentOuterLine.points.Add(prevP2);
-	currentOuterLine.points.Add(p.points[p.points.Num()-1] + width*normal);
-	currentOuterLine.points.Add(p.points[p.points.Num() - 1] + (width + endWidth)*normal);
+	currentOuterLine.points.Add(p.points[0] + width*normal);
+	currentOuterLine.points.Add(p.points[0] + (width + endWidth)*normal);
 	currentOuterLine.points.Add(prevP2 + (endWidth)*otherTan);
-	currentOuterLine.points.Add(prevP2);
 	currentOuterLine.offset(FVector(0, 0, endHeight));
 	pols.Append(getSidesOfPolygon(currentOuterLine, PolygonType::concrete, endHeight));
 	pols.Add(currentOuterLine);
@@ -369,12 +366,7 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 			polygon.points.Add(p.points[i] + offset);
 		}
 		if (!p.open) {
-			//polygon.points.RemoveAt(polygon.points.Num() - 1);
-			//polygon.points.Add(FVector(polygon.points[0]));
 			polygon.points.Add(FVector(polygon.points[1]));
-
-			//polygon.points.Add(FVector(polygon.points[2]));
-
 
 		}
 		else {
