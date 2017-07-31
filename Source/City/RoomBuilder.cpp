@@ -130,24 +130,24 @@ TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float
 }
 
 
-FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
-	FVector min;
-	FVector max;
-	FPolygon pol;
-
-	if (map.Contains(name))
-		map[name]->GetLocalBounds(min, max);
-	else
-		return pol;
-	//UE_LOG(LogTemp, Warning, TEXT("box: %s, %s"), *min.ToString(), *max.ToString());
-
-	pol.points.Add(rot.RotateVector(FVector(min.X, min.Y, 0.0f)) + pos);
-	pol.points.Add(rot.RotateVector(FVector(max.X, min.Y, 0.0f)) + pos);
-	pol.points.Add(rot.RotateVector(FVector(max.X, max.Y, 0.0f)) + pos);
-	pol.points.Add(rot.RotateVector(FVector(min.X, max.Y, 0.0f)) + pos);
-	//pol.points.Add(rot.RotateVector(FVector(min.X, min.Y, 0.0f)) + pos);
-	return pol;
-}
+//FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
+//	FVector min;
+//	FVector max;
+//	FPolygon pol;
+//
+//	if (map.Contains(name))
+//		map[name]->GetLocalBounds(min, max);
+//	else
+//		return pol;
+//	//UE_LOG(LogTemp, Warning, TEXT("box: %s, %s"), *min.ToString(), *max.ToString());
+//
+//	pol.points.Add(rot.RotateVector(FVector(min.X, min.Y, 0.0f)) + pos);
+//	pol.points.Add(rot.RotateVector(FVector(max.X, min.Y, 0.0f)) + pos);
+//	pol.points.Add(rot.RotateVector(FVector(max.X, max.Y, 0.0f)) + pos);
+//	pol.points.Add(rot.RotateVector(FVector(min.X, max.Y, 0.0f)) + pos);
+//	//pol.points.Add(rot.RotateVector(FVector(min.X, min.Y, 0.0f)) + pos);
+//	return pol;
+//}
 
 
 FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHeight, float doorWidth, FVector doorPos) {
