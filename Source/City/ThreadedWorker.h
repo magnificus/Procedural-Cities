@@ -1,8 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "HouseBuilder.h"
+
+// this is a multi threaded worker for generating the house data for single houses (that being the main bottleneck in the program) faster
 
 class AHouseBuilder;
 //~~~~~ Multi Threading ~~~

@@ -206,7 +206,7 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 	for (int i = 0; i < corners.points.Num(); i += 2) {
 		corners.toIgnore.Add(i);
 	}
-	for (int i = 0; i < corners.points.Num()+1; i++) {
+	for (int i = -1; i < corners.points.Num()+2; i+=2) {
 		corners.exteriorWalls.Add(i);
 		//corners.windows.Add(i);
 	}
@@ -671,7 +671,6 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
 		else {
 			procMeshActor = GetWorld()->SpawnActor<AProcMeshActor>(procMeshActorClass, FActorSpawnParameters());
 		}
-		//UE_LOG(LogTemp, Log, TEXT("procmeshactor assigned"));
 	}
 	if (!procMeshActor)
 		return;
@@ -694,8 +693,6 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
 
 				}
 			}
-			//fs.pol.reverse();
-			//otherSides.Add(fs);
 		}
 	}
 	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
@@ -716,7 +713,6 @@ FHouseInfo AHouseBuilder::getHouseInfoSimple() {
 		side.points.Add(f.points[i - 1]);
 		side.points.Add(f.points[i% f.points.Num()]);
 		side.points.Add(f.points[i% f.points.Num()] + FVector(0, 0, f.height*floorHeight));
-		//side.points.Add(f.points[i - 1] + FVector(0, 0, f.height*floorHeight));
 		side.reverse();
 		toReturn.roomInfo.pols.Add(side);
 	}

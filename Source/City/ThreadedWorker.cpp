@@ -4,13 +4,6 @@
 #include "ThreadedWorker.h"
 
 
-//ThreadedWorker::ThreadedWorker()
-//{
-//}
-//
-//ThreadedWorker::~ThreadedWorker()
-//{
-//}
 
 //***********************************************************
 //Thread Worker Starts as NULL, prior to being instanced
@@ -37,16 +30,12 @@ ThreadedWorker::~ThreadedWorker()
 //Init
 bool ThreadedWorker::Init()
 {
-	//Init the Data 
 	return true;
 }
 
 //Run
 uint32 ThreadedWorker::Run()
 {
-	//house
-	//Initial wait before starting
-	//FPlatformProcess::Sleep(0.03);
 
 	resultingInfo = houseBuilder->getHouseInfo(shellOnly);
 	done = true;

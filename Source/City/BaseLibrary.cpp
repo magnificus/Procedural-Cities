@@ -628,6 +628,8 @@ TArray<FMaterialPolygon> BaseLibrary::getSimplePlotPolygons(TArray<FSimplePlot> 
 	PolygonType type;
 	if (plots.Num() > 0)
 		type = plots[0].type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;
+	else
+		return toReturn;
 	for (FSimplePlot p : plots) {
 		FMaterialPolygon newP;
 		//p.pol.points.RemoveAt(p.pol.points.Num() - 1);
@@ -639,4 +641,108 @@ TArray<FMaterialPolygon> BaseLibrary::getSimplePlotPolygons(TArray<FSimplePlot> 
 
 	}
 	return toReturn;
+}
+
+
+
+
+FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, bool windowAllowed, int testsPerSide, FString string, FRotator offsetRot, FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool onWall) {
+	for (int i = 1; i < points.Num(); i++) {
+		if (windows.Contains(i) && !windowAllowed) {
+			continue;
+		}
+		int place = i;
+		for (int j = 0; j < testsPerSide; j++) {
+			FVector dir = getNormal(points[place], points[place - 1], true);
+			FVector tangent = points[place] - points[place - 1];
+			float sideLen = tangent.Size();
+			tangent.Normalize();
+			dir.Normalize();
+			FVector origin = points[place - 1] + tangent * (FMath::FRand() * (sideLen - 100.0f) + 100.0f);
+			FVector pos = origin + dir + offsetPos;// *verticalOffset + offsetPos;
+			FRotator rot = dir.Rotation() + offsetRot;
+			FPolygon pol = getPolygon(rot, pos, string, map);
+
+			// fit the polygon properly if possible
+			float lenToMove = 0;
+			for (int k = 1; k < pol.points.Num(); k++) {
+				FVector res = intersection(pol.points[k - 1], pol.points[k], points[place], points[place - 1]);
+				if (res.X != 0.0f) {
+					float currentToMove = FVector::Dist(pol.points[k - 1], pol.points[k]) - FVector::Dist(pol.points[k - 1], res);
+					lenToMove = std::max(lenToMove, currentToMove);
+					//pos += dir * (lenToMove+5);
+					//break;
+				}
+			}
+			if (lenToMove != 0) {
+				pos += (lenToMove + 30)*dir;
+				pol = getPolygon(rot, pos, string, map);
+			}
+			if (onWall) {
+				// at least two points has to be next to the wall
+				int count = 0;
+				for (int k = 1; k < pol.points.Num(); k++) {
+					FVector curr = NearestPointOnLine(points[i - 1], points[i] - points[i - 1], pol.points[k]);
+					float dist = FMath::Pow(curr.X - pol.points[k].X, 2) + FMath::Pow(curr.Y - pol.points[k].Y, 2);
+					if (dist < 1500) { // pick a number that seems reasonable
+						count++;
+					}
+				}
+				if (count < 2) {
+					continue;
+				}
+			}
+
+			if (!testCollision(pol, placed, 0, *this)) {
+				return FTransform(rot, pos, FVector(1.0f, 1.0f, 1.0f));
+			}
+		}
+
+
+	}
+	return FTransform(FRotator(0, 0, 0), FVector(0, 0, 0), FVector(0, 0, 0));
+}
+
+
+/**
+A simplified method for trying to find a wall in a room to place the mesh
+@param r2 the room to place mesh in
+@param placed other placed polygons, to check for collision
+@param meshes the array to which append the mesh if sucessful
+@param windowAllowed whether to allow the mesh to be placed in front of windows or not
+@param testsPerSide number of tries for placement on each side of the room
+@param string name of mesh in instanced mesh map
+@param offsetRot offset rotation for object
+@param offsetPos offset position for object'
+@param map the instanced mesh map for finding the bounding box for the object
+@param onwall whether the object is required to be strictly next to the wall (and not sticking out)
+@return whether the placement was successful or not
+
+*/
+bool FRoomPolygon::attemptPlace(TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, bool windowAllowed, int testsPerSide, FString string, FRotator offsetRot, FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool onWall) {
+	FTransform pos = attemptGetPosition(placed, meshes, windowAllowed, testsPerSide, string, offsetRot, offsetPos, map, onWall);
+	if (pos.GetLocation().X != 0.0f) {
+		FPolygon pol = getPolygon(pos.Rotator(), pos.GetLocation(), string, map);
+		placed.Add(pol);
+		meshes.Add(FMeshInfo{ string, pos });
+		return true;
+	}
+	return false;
+}
+
+FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
+	FVector min;
+	FVector max;
+	FPolygon pol;
+
+	if (map.Contains(name))
+		map[name]->GetLocalBounds(min, max);
+	else
+		return pol;
+
+	pol.points.Add(rot.RotateVector(FVector(min.X, min.Y, 0.0f)) + pos);
+	pol.points.Add(rot.RotateVector(FVector(max.X, min.Y, 0.0f)) + pos);
+	pol.points.Add(rot.RotateVector(FVector(max.X, max.Y, 0.0f)) + pos);
+	pol.points.Add(rot.RotateVector(FVector(min.X, max.Y, 0.0f)) + pos);
+	return pol;
 }

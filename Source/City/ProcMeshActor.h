@@ -60,8 +60,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	//bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URuntimeMeshComponent* mesh, UMaterialInterface *mat, int start, int end);
-
 	bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URuntimeMeshComponent* mesh, UMaterialInterface *mat);
 
 	bool isWorking = false;

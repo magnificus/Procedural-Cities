@@ -4,7 +4,6 @@
 
 #include "GameFramework/Actor.h"
 #include "MeshPolygonReference.h"
-#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "RoomBuilder.generated.h"
 
 

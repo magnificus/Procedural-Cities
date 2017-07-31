@@ -10,7 +10,10 @@
 #include "Components/SplineMeshComponent.h"
 #include "City.h"
 #include "Algo/Reverse.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
+
 #include "BaseLibrary.generated.h"
+
 /**
  * 
  */
@@ -74,13 +77,16 @@ float randFloat();
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
 TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width);
 TArray<FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &first);
-
-
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
+
+
+
 
 static FVector getNormal(FVector p1, FVector p2, bool left) {
 	return FRotator(0, left ? 90 : 270, 0).RotateVector(p2 - p1);
 }
+
+FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map);
 
 
 USTRUCT(BlueprintType)
@@ -127,7 +133,7 @@ struct FPolygon
 
 	// not totally random, favors placement closer to the sides a bit, but good enough
 	FVector getRandomPoint(bool left, float minDist) {
-		int place = FMath::RandRange(0, 0.99) % points.Num() + 1;
+		int place = FMath::RandRange(1, points.Num());
 		FVector tangent = (points[place%points.Num()] - points[place - 1]);
 		FVector beginPlace = FMath::FRand() * tangent + points[place - 1];
 		tangent.Normalize();
@@ -456,7 +462,6 @@ struct FSimplePlot {
 		case SimplePlotType::undecided:
 		case SimplePlotType::green: {
 			float treeAreaRatio = 0.01;
-			//UE_LOG(LogTemp, Warning, TEXT("TRYING WITH AREA: %f"), area);
 			for (int i = 0; i < treeAreaRatio*area; i++) {
 				FVector point = pol.getRandomPoint(true, 150);
 				if (point.X != 0.0f) {
@@ -465,7 +470,6 @@ struct FSimplePlot {
 					temp.points.Add(point + FVector(1, 1, 0));
 					temp.points.Add(point + FVector(0, 1, 0));
 					temp.points.Add(point + FVector(1, 0, 0));
-					//temp.points.Add(point);
 					bool collision = false;
 					for (FPolygon &p : blocking) {
 						if (testCollision(p, temp, 0)) {
@@ -485,7 +489,7 @@ struct FSimplePlot {
 			break;
 		}
 		case SimplePlotType::asphalt: {
-
+			//attemptPlace()
 			break;
 		}
 		}
@@ -509,7 +513,7 @@ struct FHouseInfo {
 
 
 static FVector middle(FVector p1, FVector p2) {
-	return (p2 + p1) / 2;// ((p2 - p1) * 0.5) + p1;
+	return (p2 + p1) / 2;
 }
 
 static TArray<int32> getIntList(int32 min, int32 max) {
@@ -555,18 +559,6 @@ struct FMetaPolygon : public FPolygon
 	void checkOrientation() {
 		if (!getIsClockwise())
 			reverse();
-		//for (int i = 1; i < points.Num(); i++) {
-		//	FVector tangent = points[i] - points[i-1];
-		//	tangent = FRotator(0, 90, 0).RotateVector(tangent);
-		//	tangent.Normalize();
-		//	FVector middle = (points[i] + points[i - 1]) / 2;
-		//	FVector center = getCenter();
-		//	totDiff += FVector::Dist(middle, center) - FVector::Dist(middle + tangent * 50, center);
-		//}
-
-		//if (totDiff < 0) {
-		//	reverse();
-		//}
 		buildLeft = true;
 
 	}
@@ -630,7 +622,6 @@ struct RoomBlueprint {
 	TArray<RoomSpecification> optional;
 };
 
-//static getOfficeSpecifications
 
 
 
@@ -771,19 +762,13 @@ struct FRoomPolygon : public FPolygon
 
 		for (int i = p.min + 1; i < p.max; i++) {
 			if (entrances.Contains(i)) {
-				//if (nonDuplicatingEntrances.Contains(i)) {
-				//	newP->nonDuplicatingEntrances.Add(newP->points.Num());
-				//}
-				//else {
+
 				if (specificEntrances.Contains(i))
 					newP->specificEntrances.Add(newP->points.Num(), specificEntrances[i]);
-				//}
 				newP->entrances.Add(newP->points.Num());
 
 				entrances.Remove(i);
 				specificEntrances.Remove(i);
-				//auto res = activeConnections.FindKey(i);
-				//FRoomPolygon *p1 = *res;
 				TArray<FRoomPolygon*> toRemove;
 				for (auto &pair : activeConnections) {
 					if (pair.Value == i) {
@@ -833,7 +818,7 @@ struct FRoomPolygon : public FPolygon
 		updateConnections(p.max, p.p2, newP, false, newP->points.Num());
 
 
-		if (entrances.Contains(p.max)){// && !nonDuplicatingEntrances.Contains(p.max)) {
+		if (entrances.Contains(p.max)){
 			FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max%points.Num()]);
 			if (isOnLine(entrancePoint, p.p2, points[p.max-1])) {
 				if (specificEntrances.Contains(p.max))
@@ -966,15 +951,11 @@ struct FRoomPolygon : public FPolygon
 		//if (p.max != points.Num())
 			points.EmplaceAt(p.min + 1, p.p2);
 
-		//toIgnore.Empty();
-		//if (!newP->getIsClockwise())
-		//	newP->reverse();
-		//if (!getIsClockwise())
-		//	reverse();
 		return newP;
 	}
 
-
+	FTransform attemptGetPosition(TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, bool windowAllowed, int testsPerSide, FString string, FRotator offsetRot, FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool onWall);
+	bool attemptPlace(TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, bool windowAllowed, int testsPerSide, FString string, FRotator offsetRot, FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool onWall);
 
 
 	TArray<FRoomPolygon*> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon*> &remaining, bool repeating, bool useMin) {

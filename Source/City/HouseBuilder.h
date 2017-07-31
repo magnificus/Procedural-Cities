@@ -59,7 +59,7 @@ public:
 		minHouseArea = minHouseArea_in;
 		makeInterestingAttempts = makeInterestingAttempts_in;
 		floorHeight = floorHeight_in;
-
+		generateRoofs = generateRoofs_in;
 	}
 
 
