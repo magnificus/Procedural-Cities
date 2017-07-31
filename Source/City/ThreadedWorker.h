@@ -16,8 +16,6 @@ class ThreadedWorker : public FRunnable
 
 	AHouseBuilder *houseBuilder;
 	FHousePolygon housePol;
-	float floorHeight;
-	float maxRoomArea;
 	bool shellOnly;
 	bool simple;
 	/** The PC */
@@ -27,7 +25,7 @@ class ThreadedWorker : public FRunnable
 	FThreadSafeCounter StopTaskCounter;
 
 private:
-	int32				PrimesFoundCount;
+
 public:
 	FHouseInfo resultingInfo;
 	bool fullReplacement;
@@ -42,7 +40,7 @@ public:
 	//~~~ Thread Core Functions ~~~
 
 	//Constructor / Destructor
-	ThreadedWorker(AHouseBuilder *house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement);
+	ThreadedWorker(AHouseBuilder *house, bool shellOnly, bool simple, bool fullReplacement);
 	virtual ~ThreadedWorker();
 
 	// Begin FRunnable interface.

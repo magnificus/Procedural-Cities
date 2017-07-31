@@ -18,21 +18,28 @@ class CITY_API AHouseBuilder : public AActor
 {
 	GENERATED_BODY()
 
-public:	
+	FHousePolygon f;
+	float floorHeight = 400.0;
+	float maxRoomArea = 500;
+	float maxHouseArea = 2000.0f;
+
+	float minHouseArea = 100.0f;
+
+	int makeInterestingAttempts = 4;
+
+	bool generateRoofs = true;
+
+
+public:
 	// Sets default values for this actor's properties
 	AHouseBuilder();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
-	TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map;
+		TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
-	TMap<FString, UStaticMesh*> staticMap;
+		TMap<FString, UStaticMesh*> staticMap;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
-	bool generateRoofs = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
-	int makeInterestingAttempts = 4;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = ProcMesh)
 		TSubclassOf<class AProcMeshActor> procMeshActorClass;
@@ -45,13 +52,25 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	FHouseInfo getHouseInfoSimple(FHousePolygon f, float floorHeight, float maxRoomArea);
+		void init(FHousePolygon f, float floorHeight, float maxRoomArea, float minHouseArea, int makeInterestingAttempts, bool generateRoofs){
+		this->f = f;
+		this->floorHeight = floorHeight;
+		this->maxRoomArea = maxRoomArea;
+		this->minHouseArea = minHouseArea;
+		this->makeInterestingAttempts = makeInterestingAttempts;
+		this->floorHeight = floorHeight;
+
+	}
+
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	FHouseInfo getHouseInfo(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly);
+	FHouseInfo getHouseInfoSimple();
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void buildHouse(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement);
+	FHouseInfo getHouseInfo(bool shellOnly);
+
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+	void buildHouse(bool shellOnly, bool simple, bool fullReplacement);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	void buildHouseFromInfo(FHouseInfo res, bool fullReplacement);

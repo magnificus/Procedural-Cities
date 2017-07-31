@@ -3,8 +3,6 @@
 #pragma once
 
 #include "City.h"
-#include "gpc.h"
-//#include "gpc.c"
 #include "ProcMeshActor.h"
 #include "polypartition.h"
 // Sets default values

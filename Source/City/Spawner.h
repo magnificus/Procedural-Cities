@@ -26,57 +26,76 @@ class CITY_API ASpawner : public AActor
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = General, meta = (AllowPrivateAccess = "true"))
-		float standardWidth;
+	// width of road mesh, you don't want to mess around with this if you're not changing the road model
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
+		float standardWidth; 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+	// the length of a single road section for the main road
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		FVector primaryStepLength;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+	// the length of a single road section for the secondary roads
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		FVector secondaryStepLength;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+	// the maximum amount of change allowed for the main road
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float changeIntensity;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+	// the maximum amount of change allowed for the secondary roads
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float secondaryChangeIntensity;
 
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = limits, meta = (AllowPrivateAccess = "true"))
+	// the total number of road segments placed
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		int32 length;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float maxAttachDistance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float mainRoadBranchChance;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float noiseScale = 0.00003;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float mainRoadAdvantage = 0.1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float mainRoadDetrimentRange = 1000000;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = roadPlacement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float mainRoadDetrimentImpact = 0.01;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = algorithm, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float collisionLeniency;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float maxMainRoadLength;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float maxSecondaryRoadLength;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = mesh, meta = (AllowPrivateAccess = "true"))
 		UStaticMesh* meshRoad;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = length, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = mesh, meta = (AllowPrivateAccess = "true"))
 		UStaticMesh* meshPolygon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
 	float maxHouseArea = 2000.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
-	float minHouseArea = 5.0f;
+	float minHouseArea = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
+		int32	minFloors = 3;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
+		int32	maxFloors = 15;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
+		float floorHeight = 400.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+		int makeInterestingAttempts = 4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+		bool generateRoofs = true;
 
 	UPROPERTY(EditAnywhere, Instanced, Category = "Path spline")
 		USplineMeshComponent* PathSpline;
@@ -92,10 +111,7 @@ class CITY_API ASpawner : public AActor
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
 		float	offsetSize = 500;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
-		int32	minFloors = 3;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
-		int32	maxFloors = 15;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = rooms, meta = (AllowPrivateAccess = "true"))
 		float maxRoomSize = 200;

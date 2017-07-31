@@ -15,5 +15,5 @@ ACityGameMode::ACityGameMode()
 	//}
 
 	// use our custom HUD class
-	HUDClass = ACityHUD::StaticClass();
+	//HUDClass = ACityHUD::StaticClass();
 }

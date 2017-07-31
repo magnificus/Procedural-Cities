@@ -2,7 +2,7 @@
 
 #include "City.h"
 #include "polypartition.h"
-#include "gpc.h"
+//#include "gpc.h"
 #include "RoomBuilder.h"
 
 

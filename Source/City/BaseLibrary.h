@@ -127,13 +127,13 @@ struct FPolygon
 		FVector tangent = (points[place%points.Num()] - points[place - 1]);
 		FVector beginPlace = FMath::FRand() * tangent + points[place - 1];
 		tangent.Normalize();
-		FVector normal = FRotator(0, left ? 90 : 270, 0).RotateVector(tangent);
+		FVector pointNormal = FRotator(0, left ? 90 : 270, 0).RotateVector(tangent);
 		int a;
 		FVector target;
-		getSplitCorrespondingPoint(place, beginPlace, tangent, normal, a, target);
+		getSplitCorrespondingPoint(place, beginPlace, tangent, pointNormal, a, target);
 		if (target.X == 0.0f || FVector::Dist(beginPlace, target) < minDist * 2)
 			return FVector(0, 0, 0);
-		FVector point = FMath::FRandRange(minDist, FVector::Dist(beginPlace, target) - minDist) * normal + beginPlace;
+		FVector point = FMath::FRandRange(minDist, FVector::Dist(beginPlace, target) - minDist) * pointNormal + beginPlace;
 		return point;
 	}
 
@@ -245,13 +245,13 @@ struct FPolygon
 		Algo::Reverse(points);
 	}
 
-	void getSplitCorrespondingPoint(int begin, FVector point, FVector tangent, FVector normal, int &split, FVector &p2) {
+	void getSplitCorrespondingPoint(int begin, FVector point, FVector tangent, FVector inNormal, int &split, FVector &p2) {
 		float closest = 10000000.0f;
 		for (int i = 1; i < points.Num()+1; i++) {
 			if (i == begin) {
 				continue;
 			}
-			FVector curr = intersection(point, point + normal * 100000, points[i - 1], points[i%points.Num()]);
+			FVector curr = intersection(point, point + inNormal * 100000, points[i - 1], points[i%points.Num()]);
 			if (curr.X != 0.0f && FVector::Dist(curr, point) < closest) {
 				closest = FVector::Dist(curr, point);
 				split = i;

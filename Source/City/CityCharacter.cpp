@@ -2,7 +2,6 @@
 
 #include "City.h"
 #include "CityCharacter.h"
-#include "CityProjectile.h"
 #include "Animation/AnimInstance.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/HeadMountedDisplayFunctionLibrary.h"

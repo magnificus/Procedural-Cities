@@ -227,9 +227,7 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	f2.type = PolygonType::floor;
 	f2.points = f.points;
 
-	//f2.points.RemoveAt(f2.points.Num() - 1);
 
-	//hole.points.RemoveAt(hole.points.Num() - 1);
 	f2.offset(FVector(0, 0, floorBegin));
 	hole.offset(FVector(0, 0, floorBegin));
 
@@ -242,8 +240,8 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 	//if (!f2.getIsClockwise())
 	//	f2.reverse();
 
-	if (hole.getIsClockwise())
-		hole.reverse();
+	//if (hole.getIsClockwise())
+	//	hole.reverse();
 	holes.Add(hole);
 	pols = ARoomBuilder::getSideWithHoles(f2, holes, PolygonType::floor);
 
@@ -251,39 +249,38 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 		pol.normal = FVector(0, 0, -1);
 
 	return pols;
-	FMaterialPolygon floorP;
-	floorP.points = f.points;
-	floorP.type = PolygonType::floor;
-	floorP.offset(FVector(0, 0, floorBegin));
-	//hole.offset(FVector(0, 0, floorBegin));
-	//hole.reverse();
-	int closestH = 0;
-	float closestHDist = FVector::Dist(hole[0], floorP[0]);;
-	for (int i = 1; i < hole.points.Num(); i++) {
-		float currDist = FVector::Dist(hole[i], floorP[0]);
-		if (currDist < closestHDist) {
-			closestHDist = currDist;
-			closestH = i;
-		}
-	}
-	floorP.normal = FVector(0, 0, -1);
-	floorP.points.Add(FVector(floorP[0]));
-	floorP.points.Add(hole[closestH]);
-	int start = closestH == hole.points.Num() - 1 ? 0 : closestH + 1;
-	for (int i = start; i != closestH; i++, i %= hole.points.Num()/*i = i == 0 ? hole.points.Num()-1 : i-1*/) {
-		floorP.points.Add(hole[i]);
-	}
-	//int start = closestH == 0 ? hole.points.Num()-1: closestH + 1;
-	//for (int i = start; i != closestH; i--) {
-	//	if (i < 0)
-	//		i = hole.points.Num() - 1;
+	//FMaterialPolygon floorP;
+	//floorP.points = f.points;
+	//floorP.type = PolygonType::floor;
+	//floorP.offset(FVector(0, 0, floorBegin));
+	////hole.reverse();
+	//int closestH = 0;
+	//float closestHDist = FVector::Dist(hole[0], floorP[0]);;
+	//for (int i = 1; i < hole.points.Num(); i++) {
+	//	float currDist = FVector::Dist(hole[i], floorP[0]);
+	//	if (currDist < closestHDist) {
+	//		closestHDist = currDist;
+	//		closestH = i;
+	//	}
+	//}
+	//floorP.normal = FVector(0, 0, -1);
+	//floorP.points.Add(FVector(floorP[0]));
+	//floorP.points.Add(hole[closestH]);
+	//int start = closestH == hole.points.Num() - 1 ? 0 : closestH + 1;
+	//for (int i = start; i != closestH; i++, i %= hole.points.Num()/*i = i == 0 ? hole.points.Num()-1 : i-1*/) {
 	//	floorP.points.Add(hole[i]);
 	//}
+	////int start = closestH == 0 ? hole.points.Num()-1: closestH + 1;
+	////for (int i = start; i != closestH; i--) {
+	////	if (i < 0)
+	////		i = hole.points.Num() - 1;
+	////	floorP.points.Add(hole[i]);
+	////}
 
-	floorP.points.Add(hole[closestH]);
+	//floorP.points.Add(hole[closestH]);
 
-	pols.Add(floorP);
-	 return pols;
+	//pols.Add(floorP);
+	// return pols;
 
 }
 
@@ -347,7 +344,7 @@ FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHol
 // this method changes the shape of the house to make it less cube-like, can be called several times for more "interesting" shapes 
 void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream) {
 	//return;
-	int place = stream.RandRange(1, f.points.Num()-1);
+	int place = stream.RandRange(1, f.points.Num());
 	if (stream.FRand() < 0.15f && f.points.Num() > 3) {
 		// move side inwards
 		float len = stream.FRandRange(400, 1500);
@@ -401,13 +398,13 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 	else if (stream.FRand() < 0.07f && FVector::Dist(f.points[place],f.points[place - 1]) > 3000) {
 		float depth = stream.FRandRange(500, 1500);
 		// turn a side inwards into a U
-		FVector tangent = f.points[place] - f.points[place - 1];
+		FVector tangent = f.points[place%f.points.Num()] - f.points[place - 1];
 		float lenSide = tangent.Size();
 		tangent.Normalize();
 		FVector dir = FRotator(0, f.buildLeft ? 90 : 270, 0).RotateVector(tangent);
 		FVector first = f.points[place - 1] + (tangent * (lenSide / 3));
 		FVector first2 = first + dir * depth;
-		FVector snd = f.points[place] - (tangent * (lenSide / 3)) ;
+		FVector snd = f.points[place%f.points.Num()] - (tangent * (lenSide / 3)) ;
 		FVector snd2 = snd + dir * depth;
 
 		FSimplePlot simplePlot;
@@ -617,7 +614,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	if (stream.FRand() < 0.3) {
 		// only shrink one side
 		float len = stream.FRandRange(400, 1500);
-		int place = stream.FRandRange(0, 0.99) * (f.points.Num() - 3) + 2;
+		int place = stream.RandRange(1, f.points.Num());
 		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,0));
 		if (res.points.Num() > 2) {
 			FMaterialPolygon pol;
@@ -630,7 +627,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		}
 	}
 	// shrink whole symmetrically
-	else if (stream.FRand() < 0.3) {
+	else if (stream.FRand() < 0.2) {
 		float len = stream.FRandRange(400, 1200);
 		FHousePolygon cp = FHousePolygon(f);
 		cp.symmetricShrink(len, cp.buildLeft);
@@ -653,10 +650,10 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	return toReturn;
 }
 
-void AHouseBuilder::buildHouse(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement) {
+void AHouseBuilder::buildHouse(bool shellOnly, bool simple, bool fullReplacement) {
 	housePol = f;
 
-	worker = new ThreadedWorker(this, f, floorHeight, maxRoomArea, shellOnly, simple, fullReplacement);
+	worker = new ThreadedWorker(this, shellOnly, simple, fullReplacement);
 	workerWorking = true;
 }
 
@@ -706,7 +703,7 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
 	}
 }
 
-FHouseInfo AHouseBuilder::getHouseInfoSimple(FHousePolygon f, float floorHeight, float maxRoomArea) {
+FHouseInfo AHouseBuilder::getHouseInfoSimple() {
 	FHouseInfo toReturn;
 	for (int i = 1; i < f.points.Num() + 1; i++) {
 		FMaterialPolygon side;
@@ -732,7 +729,7 @@ FHouseInfo AHouseBuilder::getHouseInfoSimple(FHousePolygon f, float floorHeight,
 }
 
 
-FHouseInfo AHouseBuilder::getHouseInfo(FHousePolygon f, float floorHeight, float maxRoomArea, bool shellOnly)
+FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 {
 	float dist = FVector::Dist(f[0], f[f.points.Num() - 1]);
 	UE_LOG(LogTemp, Warning, TEXT("dist between start and end: %f"), dist);

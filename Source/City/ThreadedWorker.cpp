@@ -18,11 +18,8 @@
 ThreadedWorker* ThreadedWorker::Runnable = NULL;
 //***********************************************************
 
-ThreadedWorker::ThreadedWorker(AHouseBuilder* house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement)
+ThreadedWorker::ThreadedWorker(AHouseBuilder* house, bool shellOnly, bool simple, bool fullReplacement)
 	: houseBuilder(house)
-	, housePol(p)
-	, floorHeight(floorHeight)
-	, maxRoomArea(maxRoomArea)
 	, shellOnly(shellOnly)
 	, simple(simple)
 	, fullReplacement(fullReplacement)
@@ -51,33 +48,7 @@ uint32 ThreadedWorker::Run()
 	//Initial wait before starting
 	//FPlatformProcess::Sleep(0.03);
 
-	resultingInfo = houseBuilder->getHouseInfo(housePol, floorHeight, maxRoomArea, shellOnly);
-	//While not told to stop this thread 
-	//		and not yet finished finding Prime Numbers
-	//while (StopTaskCounter.GetValue() == 0 && !IsFinished())
-	//{
-		//PrimeNumbers->Add(FindNextPrimeNumber());
-	//	PrimesFoundCount++;
-
-		//***************************************
-		//Show Incremental Results in Main Game Thread!
-
-		//	Please note you should not create, destroy, or modify UObjects here.
-		//	  Do those sort of things after all thread are completed.
-
-		//	  All calcs for making stuff can be done in the threads
-		//	     But the actual making/modifying of the UObjects should be done in main game thread.
-		//ThePC->ClientMessage(FString::FromInt(PrimeNumbers->Last()));
-		//***************************************
-
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		//prevent thread from using too many resources
-		//FPlatformProcess::Sleep(0.01);
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	//}
-
-	//Run ThreadedWorker::Shutdown() from the timer in Game Thread that is watching
-	//to see when ThreadedWorker::IsThreadFinished()
+	resultingInfo = houseBuilder->getHouseInfo(shellOnly);
 	done = true;
 	return 0;
 }
@@ -87,17 +58,6 @@ void ThreadedWorker::Stop()
 {
 	StopTaskCounter.Increment();
 }
-
-//ThreadedWorker* ThreadedWorker::JoyInit(AHouseBuilder* house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement)
-//{
-//	//Create new instance of thread if it does not exist
-//	//		and the platform supports multi threading!
-//	if (!Runnable && FPlatformProcess::SupportsMultithreading())
-//	{
-//		Runnable = new ThreadedWorker(house, p, floorHeight, maxRoomArea, shellOnly, simple, fullReplacement);
-//	}
-//	return Runnable;
-//}
 
 void ThreadedWorker::EnsureCompletion()
 {
