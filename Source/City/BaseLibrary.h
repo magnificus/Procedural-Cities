@@ -493,16 +493,18 @@ struct FSimplePlot {
 			break;
 		}
 		case SimplePlotType::asphalt: {
-
-			int place = FMath::RandRange(1, pol.points.Num());
-			int numToPlace = FMath::RandRange(1, 3);
-			FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
-			FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
-			float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
-			tan.Normalize();
-			for (int i = 0; i < numToPlace; i++) {
-				meshes.Add(FMeshInfo{ "trash_box", FTransform{tan.Rotation(), posStart + tan * i * 200}});
+			if (FMath::FRand() < 0.15) {
+				int place = FMath::RandRange(1, pol.points.Num());
+				int numToPlace = FMath::RandRange(1, 5);
+				FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
+				FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
+				float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
+				tan.Normalize();
+				for (int i = 0; i < numToPlace; i++) {
+					meshes.Add(FMeshInfo{ "trash_box", FTransform{ tan.Rotation() + FRotator(0,180, 0), posStart + tan * i * 200 } });
+				}
 			}
+
 			//attemptPlace()
 			break;
 		}
