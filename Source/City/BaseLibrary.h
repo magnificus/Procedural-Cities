@@ -78,6 +78,10 @@ TArray<FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &first);
 
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 
+static FVector getNormal(FVector p1, FVector p2, bool left) {
+	return FRotator(0, left ? 90 : 270, 0).RotateVector(p2 - p1);
+}
+
 
 USTRUCT(BlueprintType)
 struct FPolygon
@@ -202,12 +206,9 @@ struct FPolygon
 					for (int k = j; k < points.Num(); k++) {
 						newPoints.Add(points[k]);
 					}
-					//points.Add(FVector(0, 0, 0));
-					//points.Empty();
 					points = newPoints;
 					i = 0;
 					break;
-					//return;
 
 				}
 			}
@@ -220,7 +221,6 @@ struct FPolygon
 
 	// this method merges polygon sides when possible, and combines points
 	bool decreaseEdges() {
-		float dirDiffAllowed = 0.001f;
 		float distDiffAllowed = 40000;
 		bool hasModified = false;
 		for (int i = 1; i < points.Num(); i++) {
@@ -266,12 +266,6 @@ struct FPolygon
 		if (points.Num() < 3) {
 			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
 		}
-		//if (FVector::Dist(points[0], points[points.Num() - 1]) > 0.1f) {
-		//	UE_LOG(LogTemp, Warning, TEXT("END AND BEGINNING NOT CONNECTED IN SPLITSTRUCT, dist is: %f"), FVector::Dist(points[0], points[points.Num() - 1]));
-		//	FVector first = points[0];
-		//	points.Add(first);
-		//}
-
 		int longest = -1;
 
 		float longestLen = 0.0f;
@@ -298,18 +292,6 @@ struct FPolygon
 		tangent.Normalize();
 
 		getSplitCorrespondingPoint(longest, middle, curr, tangent, split, p2);
-		//float closest = 10000000.0f;
-		//for (int i = 1; i < points.Num(); i++) {
-		//	if (i == longest) {
-		//		continue;
-		//	}
-		//	curr = intersection(middle, middle + tangent * 100000, points[i - 1], points[i]);
-		//	if (curr.X != 0.0f && FVector::Dist(curr, middle) < closest) {
-		//		closest = FVector::Dist(curr, middle);
-		//		split = i;
-		//		p2 = curr;
-		//	}
-		//}
 
 		if (p2.X == 0.0f || p1.X == 0.0f) {
 			UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT, NO CORRESPONDING SPLIT POINT FOR POLYGON"));
@@ -335,55 +317,39 @@ struct FPolygon
 		return SplitStruct{ min, max, p1, p2 };
 	}
 
-	// combined lengths will be sqrt(2) longer than single lengths because otherwise the corners look bad
-	FVector getPointDirection(int place, bool left, bool wrapAround) {
-		//if (place == 0) {
-		//	FVector dir1 = points[1] - points[0];
-		//	dir1.Normalize();
-		//	dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
-		//	if (wrapAround) {
-		//		FVector dir2 = points[points.Num() - 1] - points[points.Num() - 2];
-		//		dir2.Normalize();
-		//		dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
-		//		FVector totDir = dir1 + dir2;
-		//		totDir.Normalize();
-		//		return totDir;
-		//	}
-		//	return dir1;
-		//}
-		//else if (place == points.Num() - 1) {
-		//	FVector dir2 = points[points.Num() - 1] - points[points.Num() - 2];
-		//	dir2.Normalize();
-		//	dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
-		//	if (wrapAround) {
-		//		FVector dir1 = points[1] - points[0];
-		//		dir1.Normalize();
-		//		dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
-		//		FVector totDir = dir1 + dir2;
-		//		totDir.Normalize();
-		//		return totDir;
-		//	}
-		//	return dir2;
-		//}
-		//else {
+	FVector getPointDirection(int place, bool left) {
 		int prev = place == 0 ? points.Num() - 1 : place - 1;
-			FVector dir1 = points[place] - points[prev];
-			FVector dir2 = points[(place + 1)%points.Num()] - points[place];
-			dir1.Normalize();
-			dir2.Normalize();
-			dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
-			dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
+		//FVector dir1 = points[place] - points[prev];
+		//FVector dir2 = points[(place + 1)%points.Num()] - points[place];
 
-			FVector totDir = dir1 + dir2;
-			totDir.Normalize();
-			return totDir;
-		//}
+		FVector dir1 = getNormal(points[place], points[prev], left);
+		FVector dir2 = getNormal(points[(place + 1) % points.Num()], points[place] , left);
+
+		dir1.Normalize();
+		dir2.Normalize();
+		//dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
+		//dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
+
+		FVector totDir = dir1 + dir2;
+		//totDir.Normalize();
+
+		totDir.X = std::min(totDir.X, 1.0f);
+		totDir.Y = std::min(totDir.Y, 1.0f);
+		totDir.Z = std::min(totDir.Z, 1.0f);
+		totDir.X = std::max(totDir.X, -1.0f);
+		totDir.Y = std::max(totDir.Y, -1.0f);
+		totDir.Z = std::max(totDir.Z, -1.0f);
+
+		//totDir.Normalize();
+		return totDir;
+	//}
 
 	}
 
 	void symmetricShrink(float length, bool left) {
 		for (int i = 0; i < points.Num(); i++) {
-			points[i] += getPointDirection(i, left, true)*length;
+			//float distToCenter = FVector::Dist(getCenter(), points[i]);
+			points[i] += getPointDirection(i, left)*length;
 		}
 	}
 
@@ -554,9 +520,6 @@ static TArray<int32> getIntList(int32 min, int32 max) {
 	return ints;
 }
 
-static FVector getNormal(FVector p1, FVector p2, bool left) {
-	return FRotator(0, left ? 90 : 270, 0).RotateVector(p2 - p1);
-}
 
 static void removeAllButOne(TSet<int32> &entries) {
 	TArray<int> numbers;

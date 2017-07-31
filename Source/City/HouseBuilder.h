@@ -52,13 +52,13 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-		void init(FHousePolygon f, float floorHeight, float maxRoomArea, float minHouseArea, int makeInterestingAttempts, bool generateRoofs){
-		this->f = f;
-		this->floorHeight = floorHeight;
-		this->maxRoomArea = maxRoomArea;
-		this->minHouseArea = minHouseArea;
-		this->makeInterestingAttempts = makeInterestingAttempts;
-		this->floorHeight = floorHeight;
+		void init(FHousePolygon f_in, float floorHeight_in, float maxRoomArea_in, float minHouseArea_in, int makeInterestingAttempts_in, bool generateRoofs_in){
+		f = f_in;
+		floorHeight = floorHeight_in;
+		maxRoomArea = maxRoomArea_in;
+		minHouseArea = minHouseArea_in;
+		makeInterestingAttempts = makeInterestingAttempts_in;
+		floorHeight = floorHeight_in;
 
 	}
 

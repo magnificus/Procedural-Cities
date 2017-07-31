@@ -288,7 +288,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 				// this means that next wall is exterior, move our front a little back
 				if (rp->exteriorWalls.Contains(next))
 					extraBack = -tan * 20;
-				extraBottom = 2;
+				//extraBottom = 2;
 			}
 
 

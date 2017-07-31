@@ -206,7 +206,7 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 	for (int i = 0; i < corners.points.Num(); i += 2) {
 		corners.toIgnore.Add(i);
 	}
-	for (int i = 1; i < corners.points.Num(); i+=2) {
+	for (int i = 0; i < corners.points.Num()+1; i++) {
 		corners.exteriorWalls.Add(i);
 		//corners.windows.Add(i);
 	}
@@ -312,7 +312,7 @@ FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f) {
 
 // return polygon covering the space that was removed from f
 FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHole, float len, FVector offset) {
-	int prev2 = place > 1 ? place - 2 : place - 3 + f.points.Num();
+	int prev2 = place > 1 ? place - 2 : place - 2 + f.points.Num();
 	FVector dir1 = f.points[prev2] - f.points[place - 1];
 	dir1.Normalize();
 	FVector dir2 = f.points[(place + 1)%f.points.Num()] - f.points[place%f.points.Num()];
@@ -328,14 +328,13 @@ FPolygon attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &centerHol
 	FVector toChange2To = f.points[place%f.points.Num()] + dir2 * len;
 	line.points.Add(toChange1To);
 	line.points.Add(toChange2To);
-	line.points.Add(toChange1To);
 	if (intersection(line, centerHole).X == 0.0f && intersection(line, f).X == 0.0f) {
 		f.points[place - 1] = toChange1To;
 		f.points[place%f.points.Num()] = toChange2To;
 		pol.points.Add(toChange1To);
 		pol.points.Add(toChange2To);
 		pol.offset(offset);
-		f.windows.Add(place%f.points.Num());
+		f.windows.Add(place);
 		return pol;
 	}
 	return FPolygon();
@@ -395,7 +394,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 
 
 	}
-	else if (stream.FRand() < 0.07f && FVector::Dist(f.points[place],f.points[place - 1]) > 3000) {
+	else if (stream.FRand() < 0.07f && FVector::Dist(f.points[place%f.points.Num()],f.points[place - 1]) > 3000) {
 		float depth = stream.FRandRange(500, 1500);
 		// turn a side inwards into a U
 		FVector tangent = f.points[place%f.points.Num()] - f.points[place - 1];
@@ -451,7 +450,6 @@ TArray<FMaterialPolygon> AHouseBuilder::getShaftSides(FPolygon hole, int openSid
 		side.points.Add(hole.points[i - 1] + FVector(0, 0, height));
 		side.points.Add(hole.points[i%hole.points.Num()] + FVector(0, 0, height));
 		side.points.Add(hole.points[i%hole.points.Num()]);
-		//side.points.Add(hole.points[i - 1]);
 		sides.Add(side);
 	}
 
@@ -468,7 +466,6 @@ void addStairInfo(FRoomInfo &info, float height, FPolygon &hole) {
 		side.points.Add(hole.points[i - 1] + FVector(0, 0, height));
 		side.points.Add(hole.points[i%hole.points.Num()] + FVector(0, 0, height));
 		side.points.Add(hole.points[i%hole.points.Num()]);
-		//side.points.Add(hole.points[i - 1]);
 		sides.Add(side);
 	}
 	info.pols.Append(sides);
@@ -490,7 +487,6 @@ void addFacade(FHousePolygon &f, FRoomInfo &toReturn, float beginHeight, float f
 		fac.points.Add(fac.points[0] + FVector(0, 0, facadeHeight));
 		fac.points.Add(f.points[i%f.points.Num()] + tangent2 * width + FVector(0, 0, beginHeight + facadeHeight));
 		fac.points.Add(fac.points[2] - FVector(0, 0, facadeHeight));
-		//fac.points.Add(f.points[i - 1] + tangent1 * width + FVector(0, 0, beginHeight));
 
 		toReturn.pols.Add(fac);
 
@@ -549,7 +545,6 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 				box.points.Add(p4);
 				box.points.Add(p3);
 				box.points.Add(p2);
-				//box.points.Add(p1);
 				count++;
 
 			} while (intersection(box, pol).X != 0.0f || !testCollision(box, pol, 0));
@@ -577,12 +572,14 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 		shape.offset(FVector(0, 0, offset));
 		//shape.reverse();
 		FVector center = shape.getCenter();
+		//shape.symmetricShrink(stream.FRandRange(500, 2000), false);
 		for (FVector &point : shape.points) {
 			FVector tangent = center - point;
 			//tangent.Normalize();
 			point += tangent / 4;
 		}
-		//shape.reverse();
+		if (!pol.getIsClockwise())
+			shape.reverse();
 		shape.normal = FVector(0, 0, -1);
 		for (int i = 1; i < shape.points.Num() + 1; i++) {
 			FMaterialPolygon side;
@@ -600,7 +597,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	}
 
 	for (FMaterialPolygon p : nextShapes)
-		addDetailOnPolygon(depth++, maxDepth, 1, p, toReturn, stream);
+		addDetailOnPolygon(++depth, maxDepth, 1, p, toReturn, stream);
 }
 
 void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream) {
@@ -615,11 +612,12 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		// only shrink one side
 		float len = stream.FRandRange(400, 1500);
 		int place = stream.RandRange(1, f.points.Num());
-		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,0));
+		float modifier = f.windows.Contains(place) && stream.FRand() < 0.1 ? -0.5 : 1;
+		FPolygon res = attemptMoveSideInwards(f, place, centerHole, len*modifier, FVector(0,0,0));
 		if (res.points.Num() > 2) {
 			FMaterialPolygon pol;
 			pol.points = res.points;
-			pol.offset(FVector(0, 0, 20));
+			pol.offset(FVector(0, 0, -15));
 			pol.type = PolygonType::roof;
 			pol.normal = FVector(0, 0, 1);
 			toReturn.Add(pol);
@@ -628,17 +626,23 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	}
 	// shrink whole symmetrically
 	else if (stream.FRand() < 0.2) {
-		float len = stream.FRandRange(400, 1200);
+		bool canGoOut = true;
+		float modifier = 1.0;
+		for (int i = 0; i < f.points.Num(); i++)
+			if (!f.windows.Contains(i))
+				canGoOut = false;
+
+		if (canGoOut && stream.FRand() < 0.1)
+			modifier = -0.5;
+		float len = stream.FRandRange(400, 1500);
 		FHousePolygon cp = FHousePolygon(f);
-		cp.symmetricShrink(len, cp.buildLeft);
+		cp.symmetricShrink(len*modifier, false);
 		if (intersection(cp, centerHole).X == 0.0f && !selfIntersection(cp)) {
-			//f.points.RemoveAt(f.points.Num() - 1);
-			//f.reverse();
 			TArray<FPolygon> holes;
 			holes.Add(cp);
 			toReturn = ARoomBuilder::getSideWithHoles(f, holes, PolygonType::roof);
 			for (auto &a : toReturn) {
-				a.offset(FVector(0, 0, 20));
+				a.offset(FVector(0, 0, -15));
 				a.normal = FVector(0, 0, 1);
 			}
 			f = cp;
