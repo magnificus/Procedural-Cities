@@ -634,7 +634,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 
 		if (canGoOut && stream.FRand() < 0.1)
 			modifier = -0.5;
-		float len = stream.FRandRange(400, 1500);
+		float len = stream.FRandRange(0.1, 0.3);
 		FHousePolygon cp = FHousePolygon(f);
 		cp.symmetricShrink(len*modifier, false);
 		if (intersection(cp, centerHole).X == 0.0f && !selfIntersection(cp)) {

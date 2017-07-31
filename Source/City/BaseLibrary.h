@@ -89,6 +89,10 @@ static FVector getNormal(FVector p1, FVector p2, bool left) {
 FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map);
 
 
+static FVector middle(FVector p1, FVector p2) {
+	return (p2 + p1) / 2;
+}
+
 USTRUCT(BlueprintType)
 struct FPolygon
 {
@@ -337,14 +341,14 @@ struct FPolygon
 		//dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
 
 		FVector totDir = dir1 + dir2;
-		//totDir.Normalize();
+		totDir.Normalize();
 
-		totDir.X = std::min(totDir.X, 1.0f);
-		totDir.Y = std::min(totDir.Y, 1.0f);
-		totDir.Z = std::min(totDir.Z, 1.0f);
-		totDir.X = std::max(totDir.X, -1.0f);
-		totDir.Y = std::max(totDir.Y, -1.0f);
-		totDir.Z = std::max(totDir.Z, -1.0f);
+		//totDir.X = std::min(totDir.X, 1.0f);
+		//totDir.Y = std::min(totDir.Y, 1.0f);
+		//totDir.Z = std::min(totDir.Z, 1.0f);
+		//totDir.X = std::max(totDir.X, -1.0f);
+		//totDir.Y = std::max(totDir.Y, -1.0f);
+		//totDir.Z = std::max(totDir.Z, -1.0f);
 
 		//totDir.Normalize();
 		return totDir;
@@ -354,8 +358,8 @@ struct FPolygon
 
 	void symmetricShrink(float length, bool left) {
 		for (int i = 0; i < points.Num(); i++) {
-			//float distToCenter = FVector::Dist(getCenter(), points[i]);
-			points[i] += getPointDirection(i, left)*length;
+			float distToCenter = FVector::Dist(getCenter(), points[i]);
+			points[i] += getPointDirection(i, left)*length*distToCenter;
 		}
 	}
 
@@ -489,6 +493,16 @@ struct FSimplePlot {
 			break;
 		}
 		case SimplePlotType::asphalt: {
+
+			int place = FMath::RandRange(1, pol.points.Num());
+			int numToPlace = FMath::RandRange(1, 3);
+			FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
+			FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
+			float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
+			tan.Normalize();
+			for (int i = 0; i < numToPlace; i++) {
+				meshes.Add(FMeshInfo{ "trash_box", FTransform{tan.Rotation(), posStart + tan * i * 200}});
+			}
 			//attemptPlace()
 			break;
 		}
@@ -512,9 +526,6 @@ struct FHouseInfo {
 
 
 
-static FVector middle(FVector p1, FVector p2) {
-	return (p2 + p1) / 2;
-}
 
 static TArray<int32> getIntList(int32 min, int32 max) {
 	TArray<int32> ints;

@@ -130,26 +130,6 @@ TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float
 }
 
 
-//FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
-//	FVector min;
-//	FVector max;
-//	FPolygon pol;
-//
-//	if (map.Contains(name))
-//		map[name]->GetLocalBounds(min, max);
-//	else
-//		return pol;
-//	//UE_LOG(LogTemp, Warning, TEXT("box: %s, %s"), *min.ToString(), *max.ToString());
-//
-//	pol.points.Add(rot.RotateVector(FVector(min.X, min.Y, 0.0f)) + pos);
-//	pol.points.Add(rot.RotateVector(FVector(max.X, min.Y, 0.0f)) + pos);
-//	pol.points.Add(rot.RotateVector(FVector(max.X, max.Y, 0.0f)) + pos);
-//	pol.points.Add(rot.RotateVector(FVector(min.X, max.Y, 0.0f)) + pos);
-//	//pol.points.Add(rot.RotateVector(FVector(min.X, min.Y, 0.0f)) + pos);
-//	return pol;
-//}
-
-
 FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHeight, float doorWidth, FVector doorPos) {
 	FVector side = p2 - p1;
 	float sideLen = side.Size();
@@ -160,8 +140,6 @@ FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHe
 	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 2));// + FVector(0, 0, 100));
 	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 2));// + FVector(0, 0, 100));
 	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, doorHeight));
-	//doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
-	//doorPolygon.reverse();
 	return doorPolygon;
 }
 
@@ -183,8 +161,7 @@ TArray<FMaterialPolygon> getCrossWindow(FPolygon p, FVector center, float frameW
 		frame.points.Add(middle(p.points[j - 1], p.points[j]) + tangent1 * frameWidth/2);
 		frame.points.Add(middle(p.points[j - 1], p.points[j]) + tangent1 * frameWidth/2 + tangent2*tan2Len);
 		frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent1 * frameWidth / 2 + tangent2*tan2Len);
-		//frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent1 * frameWidth / 2);
-		FVector frameDir = frame.getDirection();
+ 		FVector frameDir = frame.getDirection();
 		frame.offset(frameDir*(frameDepth / 2 - 20));
 		toReturn.Add(frame);
 	}
@@ -208,7 +185,6 @@ TArray<FMaterialPolygon> getRectangularWindow(FPolygon p, FVector center, float 
 		frame.points.Add(p.points[j]);
 		frame.points.Add(p.points[j] + tangent2 * frameWidth);
 		frame.points.Add(p.points[j - 1] + tangent1 * frameWidth);
-		//frame.points.Add(p.points[j - 1]);
 		FVector frameDir = frame.getDirection();
 		frame.offset(frameDir*(frameDepth / 2 - 20));
 		toReturn.Add(frame);
@@ -277,8 +253,8 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 			FVector extraBack = FVector(0, 0, 0);
 			FVector extraFront = FVector(0, 0, 0);
 
-			int prev = i > 1 ? i - 1 : rp->points.Num() - 1;
-			int next = i < rp->points.Num() - 1 ? i + 1 : 1;
+			int prev = i > 1 ? i - 1 : rp->points.Num();
+			int next = i < rp->points.Num()? i + 1 : 1;
 			float extraBottom = 0;
 			if (!rp->exteriorWalls.Contains(i)) {
 				// this means that prev wall was exterior, move our back a little forward
@@ -490,7 +466,6 @@ void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &me
 			FPolygon pol = getPolygon(normal.Rotation(), origin + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
 			// make sure it's fully inside the room
 			if (!testCollision(pol, placed, 0, *r2)){// && intersection(pol, *r2).X == 0.0f) {
-				//placed.Add(pol);
 				toPlace.Add(pol);
 				meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),origin + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)), true});
 			}
@@ -535,18 +510,18 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	TArray<FPolygon> placed;
 	placed = getBlockingVolumes(r2, 200, 200);
 	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_cubicle", 0.0023, 0.0022, map);
-	//meshes.RemoveAt(meshes.Num() / 3, meshes.Num() / 3);
 	TArray<FMeshInfo> finalMeshes;
 	for (FMeshInfo mesh : meshes) {
 		mesh.transform.SetLocation(mesh.transform.GetLocation() + FVector(0, 0, 15));
 		finalMeshes.Add(mesh);
-		FVector compUserOffset = FVector(90, 0, 120);
+		FVector compUserOffset = FVector(90, 0, 115);
 		FRotator compUserRot = FRotator(0, -90, 0);
-		FVector compBoxOffset = FVector(90, 100, -35);
+		FVector compBoxOffset = FVector(90, 100, -45);
 		finalMeshes.Add(FMeshInfo{ "comp_user", FTransform{mesh.transform.Rotator() + compUserRot, mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compUserOffset) } });
 		finalMeshes.Add(FMeshInfo{ "comp_box", FTransform{ mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compBoxOffset) } });
 	}
-	r2->attemptPlace(placed, finalMeshes, true, 1, "trash_can", FRotator(90, 0, 0), FVector(50, 20, 0), map, false);
+	r2->attemptPlace(placed, finalMeshes, true, 1, "trash_can", FRotator(0, 0, 0), FVector(0, 0, 7), map, false);
+	//finalMeshes.Add(FMeshInfo{ "trash_can", FTransform{FRotator(0,0,0), r2->getCenter() + FVector(0,0,20)} });
 	return finalMeshes;
 }
 

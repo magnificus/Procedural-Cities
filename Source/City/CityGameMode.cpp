@@ -2,7 +2,7 @@
 
 #include "City.h"
 #include "CityGameMode.h"
-#include "CityHUD.h"
+//#include "CityHUD.h"
 #include "CityCharacter.h"
 
 ACityGameMode::ACityGameMode()
