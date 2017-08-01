@@ -445,7 +445,7 @@ void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &me
 	//if (res.min == 0) {
 	//	return;
 	//}
-	for (int k = 1; k < r2->points.Num() / 2; k++) {
+	for (int k = 1; k < r2->points.Num(); k++) {
 		FVector origin = middle(r2->points[k], r2->points[k - 1]);
 		FVector tangent = r2->points[k] - r2->points[k - 1];
 		tangent.Normalize();
