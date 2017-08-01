@@ -144,7 +144,7 @@ struct FPolygon
 		FVector pointNormal = FRotator(0, left ? 90 : 270, 0).RotateVector(tangent);
 		int a;
 		FVector target;
-		getSplitCorrespondingPoint(place, beginPlace, tangent, pointNormal, a, target);
+		getSplitCorrespondingPoint(place, beginPlace, pointNormal, a, target);
 		if (target.X == 0.0f || FVector::Dist(beginPlace, target) < minDist * 2)
 			return FVector(0, 0, 0);
 		FVector point = FMath::FRandRange(minDist, FVector::Dist(beginPlace, target) - minDist) * pointNormal + beginPlace;
@@ -255,7 +255,7 @@ struct FPolygon
 		Algo::Reverse(points);
 	}
 
-	void getSplitCorrespondingPoint(int begin, FVector point, FVector tangent, FVector inNormal, int &split, FVector &p2) {
+	void getSplitCorrespondingPoint(int begin, FVector point, FVector inNormal, int &split, FVector &p2) {
 		float closest = 10000000.0f;
 		for (int i = 1; i < points.Num()+1; i++) {
 			if (i == begin) {
@@ -301,7 +301,7 @@ struct FPolygon
 		FVector tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(curr);
 		tangent.Normalize();
 
-		getSplitCorrespondingPoint(longest, middle, curr, tangent, split, p2);
+		getSplitCorrespondingPoint(longest, middle, tangent, split, p2);
 
 		if (p2.X == 0.0f || p1.X == 0.0f) {
 			UE_LOG(LogTemp, Warning, TEXT("UNABLE TO SPLIT, NO CORRESPONDING SPLIT POINT FOR POLYGON"));
@@ -975,80 +975,157 @@ struct FRoomPolygon : public FPolygon
 
 	TArray<FRoomPolygon*> fitSpecificationOnRooms(TArray<RoomSpecification> specs, TArray<FRoomPolygon*> &remaining, bool repeating, bool useMin) {
 		TArray<FRoomPolygon*> toReturn;
-		float area;
-		float minPctSplit = 0.25f;
+		float minPctSplit = 0.35f;
+
+		//std::priority_queue<FRoomPolygon*, std::deque<FRoomPolygon*>, roomComparator> queue;
+		//for (FRoomPolygon *p : remaining)
+		//	queue.push(p);
+		if (remaining.Num() == 0)
+			return toReturn;
 		bool couldPlace = false;
-		int c1 = 0;
+		bool anyRoomPlaced = false;
 		do {
-			couldPlace = false;
-			for (RoomSpecification r : specs) {
-				bool found = false;
-				bool smaller = false;
-				float maxAreaAllowed = useMin ? (r.maxArea + r.minArea) / 2 : r.maxArea;
+			anyRoomPlaced = false;
+			for (RoomSpecification spec : specs) {
+				if (remaining.Num() == 0)
+					return toReturn;
+				couldPlace = false;
+				bool specSmallerThanRooms = true;
+				float maxAreaAllowed = useMin ? (spec.maxArea + spec.minArea) / 2 : spec.maxArea;
 				for (int i = 0; i < remaining.Num(); i++) {
-					FRoomPolygon *p = remaining[i];
-					area = p->getArea();
-					smaller = smaller || (area > maxAreaAllowed);
-					if (area <= maxAreaAllowed && area >= r.minArea){// && p->type != SubRoomType::hallway) {
-						// found fitting room
-						p->type = r.type;
-						toReturn.Add(p);
+					FRoomPolygon *r = remaining[i];
+					float area = r->getArea();
+					specSmallerThanRooms = specSmallerThanRooms && area > maxAreaAllowed;
+					if (area < maxAreaAllowed && area > spec.minArea) {
+						// can place here
+						r->type = spec.type;
+						toReturn.Add(r);
 						remaining.RemoveAt(i);
-						found = true;
 						couldPlace = true;
+						anyRoomPlaced = true;
 						break;
 					}
 				}
-				// could not find a fitting room since all remaining are too big, cut them down to size
-				if (!found && smaller) {
+				if (!couldPlace && specSmallerThanRooms) {
+					// could not find a fitting room since all remaining are too big, cut them down to size
 					FRoomPolygon *target = remaining[0];
 					int targetNum = 0;
 					float scale = 0.0f;
-					for (int i = 0; i < remaining.Num(); i++) {
+					for (int i = 1; i < remaining.Num(); i++) {
 						target = remaining[i];
 						targetNum = i;
-						scale = r.minArea / target->getArea();
+						scale = spec.minArea / target->getArea();
 						if (scale < 1.0f) {
+							//found room bigger than my requirement
 							break;
 						}
 					}
 					remaining.RemoveAt(targetNum);
-					int count = 0;
-					while (scale < minPctSplit && count++ < 5) {
-						FRoomPolygon* newP = target->splitAlongMax(0.6, true);
+
+					// keep cutting it down until small enough to place my room
+					while (scale < minPctSplit) {
+						FRoomPolygon* newP = target->splitAlongMax(0.5, true);
 						if (newP == nullptr) {
 							break;
 						}
 						remaining.EmplaceAt(0, newP);
-						scale = r.minArea / target->getArea();
-
+						scale = spec.minArea / target->getArea();
 					}
-					if (target->getArea() <= maxAreaAllowed && target->getArea() >= r.minArea){// && target->type != SubRoomType::hallway) {
-						target->type = r.type;
-						//remaining.RemoveAt(targetNum);
+					if (target->getArea() <= maxAreaAllowed && target->getArea() >= spec.minArea) {
+						target->type = spec.type;
 						toReturn.Add(target);
+						anyRoomPlaced = true;
 						couldPlace = true;
-
 					}
-					else if (scale > minPctSplit) {
-						FRoomPolygon* newP = target->splitAlongMax(r.minArea / target->getArea(), true);
+					else /*if (scale > minPctSplit) */ {
+						FRoomPolygon* newP = target->splitAlongMax(spec.minArea / target->getArea(), true);
 						if (newP == nullptr) {
 							couldPlace = false;
 						}
 						else {
-							newP->type = r.type;
+							newP->type = spec.type;
 							toReturn.Add(newP);
+							anyRoomPlaced = true;
 							couldPlace = true;
 						}
 						remaining.EmplaceAt(0, target);
 					}
-					else {
-						remaining.EmplaceAt(0, target);
-					}
-						
 				}
 			}
-		} while (repeating && couldPlace && c1++ < 5);
+		} while (repeating && anyRoomPlaced);
+
+
+
+		//do {
+		//	couldPlace = false;
+		//	for (RoomSpecification r : specs) {
+		//		bool found = false;
+		//		bool smaller = false;
+		//		float maxAreaAllowed = useMin ? (r.maxArea + r.minArea) / 2 : r.maxArea;
+		//		for (int i = 0; i < remaining.Num(); i++) {
+		//			FRoomPolygon *p = remaining[i];
+		//			area = p->getArea();
+		//			smaller = smaller || (area > maxAreaAllowed);
+		//			if (area <= maxAreaAllowed && area >= r.minArea){// && p->type != SubRoomType::hallway) {
+		//				// found fitting room
+		//				p->type = r.type;
+		//				toReturn.Add(p);
+		//				remaining.RemoveAt(i);
+		//				found = true;
+		//				couldPlace = true;
+		//				break;
+		//			}
+		//		}
+		//		// could not find a fitting room since all remaining are too big, cut them down to size
+		//		if (!found && smaller) {
+		//			FRoomPolygon *target = remaining[0];
+		//			int targetNum = 0;
+		//			float scale = 0.0f;
+		//			for (int i = 0; i < remaining.Num(); i++) {
+		//				target = remaining[i];
+		//				targetNum = i;
+		//				scale = r.minArea / target->getArea();
+		//				if (scale < 1.0f) {
+		//					break;
+		//				}
+		//			}
+		//			remaining.RemoveAt(targetNum);
+		//			int count = 0;
+		//			while (scale < minPctSplit && count++ < 5) {
+		//				FRoomPolygon* newP = target->splitAlongMax(0.6, true);
+		//				if (newP == nullptr) {
+		//					break;
+		//				}
+		//				remaining.EmplaceAt(0, newP);
+		//				scale = r.minArea / target->getArea();
+
+		//			}
+		//			if (target->getArea() <= maxAreaAllowed && target->getArea() >= r.minArea){// && target->type != SubRoomType::hallway) {
+		//				target->type = r.type;
+		//				//remaining.RemoveAt(targetNum);
+		//				toReturn.Add(target);
+		//				couldPlace = true;
+
+		//			}
+		//			else if (scale > minPctSplit) {
+		//				FRoomPolygon* newP = target->splitAlongMax(r.minArea / target->getArea(), true);
+		//				if (newP == nullptr) {
+		//					couldPlace = false;
+		//				}
+		//				else {
+		//					newP->type = r.type;
+		//					toReturn.Add(newP);
+		//					couldPlace = true;
+		//				}
+		//				remaining.EmplaceAt(0, target);
+		//			}
+		//			else {
+		//				remaining.EmplaceAt(0, target);
+		//			}
+		//				
+		//		}
+		//	}
+		//} while (repeating && couldPlace && c1++ < 5);
 
 		return toReturn;
 
@@ -1064,13 +1141,12 @@ struct FRoomPolygon : public FPolygon
 	}
 
 
-	// post placement part of algorithm, makes sure the required rooms are there by any means neccesary
+	// post placement part of algorithm, makes sure the required rooms are there and modifies existing rooms
 	void postFit(TArray<FRoomPolygon*> &rooms, TArray<RoomSpecification> neededRooms, TArray<RoomSpecification> optionalRooms){
 
 		if (neededRooms.Num() > rooms.Num()) {
 			return;
 		}
-		//TMap<RoomSpecification, int32> required;
 		TMap<SubRoomType, int32> need;
 		for (RoomSpecification r : neededRooms) {
 			if (need.Contains(r.type))
@@ -1444,6 +1520,12 @@ struct logicRoadSegment {
 struct roadComparator {
 	bool operator() (logicRoadSegment* arg1, logicRoadSegment* arg2) {
 		return arg1->time > arg2->time;
+	}
+};
+
+struct roomComparator {
+	bool operator() (FRoomPolygon *p1, FRoomPolygon *p2) {
+		return p1->getArea() > p2->getArea();
 	}
 };
 

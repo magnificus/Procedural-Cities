@@ -440,37 +440,45 @@ bool attemptPlaceOnTop(FPolygon &p, TArray<FPolygon> &placed, TArray<FMeshInfo> 
 
 
 void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
-	int place = 1;
 	// get a line through the room
-	SplitStruct res = r2->getSplitProposal(false, 0.5);
-	if (res.min == 0) {
-		return;
-	}
-	FVector origin = r2->points[res.min - 1];
-	FVector normal = res.p2 - res.p1;
-	normal.Normalize();
-	FVector tangent = r2->points[res.min] - r2->points[res.min - 1];
-	tangent.Normalize(); 
-	float width = FVector::Dist(r2->points[res.min], r2->points[res.min - 1]);
-	float height = FVector::Dist(res.p1, res.p2);
+	//SplitStruct res = r2->getSplitProposal(false, 0.5);
+	//if (res.min == 0) {
+	//	return;
+	//}
+	for (int k = 1; k < r2->points.Num() / 2; k++) {
+		FVector origin = middle(r2->points[k], r2->points[k - 1]);
+		FVector tangent = r2->points[k] - r2->points[k - 1];
+		tangent.Normalize();
+		FVector normal = FRotator(0, 270, 0).RotateVector(tangent);
+		int target;
+		FVector targetP;
+		r2->getSplitCorrespondingPoint(k, origin, normal, target, targetP);
+		float width = FVector::Dist(r2->points[k], r2->points[k - 1]);
+		float height = FVector::Dist(origin, targetP);
 
-	int numWidth = FMath::FloorToInt(width * horDens) + 1;
-	int numHeight = FMath::FloorToInt(height * vertDens) + 1;
+		int numWidth = FMath::FloorToInt(width * horDens) + 1;
+		int numHeight = FMath::FloorToInt(height * vertDens) + 1;
 
-	float intervalWidth = width / numWidth;
-	float intervalHeight = height / numHeight;
-	TArray<FPolygon> toPlace;
-	for (int i = 1; i < numWidth; i++) {
-		for (int j = 1; j < numHeight; j++) {
-			FPolygon pol = getPolygon(normal.Rotation(), origin + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
-			// make sure it's fully inside the room
-			if (!testCollision(pol, placed, 0, *r2)){// && intersection(pol, *r2).X == 0.0f) {
-				toPlace.Add(pol);
-				meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),origin + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)), true});
+		float intervalWidth = width / numWidth;
+		float intervalHeight = height / numHeight;
+		TArray<FPolygon> toPlace;
+		for (int i = 1; i < numWidth; i++) {
+			for (int j = 1; j < numHeight; j++) {
+				FPolygon pol = getPolygon(normal.Rotation(), origin + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
+				// make sure it's fully inside the room
+				if (!testCollision(pol, placed, 0, *r2)) {// && intersection(pol, *r2).X == 0.0f) {
+					toPlace.Add(pol);
+					meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)), true });
+				}
 			}
 		}
+		if (toPlace.Num() > 0) {
+			placed.Append(toPlace);
+			return;
+		}
 	}
-	placed.Append(toPlace);
+	
+
 	//FVector start =
 }
 
@@ -508,7 +516,8 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	TArray<FMeshInfo> meshes;
 	TArray<FPolygon> placed;
 	placed = getBlockingVolumes(r2, 200, 200);
-	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_cubicle", 0.0023, 0.0022, map);
+	// first is height, second is width
+	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_cubicle", 0.002, 0.002, map);
 	TArray<FMeshInfo> finalMeshes;
 	for (FMeshInfo mesh : meshes) {
 		mesh.transform.SetLocation(mesh.transform.GetLocation() + FVector(0, 0, 15));
@@ -717,8 +726,8 @@ static TArray<FMeshInfo> getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 	//placed.Add(r2);
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	r2->attemptPlace(placed, meshes, true, 2, "bed", FRotator(0, 270, 0), FVector(0, 50, 60), map, false);
-	r2->attemptPlace(placed, meshes, true, 1, "small_table", FRotator(0, 0, 0), FVector(0, 10, -50), map, false);
+	r2->attemptPlace(placed, meshes, true, 2, "bed", FRotator(0, 270, 0), FVector(0, 0, 60), map, false);
+	r2->attemptPlace(placed, meshes, true, 1, "small_table", FRotator(0, 0, 0), FVector(0, 20, -50), map, false);
 	r2->attemptPlace(placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	r2->attemptPlace(placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 
@@ -820,7 +829,6 @@ FRoomInfo placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalIn
 	floor.points.Add(end);
 	floor.points.Add(endOut);
 	floor.points.Add(startOut);
-	floor.points.Add(start);
 
 	r.pols.Add(floor);
 
