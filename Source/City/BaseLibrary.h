@@ -182,9 +182,9 @@ struct FPolygon
 		bool changed = true;
 		while (changed) {
 			changed = decreaseEdges();
-			for (int i = 1; i < points.Num() - 1; i++) {
+			for (int i = 1; i < points.Num(); i++) {
 				FVector tan1 = points[i] - points[i - 1];
-				FVector tan2 = points[i + 1] - points[i];
+				FVector tan2 = points[(i + 1)%points.Num()] - points[i];
 				tan1.Normalize();
 				tan2.Normalize();
 				float dist = FVector::DotProduct(tan1, tan2);
@@ -233,9 +233,9 @@ struct FPolygon
 	bool decreaseEdges() {
 		float distDiffAllowed = 40000;
 		bool hasModified = false;
-		for (int i = 1; i < points.Num(); i++) {
-			if (FVector::DistSquared(points[i - 1], points[i]) < distDiffAllowed) {
-				points.RemoveAt(i);
+		for (int i = 1; i < points.Num() + 1; i++) {
+			if (FVector::DistSquared(points[i - 1], points[i%points.Num()]) < distDiffAllowed) {
+				points.RemoveAt(i%points.Num());
 				hasModified = true;
 				i--;
 			}
@@ -501,7 +501,7 @@ struct FSimplePlot {
 					FPolygon toTest = getPolygon(FRotator(0, 180, 0), loc, name, map); //getTinyPolygon(loc);
 					if (!testCollision(toTest, blocking, 0, pol)) {
 						FRotator finRot = tan.Rotation() + FRotator(0, 180, 0);
-						meshes.Add(FMeshInfo{ name, FTransform{ tan.Rotation() + FRotator(0,180, 0), loc + finRot.RotateVector(FVector(0,80,0))} });
+						meshes.Add(FMeshInfo{ name, FTransform{ tan.Rotation() + FRotator(0,180, 0), loc + finRot.RotateVector(FVector(120,0,0))} });
 					}
 
 				}
@@ -633,8 +633,13 @@ struct RoomSpecification {
 };
 
 struct RoomBlueprint {
+	RoomBlueprint(const TArray<RoomSpecification> &needed, const TArray<RoomSpecification> &optional) : needed(needed), optional(optional), useHallway(false) {}
+	RoomBlueprint(const TArray<RoomSpecification> &needed, const TArray<RoomSpecification> &optional, bool useHallway) : needed(needed), optional(optional), useHallway(useHallway) {}
+
 	TArray<RoomSpecification> needed;
 	TArray<RoomSpecification> optional;
+	bool useHallway;
+
 };
 
 
@@ -684,7 +689,7 @@ struct FRoomPolygon : public FPolygon
 		for (FRoomPolygon* p1 : passiveConnections[num]) {
 			int loc = p1->activeConnections[this];
 			// this is the entrance, we're not allowed to place a wall that collides with this, try to fit newP on the other side of the entrance if possible, making it a single-entry room
-			FVector point = p1->specificEntrances[loc]; //middle(p1->points[loc], p1->points[loc - 1]);
+			FVector point = p1->specificEntrances[loc];
 			float dist = FVector::Dist(point, inPoint);
 			if (dist < 100) {
 				FVector tangent = points[num%points.Num()] - points[num - 1];
@@ -980,8 +985,6 @@ struct FRoomPolygon : public FPolygon
 		//std::priority_queue<FRoomPolygon*, std::deque<FRoomPolygon*>, roomComparator> queue;
 		//for (FRoomPolygon *p : remaining)
 		//	queue.push(p);
-		if (remaining.Num() == 0)
-			return toReturn;
 		bool couldPlace = false;
 		bool anyRoomPlaced = false;
 		do {
@@ -1142,11 +1145,9 @@ struct FRoomPolygon : public FPolygon
 
 
 	// post placement part of algorithm, makes sure the required rooms are there and modifies existing rooms
-	void postFit(TArray<FRoomPolygon*> &rooms, TArray<RoomSpecification> neededRooms, TArray<RoomSpecification> optionalRooms){
+	void postFit(TArray<FRoomPolygon*> &rooms, RoomBlueprint blueprint){
 
-		if (neededRooms.Num() > rooms.Num()) {
-			return;
-		}
+		TArray<RoomSpecification> neededRooms = blueprint.needed;
 		TMap<SubRoomType, int32> need;
 		for (RoomSpecification r : neededRooms) {
 			if (need.Contains(r.type))
@@ -1155,10 +1156,10 @@ struct FRoomPolygon : public FPolygon
 				need.Add(r.type, 1);
 		}
 		for (FRoomPolygon *p : rooms) {
-			if (p->entrances.Num() > p->specificEntrances.Num()) {
+			if (p->entrances.Num() > p->specificEntrances.Num() && blueprint.useHallway) {
 				p->type = SubRoomType::hallway;
 			}
-			else if (!splitableType(p->type) && p->getTotalConnections() > 1) {
+			if (!splitableType(p->type) && p->getTotalConnections() > 1) {
 				p->type = SubRoomType::corridor;
 			}
 			if (need.Contains(p->type))
@@ -1216,6 +1217,8 @@ struct FRoomPolygon : public FPolygon
 				}
 
 			}
+		}
+		for (FRoomPolygon *p : rooms) {
 
 		}
 	}
@@ -1239,12 +1242,11 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true, false));
 
 		rooms.Append(remaining);
-		TArray<SubRoomType> neededTypes;
-		for (auto &a : blueprint.needed) {
-			neededTypes.Add(a.type);
-		}
-		postFit(rooms, blueprint.needed, blueprint.optional);
-
+		//TArray<SubRoomType> neededTypes;
+		//for (auto &a : blueprint.needed) {
+		//	neededTypes.Add(a.type);
+		//}
+		postFit(rooms, blueprint);
 
 
 		return rooms;

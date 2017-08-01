@@ -111,7 +111,7 @@ TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float
 			FPolygon entranceBlock;
 			int32 num = p->activeConnections[r2];
 			FVector inMiddle = p->specificEntrances.Contains(num) ? p->specificEntrances[num] : middle(p->points[num%p->points.Num()], p->points[num - 1]);
-			FVector tangent = p->points[num%p->points.Num()] - p->points[(num - 1) % p->points.Num()];
+			FVector tangent = p->points[num%p->points.Num()] - p->points[num - 1];
 			tangent.Normalize();
 			FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
 			entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
@@ -450,21 +450,25 @@ void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &me
 		FVector tangent = r2->points[k] - r2->points[k - 1];
 		tangent.Normalize();
 		FVector normal = FRotator(0, 270, 0).RotateVector(tangent);
-		int target;
+		int target = -1;
 		FVector targetP;
 		r2->getSplitCorrespondingPoint(k, origin, normal, target, targetP);
+		if (target == -1) {
+			UE_LOG(LogTemp, Warning, TEXT("Couldn't place row, no corresponding split point"));
+			return;
+		}
 		float width = FVector::Dist(r2->points[k], r2->points[k - 1]);
 		float height = FVector::Dist(origin, targetP);
 
 		int numWidth = FMath::FloorToInt(width * horDens) + 1;
 		int numHeight = FMath::FloorToInt(height * vertDens) + 1;
-
+			
 		float intervalWidth = width / numWidth;
 		float intervalHeight = height / numHeight;
 		TArray<FPolygon> toPlace;
 		for (int i = 1; i < numWidth; i++) {
 			for (int j = 1; j < numHeight; j++) {
-				FPolygon pol = getPolygon(normal.Rotation(), origin + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
+				FPolygon pol = getPolygon(normal.Rotation(), r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
 				// make sure it's fully inside the room
 				if (!testCollision(pol, placed, 0, *r2)) {// && intersection(pol, *r2).X == 0.0f) {
 					toPlace.Add(pol);
@@ -490,9 +494,15 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	FVector dir = r2->getRoomDirection();
 	FVector center = r2->getCenter();
 
-	FPolygon pol = getPolygon(dir.Rotation() + FRotator(0, 180, 0), center, "office_meeting_table", map);
+	FPolygon pol = getPolygon(dir.Rotation(), center, "office_meeting_table", map);
 	if (!testCollision(pol, placed, 0, *r2)) {
 		meshes.Add(FMeshInfo{ "office_meeting_table", FTransform(dir.Rotation(), center + FVector(0,0,10), FVector(1.0, 1.0, 1.0)) });
+	}
+	else {
+		FPolygon pol = getPolygon(dir.Rotation() + FRotator(0, 90, 0), center, "office_meeting_table", map);
+		if (!testCollision(pol, placed, 0, *r2)) {
+			meshes.Add(FMeshInfo{ "office_meeting_table", FTransform(dir.Rotation() + FRotator(0, 90, 0), center + FVector(0,0,10), FVector(1.0, 1.0, 1.0)) });
+		}
 	}
 	float offsetLen = 100;
 
@@ -528,7 +538,7 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 		finalMeshes.Add(FMeshInfo{ "comp_user", FTransform{mesh.transform.Rotator() + compUserRot, mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compUserOffset) } });
 		finalMeshes.Add(FMeshInfo{ "comp_box", FTransform{ mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compBoxOffset) } });
 	}
-	r2->attemptPlace(placed, finalMeshes, true, 1, "trash_can", FRotator(0, 0, 0), FVector(0, 0, 7), map, false);
+	r2->attemptPlace(placed, finalMeshes, true, 1, "trash_can", FRotator(0, 0, 0), FVector(50, 0, 7), map, false);
 	//finalMeshes.Add(FMeshInfo{ "trash_can", FTransform{FRotator(0,0,0), r2->getCenter() + FVector(0,0,20)} });
 	return finalMeshes;
 }
@@ -539,7 +549,7 @@ RoomBlueprint getOfficeBlueprint(float areaScale) {
 	RoomSpecification meetingRoom{ 100 * areaScale, 200 * areaScale, SubRoomType::meeting };
 	needed.Add(meetingRoom);
 	RoomSpecification bathroom{ 30 * areaScale, 60 * areaScale, SubRoomType::bath };
-	RoomSpecification workRoom{ 40 * areaScale, 200 * areaScale, SubRoomType::work };
+	RoomSpecification workRoom{ 10 * areaScale, 200 * areaScale, SubRoomType::work };
 	TArray<RoomSpecification> optional;
 	optional.Add(workRoom);
 	optional.Add(workRoom);
@@ -547,11 +557,10 @@ RoomBlueprint getOfficeBlueprint(float areaScale) {
 	needed.Add(bathroom);
 	optional.Add(workRoom);
 
-	return RoomBlueprint{ needed, optional };
+	return RoomBlueprint{ needed, optional, false };
 }
 
 RoomBlueprint getRestaurantBlueprint(float areaScale) {
-	// one meeting room, rest working rooms
 	TArray<RoomSpecification> needed;
 	RoomSpecification restaurant{ 50 * areaScale, 1000 * areaScale, SubRoomType::restaurant };
 	needed.Add(restaurant);
@@ -599,7 +608,7 @@ RoomBlueprint getApartmentBlueprint(float areaScale) {
 	optional.Add(bathroom);
 	optional.Add(living);
 
-	return RoomBlueprint{ needed, optional };
+	return RoomBlueprint{ needed, optional, true };
 
 
 }
