@@ -27,11 +27,18 @@ public:
 	// Sets default values for this actor's properties
 	APlotBuilder();
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+		TMap<FString, UHierarchicalInstancedStaticMeshComponent*> instancedMap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+		TMap<FString, UStaticMesh*> staticMap;
+
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static TArray<FMetaPolygon> sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	static FPlotInfo generateHousePolygons(FPlotPolygon p, int minFloors, int maxFloors, float noiseScale);
+	FPlotInfo generateHousePolygons(FPlotPolygon p, int minFloors, int maxFloors, float noiseScale);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static FPolygon generateSidewalkPolygon(FPlotPolygon p, float offsetSize);

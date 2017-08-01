@@ -88,23 +88,23 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 
 
 TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float blockingLength) {
-	TArray<FPolygon> blocking;
-	for (int i : r2->entrances) {
-		//
-		FPolygon entranceBlock;
+	TArray<FPolygon> blocking = getBlockingEntrances(r2->points, r2->entrances, r2->specificEntrances, entranceWidth, blockingLength);
+	//for (int i : r2->entrances) {
+	//	//
+	//	FPolygon entranceBlock;
 
-		FVector inMiddle = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
-		FVector tangent = r2->points[i%r2->points.Num()] - r2->points[i - 1];
-		tangent.Normalize();
-		FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
-		entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
-		entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 - altTangent*blockingLength);
-		entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 - altTangent*blockingLength);
-		entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 + altTangent*blockingLength);
-		//entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
-		blocking.Add(entranceBlock);
+	//	FVector inMiddle = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
+	//	FVector tangent = r2->points[i%r2->points.Num()] - r2->points[i - 1];
+	//	tangent.Normalize();
+	//	FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
+	//	entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
+	//	entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 - altTangent*blockingLength);
+	//	entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 - altTangent*blockingLength);
+	//	entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 + altTangent*blockingLength);
+	//	//entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
+	//	blocking.Add(entranceBlock);
 
-	}
+	//}
 
 	for (auto &pair : r2->passiveConnections) {
 		for (FRoomPolygon *p : pair.Value) {
@@ -118,7 +118,6 @@ TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float
 			entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 - altTangent*blockingLength);
 			entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 - altTangent*blockingLength);
 			entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 + altTangent*blockingLength);
-			//entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
 			blocking.Add(entranceBlock);
 		}
 

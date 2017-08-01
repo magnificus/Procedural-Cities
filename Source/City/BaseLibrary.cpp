@@ -11,6 +11,15 @@ BaseLibrary::~BaseLibrary()
 {
 }
 
+FPolygon getTinyPolygon(FVector point) {
+	FPolygon temp;
+	temp.points.Add(point);
+	temp.points.Add(point + FVector(1, 1, 0));
+	temp.points.Add(point + FVector(0, 1, 0));
+	temp.points.Add(point + FVector(1, 0, 0));
+	return temp;
+}
+
 void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points) {
 	if (points.Num() == 0)
 		return;
@@ -254,6 +263,25 @@ FVector getProperIntersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 		}
 	}
 	return res;
+}
+
+TArray<FPolygon> getBlockingEntrances(TArray<FVector> points, TSet<int32> entrances, TMap<int32, FVector> specificEntrances, float entranceWidth, float blockingLength) {
+	TArray<FPolygon> blocking;
+	for (int i : entrances) {
+		FPolygon entranceBlock;
+
+		FVector inMiddle = specificEntrances.Contains(i) ? specificEntrances[i] : middle(points[i%points.Num()], points[i - 1]);
+		FVector tangent = points[i%points.Num()] - points[i - 1];
+		tangent.Normalize();
+		FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
+		entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
+		entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 - altTangent*blockingLength);
+		entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 - altTangent*blockingLength);
+		entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 + altTangent*blockingLength);
+		blocking.Add(entranceBlock);
+
+	}
+	return blocking;
 }
 
 void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blocking, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen, float width, float middleOffset)
@@ -583,7 +611,6 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 		other.offset(p.getDirection() * p.width);
 		if (polygonSides) {
 			for (int i = 1; i < p.points.Num()+1; i++) {
-				//otherSides.Append(getSidesOfPolygon(p, p.type, 20));
 				FMaterialPolygon newP1;
 				newP1.type = p.type;
 				newP1.points.Add(other.points[i - 1]);
@@ -599,20 +626,6 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 				otherSides.Add(newP2);
 
 			}
-			//FMaterialPolygon newP1;
-			//newP1.type = p.type;
-			//newP1.points.Add(other.points[p.points.Num() - 1]);
-			//newP1.points.Add(p.points[0]);
-			//newP1.points.Add(p.points[p.points.Num() - 1]);
-			////newP1.points.Add(other.points[0]);
-			//otherSides.Add(newP1);
-
-			//FMaterialPolygon newP2;
-			//newP2.type = p.type;
-			//newP2.points.Add(other.points[p.points.Num() - 1]);
-			//newP2.points.Add(other.points[0]);
-			//newP2.points.Add(p.points[0]);
-			//otherSides.Add(newP2);
 		}
 		other.normal = -p.normal;
 
@@ -632,11 +645,9 @@ TArray<FMaterialPolygon> BaseLibrary::getSimplePlotPolygons(TArray<FSimplePlot> 
 		return toReturn;
 	for (FSimplePlot p : plots) {
 		FMaterialPolygon newP;
-		//p.pol.points.RemoveAt(p.pol.points.Num() - 1);
 		newP.points = p.pol.points;
-		//if (!newP.getIsClockwise())
 		newP.reverse();
-		newP.type = type;// simplePolygonType;//p.type == SimplePlotType::asphalt ? PolygonType::concrete : PolygonType::green;;
+		newP.type = type;
 		toReturn.Add(newP);
 
 	}
@@ -670,8 +681,6 @@ FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMe
 				if (res.X != 0.0f) {
 					float currentToMove = FVector::Dist(pol.points[k - 1], pol.points[k]) - FVector::Dist(pol.points[k - 1], res);
 					lenToMove = std::max(lenToMove, currentToMove);
-					//pos += dir * (lenToMove+5);
-					//break;
 				}
 			}
 			if (lenToMove != 0) {

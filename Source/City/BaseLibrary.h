@@ -64,7 +64,6 @@ enum class PolygonType : uint8
 
 void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points);
 
-//void getMinMax(float &min, float &max, FVector tangent, FVector v1, FVector v2, FVector v3, FVector v4);
 FVector intersection(FPolygon &p1, TArray<FPolygon> &p2);
 FVector intersection(FPolygon &p1, FPolygon &p2);
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
@@ -78,9 +77,10 @@ FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
 TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width);
 TArray<FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &first);
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
+TArray<FPolygon> getBlockingEntrances(TArray<FVector> points, TSet<int32> entrances, TMap<int32, FVector> specificEntrances, float entranceWidth, float blockingLength);
 
 
-
+FPolygon getTinyPolygon(FVector point);
 
 static FVector getNormal(FVector p1, FVector p2, bool left) {
 	return FRotator(0, left ? 90 : 270, 0).RotateVector(p2 - p1);
@@ -452,15 +452,19 @@ struct FSimplePlot {
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FMeshInfo> meshes;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FPolygon> obstacles;
+
 	SimplePlotType type = SimplePlotType::undecided;
 
 
-	void decorate() {
-		decorate(TArray<FPolygon>());
+	void decorate(TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
+		decorate(TArray<FPolygon>(), map);
 	}
 
 
-	void decorate(TArray<FPolygon> blocking) {
+	void decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
+		blocking.Append(obstacles);
 		float area = pol.getArea();
 		switch (type) {
 		case SimplePlotType::undecided:
@@ -469,21 +473,12 @@ struct FSimplePlot {
 			for (int i = 0; i < treeAreaRatio*area; i++) {
 				FVector point = pol.getRandomPoint(true, 150);
 				if (point.X != 0.0f) {
-					FPolygon temp;
-					temp.points.Add(point);
-					temp.points.Add(point + FVector(1, 1, 0));
-					temp.points.Add(point + FVector(0, 1, 0));
-					temp.points.Add(point + FVector(1, 0, 0));
-					bool collision = false;
-					for (FPolygon &p : blocking) {
-						if (testCollision(p, temp, 0)) {
-							collision = true;
-							break;
-						}
-					}
+					FString name = "tree";
+					FPolygon temp = getTinyPolygon(point);//getPolygon(FRotator(0,0,0), point, name, map);
+					bool collision = testCollision(temp, blocking, 0, pol);
 					if (!collision) {
 						FMeshInfo toAdd;
-						toAdd.description = "tree";
+						toAdd.description = name;
 						toAdd.transform = FTransform(point);
 						toAdd.instanced = false;
 						meshes.Add(toAdd);
@@ -500,8 +495,15 @@ struct FSimplePlot {
 				FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
 				float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
 				tan.Normalize();
+				FString name = "trash_box";
 				for (int i = 0; i < numToPlace; i++) {
-					meshes.Add(FMeshInfo{ "trash_box", FTransform{ tan.Rotation() + FRotator(0,180, 0), posStart + tan * i * 200 } });
+					FVector loc = posStart + tan * i * 250;
+					FPolygon toTest = getPolygon(FRotator(0, 180, 0), loc, name, map); //getTinyPolygon(loc);
+					if (!testCollision(toTest, blocking, 0, pol)) {
+						FRotator finRot = tan.Rotation() + FRotator(0, 180, 0);
+						meshes.Add(FMeshInfo{ name, FTransform{ tan.Rotation() + FRotator(0,180, 0), loc + finRot.RotateVector(FVector(0,80,0))} });
+					}
+
 				}
 			}
 

@@ -223,7 +223,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 				fs.pol = p;
 				fs.pol.offset(FVector(0, 0, 30));
 				fs.type = p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
-				fs.decorate(placed);
+				fs.decorate(placed, instancedMap);
 				info.leftovers.Add(fs);
 
 			}
@@ -251,7 +251,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 					fs.pol = r;
 					fs.pol.offset(FVector(0, 0, 30));
 					fs.type = p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
-					fs.decorate();
+					fs.decorate(instancedMap);
 					info.leftovers.Add(fs);
 				}
 				else {
@@ -396,7 +396,7 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 				FVector tan = target - origin;
 				float len = tan.Size();
 				tan.Normalize();
-				toReturn.staticMeshes.Add(FMeshInfo{ "tree", FTransform(origin + j * tan * (len / toPlace)) });
+				toReturn.staticMeshes.Add(FMeshInfo{ "tree", FTransform(origin + j * tan * (len / toPlace)), false });
 			}
 		}
 	}
