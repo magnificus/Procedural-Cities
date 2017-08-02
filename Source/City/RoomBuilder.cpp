@@ -421,7 +421,7 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	float offsetLen = 100;
 
 	if (randFloat() < 0.5) {
-		r2->attemptPlace(placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 150), map, true);
+		r2->attemptPlace(placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	}
 
 	if (randFloat() < 0.5) {
@@ -603,7 +603,6 @@ static TArray<FMeshInfo> getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHier
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
 	r2->attemptPlace(placed, meshes, false, 1, "restaurant_bar", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
-	//r2->attemptPlace(placed, meshes, true, 5, "restaurant_table", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
 	TArray<FMeshInfo> tables;
 
 	placeRows(r2, placed, tables, FRotator(0, 0, 0), "restaurant_table", FMath::FRandRange(0.0015, 0.003), FMath::FRandRange(0.0015, 0.003), map);
@@ -892,10 +891,10 @@ FRoomInfo ARoomBuilder::buildStore(FRoomPolygon *f, float height, TMap<FString, 
 		}
 
 	}
+
+	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, 300, 300, 0, shellOnly, true));
 	for (FRoomPolygon* roomP : roomPols)
 		delete(roomP);
-	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, 300, 300, 0, shellOnly, true));
-
 	return r;
 }
 

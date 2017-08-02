@@ -658,14 +658,14 @@ TArray<FMaterialPolygon> BaseLibrary::getSimplePlotPolygons(TArray<FSimplePlot> 
 
 
 FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, bool windowAllowed, int testsPerSide, FString string, FRotator offsetRot, FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool onWall) {
-	for (int i = 1; i < points.Num(); i++) {
+	for (int i = 1; i < points.Num()+1; i++) {
 		if (windows.Contains(i) && !windowAllowed) {
 			continue;
 		}
 		int place = i;
 		for (int j = 0; j < testsPerSide; j++) {
-			FVector dir = getNormal(points[place], points[place - 1], true);
-			FVector tangent = points[place] - points[place - 1];
+			FVector dir = getNormal(points[place%points.Num()], points[place - 1], true);
+			FVector tangent = points[place%points.Num()] - points[place - 1];
 			float sideLen = tangent.Size();
 			tangent.Normalize();
 			dir.Normalize();
@@ -678,11 +678,11 @@ FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMe
 			float lenToMove = 0;
 			for (int k = 0; k < pol.points.Num(); k++) {
 				FVector toPoint = pol[k] - points[place - 1];
-				//float dot = FVector::DotProduct(dir, toPoint);
-				//if (dot < 0) {
+				float dot = FVector::DotProduct(dir, toPoint);
+				if (dot < 0) {
 				//	// need to move forward
 					lenToMove = std::max(lenToMove, toPoint.ProjectOnToNormal(dir).Size());
-				//}
+				}
 
 				//FVector res = intersection(pol.points[k - 1], pol.points[k], points[place], points[place - 1]);
 				//if (res.X != 0.0f) {
@@ -697,10 +697,10 @@ FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMe
 			if (onWall) {
 				// at least two points has to be next to the wall
 				int count = 0;
-				for (int k = 1; k < pol.points.Num(); k++) {
-					FVector curr = NearestPointOnLine(points[i - 1], points[i] - points[i - 1], pol.points[k]);
+				for (int k = 0; k < pol.points.Num(); k++) {
+					FVector curr = NearestPointOnLine(points[i - 1], points[i%points.Num()] - points[i - 1], pol.points[k]);
 					float dist = FMath::Pow(curr.X - pol.points[k].X, 2) + FMath::Pow(curr.Y - pol.points[k].Y, 2);
-					if (dist < 1500) { // pick a number that seems reasonable
+					if (dist < 10000) { // pick a number that seems reasonable
 						count++;
 					}
 				}
