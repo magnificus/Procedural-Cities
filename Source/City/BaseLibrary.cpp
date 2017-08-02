@@ -499,7 +499,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		polygons.Add(f);
 
 	}
-	float maxConnect = 4500;
+	float maxConnect = 4000;
 
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
@@ -684,7 +684,7 @@ FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMe
 				}
 			}
 			if (lenToMove != 0) {
-				pos += (lenToMove + 30)*dir;
+				pos += (lenToMove + 5)*dir;
 				pol = getPolygon(rot, pos, string, map);
 			}
 			if (onWall) {
@@ -754,4 +754,47 @@ FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHier
 	pol.points.Add(rot.RotateVector(FVector(max.X, max.Y, 0.0f)) + pos);
 	pol.points.Add(rot.RotateVector(FVector(min.X, max.Y, 0.0f)) + pos);
 	return pol;
+}
+
+TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int num, FString name, bool useRealPolygon , const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map) {
+	TArray<FMeshInfo> meshes;
+	for (int i = 0; i < num; i++) {
+		FVector point = pol.getRandomPoint(true, 150);
+		if (point.X != 0.0f) {
+			FPolygon temp;
+			if (useRealPolygon)
+				temp = getPolygon(FRotator(0, 0, 0), point, name, *map);
+			else
+				temp = getTinyPolygon(point);
+			bool collision = testCollision(temp, blocking, 0, pol);
+			if (!collision) {
+				FMeshInfo toAdd;
+				toAdd.description = name;
+				toAdd.transform = FTransform(point);
+				toAdd.instanced = false;
+				meshes.Add(toAdd);
+				blocking.Add(temp);
+			}
+		}
+	}
+	return meshes;
+}
+
+TArray<FMeshInfo> attemptPlaceClusterAlongSide(FPolygon pol, TArray<FPolygon> &blocking, int num, float distBetween, FString name, FVector offset, bool useRealPolygon, const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map) {
+	TArray<FMeshInfo> meshes;
+	int place = FMath::RandRange(1, pol.points.Num());
+	FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
+	FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
+	//float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
+	tan.Normalize();
+	for (int i = 0; i < num; i++) {
+		FRotator finRot = tan.Rotation();// +FRotator(0, 180, 0);
+		FVector loc = posStart + tan * i * distBetween + finRot.RotateVector(offset);
+		FPolygon toTest = useRealPolygon ? getPolygon(finRot, loc, name, *map) : getTinyPolygon(loc);
+		if (!testCollision(toTest, blocking, 0, pol)) {
+			meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc },true });
+		}
+
+	}
+	return meshes;
 }

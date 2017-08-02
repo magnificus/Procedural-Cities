@@ -29,6 +29,9 @@ class CITY_API AHouseBuilder : public AActor
 
 	bool generateRoofs = true;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = performance, meta = (AllowPrivateAccess = "true"))
+	bool proceduralLoadIn = false;
+
 
 public:
 	// Sets default values for this actor's properties
@@ -52,7 +55,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-		void init(FHousePolygon f_in, float floorHeight_in, float maxRoomArea_in, float minHouseArea_in, int makeInterestingAttempts_in, bool generateRoofs_in){
+		void init(FHousePolygon f_in, float floorHeight_in, float maxRoomArea_in, float minHouseArea_in, int makeInterestingAttempts_in, bool generateRoofs_in, bool proceduralLoadIn_in){
 		f = f_in;
 		floorHeight = floorHeight_in;
 		maxRoomArea = maxRoomArea_in;
@@ -60,6 +63,7 @@ public:
 		makeInterestingAttempts = makeInterestingAttempts_in;
 		floorHeight = floorHeight_in;
 		generateRoofs = generateRoofs_in;
+		proceduralLoadIn = proceduralLoadIn_in;
 	}
 
 

@@ -278,7 +278,7 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 			FVector entrancePos = FVector(-10000, -10000, -10000);
 			float doorStart = 100000;
 			float doorEnd = -1000000;
-			if (rp->entrances.Contains(i) && FVector::Dist(rp->points[i-1], rp->points[i%rp->points.Num()]) > 150) {
+			if (rp->entrances.Contains(i) && FVector::Dist(rp->points[i-1], rp->points[i%rp->points.Num()]) > 200) {
 				entrancePos = rp->specificEntrances.Contains(i) ?  rp->specificEntrances[i] : middle(rp->points[i - 1], rp->points[i%rp->points.Num()]);
 				doorStart = FVector::Dist(rp->points[i - 1], entrancePos) - 137/2;
 				doorEnd = doorStart + 137;
@@ -499,7 +499,7 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 		meshes.Add(FMeshInfo{ "office_meeting_table", FTransform(dir.Rotation(), center + FVector(0,0,10), FVector(1.0, 1.0, 1.0)) });
 	}
 	else {
-		FPolygon pol = getPolygon(dir.Rotation() + FRotator(0, 90, 0), center, "office_meeting_table", map);
+		pol = getPolygon(dir.Rotation() + FRotator(0, 90, 0), center, "office_meeting_table", map);
 		if (!testCollision(pol, placed, 0, *r2)) {
 			meshes.Add(FMeshInfo{ "office_meeting_table", FTransform(dir.Rotation() + FRotator(0, 90, 0), center + FVector(0,0,10), FVector(1.0, 1.0, 1.0)) });
 		}
@@ -527,7 +527,7 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	TArray<FPolygon> placed;
 	placed = getBlockingVolumes(r2, 200, 200);
 	// first is height, second is width
-	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_cubicle", 0.002, 0.002, map);
+	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_cubicle", 0.0016, 0.016, map);
 	TArray<FMeshInfo> finalMeshes;
 	for (FMeshInfo mesh : meshes) {
 		mesh.transform.SetLocation(mesh.transform.GetLocation() + FVector(0, 0, 15));
@@ -758,7 +758,7 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 	placed.Append(getBlockingVolumes(r2, 200, 100));
 	r2->attemptPlace(placed, meshes, false, 2, "kitchen", FRotator(0, 90, 0), FVector(-15, 0, 0), map, true);
 	meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
-	r2->attemptPlace(placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, false);
+	r2->attemptPlace(placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 50, 200), map, false);
 	r2->attemptPlace(placed, meshes, false, 1, "fridge", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
 	r2->attemptPlace(placed, meshes, false, 1, "oven", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	return meshes;
@@ -904,7 +904,8 @@ FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon *f, int floor, float height, fl
 
 	}
 	r.pols.Append(interiorPlanToPolygons(roomPols, height, density, windowHeight, windowWidth, floor, shellOnly, false));
-
+	for (FRoomPolygon* roomP : roomPols)
+		delete(roomP);
 	return r;
 }
 
@@ -938,6 +939,8 @@ FRoomInfo ARoomBuilder::buildRestaurant(FRoomPolygon *f, float height, TMap<FStr
 		}
 	}
 	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, stream.FRandRange(300,200), stream.FRandRange(300, 200), 0, shellOnly, true));
+	for (FRoomPolygon* roomP : roomPols)
+		delete(roomP);
 	return r;
 }
 
@@ -975,6 +978,8 @@ FRoomInfo ARoomBuilder::buildStore(FRoomPolygon *f, float height, TMap<FString, 
 		}
 
 	}
+	for (FRoomPolygon* roomP : roomPols)
+		delete(roomP);
 	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, 300, 300, 0, shellOnly, true));
 
 	return r;
@@ -1050,13 +1055,6 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 			}
 		}
 	}
-
-	//TArray<FRoomPolygon> toReturn;
-
-	//for (FRoomPolygon *p : roomPols) {
-	//	toReturn.Add(*p);
-	//}
-
 
 	r.pols.Append(interiorPlanToPolygons(roomPols, height, density, windowHeight, windowWidth, floor, shellOnly, true));
 

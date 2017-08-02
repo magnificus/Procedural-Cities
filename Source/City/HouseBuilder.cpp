@@ -739,7 +739,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 			toUse = stream.FRand() > 0.5 ? RoomType::store : RoomType::restaurant;
 		}
 		FRoomInfo newR = ARoomBuilder::buildRoom(&p, toUse, 0, floorHeight, map, false, shellOnly, stream);
-		newR.offset(FVector(0, 0, 30));
+		//newR.offset(FVector(0, 0, 30));
 		toReturn.roomInfo.pols.Append(newR.pols);
 		toReturn.roomInfo.meshes.Append(newR.meshes);
 	}

@@ -442,6 +442,16 @@ enum class SimplePlotType : uint8
 	green UMETA(DisplayName = "Green")
 };
 
+
+
+TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int num, FString name, bool useRealPolygon = false, const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map = nullptr);
+TArray<FMeshInfo> attemptPlaceClusterAlongSide(FPolygon pol, TArray<FPolygon> &blocking, int num, float distBetween, FString name, FVector offset, bool useRealPolygon = false, const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map = nullptr);
+
+//void attemptPlaceCenter() {
+//
+//}
+
+
 USTRUCT(BlueprintType)
 struct FSimplePlot {
 	GENERATED_USTRUCT_BODY();
@@ -470,44 +480,45 @@ struct FSimplePlot {
 		case SimplePlotType::undecided:
 		case SimplePlotType::green: {
 			float treeAreaRatio = 0.01;
-			for (int i = 0; i < treeAreaRatio*area; i++) {
-				FVector point = pol.getRandomPoint(true, 150);
-				if (point.X != 0.0f) {
-					FString name = "tree";
-					FPolygon temp = getTinyPolygon(point);//getPolygon(FRotator(0,0,0), point, name, map);
-					bool collision = testCollision(temp, blocking, 0, pol);
-					if (!collision) {
-						FMeshInfo toAdd;
-						toAdd.description = name;
-						toAdd.transform = FTransform(point);
-						toAdd.instanced = false;
-						meshes.Add(toAdd);
-					}
-				}
-			}
-			break;
+			meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree"));
+			//for (int i = 0; i < treeAreaRatio*area; i++) {
+			//	FVector point = pol.getRandomPoint(true, 150);
+			//	if (point.X != 0.0f) {
+			//		FString name = "tree";
+			//		FPolygon temp = getTinyPolygon(point);
+			//		bool collision = testCollision(temp, blocking, 0, pol);
+			//		if (!collision) {
+			//			FMeshInfo toAdd;
+			//			toAdd.description = name;
+			//			toAdd.transform = FTransform(point);
+			//			toAdd.instanced = false;
+			//			meshes.Add(toAdd);
+			//		}
+			//	}
+			//}
+			//break;
 		}
 		case SimplePlotType::asphalt: {
-			if (FMath::FRand() < 0.15) {
-				int place = FMath::RandRange(1, pol.points.Num());
-				int numToPlace = FMath::RandRange(1, 5);
-				FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
-				FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
-				float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
-				tan.Normalize();
-				FString name = "trash_box";
-				for (int i = 0; i < numToPlace; i++) {
-					FVector loc = posStart + tan * i * 250;
-					FPolygon toTest = getPolygon(FRotator(0, 180, 0), loc, name, map); //getTinyPolygon(loc);
-					if (!testCollision(toTest, blocking, 0, pol)) {
-						FRotator finRot = tan.Rotation() + FRotator(0, 180, 0);
-						meshes.Add(FMeshInfo{ name, FTransform{ tan.Rotation() + FRotator(0,180, 0), loc + finRot.RotateVector(FVector(120,0,0))} });
-					}
+			if (FMath::FRand() < 0.3) {
 
-				}
+				meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "trash_box", FVector(100, 0, 0), true, &map));
+				//int place = FMath::RandRange(1, pol.points.Num());
+				//FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
+				//FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
+				//float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
+				//tan.Normalize();
+				//FString name = "trash_box";
+				//for (int i = 0; i < numToPlace; i++) {
+				//	FRotator finRot = tan.Rotation() + FRotator(0, 180, 0);
+				//	FVector loc = posStart + tan * i * 250 + finRot.RotateVector(FVector(-120, 0, 0));
+				//	FPolygon toTest = getPolygon(finRot, loc, name, map); //getTinyPolygon(loc);
+				//	//if (!testCollision(toTest, blocking, 0, pol)) {
+				//		meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc},true });
+				//	//}
+
+				//}
 			}
 
-			//attemptPlace()
 			break;
 		}
 		}
