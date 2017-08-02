@@ -669,22 +669,29 @@ FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMe
 			float sideLen = tangent.Size();
 			tangent.Normalize();
 			dir.Normalize();
-			FVector origin = points[place - 1] + tangent * (FMath::FRand() * (sideLen - 100.0f) + 100.0f);
-			FVector pos = origin + dir + offsetPos;// *verticalOffset + offsetPos;
+			FVector origin = points[place - 1] + tangent * (FMath::FRand() * (sideLen - 150.0f) + 150.0f);
+			FVector pos = origin + dir + offsetPos;
 			FRotator rot = dir.Rotation() + offsetRot;
 			FPolygon pol = getPolygon(rot, pos, string, map);
 
 			// fit the polygon properly if possible
 			float lenToMove = 0;
-			for (int k = 1; k < pol.points.Num(); k++) {
-				FVector res = intersection(pol.points[k - 1], pol.points[k], points[place], points[place - 1]);
-				if (res.X != 0.0f) {
-					float currentToMove = FVector::Dist(pol.points[k - 1], pol.points[k]) - FVector::Dist(pol.points[k - 1], res);
-					lenToMove = std::max(lenToMove, currentToMove);
-				}
+			for (int k = 0; k < pol.points.Num(); k++) {
+				FVector toPoint = pol[k] - points[place - 1];
+				//float dot = FVector::DotProduct(dir, toPoint);
+				//if (dot < 0) {
+				//	// need to move forward
+					lenToMove = std::max(lenToMove, toPoint.ProjectOnToNormal(dir).Size());
+				//}
+
+				//FVector res = intersection(pol.points[k - 1], pol.points[k], points[place], points[place - 1]);
+				//if (res.X != 0.0f) {
+				//	float currentToMove = FVector::Dist(pol.points[k - 1], pol.points[k]) - FVector::Dist(pol.points[k - 1], res);
+				//	lenToMove = std::max(lenToMove, currentToMove);
+				//}
 			}
 			if (lenToMove != 0) {
-				pos += (lenToMove + 5)*dir;
+				pos += (lenToMove + 15)*dir;
 				pol = getPolygon(rot, pos, string, map);
 			}
 			if (onWall) {
