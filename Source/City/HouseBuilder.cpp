@@ -553,6 +553,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 		if (!pol.getIsClockwise())
 			shape.reverse();
 		shape.normal = FVector(0, 0, -1);
+		//shape.offset(FVector(0, 0, 20));
 		for (int i = 1; i < shape.points.Num() + 1; i++) {
 			FMaterialPolygon side;
 			side.type = PolygonType::roof;
@@ -589,9 +590,9 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		if (res.pol.points.Num() > 2) {
 			FMaterialPolygon pol;
 			pol.points = res.pol.points;
-			//pol.offset(FVector(0, 0, -15));
 			pol.type = PolygonType::roof;
 			pol.normal = FVector(0, 0, -1);
+			pol.offset(FVector(0, 0, 1));
 			toReturn.Add(pol);
 			return toReturn;
 		}
@@ -614,8 +615,8 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 			holes.Add(cp);
 			toReturn = ARoomBuilder::getSideWithHoles(f, holes, PolygonType::roof);
 			for (auto &a : toReturn) {
-				//a.offset(FVector(0, 0, -15));
 				a.normal = FVector(0, 0, -1);
+				a.offset(FVector(0, 0, 1));
 			}
 			f = cp;
 			for (int i = 1; i < f.points.Num()+1; i++) {
@@ -819,7 +820,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 
 	FMaterialPolygon roof;
 	roof.points = f.points;
-	roof.offset(FVector(0, 0, floorHeight*floors));
+	roof.offset(FVector(0, 0, floorHeight*floors + 1));
 	roof.type = PolygonType::roof;
 	roof.normal = FVector(0, 0, -1);
 
