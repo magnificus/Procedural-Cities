@@ -589,9 +589,9 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		if (res.pol.points.Num() > 2) {
 			FMaterialPolygon pol;
 			pol.points = res.pol.points;
-			pol.offset(FVector(0, 0, -15));
+			//pol.offset(FVector(0, 0, -15));
 			pol.type = PolygonType::roof;
-			pol.normal = FVector(0, 0, 1);
+			pol.normal = FVector(0, 0, -1);
 			toReturn.Add(pol);
 			return toReturn;
 		}
@@ -614,8 +614,8 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 			holes.Add(cp);
 			toReturn = ARoomBuilder::getSideWithHoles(f, holes, PolygonType::roof);
 			for (auto &a : toReturn) {
-				a.offset(FVector(0, 0, -15));
-				a.normal = FVector(0, 0, 1);
+				//a.offset(FVector(0, 0, -15));
+				a.normal = FVector(0, 0, -1);
 			}
 			f = cp;
 			for (int i = 1; i < f.points.Num()+1; i++) {
@@ -689,7 +689,7 @@ FHouseInfo AHouseBuilder::getHouseInfoSimple() {
 	}
 	FMaterialPolygon roof;
 	roof.points = f.points;
-	roof.normal = FVector(0, 0, 1);
+	roof.normal = FVector(0, 0, -1);
 	roof.type = PolygonType::roof;
 	roof.offset(FVector(0, 0, f.height*floorHeight));
 	roof.reverse();
@@ -706,6 +706,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 	UE_LOG(LogTemp, Warning, TEXT("dist between start and end: %f"), dist);
 	FRandomStream stream;
 	float corrWidth = 300;
+	FHousePolygon pre = f;
 	stream.Initialize(f.housePosition.X * 1000 + f.housePosition.Y);
 	//if (f.points.Num() < 3) {
 	//	return FHouseInfo();
@@ -820,7 +821,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 	roof.points = f.points;
 	roof.offset(FVector(0, 0, floorHeight*floors));
 	roof.type = PolygonType::roof;
-	roof.normal = FVector(0, 0, 1);
+	roof.normal = FVector(0, 0, -1);
 
 	if (generateRoofs)
 		toReturn.roomInfo.pols.Add(roof);
@@ -833,6 +834,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 	if (generateRoofs) {
 		addRoofDetail(roof, toReturn.roomInfo, stream);
 	}
+	f = pre;
 	return toReturn;
 }
 
