@@ -741,6 +741,8 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 		FRoomInfo newR = ARoomBuilder::buildRoom(&p, toUse, 0, floorHeight, map, false, shellOnly, stream);
 		//newR.offset(FVector(0, 0, 30));
 		toReturn.roomInfo.pols.Append(newR.pols);
+		for (FMeshInfo &f : newR.meshes)
+			f.transform.SetTranslation(f.transform.GetTranslation() + FVector(0,0,20));
 		toReturn.roomInfo.meshes.Append(newR.meshes);
 	}
 	FVector rot = getNormal(hole.points[1], hole.points[0], true);

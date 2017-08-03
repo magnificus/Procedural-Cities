@@ -219,7 +219,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			}
 			else {
 				FSimplePlot fs;
-				//fm.points.RemoveAt(fm.points.Num() - 1);
+				//fm.points.RemoveAt(fm.points.Nfum() - 1);
 				fs.pol = p;
 				fs.pol.offset(FVector(0, 0, 30));
 				fs.type = p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;

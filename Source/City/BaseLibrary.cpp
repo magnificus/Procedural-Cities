@@ -680,18 +680,13 @@ FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMe
 				FVector toPoint = pol[k] - points[place - 1];
 				float dot = FVector::DotProduct(dir, toPoint);
 				if (dot < 0) {
-				//	// need to move forward
+					// need to move forward
 					lenToMove = std::max(lenToMove, toPoint.ProjectOnToNormal(dir).Size());
 				}
 
-				//FVector res = intersection(pol.points[k - 1], pol.points[k], points[place], points[place - 1]);
-				//if (res.X != 0.0f) {
-				//	float currentToMove = FVector::Dist(pol.points[k - 1], pol.points[k]) - FVector::Dist(pol.points[k - 1], res);
-				//	lenToMove = std::max(lenToMove, currentToMove);
-				//}
 			}
 			if (lenToMove != 0) {
-				pos += (lenToMove + 15)*dir;
+				pos += (lenToMove + 20)*dir;
 				pol = getPolygon(rot, pos, string, map);
 			}
 			if (onWall) {
@@ -804,4 +799,76 @@ TArray<FMeshInfo> attemptPlaceClusterAlongSide(FPolygon pol, TArray<FPolygon> &b
 
 	}
 	return meshes;
+}
+
+void attemptPlaceCenter(FPolygon &pol, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FString string, FRotator offsetRot, FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
+	FVector dir = pol.getRoomDirection();
+	FVector center = pol.getCenter();
+
+	FPolygon objectPol = getPolygon(dir.Rotation(), center, string, map);
+	if (!testCollision(objectPol, placed, 0, pol)) {
+		meshes.Add(FMeshInfo{ string, FTransform(dir.Rotation() + offsetRot, center + offsetPos, FVector(1.0, 1.0, 1.0)) });
+	}
+	else {
+		objectPol = getPolygon(dir.Rotation() + FRotator(0, 90, 0), center, string, map);
+		if (!testCollision(objectPol, placed, 0, pol)) {
+			meshes.Add(FMeshInfo{string, FTransform(dir.Rotation() + offsetRot + FRotator(0, 90, 0), center + offsetPos, FVector(1.0, 1.0, 1.0)) });
+		}
+	}
+}
+
+void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
+	blocking.Append(obstacles);
+	float area = pol.getArea();
+	switch (type) {
+	case SimplePlotType::undecided:
+	case SimplePlotType::green: {
+		float treeAreaRatio = 0.01;
+		attemptPlaceCenter(pol, blocking, meshes, "fountain", FRotator(0, 0, 0), FVector(0, 0, 0), map);
+		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree"));
+		//for (int i = 0; i < treeAreaRatio*area; i++) {
+		//	FVector point = pol.getRandomPoint(true, 150);
+		//	if (point.X != 0.0f) {
+		//		FString name = "tree";
+		//		FPolygon temp = getTinyPolygon(point);
+		//		bool collision = testCollision(temp, blocking, 0, pol);
+		//		if (!collision) {
+		//			FMeshInfo toAdd;
+		//			toAdd.description = name;
+		//			toAdd.transform = FTransform(point);
+		//			toAdd.instanced = false;
+		//			meshes.Add(toAdd);
+		//		}
+		//	}
+		//}
+		break;
+	}
+	case SimplePlotType::asphalt: {
+		if (FMath::FRand() < 0.3) {
+			FRoomPolygon rp;
+			rp.points = pol.points;
+			rp.reverse();
+			for (int i = 0; i < FMath::RandRange(1, 5); i++)
+				rp.attemptPlace(blocking, meshes, true, 1, "trash_box", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
+			//meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "trash_box", FVector(100, 0, 0), true, &map));
+			//int place = FMath::RandRange(1, pol.points.Num());
+			//FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
+			//FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
+			//float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
+			//tan.Normalize();
+			//FString name = "trash_box";
+			//for (int i = 0; i < numToPlace; i++) {
+			//	FRotator finRot = tan.Rotation() + FRotator(0, 180, 0);
+			//	FVector loc = posStart + tan * i * 250 + finRot.RotateVector(FVector(-120, 0, 0));
+			//	FPolygon toTest = getPolygon(finRot, loc, name, map); //getTinyPolygon(loc);
+			//	//if (!testCollision(toTest, blocking, 0, pol)) {
+			//		meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc},true });
+			//	//}
+
+			//}
+		}
+
+		break;
+	}
+	}
 }

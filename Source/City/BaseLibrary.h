@@ -363,6 +363,15 @@ struct FPolygon
 		}
 	}
 
+
+
+	FVector getRoomDirection() {
+		if (points.Num() < 3) {
+			return FVector(0.0f, 0.0f, 0.0f);
+		}
+		return getNormal(points[1], points[0], true);
+	}
+
 };
 
 
@@ -446,10 +455,7 @@ enum class SimplePlotType : uint8
 
 TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int num, FString name, bool useRealPolygon = false, const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map = nullptr);
 TArray<FMeshInfo> attemptPlaceClusterAlongSide(FPolygon pol, TArray<FPolygon> &blocking, int num, float distBetween, FString name, FVector offset, bool useRealPolygon = false, const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map = nullptr);
-
-//void attemptPlaceCenter() {
-//
-//}
+void attemptPlaceCenter(FPolygon &pol, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FString string, FRotator offsetRot, FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map);
 
 
 USTRUCT(BlueprintType)
@@ -457,13 +463,13 @@ struct FSimplePlot {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FPolygon pol;
+		FPolygon pol;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FMeshInfo> meshes;
+		TArray<FMeshInfo> meshes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FPolygon> obstacles;
+		TArray<FPolygon> obstacles;
 
 	SimplePlotType type = SimplePlotType::undecided;
 
@@ -473,56 +479,8 @@ struct FSimplePlot {
 	}
 
 
-	void decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
-		blocking.Append(obstacles);
-		float area = pol.getArea();
-		switch (type) {
-		case SimplePlotType::undecided:
-		case SimplePlotType::green: {
-			float treeAreaRatio = 0.01;
-			meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree"));
-			//for (int i = 0; i < treeAreaRatio*area; i++) {
-			//	FVector point = pol.getRandomPoint(true, 150);
-			//	if (point.X != 0.0f) {
-			//		FString name = "tree";
-			//		FPolygon temp = getTinyPolygon(point);
-			//		bool collision = testCollision(temp, blocking, 0, pol);
-			//		if (!collision) {
-			//			FMeshInfo toAdd;
-			//			toAdd.description = name;
-			//			toAdd.transform = FTransform(point);
-			//			toAdd.instanced = false;
-			//			meshes.Add(toAdd);
-			//		}
-			//	}
-			//}
-			//break;
-		}
-		case SimplePlotType::asphalt: {
-			if (FMath::FRand() < 0.3) {
+	void decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map);
 
-				meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "trash_box", FVector(100, 0, 0), true, &map));
-				//int place = FMath::RandRange(1, pol.points.Num());
-				//FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
-				//FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
-				//float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
-				//tan.Normalize();
-				//FString name = "trash_box";
-				//for (int i = 0; i < numToPlace; i++) {
-				//	FRotator finRot = tan.Rotation() + FRotator(0, 180, 0);
-				//	FVector loc = posStart + tan * i * 250 + finRot.RotateVector(FVector(-120, 0, 0));
-				//	FPolygon toTest = getPolygon(finRot, loc, name, map); //getTinyPolygon(loc);
-				//	//if (!testCollision(toTest, blocking, 0, pol)) {
-				//		meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc},true });
-				//	//}
-
-				//}
-			}
-
-			break;
-		}
-		}
-	}
 };
 USTRUCT(BlueprintType)
 struct FHouseInfo {
@@ -678,17 +636,18 @@ struct FRoomPolygon : public FPolygon
 	bool canRefine = true;
 	SubRoomType type = SubRoomType::empty;
 
-	void updateConnections(int num, FVector &inPoint, FRoomPolygon* newP, bool first, int passiveNum) {
+	void updateConnections(int num, FVector &inPoint, FRoomPolygon* newP, bool first, int passiveNum, bool preferEntrancesInThis) {
 		TArray<FRoomPolygon*> toRemove;
 
 		TSet<FRoomPolygon*> childPassive;
 
-		// move collisions to the left
+		// move collisions to the left if preferEntrancesInThis
 		if (specificEntrances.Contains(num)) {
 			//FVector entrancePoint = specificEntrances.Contains(num) ? specificEntrances[num] : middle(points[num], points[num - 1]);
 			if (FVector::Dist(inPoint, specificEntrances[num]) < 100) {
 				FVector tangent = points[num%points.Num()] - points[num - 1];
 				tangent.Normalize();
+				//inPoint = preferEntrancesInThis ? specificEntrances[num] - tangent * 100 : specificEntrances[num] + tangent * 100;
 				float toMove = FVector::Dist(inPoint, specificEntrances[num] - tangent * 100);
 				inPoint -= toMove * tangent;
 			}
@@ -733,13 +692,13 @@ struct FRoomPolygon : public FPolygon
 	}
 
 
-	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween) {
+	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween, bool clusterDoorsInThis = true) {
 		SplitStruct p = getSplitProposal(false, approxRatio);
 		if (p.p1.X == 0.0f) {
 			return NULL;
 		}
 		FRoomPolygon* newP = new FRoomPolygon();
-		updateConnections(p.min, p.p1, newP, true, 1);
+		updateConnections(p.min, p.p1, newP, true, 1, clusterDoorsInThis);
 
 		if (entrances.Contains(p.min)){
 			// potentially add responsibility of child
@@ -846,7 +805,7 @@ struct FRoomPolygon : public FPolygon
 			newP->points.Add(points[i]);
 		}
 
-		updateConnections(p.max, p.p2, newP, false, newP->points.Num());
+		updateConnections(p.max, p.p2, newP, false, newP->points.Num(), clusterDoorsInThis);
 
 
 		if (entrances.Contains(p.max)){
@@ -979,8 +938,18 @@ struct FRoomPolygon : public FPolygon
 
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
-		//if (p.max != points.Num())
-			points.EmplaceAt(p.min + 1, p.p2);
+		points.EmplaceAt(p.min + 1, p.p2);
+
+		int entrancesThis = getTotalConnections();
+		int entrancesNewP = newP->getTotalConnections();
+
+		if (clusterDoorsInThis && entrancesNewP > entrancesThis) {
+			// this calls for a swaperino
+			FRoomPolygon *temp = this;
+			*this = *newP;
+			*newP = *temp;
+		}
+
 
 		return newP;
 	}
@@ -1030,12 +999,12 @@ struct FRoomPolygon : public FPolygon
 						targetNum = i;
 						scale = spec.minArea / target->getArea();
 						if (scale < 1.0f) {
-							//found room bigger than my requirement
+							//current target is bigger than my requirement
 							break;
 						}
 					}
 					remaining.RemoveAt(targetNum);
-
+					scale = spec.maxArea / target->getArea();
 					// keep cutting it down until small enough to place my room
 					while (scale < minPctSplit) {
 						FRoomPolygon* newP = target->splitAlongMax(0.5, true);
@@ -1043,7 +1012,7 @@ struct FRoomPolygon : public FPolygon
 							break;
 						}
 						remaining.EmplaceAt(0, newP);
-						scale = spec.minArea / target->getArea();
+						scale = spec.maxArea / target->getArea();
 					}
 					if (target->getArea() <= maxAreaAllowed && target->getArea() >= spec.minArea) {
 						target->type = spec.type;
@@ -1052,7 +1021,7 @@ struct FRoomPolygon : public FPolygon
 						couldPlace = true;
 					}
 					else /*if (scale > minPctSplit) */ {
-						FRoomPolygon* newP = target->splitAlongMax(spec.minArea / target->getArea(), true);
+						FRoomPolygon* newP = target->splitAlongMax(spec.minArea / target->getArea(), true, !splitableType(spec.type));
 						if (newP == nullptr) {
 							couldPlace = false;
 						}
@@ -1257,21 +1226,13 @@ struct FRoomPolygon : public FPolygon
 		//for (auto &a : blueprint.needed) {
 		//	neededTypes.Add(a.type);
 		//}
-		postFit(rooms, blueprint);
+		//postFit(rooms, blueprint);
 
 
 		return rooms;
 	}
 
 
-
-
-	FVector getRoomDirection() {
-		if (points.Num() < 3) {
-			return FVector(0.0f, 0.0f, 0.0f);
-		}
-		return getNormal(points[1], points[0], true);
-	}
 
 };
 
