@@ -943,12 +943,12 @@ struct FRoomPolygon : public FPolygon
 		int entrancesThis = getTotalConnections();
 		int entrancesNewP = newP->getTotalConnections();
 
-		if (clusterDoorsInThis && entrancesNewP > entrancesThis) {
-			// this calls for a swaperino
-			FRoomPolygon *temp = this;
-			*this = *newP;
-			*newP = *temp;
-		}
+		//if (clusterDoorsInThis && entrancesNewP > entrancesThis) {
+		//	// this calls for a swaperino
+		//	FRoomPolygon *temp = this;
+		//	*this = *newP;
+		//	newP = temp;
+		//}
 
 
 		return newP;
@@ -1226,7 +1226,7 @@ struct FRoomPolygon : public FPolygon
 		//for (auto &a : blueprint.needed) {
 		//	neededTypes.Add(a.type);
 		//}
-		//postFit(rooms, blueprint);
+		postFit(rooms, blueprint);
 
 
 		return rooms;

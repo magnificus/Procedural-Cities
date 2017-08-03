@@ -618,7 +618,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 				a.normal = FVector(0, 0, 1);
 			}
 			f = cp;
-			for (int i = 1; i < f.points.Num(); i++) {
+			for (int i = 1; i < f.points.Num()+1; i++) {
 				f.windows.Add(i);
 			}
 		}

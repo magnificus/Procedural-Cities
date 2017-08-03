@@ -467,7 +467,7 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 		FVector compUserOffset = FVector(90, 0, 115);
 		FRotator compUserRot = FRotator(0, -90, 0);
 		FVector compBoxOffset = FVector(90, 100, -45);
-		FVector chairOffset = FVector(200, 0, 0);
+		FVector chairOffset = FVector(230, 0, 0);
 		finalMeshes.Add(FMeshInfo{ "comp_user", FTransform{mesh.transform.Rotator() + compUserRot, mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compUserOffset) } });
 		finalMeshes.Add(FMeshInfo{ "comp_box", FTransform{ mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compBoxOffset) } });
 		finalMeshes.Add(FMeshInfo{ "office_chair", FTransform{mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(chairOffset) } });
