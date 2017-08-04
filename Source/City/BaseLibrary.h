@@ -647,9 +647,9 @@ struct FRoomPolygon : public FPolygon
 			if (FVector::Dist(inPoint, specificEntrances[num]) < 100) {
 				FVector tangent = points[num%points.Num()] - points[num - 1];
 				tangent.Normalize();
-				//inPoint = preferEntrancesInThis ? specificEntrances[num] - tangent * 100 : specificEntrances[num] + tangent * 100;
-				float toMove = FVector::Dist(inPoint, specificEntrances[num] - tangent * 100);
-				inPoint -= toMove * tangent;
+				inPoint = preferEntrancesInThis ? specificEntrances[num] - tangent * 100 : specificEntrances[num] + tangent * 100;
+				//float toMove = FVector::Dist(inPoint, specificEntrances[num] - tangent * 100);
+				//inPoint -= toMove * tangent;
 			}
 		}
 
@@ -664,11 +664,12 @@ struct FRoomPolygon : public FPolygon
 			if (dist < 100) {
 				FVector tangent = points[num%points.Num()] - points[num - 1];
 				tangent.Normalize();
-				float toMove = FVector::Dist(inPoint, point - tangent * 100);
-				inPoint -= toMove * tangent;
+				inPoint = preferEntrancesInThis ? point - tangent * 100 : point + tangent * 100;
+				//float toMove = FVector::Dist(inPoint, point - tangent * 100);
+				//inPoint -= toMove * tangent;
 				// our child is now free from our master, but we're still slaves
 			}
-			else {
+			//else {
 				// new cut doesn't interfere overlap with the entrance, now to see who gets it
 				if (first && isOnLine(point, points[num - 1], inPoint) || !first && !isOnLine(point, points[num - 1], inPoint)) {
 					// i got it, no change
@@ -681,7 +682,7 @@ struct FRoomPolygon : public FPolygon
 					toRemove.Add(p1);
 					newP->toIgnore.Add(passiveNum);
 				}
-			}
+			//}
 		}
 		if (childPassive.Num() > 0)
 			newP->passiveConnections.Add(passiveNum, childPassive);
@@ -933,8 +934,6 @@ struct FRoomPolygon : public FPolygon
 			newP->activeConnections.Add(this, newP->points.Num());
 		}
 
-		//newP->points.Add(p.p1);
-
 
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
@@ -945,9 +944,10 @@ struct FRoomPolygon : public FPolygon
 
 		//if (clusterDoorsInThis && entrancesNewP > entrancesThis) {
 		//	// this calls for a swaperino
-		//	FRoomPolygon *temp = this;
-		//	*this = *newP;
-		//	newP = temp;
+		//	//std::swap(this, newP);
+		//	//FRoomPolygon *temp = this;
+		//	//*this = *newP;
+		//	//newP = temp;
 		//}
 
 
@@ -1021,11 +1021,18 @@ struct FRoomPolygon : public FPolygon
 						couldPlace = true;
 					}
 					else /*if (scale > minPctSplit) */ {
-						FRoomPolygon* newP = target->splitAlongMax(spec.minArea / target->getArea(), true, !splitableType(spec.type));
+						float splitPct = spec.minArea / target->getArea();
+						if (splitableType(spec.type))
+							splitPct = 1-splitPct;
+						FRoomPolygon* newP = target->splitAlongMax(splitPct, true);
+
 						if (newP == nullptr) {
 							couldPlace = false;
 						}
 						else {
+							// if I'm in a splitable room, make use of that and make me the room with prioritized doors
+							if (splitableType(spec.type))
+								std::swap(newP, target);
 							newP->type = spec.type;
 							toReturn.Add(newP);
 							anyRoomPlaced = true;
