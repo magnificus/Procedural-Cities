@@ -548,6 +548,28 @@ RoomBlueprint getApartmentBlueprint(float areaScale) {
 }
 
 
+static TArray<FMeshInfo> placeAwnings(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	TArray<FMeshInfo> meshes;
+	for (int i : r2->windows) {
+		FVector tan = (*r2)[i%r2->points.Num()] - (*r2)[i - 1];
+		float len = tan.Size();
+		tan.Normalize();
+
+		FVector min;
+		FVector max;
+		if (map.Contains("awning"))
+			map["awning"]->GetLocalBounds(min, max);
+		else
+			return TArray<FMeshInfo>();
+		float width = max.Y - min.Y + 5;
+		for (int j = width / 2; j < len - width / 2; j += width) {
+			meshes.Add(FMeshInfo{ "awning", FTransform{ getNormal((*r2)[i%r2->points.Num()], (*r2)[i - 1], true).Rotation(), (*r2)[i - 1] + tan * j + FVector(0,0,350)}, true });
+
+		}
+	}
+	return meshes;
+}
+
 
 
 
@@ -562,6 +584,8 @@ static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon *r2, TArray<F
 	tan.Normalize();
 	float extraChairHeight = 30;
 	FMeshInfo table{ "large_table", FTransform(rot.Rotation() , center, FVector(1.0f, 1.0f, 1.0f)) };
+	if (FMath::FRand() < 0.2)
+		attemptPlaceOnTop(table, meshes, "kettle", 30, map);
 	FVector c1 = center - rot * 70 + tan * 150;
 	FVector c2 = center + rot * 70 + tan * 150;
 	FVector c3 = center - rot * 70 - tan * 150;
@@ -639,6 +663,8 @@ static TArray<FMeshInfo> getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHier
 			meshes.Add({ "restaurant_chair", trans });
 
 	}
+	if (FMath::FRand() < 0.3)
+		meshes.Append(placeAwnings(r2, map));
 	meshes.Append(tables);
 	return meshes;
 }
@@ -739,6 +765,8 @@ static TArray<FMeshInfo> getStoreFront(FRoomPolygon *r2, TMap<FString, UHierarch
 	for (int i = 0; i < 5; i++) {
 		r2->attemptPlace(placed, meshes, false, 1, "counter", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	}
+	if (FMath::FRand() < 0.3)
+		meshes.Append(placeAwnings(r2, map));
 	//r2->attemptPlace(placed, meshes, 50, false, 5, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 	///r2->attemptPlace(placed, meshes, 45.0f, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
 
