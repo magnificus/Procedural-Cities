@@ -844,7 +844,37 @@ FRoomInfo placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalIn
 
 	return r;
 }
+void buildSpecificRoom(FRoomInfo &r, FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	switch (r2->type) {
+	case SubRoomType::living: r.meshes.Append(getLivingRoom(r2, map));
+		break;
+	case SubRoomType::bed: r.meshes.Append(getBedRoom(r2, map));
+		break;
+	case SubRoomType::closet: r.meshes.Append(getCloset(r2, map));
+		break;
+	case SubRoomType::corridor:
+		r.meshes.Append(getCorridor(r2, map));
+		break;
+	case SubRoomType::kitchen:
+		r.meshes.Append(getKitchen(r2, map));
+		break;
+	case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
+		break;
+	case SubRoomType::hallway: 	r.meshes.Append(getHallWay(r2, map));
+		break;
+	case SubRoomType::meeting: r.meshes.Append(getMeetingRoom(r2, map));
+		break;
+	case SubRoomType::work: r.meshes.Append(getWorkingRoom(r2, map));
+		break;
+	case SubRoomType::restaurant: r.meshes.Append(getRestaurantRoom(r2, map));
+		r.meshes.Add(FMeshInfo{ "restaurant_room", FTransform(r2->getCenter()) });
+		break;
+	case SubRoomType::storeFront: r.meshes.Append(getStoreFront(r2, map));
+		r.meshes.Add(FMeshInfo{ "store_front", FTransform(r2->getCenter()) });
+		break;
 
+	}
+}
 FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon *f, int floor, float height, float density, float windowHeight, float windowWidth, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool shellOnly) {
 
 	FRoomInfo r;
@@ -864,14 +894,15 @@ FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon *f, int floor, float height, fl
 			//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
 		}
 		if (!shellOnly) {
-			switch (r2->type) {
-			case SubRoomType::meeting: r.meshes.Append(getMeetingRoom(r2, map));
-				break;
-			case SubRoomType::work: r.meshes.Append(getWorkingRoom(r2, map));
-				break;
-			case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
-				break;
-			}
+			buildSpecificRoom(r, r2, map);
+			//switch (r2->type) {
+			//case SubRoomType::meeting: r.meshes.Append(getMeetingRoom(r2, map));
+			//	break;
+			//case SubRoomType::work: r.meshes.Append(getWorkingRoom(r2, map));
+			//	break;
+			//case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
+			//	break;
+			//}
 		}
 
 
@@ -900,15 +931,16 @@ FRoomInfo ARoomBuilder::buildRestaurant(FRoomPolygon *f, float height, TMap<FStr
 			//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
 		}
 		if (!shellOnly) {
+			buildSpecificRoom(r, r2, map);
 			//r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
-			switch (r2->type) {
-			case SubRoomType::restaurant: r.meshes.Append(getRestaurantRoom(r2, map));
-				r.meshes.Add(FMeshInfo{ "restaurant_room", FTransform(r2->getCenter()) });
-				break;
-			case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
-				r.meshes.Add(FMeshInfo{ "bath", FTransform(r2->getCenter()) });
-				break;
-			}
+			//switch (r2->type) {
+			//case SubRoomType::restaurant: r.meshes.Append(getRestaurantRoom(r2, map));
+			//	r.meshes.Add(FMeshInfo{ "restaurant_room", FTransform(r2->getCenter()) });
+			//	break;
+			//case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
+			//	r.meshes.Add(FMeshInfo{ "bath", FTransform(r2->getCenter()) });
+			//	break;
+			//}
 		}
 	}
 	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, stream.FRandRange(300,200), stream.FRandRange(300, 200), 0, shellOnly, true));
@@ -940,14 +972,7 @@ FRoomInfo ARoomBuilder::buildStore(FRoomPolygon *f, float height, TMap<FString, 
 		}
 		if (!shellOnly) {
 			r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
-			switch (r2->type) {
-			case SubRoomType::storeFront: r.meshes.Append(getStoreFront(r2, map));
-				r.meshes.Add(FMeshInfo{ "store_front", FTransform(r2->getCenter()) });
-				break;
-			case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
-				r.meshes.Add(FMeshInfo{ "bath", FTransform(r2->getCenter()) });
-				break;
-			}
+			buildSpecificRoom(r, r2, map);
 		}
 
 	}
@@ -1000,32 +1025,10 @@ FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height,
 			}
 
 			r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
-			switch (r2->type) {
-			case SubRoomType::living: r.meshes.Append(getLivingRoom(r2, map));
-				r.meshes.Add(FMeshInfo{ "room_living", FTransform(r2->getCenter()) });
-				break;
-			case SubRoomType::bed: r.meshes.Append(getBedRoom(r2, map));
-				r.meshes.Add(FMeshInfo{ "room_bed", FTransform(r2->getCenter()) });
-				break;
-			case SubRoomType::closet: r.meshes.Append(getCloset(r2, map));
-				r.meshes.Add(FMeshInfo{ "room_closet", FTransform(r2->getCenter()) });
-				break;
-			case SubRoomType::corridor:
-				r.meshes.Append(getCorridor(r2, map));
-				r.meshes.Add(FMeshInfo{ "room_corridor", FTransform(r2->getCenter()) });
-				break;
-			case SubRoomType::kitchen:
-				r.meshes.Append(getKitchen(r2, map));
-				r.meshes.Add(FMeshInfo{ "room_kitchen", FTransform(r2->getCenter()) });
-				break;
-			case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
-				r.meshes.Add(FMeshInfo{ "room_bathroom", FTransform(r2->getCenter()) });
-				break;
-			case SubRoomType::hallway: 	r.meshes.Append(getHallWay(r2, map));
-				r.meshes.Add(FMeshInfo{ "room_hallway", FTransform(r2->getCenter()) });
-				break;
+			buildSpecificRoom(r, r2, map);
 
-			}
+			
+
 		}
 	}
 
