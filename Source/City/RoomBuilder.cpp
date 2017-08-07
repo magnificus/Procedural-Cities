@@ -624,9 +624,7 @@ static TArray<FMeshInfo> getCorridor(FRoomPolygon *r2, TMap<FString, UHierarchic
 	placed.Append(getBlockingVolumes(r2, 200, 100));
 	r2->attemptPlace(placed, meshes, false, 1, "locker", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 	if (meshes.Num() == 1 && FMath::FRand() < 0.2) {
-		//FTransform toUse = .transform;
-		//getPolygon(toUse.Rotator(), toUse.GetLocation(), meshes[0].description, map);
-		attemptPlaceOnTop(meshes[0], meshes, "vase", 20, map);
+		attemptPlaceOnTop(meshes[0], meshes, "vase", 50, map);
 
 	}
 	r2->attemptPlace(placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 10), map, true);
@@ -757,10 +755,8 @@ void ARoomBuilder::buildSpecificRoom(FRoomInfo &r, FRoomPolygon *r2, TMap<FStrin
 	case SubRoomType::work: r.meshes.Append(getWorkingRoom(r2, map));
 		break;
 	case SubRoomType::restaurant: r.meshes.Append(getRestaurantRoom(r2, map));
-		r.meshes.Add(FMeshInfo{ "restaurant_room", FTransform(r2->getCenter()) });
 		break;
 	case SubRoomType::storeFront: r.meshes.Append(getStoreFront(r2, map));
-		r.meshes.Add(FMeshInfo{ "store_front", FTransform(r2->getCenter()) });
 		break;
 
 	}

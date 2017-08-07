@@ -144,7 +144,7 @@ public:
 	TArray<FMaterialPolygon> getRoadLines(TArray<FRoadSegment> segments);
 
 	UFUNCTION(BlueprintCallable, Category = "Data")
-		TArray<FPolygon> roadsToPolygons(TArray<FRoadSegment> segments);
+		TArray<FMaterialPolygon> roadsToPolygons(TArray<FRoadSegment> segments);
 	//UFUNCTION(BlueprintCallable, Category = "Generation")
 	//void buildPlots(TArray<FPolygon> polygons);
 

@@ -849,7 +849,7 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 			rp.points = pol.points;
 			rp.reverse();
 			for (int i = 0; i < FMath::RandRange(1, 5); i++)
-				rp.attemptPlace(blocking, meshes, true, 1, "trash_box", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
+				rp.attemptPlace(blocking, meshes, true, 1, "trash_box", FRotator(0, 0, 90), FVector(0, 0, 0), map, false);
 			//meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "trash_box", FVector(100, 0, 0), true, &map));
 			//int place = FMath::RandRange(1, pol.points.Num());
 			//FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);

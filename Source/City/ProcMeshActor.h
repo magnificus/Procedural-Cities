@@ -46,6 +46,8 @@ public:
 		UMaterial* concreteMat;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		UMaterial* roadMiddleMat;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
+		UMaterial* asphaltMat;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		float texScaleMultiplier = 1.0f;
@@ -89,6 +91,8 @@ private:
 		URuntimeMeshComponent * concreteMesh;
 	UPROPERTY(VisibleAnywhere, Category = Meshes)
 		URuntimeMeshComponent * roadMiddleMesh;
+	UPROPERTY(VisibleAnywhere, Category = Meshes)
+		URuntimeMeshComponent * asphaltMesh;
 
 	TArray<URuntimeMeshComponent*> components;
 	TArray<UMaterialInterface*> materials;

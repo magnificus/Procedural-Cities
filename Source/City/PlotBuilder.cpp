@@ -50,8 +50,6 @@ FLine getCrossingLine(float dist, FPolygon road) {
 
 
 TArray<FMaterialPolygon> getCrossingAt(float dist, FPolygon road, float lineWidth) {
-	//FVector startP = middle(road.points[1], road.points[2]);
-	//FVector endP = middle(road.points[0], road.points[3]);
 	FLine line = getCrossingLine(dist, road);
 	if (line.p1.X == 0.0f)
 		return TArray<FMaterialPolygon>();
@@ -131,7 +129,6 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 			}
 		}
 	}
-	//UE_LOG(LogTemp, Warning, TEXT("Added %i sidewalks"), dec.polygons.Num())
 
 	return dec;
 }

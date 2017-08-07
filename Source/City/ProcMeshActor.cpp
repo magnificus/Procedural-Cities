@@ -21,44 +21,7 @@ AProcMeshActor::AProcMeshActor()
 	greenMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("greenMesh"));
 	concreteMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("concreteMesh"));
 	roadMiddleMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("roadMiddleMesh"));
-
-	//components.Add(exteriorMesh);
-	//components.Add(sndExteriorMesh);
-	//components.Add(interiorMesh);
-	//components.Add(windowMesh);
-	//components.Add(windowFrameMesh);
-	//components.Add(occlusionWindowMesh);
-	//components.Add(floorMesh);
-	//components.Add(roofMesh);
-	//components.Add(greenMesh);
-	//components.Add(concreteMesh);
-	//components.Add(roadMiddleMesh);
-
-	//materials.Add(exteriorMat);
-	//materials.Add(sndExteriorMat);
-	//materials.Add(interiorMat);
-	//materials.Add(windowMat);
-	//materials.Add(windowFrameMat);
-	//materials.Add(occlusionWindowMat);
-	//materials.Add(floorMat);
-	//materials.Add(roofMat);
-	//materials.Add(greenMat);
-	//materials.Add(concreteMat);
-	//materials.Add(roadMiddleMat);
-	/**
-	*	Create/replace a section for this procedural mesh component.
-	*	@param	SectionIndex		Index of the section to create or replace.
-	*	@param	Vertices			Vertex buffer of all vertex positions to use for this mesh section.
-	*	@param	Triangles			Index buffer indicating which vertices make up each triangle. Length must be a multiple of 3.
-	*	@param	Normals				Optional array of normal vectors for each vertex. If supplied, must be same length as Vertices array.
-	*	@param	UV0					Optional array of texture co-ordinates for each vertex. If supplied, must be same length as Vertices array.
-	*	@param	VertexColors		Optional array of colors for each vertex. If supplied, must be same length as Vertices array.
-	*	@param	Tangents			Optional array of tangent vector for each vertex. If supplied, must be same length as Vertices array.
-	*	@param	bCreateCollision	Indicates whether collision should be created for this section. This adds significant cost.
-	*/
-	//UFUNCTION(BlueprintCallable, Category = "Components|ProceduralMesh", meta = (AutoCreateRefTerm = "Normals,UV0,VertexColors,Tangents"))
-	//	void CreateMeshSection(int32 SectionIndex, const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals,
-	// const TArray<FVector2D>& UV0, const TArray<FColor>& VertexColors, const TArray<FProcMeshTangent>& Tangents, bool bCreateCollision);
+	asphaltMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("asphaltMesh"));
 
 }
 
@@ -179,6 +142,7 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	TArray<FPolygon> green;
 
 	TArray<FPolygon> roadMiddle;
+	TArray<FPolygon> asphalt;
 	for (FMaterialPolygon &p : pols) {
 		switch (p.type) {
 		case PolygonType::exterior:
@@ -214,7 +178,11 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 		case PolygonType::roadMiddle:
 			roadMiddle.Add(p);
 			break;
+		case PolygonType::asphalt:
+			asphalt.Add(p);
+			break;
 		}
+
 	}
 	polygons.Empty();
 	polygons.Add(exterior);
@@ -228,6 +196,7 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	polygons.Add(green);
 	polygons.Add(concrete);
 	polygons.Add(roadMiddle);
+	polygons.Add(asphalt);
 
 	components.Empty();
 	components.Add(exteriorMesh);
@@ -241,6 +210,7 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	components.Add(greenMesh);
 	components.Add(concreteMesh);
 	components.Add(roadMiddleMesh);
+	components.Add(asphaltMesh);
 
 	materials.Empty();
 	materials.Add(exteriorMat);
@@ -254,6 +224,7 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	materials.Add(greenMat);
 	materials.Add(concreteMat);
 	materials.Add(roadMiddleMat);
+	materials.Add(asphaltMat);
 
 
 

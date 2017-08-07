@@ -60,7 +60,8 @@ enum class PolygonType : uint8
 	roof UMETA(DisplayName = "Roof"),
 	green UMETA(DisplayName = "Green"),
 	concrete UMETA(DisplayName = "Concrete"),
-	roadMiddle UMETA(DisplayName = "Middle of road line")
+	roadMiddle UMETA(DisplayName = "Middle of road line"),
+	asphalt UMETA(DisplayName = "Road Material")
 };
 
 void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points);
@@ -573,7 +574,7 @@ enum class SubRoomType : uint8
 };
 
 
-// this tells us whether the room type is allowed to branch into several rooms, a bathroom should for example not lead into several other rooms, whereas a living room may
+// this tells us whether the room type is allowed to branch into several rooms, a bathroom should for example not lead into several other rooms, whereas a living room might
 static bool splitableType(SubRoomType type) {
 	switch (type){
 	case SubRoomType::meeting: return false;
@@ -588,6 +589,8 @@ static bool splitableType(SubRoomType type) {
 	case SubRoomType::hallway: return true;
 	case SubRoomType::storeBack: return true;
 	case SubRoomType::storeFront: return true;
+	case SubRoomType::restaurant: return true;
+
 	}
 	return true;
 }
@@ -1159,7 +1162,7 @@ struct FRoomPolygon : public FPolygon
 		//for (auto &a : blueprint.needed) {
 		//	neededTypes.Add(a.type);
 		//}
-		postFit(rooms, blueprint);
+		//postFit(rooms, blueprint);
 
 
 		return rooms;

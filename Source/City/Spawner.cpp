@@ -542,15 +542,16 @@ TArray<FMaterialPolygon> ASpawner::getRoadLines(TArray<FRoadSegment> segments)
 	return lines;
 }
 
-TArray<FPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
+TArray<FMaterialPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
 {
-	TArray<FPolygon> polygons;
+	TArray<FMaterialPolygon> polygons;
 	for (FRoadSegment f : segments) {
-		FPolygon p;
+		FMaterialPolygon p;
+		p.type = PolygonType::asphalt;
 		p.points.Add(f.v1);
-		p.points.Add(f.v2);
-		p.points.Add(f.v4);
 		p.points.Add(f.v3);
+		p.points.Add(f.v4);
+		p.points.Add(f.v2);
 		polygons.Add(p);
 	}
 	return polygons;
