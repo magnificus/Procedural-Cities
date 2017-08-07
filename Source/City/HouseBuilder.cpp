@@ -7,6 +7,8 @@
 //#include "ThreadedWorker.h"
 struct FPolygon;
 
+std::atomic<int> AHouseBuilder::workersWorking{ 0 };
+
 
 // Sets default values
 AHouseBuilder::AHouseBuilder()
@@ -628,10 +630,16 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 }
 
 void AHouseBuilder::buildHouse(bool shellOnly, bool simple, bool fullReplacement) {
+	if (workerWantsToWork) {
+		workerWantsToWork = false;
+		return;
+	}
+	this->shellOnly = shellOnly;
+	this->simple = simple;
+	this->fullReplacement = fullReplacement;
 	housePol = f;
 
-	worker = new ThreadedWorker(this, shellOnly, simple, fullReplacement);
-	workerWorking = true;
+	workerWantsToWork = true;
 }
 
 void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
@@ -860,9 +868,18 @@ void AHouseBuilder::BeginPlay()
 void AHouseBuilder::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (workerWantsToWork && workersWorking.load(std::memory_order_relaxed) < 3) {
+		workerWantsToWork = false;
+		workersWorking++;
+		workerWorking = true;
+		worker = new ThreadedWorker(this, shellOnly, simple, fullReplacement);
+	}
+
 	if (workerWorking && worker->IsFinished()) {
 		buildHouseFromInfo(worker->resultingInfo, worker->fullReplacement);
+		delete worker;
 		workerWorking = false;
+		workersWorking--;
 	}
 
 

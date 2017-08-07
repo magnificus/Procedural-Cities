@@ -7,7 +7,7 @@
 #include "ApartmentSpecification.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "ThreadedWorker.h"
-
+#include "atomic"
 #include "HouseBuilder.generated.h"
 
 class ThreadedWorker;
@@ -31,8 +31,10 @@ class CITY_API AHouseBuilder : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = performance, meta = (AllowPrivateAccess = "true"))
 	bool proceduralLoadIn = false;
 
-
+	bool shellOnly, simple, fullReplacement;
 public:
+	static std::atomic<int> workersWorking;
+
 	// Sets default values for this actor's properties
 	AHouseBuilder();
 
@@ -87,6 +89,7 @@ public:
 	ThreadedWorker *worker;
 
 	bool workerWorking = false;
+	bool workerWantsToWork = false;
 
 protected:
 	// Called when the game starts or when spawned
@@ -104,3 +107,4 @@ public:
 	
 	
 };
+
