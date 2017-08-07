@@ -24,9 +24,6 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 	TArray<FMetaPolygon> added;
 	for (FMetaPolygon p : plots) {
 		bool shouldAdd = true;
-		//for (FPolygon o : others) {
-
-		//}
 		if (shouldAdd) {
 			for (FMetaPolygon a : added) {
 				if (testCollision(p, a, -1000)) {

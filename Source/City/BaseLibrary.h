@@ -11,6 +11,7 @@
 #include "City.h"
 #include "Algo/Reverse.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include <functional>
 
 #include "BaseLibrary.generated.h"
 
@@ -572,6 +573,7 @@ enum class SubRoomType : uint8
 };
 
 
+// this tells us whether the room type is allowed to branch into several rooms, a bathroom should for example not lead into several other rooms, whereas a living room may
 static bool splitableType(SubRoomType type) {
 	switch (type){
 	case SubRoomType::meeting: return false;
@@ -962,9 +964,6 @@ struct FRoomPolygon : public FPolygon
 		TArray<FRoomPolygon*> toReturn;
 		float minPctSplit = 0.35f;
 
-		//std::priority_queue<FRoomPolygon*, std::deque<FRoomPolygon*>, roomComparator> queue;
-		//for (FRoomPolygon *p : remaining)
-		//	queue.push(p);
 		bool couldPlace = false;
 		bool anyRoomPlaced = false;
 		do {
@@ -1043,79 +1042,6 @@ struct FRoomPolygon : public FPolygon
 				}
 			}
 		} while (repeating && anyRoomPlaced);
-
-
-
-		//do {
-		//	couldPlace = false;
-		//	for (RoomSpecification r : specs) {
-		//		bool found = false;
-		//		bool smaller = false;
-		//		float maxAreaAllowed = useMin ? (r.maxArea + r.minArea) / 2 : r.maxArea;
-		//		for (int i = 0; i < remaining.Num(); i++) {
-		//			FRoomPolygon *p = remaining[i];
-		//			area = p->getArea();
-		//			smaller = smaller || (area > maxAreaAllowed);
-		//			if (area <= maxAreaAllowed && area >= r.minArea){// && p->type != SubRoomType::hallway) {
-		//				// found fitting room
-		//				p->type = r.type;
-		//				toReturn.Add(p);
-		//				remaining.RemoveAt(i);
-		//				found = true;
-		//				couldPlace = true;
-		//				break;
-		//			}
-		//		}
-		//		// could not find a fitting room since all remaining are too big, cut them down to size
-		//		if (!found && smaller) {
-		//			FRoomPolygon *target = remaining[0];
-		//			int targetNum = 0;
-		//			float scale = 0.0f;
-		//			for (int i = 0; i < remaining.Num(); i++) {
-		//				target = remaining[i];
-		//				targetNum = i;
-		//				scale = r.minArea / target->getArea();
-		//				if (scale < 1.0f) {
-		//					break;
-		//				}
-		//			}
-		//			remaining.RemoveAt(targetNum);
-		//			int count = 0;
-		//			while (scale < minPctSplit && count++ < 5) {
-		//				FRoomPolygon* newP = target->splitAlongMax(0.6, true);
-		//				if (newP == nullptr) {
-		//					break;
-		//				}
-		//				remaining.EmplaceAt(0, newP);
-		//				scale = r.minArea / target->getArea();
-
-		//			}
-		//			if (target->getArea() <= maxAreaAllowed && target->getArea() >= r.minArea){// && target->type != SubRoomType::hallway) {
-		//				target->type = r.type;
-		//				//remaining.RemoveAt(targetNum);
-		//				toReturn.Add(target);
-		//				couldPlace = true;
-
-		//			}
-		//			else if (scale > minPctSplit) {
-		//				FRoomPolygon* newP = target->splitAlongMax(r.minArea / target->getArea(), true);
-		//				if (newP == nullptr) {
-		//					couldPlace = false;
-		//				}
-		//				else {
-		//					newP->type = r.type;
-		//					toReturn.Add(newP);
-		//					couldPlace = true;
-		//				}
-		//				remaining.EmplaceAt(0, target);
-		//			}
-		//			else {
-		//				remaining.EmplaceAt(0, target);
-		//			}
-		//				
-		//		}
-		//	}
-		//} while (repeating && couldPlace && c1++ < 5);
 
 		return toReturn;
 

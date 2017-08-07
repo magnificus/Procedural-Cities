@@ -89,22 +89,6 @@ TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<F
 
 TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float blockingLength) {
 	TArray<FPolygon> blocking = getBlockingEntrances(r2->points, r2->entrances, r2->specificEntrances, entranceWidth, blockingLength);
-	//for (int i : r2->entrances) {
-	//	//
-	//	FPolygon entranceBlock;
-
-	//	FVector inMiddle = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
-	//	FVector tangent = r2->points[i%r2->points.Num()] - r2->points[i - 1];
-	//	tangent.Normalize();
-	//	FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);
-	//	entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
-	//	entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 - altTangent*blockingLength);
-	//	entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 - altTangent*blockingLength);
-	//	entranceBlock.points.Add(inMiddle + tangent * entranceWidth*0.5 + altTangent*blockingLength);
-	//	//entranceBlock.points.Add(inMiddle - tangent * entranceWidth*0.5 + altTangent*blockingLength);
-	//	blocking.Add(entranceBlock);
-
-	//}
 
 	for (auto &pair : r2->passiveConnections) {
 		for (FRoomPolygon *p : pair.Value) {
@@ -263,7 +247,6 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 				// this means that next wall is exterior, move our front a little back
 				if (rp->exteriorWalls.Contains(next))
 					extraBack = -tan * 20;
-				//extraBottom = 2;
 			}
 
 
@@ -272,7 +255,6 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 			newP.points.Add(p1 + FVector(0, 0, extraBottom) + extraFront);
 			newP.points.Add(p2 + FVector(0, 0, extraBottom) + extraBack);
 			newP.points.Add(p2 + FVector(0, 0, floorHeight) + extraBack);
-			//newP.points.Add(p1 + FVector(0, 0, floorHeight) + extraFront);
 
 			TArray<FPolygon> holes;
 			FVector entrancePos = FVector(-10000, -10000, -10000);
@@ -282,7 +264,6 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 				entrancePos = rp->specificEntrances.Contains(i) ?  rp->specificEntrances[i] : middle(rp->points[i - 1], rp->points[i%rp->points.Num()]);
 				doorStart = FVector::Dist(rp->points[i - 1], entrancePos) - 137/2;
 				doorEnd = doorStart + 137;
-				//holes.Add(getEntranceHole(rp->points[i - 1], rp->points[i%rp->points.Num()], floorHeight, 297, 137, entrancePos));
 				// 2 1 4 3
 				auto entH = getEntranceHole(rp->points[i - 1], rp->points[i%rp->points.Num()], floorHeight, 297, 137, entrancePos);
 				newP.points.EmplaceAt(2, entH[1]);
@@ -316,7 +297,6 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 						currWindow.points.Add(pw4);
 						windows.Add(currWindow);
 					}
-					//}
 				}
 					for (FPolygon p : windows) {
 						FMaterialPolygon win;
@@ -334,13 +314,9 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 				holes.Append(windows);
 
 			}
-			//holes.Empty();
 			TArray<FMaterialPolygon> pols = getSideWithHoles(newP, holes, rp->exteriorWalls.Contains(i) ? PolygonType::exterior : PolygonType::interior);
 			toReturn.Append(pols);
 
-			//else {
-			//	toReturn.Add(newP);
-			//}
 
 		}
 
@@ -426,16 +402,6 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	FVector center = r2->getCenter();
 
 	attemptPlaceCenter(*r2, placed, meshes, "office_meeting_table", FRotator(0, 0, 0), FVector(0, 0, 10), map);
-	//FPolygon pol = getPolygon(dir.Rotation(), center, "office_meeting_table", map);
-	//if (!testCollision(pol, placed, 0, *r2)) {
-	//	meshes.Add(FMeshInfo{ "office_meeting_table", FTransform(dir.Rotation(), center + FVector(0,0,10), FVector(1.0, 1.0, 1.0)) });
-	//}
-	//else {
-	//	pol = getPolygon(dir.Rotation() + FRotator(0, 90, 0), center, "office_meeting_table", map);
-	//	if (!testCollision(pol, placed, 0, *r2)) {
-	//		meshes.Add(FMeshInfo{ "office_meeting_table", FTransform(dir.Rotation() + FRotator(0, 90, 0), center + FVector(0,0,10), FVector(1.0, 1.0, 1.0)) });
-	//	}
-	//}
 	float offsetLen = 100;
 
 	if (randFloat() < 0.5) {
@@ -473,80 +439,8 @@ static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 		finalMeshes.Add(FMeshInfo{ "office_chair", FTransform{mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(chairOffset) } });
 	}
 	r2->attemptPlace(placed, finalMeshes, true, 1, "trash_can", FRotator(0, 0, 0), FVector(0, 0, 7), map, false);
-	//finalMeshes.Add(FMeshInfo{ "trash_can", FTransform{FRotator(0,0,0), r2->getCenter() + FVector(0,0,20)} });
 	return finalMeshes;
 }
-
-RoomBlueprint getOfficeBlueprint(float areaScale) {
-	// one meeting room, rest working rooms
-	TArray<RoomSpecification> needed;
-	RoomSpecification meetingRoom{ 100 * areaScale, 300 * areaScale, SubRoomType::meeting };
-	needed.Add(meetingRoom);
-	RoomSpecification bathroom{ 30 * areaScale, 60 * areaScale, SubRoomType::bath };
-	RoomSpecification workRoom{ 50 * areaScale, 300 * areaScale, SubRoomType::work };
-	TArray<RoomSpecification> optional;
-	optional.Add(workRoom);
-	optional.Add(workRoom);
-	optional.Add(workRoom);
-	needed.Add(bathroom);
-	optional.Add(workRoom);
-
-	return RoomBlueprint{ needed, optional, false };
-}
-
-RoomBlueprint getRestaurantBlueprint(float areaScale) {
-	TArray<RoomSpecification> needed;
-	RoomSpecification restaurant{ 50 * areaScale, 1000 * areaScale, SubRoomType::restaurant };
-	needed.Add(restaurant);
-
-	TArray<RoomSpecification> optional;
-	optional.Add(restaurant);
-	return RoomBlueprint{ needed, optional };
-
-}
-
-
-RoomBlueprint getStoreBlueprint(float areaScale) {
-	// one meeting room, rest working rooms
-	TArray<RoomSpecification> needed;
-	RoomSpecification storeBack{ 50 * areaScale, 200 * areaScale, SubRoomType::storeBack };
-	RoomSpecification storeFront{ 200 * areaScale, 400 * areaScale, SubRoomType::storeFront };
-	RoomSpecification bathroom{ 30 * areaScale, 60 * areaScale, SubRoomType::bath };
-	needed.Add(storeFront);
-
-	TArray<RoomSpecification> optional;
-	optional.Add(bathroom);
-	optional.Add(storeBack);
-
-	return RoomBlueprint{ needed, optional };
-
-}
-
-RoomBlueprint getApartmentBlueprint(float areaScale) {
-	TArray<RoomSpecification> needed;
-	RoomSpecification kitchen{40*areaScale, 90*areaScale, SubRoomType::kitchen};
-	RoomSpecification bathroom{30*areaScale, 60*areaScale, SubRoomType::bath };
-	RoomSpecification bedroom{50*areaScale, 100*areaScale, SubRoomType::bed };
-	RoomSpecification living{100 * areaScale, 150 * areaScale, SubRoomType::living };
-	RoomSpecification closet{ 10 * areaScale, 40 * areaScale, SubRoomType::closet };
-
-	needed.Add(bedroom);
-	needed.Add(living);
-	needed.Add(kitchen);
-	needed.Add(bathroom);
-
-	TArray<RoomSpecification> optional;
-	optional.Add(bedroom);
-	optional.Add(closet);
-	optional.Add(bedroom);
-	optional.Add(bathroom);
-	optional.Add(living);
-
-	return RoomBlueprint{ needed, optional, true };
-
-
-}
-
 
 static TArray<FMeshInfo> placeAwnings(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	TArray<FMeshInfo> meshes;
@@ -767,8 +661,6 @@ static TArray<FMeshInfo> getStoreFront(FRoomPolygon *r2, TMap<FString, UHierarch
 	}
 	if (FMath::FRand() < 0.3)
 		meshes.Append(placeAwnings(r2, map));
-	//r2->attemptPlace(placed, meshes, 50, false, 5, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
-	///r2->attemptPlace(placed, meshes, 45.0f, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
 
 
 	return meshes;
@@ -779,15 +671,13 @@ static TArray<FMeshInfo> getStoreBack(FRoomPolygon *r2, TMap<FString, UHierarchi
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	//r2->attemptPlace(placed, meshes, 50, false, 5, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
-	//r2->attemptPlace(placed, meshes, 45.0f, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
 
 
 	return meshes;
 }
 
 
-FRoomInfo placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+FRoomInfo ARoomBuilder::placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	FRoomInfo r;
 
 	float width = 500;
@@ -844,7 +734,7 @@ FRoomInfo placeBalcony(FRoomPolygon *p, int place, TMap<FString, UHierarchicalIn
 
 	return r;
 }
-void buildSpecificRoom(FRoomInfo &r, FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+void ARoomBuilder::buildSpecificRoom(FRoomInfo &r, FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	switch (r2->type) {
 	case SubRoomType::living: r.meshes.Append(getLivingRoom(r2, map));
 		break;
@@ -874,198 +764,4 @@ void buildSpecificRoom(FRoomInfo &r, FRoomPolygon *r2, TMap<FString, UHierarchic
 		break;
 
 	}
-}
-FRoomInfo ARoomBuilder::buildOffice(FRoomPolygon *f, int floor, float height, float density, float windowHeight, float windowWidth, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool shellOnly) {
-
-	FRoomInfo r;
-	TArray<FRoomPolygon*> roomPols = f->getRooms(getOfficeBlueprint(1.0f));
-	for (FRoomPolygon *r2 : roomPols) {
-		if (!shellOnly)
-			r.meshes.Add(FMeshInfo{ "office_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
-		for (int i : r2->entrances) {
-			if (shellOnly && !r2->exteriorWalls.Contains(i))
-				continue;
-			FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i], r2->points[i - 1]);
-			FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
-			dir1.Normalize();
-			FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
-			dir2.Normalize();
-			r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
-			//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
-		}
-		if (!shellOnly) {
-			buildSpecificRoom(r, r2, map);
-			//switch (r2->type) {
-			//case SubRoomType::meeting: r.meshes.Append(getMeetingRoom(r2, map));
-			//	break;
-			//case SubRoomType::work: r.meshes.Append(getWorkingRoom(r2, map));
-			//	break;
-			//case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
-			//	break;
-			//}
-		}
-
-
-	}
-	r.pols.Append(interiorPlanToPolygons(roomPols, height, density, windowHeight, windowWidth, floor, shellOnly, false));
-	for (FRoomPolygon* roomP : roomPols)
-		delete(roomP);
-	return r;
-}
-
-FRoomInfo ARoomBuilder::buildRestaurant(FRoomPolygon *f, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool shellOnly, FRandomStream stream) {
-	FRoomInfo r;
-	TArray<FRoomPolygon*> roomPols = f->getRooms(getRestaurantBlueprint(1.0f));
-	for (FRoomPolygon* r2 : roomPols) {
-		for (int i : r2->windows) {
-			if (FVector::Dist(f->points[i%f->points.Num()], f->points[i-1]) > 150.0f)
-			r2->entrances.Add(i);
-		}
-		for (int i : r2->entrances) {
-			FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
-			FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
-			dir1.Normalize();
-			FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
-			dir2.Normalize();
-			r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
-			//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
-		}
-		if (!shellOnly) {
-			buildSpecificRoom(r, r2, map);
-			//r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
-			//switch (r2->type) {
-			//case SubRoomType::restaurant: r.meshes.Append(getRestaurantRoom(r2, map));
-			//	r.meshes.Add(FMeshInfo{ "restaurant_room", FTransform(r2->getCenter()) });
-			//	break;
-			//case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
-			//	r.meshes.Add(FMeshInfo{ "bath", FTransform(r2->getCenter()) });
-			//	break;
-			//}
-		}
-	}
-	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, stream.FRandRange(300,200), stream.FRandRange(300, 200), 0, shellOnly, true));
-	for (FRoomPolygon* roomP : roomPols)
-		delete(roomP);
-	return r;
-}
-
-
-FRoomInfo ARoomBuilder::buildStore(FRoomPolygon *f, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool shellOnly) {
-	FRoomInfo r;
-
-	TArray<FRoomPolygon*> roomPols = f->getRooms(getStoreBlueprint(1.0f));
-
-	for (FRoomPolygon* r2 : roomPols) {
-		// stores always have entrances outwards
-		for (int i : r2->windows) {
-			if (f->points.Num() > i && FVector::Dist(f->points[i], f->points[i - 1]) > 150.0f)
-				r2->entrances.Add(i);
-		}
-		for (int i : r2->entrances) {
-			FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
-			FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
-			dir1.Normalize();
-			FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
-			dir2.Normalize();
-			r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
-			//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
-		}
-		if (!shellOnly) {
-			r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
-			buildSpecificRoom(r, r2, map);
-		}
-
-	}
-
-	r.pols.Append(interiorPlanToPolygons(roomPols, height, 1.0, 300, 300, 0, shellOnly, true));
-	for (FRoomPolygon* roomP : roomPols)
-		delete(roomP);
-	return r;
-}
-
-
-FRoomInfo ARoomBuilder::buildApartment(FRoomPolygon *f, int floor, float height, float density, float windowHeight, float windowWidth, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool balcony, bool shellOnly) {
-
-	FRoomInfo r;
-	TArray<FRoomPolygon*> roomPols = f->getRooms(getApartmentBlueprint(1.0f));
-	
-	if (balcony) {
-		for (FRoomPolygon *p : roomPols) {
-			if (splitableType(p->type)) {
-				// these are the balcony candidate rooms
-				if (p->windows.Num() > 0) {
-					for (int place : p->windows) {
-						if (FVector::DistSquared(p->points[place%p->points.Num()], p->points[place - 1]) > 10000) {
-							p->entrances.Add(place);
-							FVector mid = middle(p->points[place%p->points.Num()], p->points[place - 1]);
-							p->specificEntrances.Add(place, mid);
-							r = placeBalcony(p, place, map);
-							goto balconyDone;
-						}
-
-					}
-
-				}
-			}
-		}
-	}
-	balconyDone:
-
-	if (!shellOnly) {
-		for (FRoomPolygon* r2 : roomPols) {
-			for (int i : r2->entrances) {
-				FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i], r2->points[i - 1]);
-				FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
-				dir1.Normalize();
-				FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
-				dir2.Normalize();
-				r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
-
-				//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
-			}
-
-			r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
-			buildSpecificRoom(r, r2, map);
-
-			
-
-		}
-	}
-
-	r.pols.Append(interiorPlanToPolygons(roomPols, height, density, windowHeight, windowWidth, floor, shellOnly, true));
-
-	for (FRoomPolygon *p : roomPols) {
-		delete p;
-	}
-
-	return r;
-}
-
-
-FRoomInfo ARoomBuilder::buildRoom(FRoomPolygon *f, RoomType type, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly, FRandomStream stream) {
-	if (!f->canRefine) {
-		FRoomInfo r;
-		//r.beginning = beginning;
-		//r.height = height;
-		TArray<FRoomPolygon*> pols;
-		pols.Add(f);
-		switch (type) {
-			case RoomType::office: r.pols = interiorPlanToPolygons(pols, height, 1, 340, 190, floor, shellOnly, false);
-			break;
-			case RoomType::apartment: r.pols = interiorPlanToPolygons(pols, height, 0.003, 200, 200, floor, shellOnly, true);
-			break;
-			default: r.pols = interiorPlanToPolygons(pols, height, 0.003, 200, 200, floor, shellOnly, true);
-				break;
-
-		}
-
-		return r;
-	}
-	switch (type) {
-	case RoomType::office: return buildOffice(f, floor, height, 1/* 0.0042*/, 320.0f, 190.0f, map, shellOnly);
-	case RoomType::apartment: return buildApartment(f, floor, height, 0.003, 200.0f, 200.0f, map, potentialBalcony, shellOnly);
-	case RoomType::store: return buildStore(f, height, map, shellOnly);
-	case RoomType::restaurant: return buildRestaurant(f, height, map, shellOnly, stream);
-	}
-	return FRoomInfo();
 }

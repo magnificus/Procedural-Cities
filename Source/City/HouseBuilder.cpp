@@ -730,18 +730,30 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 
 	TArray<FRoomPolygon> roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, true, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
 
+	LivingSpecification liv;
+	OfficeSpecification off;
+	RestaurantSpecification res;
+	StoreSpecification store;
+
+	ApartmentSpecification *spec;
+	if (f.type == RoomType::apartment)
+		spec = &liv;
+	else
+		spec = &off;
 	bool potentialBalcony = f.type == RoomType::apartment && floors < 10 && stream.FRand() < 0.3;
 	for (FRoomPolygon &p : roomPols) {
-		RoomType toUse = f.type;
+		ApartmentSpecification *toUse = spec;
 		p.windowType = WindowType::rectangular;
 		if (p.windows.Num() > 0 && f.type == RoomType::apartment) {
 			for (int i : p.windows) {
 				p.entrances.Add(i);
 			}
-			toUse = stream.FRand() > 0.5 ? RoomType::store : RoomType::restaurant;
+			if (stream.FRand() < 0.5)
+				toUse = &res;
+			else
+				toUse = &store;
 		}
-		FRoomInfo newR = ARoomBuilder::buildRoom(&p, toUse, 0, floorHeight, map, false, shellOnly, stream);
-		//newR.offset(FVector(0, 0, 30));
+		FRoomInfo newR = toUse->buildApartment(&p, 0, floorHeight, map, false, shellOnly, stream);
 		toReturn.roomInfo.pols.Append(newR.pols);
 		for (FMeshInfo &mesh : newR.meshes)
 			mesh.transform.SetTranslation(mesh.transform.GetTranslation() + FVector(0,0,20));
@@ -752,8 +764,6 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 	FPolygon stairPol = MeshPolygonReference::getStairPolygon(hole.getCenter() + rot*200, rot.Rotation());
 	FPolygon elevatorPol = MeshPolygonReference::getStairPolygon(hole.getCenter() - rot * 200, rot.Rotation());
 	FVector stairPos = stairPol.getCenter();
-	//if (!stairPol.getIsClockwise())
-	//	stairPol.reverse();
 	FVector elevatorPos = elevatorPol.getCenter();
 
 	if (!shellOnly) {
@@ -775,11 +785,11 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 				currentWindowType = WindowType(stream.RandRange(0,3));
 
 			if (stream.FRand() < 0.15 && f.canBeModified) {
-				TArray<FMaterialPolygon> res = potentiallyShrink(f, hole,stream);
-				for (FMaterialPolygon &fm : res) {
+				TArray<FMaterialPolygon> shrinkRes = potentiallyShrink(f, hole,stream);
+				for (FMaterialPolygon &fm : shrinkRes) {
 					fm.offset(FVector(0,0,floorHeight*i));
 				}
-				toReturn.roomInfo.pols.Append(res);
+				toReturn.roomInfo.pols.Append(shrinkRes);
 			}
 
 			if (!shellOnly) {
@@ -793,7 +803,8 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 			roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
 			for (FRoomPolygon &p : roomPols) {
 				p.windowType = currentWindowType;
-				FRoomInfo newR = ARoomBuilder::buildRoom(&p, f.type, 1, floorHeight, map, potentialBalcony, shellOnly, stream);
+				//FRoomInfo newR = ARoomBuilder::buildRoom(&p, 1, floorHeight, map, potentialBalcony, shellOnly, stream);
+				FRoomInfo newR = spec->buildApartment(&p, i, floorHeight, map, potentialBalcony, shellOnly, stream);
 				newR.offset(FVector(0, 0, floorHeight*i));
 				toReturn.roomInfo.pols.Append(newR.pols);
 				toReturn.roomInfo.meshes.Append(newR.meshes);
