@@ -314,7 +314,7 @@ FSimplePlot attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &center
 void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream) {
 	//return;
 	int place = stream.RandRange(1, f.points.Num());
-	if (stream.FRand() < 0.15f && f.points.Num() > 3) {
+	if (stream.FRand() < 0.15f) {
 		// move side inwards
 		float len = stream.FRandRange(400, 1500);
 		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
@@ -327,7 +327,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 
 	}
 
-	else if (stream.FRand() < 0.1f && f.points.Num() > 3 && FVector::Dist(f.points[place%f.points.Num()], f.points[place-1]) > 500) {
+	else if (stream.FRand() < 0.1f && FVector::Dist(f.points[place%f.points.Num()], f.points[place-1]) > 500) {
 		// remove corner
 		FVector p1 = middle(f.points[place - 1], f.points[place%f.points.Num()]);
 		FVector p2 = middle(f.points[(place + 1) % f.points.Num()], f.points[place%f.points.Num()]);
