@@ -1162,7 +1162,7 @@ struct FRoomPolygon : public FPolygon
 		//for (auto &a : blueprint.needed) {
 		//	neededTypes.Add(a.type);
 		//}
-		//postFit(rooms, blueprint);
+		postFit(rooms, blueprint);
 
 
 		return rooms;
