@@ -48,6 +48,7 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		int32 length;
 
+	// the maximum length a road can be extended in order to attach to another road
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float maxAttachDistance;
 
@@ -144,7 +145,7 @@ public:
 	TArray<FMaterialPolygon> getRoadLines(TArray<FRoadSegment> segments);
 
 	UFUNCTION(BlueprintCallable, Category = "Data")
-		TArray<FMaterialPolygon> roadsToPolygons(TArray<FRoadSegment> segments);
+		TArray<FPolygon> roadsToPolygons(TArray<FRoadSegment> segments);
 	//UFUNCTION(BlueprintCallable, Category = "Generation")
 	//void buildPlots(TArray<FPolygon> polygons);
 

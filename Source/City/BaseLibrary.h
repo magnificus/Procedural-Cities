@@ -108,12 +108,10 @@ struct FPolygon
 	bool getIsClockwise() {
 		float tot = 0;
 		FVector first = points[0];
-		//offset(-first);
 		for (int i = 1; i < points.Num() + 1; i++) {
 			tot += (points[i-1].X*0.01 * points[i%points.Num()].Y*0.01 - points[i%points.Num()].X*0.01 * points[i-1].Y*0.01);
 		}
-		//offset(first);
-			UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %f"), tot);
+			//UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %f"), tot);
 		return tot > 0;
 	}
 
@@ -435,6 +433,10 @@ struct FRoomInfo {
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<FMeshInfo> meshes;
 
+	void append(FRoomInfo info) {
+		pols.Append(info.pols);
+		meshes.Append(info.meshes);
+	}
 
 	void offset(FVector offset) {
 		for (FPolygon &p : pols)

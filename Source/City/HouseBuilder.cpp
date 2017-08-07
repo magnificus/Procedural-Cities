@@ -803,7 +803,6 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 			roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
 			for (FRoomPolygon &p : roomPols) {
 				p.windowType = currentWindowType;
-				//FRoomInfo newR = ARoomBuilder::buildRoom(&p, 1, floorHeight, map, potentialBalcony, shellOnly, stream);
 				FRoomInfo newR = spec->buildApartment(&p, i, floorHeight, map, potentialBalcony, shellOnly, stream);
 				newR.offset(FVector(0, 0, floorHeight*i));
 				toReturn.roomInfo.pols.Append(newR.pols);

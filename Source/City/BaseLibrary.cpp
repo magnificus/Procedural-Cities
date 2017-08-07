@@ -169,13 +169,6 @@ bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<F
 	return true;
 }
 
-
-
-float randFloat() {
-	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX - 1);
-}
-
-
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt)
 {
 	lineDir.Normalize();//this needs to be a unit vector
@@ -284,6 +277,8 @@ TArray<FPolygon> getBlockingEntrances(TArray<FVector> points, TSet<int32> entran
 	return blocking;
 }
 
+
+// this method takes a line from one side of a road and finds its place among other lines and polygons
 void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blocking, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen, float width, float middleOffset)
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
@@ -431,14 +426,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		left->line.p2 = f.p2 + sideOffsetEnd + extraLength;
 		left->buildLeft = true;
 		decidePolygonFate(segments, blocking, left, lines, true, extraRoadLen, width, middleOffset);
-
-		//if (!f.roadInFront) {
-		//	LinkedLine* top = new LinkedLine();
-		//	top->line.p1 = f.p2 + (extraRoadLen+5)*tangent - sideOffsetEnd*1.1;
-		//	top->line.p2 = f.p2 + (extraRoadLen+5)*tangent + sideOffsetEnd*1.1;
-		//	top->buildLeft = true;
-		//	decidePolygonFate(segments, blocking, top, lines, true, extraRoadLen, width, middleOffset);
-		//}
 
 
 		if (f.width != 0.0f) {
@@ -826,21 +813,6 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 		float treeAreaRatio = 0.01;
 		attemptPlaceCenter(pol, blocking, meshes, "fountain", FRotator(0, 0, 0), FVector(0, 0, 0), map);
 		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree"));
-		//for (int i = 0; i < treeAreaRatio*area; i++) {
-		//	FVector point = pol.getRandomPoint(true, 150);
-		//	if (point.X != 0.0f) {
-		//		FString name = "tree";
-		//		FPolygon temp = getTinyPolygon(point);
-		//		bool collision = testCollision(temp, blocking, 0, pol);
-		//		if (!collision) {
-		//			FMeshInfo toAdd;
-		//			toAdd.description = name;
-		//			toAdd.transform = FTransform(point);
-		//			toAdd.instanced = false;
-		//			meshes.Add(toAdd);
-		//		}
-		//	}
-		//}
 		break;
 	}
 	case SimplePlotType::asphalt: {
@@ -849,7 +821,7 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 			rp.points = pol.points;
 			rp.reverse();
 			for (int i = 0; i < FMath::RandRange(1, 5); i++)
-				rp.attemptPlace(blocking, meshes, true, 1, "trash_box", FRotator(0, 0, 90), FVector(0, 0, 0), map, false);
+				rp.attemptPlace(blocking, meshes, true, 1, "trash_box", FRotator(0, 0, 270), FVector(0, 0, 0), map, false);
 			//meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "trash_box", FVector(100, 0, 0), true, &map));
 			//int place = FMath::RandRange(1, pol.points.Num());
 			//FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);

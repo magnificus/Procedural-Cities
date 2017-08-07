@@ -110,7 +110,7 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 						offset.Normalize();
 						offset *= -300;
 						offset += lookingDir.RotateVector(FVector(700, 0, 0));
-						if (randFloat() < 0.5) {
+						if (FMath::FRandRange(0,0.9999) < 0.5) {
 							dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,90,0), crossingLine.p1 - offset, FVector(1.0,1.0,1.0) } });
 							dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,270,0), crossingLine.p2 + offset, FVector(1.0,1.0,1.0) } });
 						}
@@ -150,7 +150,7 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.housePosition = pol.getCenter();
-	pol.height = stream.RandRange(minFloors, minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(pol.housePosition.X, pol.housePosition.Y, noiseScale));//randFloat() * (maxFloors - minFloors) + minFloors;
+	pol.height = stream.RandRange(minFloors, minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(pol.housePosition.X, pol.housePosition.Y, noiseScale));//FMath::FRandRange(0,0.9999) * (maxFloors - minFloors) + minFloors;
 	//if (NoiseSingleton::getInstance()->noise((pol.housePosition.X + noiseXOffset)*noiseScale, (pol.housePosition.Y + noiseYOffset)*noiseScale) > 0.7) {
 	//	pol.height *= 2;
 	//}
@@ -288,7 +288,6 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 		currentOuterLine.points.Add(p2 + (width + endWidth)*normal);
 		currentOuterLine.points.Add(p1 + (width+endWidth)*normal);
 		currentOuterLine.points.Add(p1 + width*normal);
-		//currentOuterLine.points.Add(p.points[i] + width*normal);
 
 		currentOuterLine.offset(FVector(0, 0, endHeight));
 		pols.Append(getSidesOfPolygon(currentOuterLine, PolygonType::concrete, endHeight));

@@ -11,6 +11,29 @@ ApartmentSpecification::~ApartmentSpecification()
 {
 }
 
+FRoomInfo ApartmentSpecification::buildApartment(FRoomPolygon *f, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly, FRandomStream stream) {
+	FRoomInfo r;
+	if (!f->canRefine) {
+		TArray<FRoomPolygon*> pols;
+		pols.Add(f);
+		r.pols = ARoomBuilder::interiorPlanToPolygons(pols, height, getWindowDensity(stream), getWindowHeight(stream), getWindowWidth(stream), floor, shellOnly, false);
+		return r;
+	}
+
+	TArray<FRoomPolygon*> roomPols = f->getRooms(getBlueprint(1.0f));
+	intermediateInteractWithRooms(roomPols, r, map, potentialBalcony);
+	for (FRoomPolygon *r2 : roomPols) {
+		if (!shellOnly) {
+			ARoomBuilder::buildSpecificRoom(r, r2, map);
+			placeEntranceMeshes(r, r2);
+		}
+	}
+	r.pols.Append(ARoomBuilder::interiorPlanToPolygons(roomPols, height, getWindowDensity(stream), getWindowHeight(stream), getWindowWidth(stream), floor, shellOnly, false));
+	for (FRoomPolygon* roomP : roomPols)
+		delete(roomP);
+	return r;
+}
+
 void ApartmentSpecification::placeEntranceMeshes(FRoomInfo &r, FRoomPolygon *r2) {
 	for (int i : r2->entrances) {
 		if (FVector::DistSquared(r2->points[i%r2->points.Num()], r2->points[i - 1]) < 22500)
@@ -40,28 +63,6 @@ RoomBlueprint OfficeSpecification::getBlueprint(float areaScale) {
 	optional.Add(workRoom);
 	return RoomBlueprint{ needed, optional, false };
 }
-FRoomInfo OfficeSpecification::buildApartment(FRoomPolygon *f, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly, FRandomStream stream) {
-	FRoomInfo r;
-	if (!f->canRefine) {
-		TArray<FRoomPolygon*> pols;
-		pols.Add(f);
-		r.pols = ARoomBuilder::interiorPlanToPolygons(pols, height, 1, 320.0f, 190.0f, floor, shellOnly, false);
-		return r;
-	}
-			
-	TArray<FRoomPolygon*> roomPols = f->getRooms(getBlueprint(1.0f));
-	for (FRoomPolygon *r2 : roomPols) {
-		if (!shellOnly) {
-			r.meshes.Add(FMeshInfo{ "office_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
-			ARoomBuilder::buildSpecificRoom(r, r2, map);
-			placeEntranceMeshes(r, r2);
-		}
-	}
-	r.pols.Append(ARoomBuilder::interiorPlanToPolygons(roomPols, height, 1, 320.0f, 190.0f, floor, shellOnly, false));
-	for (FRoomPolygon* roomP : roomPols)
-		delete(roomP);
-	return r;
-}
 
 RoomBlueprint LivingSpecification::getBlueprint(float areaScale) {
 	TArray<RoomSpecification> needed;
@@ -85,19 +86,7 @@ RoomBlueprint LivingSpecification::getBlueprint(float areaScale) {
 
 	return RoomBlueprint{ needed, optional, true };
 }
-FRoomInfo LivingSpecification::buildApartment(FRoomPolygon *f, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly, FRandomStream stream) {
-
-	FRoomInfo r;
-	if (!f->canRefine) {
-		TArray<FRoomPolygon*> pols;
-		pols.Add(f);
-		r.pols = ARoomBuilder::interiorPlanToPolygons(pols, height, 0.003, 200.0f, 200.0f, floor, shellOnly, false);
-		return r;
-	}
-
-
-	TArray<FRoomPolygon*> roomPols = f->getRooms(getBlueprint(1.0f));
-
+void LivingSpecification::intermediateInteractWithRooms(TArray<FRoomPolygon*> &roomPols, FRoomInfo &r, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony) {
 	if (potentialBalcony) {
 		for (FRoomPolygon *p : roomPols) {
 			if (splitableType(p->type)) {
@@ -108,36 +97,14 @@ FRoomInfo LivingSpecification::buildApartment(FRoomPolygon *f, int floor, float 
 							p->entrances.Add(place);
 							FVector mid = middle(p->points[place%p->points.Num()], p->points[place - 1]);
 							p->specificEntrances.Add(place, mid);
-							r = ARoomBuilder::placeBalcony(p, place, map);
-							goto balconyDone;
+							r.append(ARoomBuilder::placeBalcony(p, place, map));
+							return;
 						}
-
 					}
-
 				}
 			}
 		}
 	}
-balconyDone:
-
-	if (!shellOnly) {
-		for (FRoomPolygon* r2 : roomPols) {
-
-			r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
-			ARoomBuilder::buildSpecificRoom(r, r2, map);
-
-			placeEntranceMeshes(r, r2);
-
-		}
-	}
-
-	r.pols.Append(ARoomBuilder::interiorPlanToPolygons(roomPols, height, 0.003, 200.0f, 200.0f, floor, shellOnly, true));
-
-	for (FRoomPolygon *p : roomPols) {
-		delete p;
-	}
-
-	return r;
 }
 
 RoomBlueprint RestaurantSpecification::getBlueprint(float areaScale) {
@@ -150,30 +117,19 @@ RoomBlueprint RestaurantSpecification::getBlueprint(float areaScale) {
 	return RoomBlueprint{ needed, optional };
 
 }
-FRoomInfo RestaurantSpecification::buildApartment(FRoomPolygon *f, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly, FRandomStream stream) {
-	FRoomInfo r;
-	if (!f->canRefine) {
-		TArray<FRoomPolygon*> pols;
-		pols.Add(f);
-		r.pols = ARoomBuilder::interiorPlanToPolygons(pols, height, 1.0, stream.FRandRange(300, 200), stream.FRandRange(300, 200), floor, shellOnly, false);
-		return r;
-	}
 
-	TArray<FRoomPolygon*> roomPols = f->getRooms(getBlueprint(1.0f));
+
+void placeMoreEntrances(TArray<FRoomPolygon*> &roomPols) {
 	for (FRoomPolygon* r2 : roomPols) {
 		for (int i : r2->windows) {
-			if (FVector::Dist(f->points[i%f->points.Num()], f->points[i - 1]) > 150.0f)
+			if (FVector::Dist(r2->points[i%r2->points.Num()], r2->points[i - 1]) > 150.0f && splitableType(r2->type))
 				r2->entrances.Add(i);
 		}
-		if (!shellOnly) {
-			placeEntranceMeshes(r, r2);
-			ARoomBuilder::buildSpecificRoom(r, r2, map);
-		}
 	}
-	r.pols.Append(ARoomBuilder::interiorPlanToPolygons(roomPols, height, 1.0, stream.FRandRange(300, 200), stream.FRandRange(300, 200), 0, shellOnly, true));
-	for (FRoomPolygon* roomP : roomPols)
-		delete(roomP);
-	return r;
+}
+
+void RestaurantSpecification::intermediateInteractWithRooms(TArray<FRoomPolygon*> &roomPols, FRoomInfo &r, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony) {
+	placeMoreEntrances(roomPols);
 }
 
 RoomBlueprint StoreSpecification::getBlueprint(float areaScale) {
@@ -189,33 +145,7 @@ RoomBlueprint StoreSpecification::getBlueprint(float areaScale) {
 
 	return RoomBlueprint{ needed, optional };
 }
-FRoomInfo StoreSpecification::buildApartment(FRoomPolygon *f, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly, FRandomStream stream) {
-	FRoomInfo r;
-	if (!f->canRefine) {
-		TArray<FRoomPolygon*> pols;
-		pols.Add(f);
-		r.pols = ARoomBuilder::interiorPlanToPolygons(pols, height, 1.0, 300, 300, floor, shellOnly, false);
-		return r;
-	}
-	TArray<FRoomPolygon*> roomPols = f->getRooms(getBlueprint(1.0f));
 
-	for (FRoomPolygon* r2 : roomPols) {
-		// stores always have entrances outwards
-		for (int i : r2->windows) {
-			if (f->points.Num() > i && FVector::Dist(f->points[i], f->points[i - 1]) > 150.0f && splitableType(r2->type))
-				r2->entrances.Add(i);
-		}
-		if (!shellOnly) {
-			r.meshes.Add(FMeshInfo{ "apartment_lamp", FTransform(r2->getCenter() + FVector(0, 0, height - 45)) });
-			ARoomBuilder::buildSpecificRoom(r, r2, map);
-			placeEntranceMeshes(r, r2);
-
-		}
-
-	}
-
-	r.pols.Append(ARoomBuilder::interiorPlanToPolygons(roomPols, height, 1.0, 300, 300, 0, shellOnly, true));
-	for (FRoomPolygon* roomP : roomPols)
-		delete(roomP);
-	return r;
+void StoreSpecification::intermediateInteractWithRooms(TArray<FRoomPolygon*> &roomPols, FRoomInfo &r, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony) {
+	placeMoreEntrances(roomPols);
 }

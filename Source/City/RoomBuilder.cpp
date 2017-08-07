@@ -404,12 +404,11 @@ static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarc
 	attemptPlaceCenter(*r2, placed, meshes, "office_meeting_table", FRotator(0, 0, 0), FVector(0, 0, 10), map);
 	float offsetLen = 100;
 
-	if (randFloat() < 0.5) {
+	if (FMath::FRandRange(0,0.9999) < 0.5) {
 		r2->attemptPlace(placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	}
 
-	if (randFloat() < 0.5) {
-		// add whiteboard
+	if (FMath::FRandRange(0,0.9999) < 0.5) {
 		r2->attemptPlace(placed, meshes, false, 1, "office_whiteboard", FRotator(0, 180, 0), FVector(0, 0, 180), map, true);
 	}
 

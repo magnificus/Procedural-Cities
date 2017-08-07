@@ -194,11 +194,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	logicRoadSegment* newRoadL = new logicRoadSegment();
 	FRoadSegment* newRoad = new FRoadSegment();
 	FVector stepLength = prevSeg->type == RoadType::main ? primaryStepLength : secondaryStepLength;
-	//newRoadL->secondDegreeRot = previous->secondDegreeRot + FRotator(0, (prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity)*(randFloat() - 0.5f), 0);
 
-	//float inset = 50;
-	//FVector tan = prevSeg->p2 - prevSeg->p1;
-	//tan.Normalize();
 	newRoad->p1 = prevSeg->p2;
 	// set seconddegreerot to attempt to change towards that direction
 
@@ -240,7 +236,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	FRoadSegment* newRoad = new FRoadSegment();
 	FVector stepLength = newType == RoadType::main ? primaryStepLength : secondaryStepLength;
 
-	newRoadL->secondDegreeRot = FRotator(0, 0, 0);//FRotator(0, (prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity)*(randFloat() - 0.5f), 0);
+	newRoadL->secondDegreeRot = FRotator(0, 0, 0);;
 	FRotator newRotation = left ? FRotator(0, 90, 0) : FRotator(0, 270, 0);
 	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRotation;
 	FVector startOffset = newRoadL->firstDegreeRot.RotateVector(FVector(standardWidth*previous->segment->width / 2, 0, 0));
@@ -292,8 +288,8 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 		if (current->roadLength < maxMainRoadLength)
 			addRoadForward(queue, current, allsegments);
 
-		if (randFloat() < mainRoadBranchChance) {
-			if (randFloat() < 0.5) {
+		if (FMath::FRandRange(0, 0.9999) < mainRoadBranchChance) {
+			if (FMath::FRandRange(0, 0.9999) < 0.5) {
 				addRoadSide(queue, current, true, mainRoadSize, allsegments, RoadType::main);
 			}
 
@@ -302,14 +298,9 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 			}
 		}
 		else {
-			//if (randFloat() < secondaryRoadBranchChance) {
-				addRoadSide(queue, current, true, sndRoadSize, allsegments, RoadType::secondary);
-			//}
-			//if (randFloat() < secondaryRoadBranchChance) {
-				addRoadSide(queue, current, false, sndRoadSize, allsegments, RoadType::secondary);
-			//}
+			addRoadSide(queue, current, true, sndRoadSize, allsegments, RoadType::secondary);
+			addRoadSide(queue, current, false, sndRoadSize, allsegments, RoadType::secondary);
 		}
-		//}
 	}
 
 	else if (current->segment->type == RoadType::secondary) {
@@ -542,12 +533,11 @@ TArray<FMaterialPolygon> ASpawner::getRoadLines(TArray<FRoadSegment> segments)
 	return lines;
 }
 
-TArray<FMaterialPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
+TArray<FPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
 {
-	TArray<FMaterialPolygon> polygons;
+	TArray<FPolygon> polygons;
 	for (FRoadSegment f : segments) {
-		FMaterialPolygon p;
-		p.type = PolygonType::asphalt;
+		FPolygon p;
 		p.points.Add(f.v1);
 		p.points.Add(f.v3);
 		p.points.Add(f.v4);
