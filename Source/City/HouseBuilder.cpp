@@ -7,8 +7,6 @@
 //#include "ThreadedWorker.h"
 struct FPolygon;
 
-std::atomic<int> AHouseBuilder::workersWorking{ 0 };
-
 
 // Sets default values
 AHouseBuilder::AHouseBuilder()
@@ -312,102 +310,113 @@ FSimplePlot attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &center
 	return FSimplePlot();
 }
 
-// this method changes the shape of the house to make it less cube-like, can be called several times for more "interesting" shapes 
+FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHole, float len, FVector offset) {
+	// remove corner
+	FVector p1 = middle(f.points[place - 1], f.points[place%f.points.Num()]);
+	FVector p2 = middle(f.points[(place + 1) % f.points.Num()], f.points[place%f.points.Num()]);
+
+	FSimplePlot simplePlot;
+	simplePlot.pol.points.Add(p1);
+	simplePlot.pol.points.Add(p2);
+	simplePlot.pol.points.Add(f.points[place%f.points.Num()]);
+	if (intersection(simplePlot.pol, centerHole).X == 0.0f) {
+		bool hadW = f.windows.Contains(place);
+		bool hadE = f.entrances.Contains(place);
+
+		simplePlot.type = f.simplePlotType; // stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+
+		simplePlot.pol.reverse();
+		simplePlot.pol.offset(offset);
+
+		f.addPoint(place, p1);
+		f.addPoint(place + 1, p2);
+		f.removePoint(place + 2);
+		f.windows.Add(place + 1);
+		f.entrances.Add(place + 1);
+		if (hadW)
+			f.windows.Add(place);
+		if (hadE)
+			f.entrances.Add(place);
+
+		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 200));
+		return simplePlot;
+		//toReturn.Add(simplePlot);
+	}
+	return FSimplePlot();
+}
+
+FSimplePlot attemptTurnSideIntoU(FHousePolygon &f, int place, FPolygon &centerHole, float len, FVector offset, FRandomStream stream) {
+	float depth = stream.FRandRange(500, 1500);
+	// turn a side inwards into a U
+	FVector tangent = f.points[place%f.points.Num()] - f.points[place - 1];
+	float lenSide = tangent.Size();
+	tangent.Normalize();
+	FVector dir = FRotator(0, f.buildLeft ? 90 : 270, 0).RotateVector(tangent);
+	FVector first = f.points[place - 1] + (tangent * (lenSide / 3));
+	FVector first2 = first + dir * depth;
+	FVector snd = f.points[place%f.points.Num()] - (tangent * (lenSide / 3));
+	FVector snd2 = snd + dir * depth;
+
+	FSimplePlot simplePlot;
+	simplePlot.pol.points.Add(first);
+	simplePlot.pol.points.Add(snd);
+	simplePlot.pol.points.Add(snd2);
+	simplePlot.pol.points.Add(first2);
+
+	FHousePolygon cp = f;
+	if (intersection(simplePlot.pol, centerHole).X == 0.0f && !selfIntersection(simplePlot.pol)) {
+		simplePlot.pol.offset(FVector(0, 0, 30));
+		simplePlot.type = f.simplePlotType;
+
+
+		f.addPoint(place, first);
+		f.windows.Add(place);
+		f.addPoint(place + 1, first2);
+		f.windows.Add(place + 1);
+
+		f.addPoint(place + 2, snd2);
+		f.windows.Add(place + 2);
+		f.entrances.Add(place + 2);
+
+		f.addPoint(place + 3, snd);
+		f.windows.Add(place + 3);
+		f.windows.Add(place + 4);
+
+		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 200));
+
+		//if (selfIntersection(f)) {
+		//	f = cp;
+		//else
+			return simplePlot;
+	}
+	return FSimplePlot();
+}
+
+
+
+// this method changes the shape of the house to make it less cube-like, can be called several times for more interesting shapes 
 void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream) {
-	//return;
 	int place = stream.RandRange(1, f.points.Num());
-	if (stream.FRand() < 0.15f) {
+	float len = stream.FRandRange(400, 1500);
+	if (stream.FRand() < 0.2f) {
 		// move side inwards
-		float len = stream.FRandRange(400, 1500);
 		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
 		if (res.pol.points.Num() > 0) {
-
 			toReturn.Add(res);
-
 		}
-
-
 	}
 
-	else if (stream.FRand() < 0.1f && FVector::Dist(f.points[place%f.points.Num()], f.points[place-1]) > 500) {
-		// remove corner
-		FVector p1 = middle(f.points[place - 1], f.points[place%f.points.Num()]);
-		FVector p2 = middle(f.points[(place + 1) % f.points.Num()], f.points[place%f.points.Num()]);
-
-		FSimplePlot simplePlot;
-		simplePlot.pol.points.Add(p1);
-		simplePlot.pol.points.Add(p2);
-		simplePlot.pol.points.Add(f.points[place%f.points.Num()]);
-		simplePlot.pol.offset(FVector(0, 0, 30));
-		if (intersection(simplePlot.pol, centerHole).X == 0.0f) {
-			bool hadW = f.windows.Contains(place);
-			bool hadE = f.entrances.Contains(place);
-
-			simplePlot.type = f.simplePlotType; // stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
-
-			simplePlot.pol.reverse();
-
-			f.addPoint(place, p1);
-			f.addPoint(place + 1, p2);
-			f.removePoint(place + 2);
-			f.windows.Add(place + 1);
-			f.entrances.Add(place + 1);
-			if (hadW)
-				f.windows.Add(place);
-			if (hadE)
-				f.entrances.Add(place);
-
-			simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 200));
-			toReturn.Add(simplePlot);
-
+	else if (stream.FRand() < 0.15f && FVector::Dist(f.points[place%f.points.Num()], f.points[place-1]) > 500) {
+		FSimplePlot res = attemptRemoveCorner(f, place, centerHole, len, FVector(0, 0, 30));
+		if (res.pol.points.Num() > 0) {
+			toReturn.Add(res);
 		}
-
-
-
 	}
-	else if (stream.FRand() < 0.07f && FVector::Dist(f.points[place%f.points.Num()],f.points[place - 1]) > 3000) {
-		float depth = stream.FRandRange(500, 1500);
-		// turn a side inwards into a U
-		FVector tangent = f.points[place%f.points.Num()] - f.points[place - 1];
-		float lenSide = tangent.Size();
-		tangent.Normalize();
-		FVector dir = FRotator(0, f.buildLeft ? 90 : 270, 0).RotateVector(tangent);
-		FVector first = f.points[place - 1] + (tangent * (lenSide / 3));
-		FVector first2 = first + dir * depth;
-		FVector snd = f.points[place%f.points.Num()] - (tangent * (lenSide / 3)) ;
-		FVector snd2 = snd + dir * depth;
-
-		FSimplePlot simplePlot;
-		simplePlot.pol.points.Add(first);
-		simplePlot.pol.points.Add(snd);
-		simplePlot.pol.points.Add(snd2);
-		simplePlot.pol.points.Add(first2);
-
-		FHousePolygon cp = f;
-		if (intersection(simplePlot.pol, centerHole).X == 0.0f && !selfIntersection(simplePlot.pol)){
-			simplePlot.pol.offset(FVector(0, 0, 30));
-			simplePlot.type = f.simplePlotType;
-
-
-			f.addPoint(place, first);
-			f.windows.Add(place);
-			f.addPoint(place + 1, first2);
-			f.windows.Add(place + 1);
-
-			f.addPoint(place + 2, snd2);
-			f.windows.Add(place + 2);
-			f.entrances.Add(place + 2);
-
-			f.addPoint(place + 3, snd);
-			f.windows.Add(place + 3);
-			f.windows.Add(place + 4);
-
-			simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 200));
-			toReturn.Add(simplePlot);
-
+	else if (stream.FRand() < 0.1f && FVector::Dist(f.points[place%f.points.Num()],f.points[place - 1]) > 3000) {
+		FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, FVector(0, 0, 30), stream);
+		if (res.pol.points.Num() > 0) {
+			toReturn.Add(res);
 		}
-		if (selfIntersection(f))
-			f = cp;
 	}
 }
 
@@ -580,23 +589,23 @@ void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream st
 }
 
 
-TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHole, FRandomStream stream) {
+TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHole, FRandomStream stream, FVector offset) {
 	TArray<FMaterialPolygon> toReturn;
 	FHousePolygon newF = FHousePolygon(f);
+	int place = stream.RandRange(1, f.points.Num());
+	float len = stream.FRandRange(400, 1500);
+	// only shrink one side
 	if (stream.FRand() < 0.3) {
-		// only shrink one side
-		float len = stream.FRandRange(400, 1500);
-		int place = stream.RandRange(1, f.points.Num());
 		float modifier = f.windows.Contains(place) && stream.FRand() < 0.1 ? -0.5 : 1;
-		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len*modifier, FVector(0,0,0));
+		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len*modifier, offset);
 		if (res.pol.points.Num() > 2) {
 			FMaterialPolygon pol;
 			pol.points = res.pol.points;
 			pol.type = PolygonType::roof;
 			pol.normal = FVector(0, 0, -1);
-			pol.offset(FVector(0, 0, 1));
+			//pol.offset(FVector(0, 0, 1));
 			toReturn.Add(pol);
-			return toReturn;
+			//return toReturn;
 		}
 	}
 	// shrink whole symmetrically
@@ -609,37 +618,61 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 
 		if (canGoOut && stream.FRand() < 0.1)
 			modifier = -0.5;
-		float len = stream.FRandRange(0.1, 0.3);
+		float shrinkLen = stream.FRandRange(0.1, 0.3);
 		FHousePolygon cp = FHousePolygon(f);
-		cp.symmetricShrink(len*modifier, false);
+		cp.symmetricShrink(shrinkLen*modifier, false);
 		if (intersection(cp, centerHole).X == 0.0f && !selfIntersection(cp)) {
 			TArray<FPolygon> holes;
 			holes.Add(cp);
-			toReturn = ARoomBuilder::getSideWithHoles(f, holes, PolygonType::roof);
-			for (auto &a : toReturn) {
+			TArray<FMaterialPolygon> res = ARoomBuilder::getSideWithHoles(f, holes, PolygonType::roof);
+			for (auto &a : res) {
 				a.normal = FVector(0, 0, -1);
-				a.offset(FVector(0, 0, 1));
+				a.offset(offset);
+				//a.offset(FVector(0, 0, 1));
 			}
+			toReturn.Append(res);
 			f = cp;
 			for (int i = 1; i < f.points.Num()+1; i++) {
 				f.windows.Add(i);
 			}
 		}
 	}
+
+	// side into u
+	else if (stream.FRand() < 0.1) {
+		FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, offset, stream);
+		if (res.pol.points.Num() > 2) {
+			FMaterialPolygon pol;
+			pol.points = res.pol.points;
+			pol.type = PolygonType::roof;
+			pol.normal = FVector(0, 0, -1);
+			//pol.offset(FVector(0, 0, 1));
+			toReturn.Add(pol);
+			//return toReturn;
+		}
+	}
+
+	// remove corner
+	else if (stream.FRand() < 0.2) {
+		FSimplePlot res = attemptRemoveCorner(f, place, centerHole, len, offset);
+		if (res.pol.points.Num() > 2) {
+			FMaterialPolygon pol;
+			pol.points = res.pol.points;
+			pol.type = PolygonType::roof;
+			pol.normal = FVector(0, 0, -1);
+			//pol.offset(FVector(0, 0, 1));
+			toReturn.Add(pol);
+			//return toReturn;
+		}
+	}
 	return toReturn;
 }
 
 void AHouseBuilder::buildHouse(bool shellOnly, bool simple, bool fullReplacement) {
-	if (workerWantsToWork) {
-		workerWantsToWork = false;
-		return;
-	}
-	this->shellOnly = shellOnly;
-	this->simple = simple;
-	this->fullReplacement = fullReplacement;
 	housePol = f;
 
-	workerWantsToWork = true;
+	worker = new ThreadedWorker(this, shellOnly, simple, fullReplacement);
+	workerWorking = true;
 }
 
 void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
@@ -726,6 +759,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 	if (f.canBeModified) {
 		for (int i = 0; i < makeInterestingAttempts; i++) {
 			makeInteresting(f, toReturn.remainingPlots, hole, stream);
+			//potentiallyShrink(f, hole, stream);
 		}
 	}
 	int floors = f.height;
@@ -793,10 +827,10 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 				currentWindowType = WindowType(stream.RandRange(0,3));
 
 			if (stream.FRand() < 0.15 && f.canBeModified) {
-				TArray<FMaterialPolygon> shrinkRes = potentiallyShrink(f, hole,stream);
-				for (FMaterialPolygon &fm : shrinkRes) {
-					fm.offset(FVector(0,0,floorHeight*i));
-				}
+				TArray<FMaterialPolygon> shrinkRes = potentiallyShrink(f, hole, stream, FVector(0, 0, floorHeight*i));
+				//for (FMaterialPolygon &fm : shrinkRes) {
+				//	fm.offset(FVector(0,0,floorHeight*i));
+				//}
 				toReturn.roomInfo.pols.Append(shrinkRes);
 			}
 
@@ -811,6 +845,7 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 			roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
 			for (FRoomPolygon &p : roomPols) {
 				p.windowType = currentWindowType;
+				//FRoomInfo newR = ARoomBuilder::buildRoom(&p, 1, floorHeight, map, potentialBalcony, shellOnly, stream);
 				FRoomInfo newR = spec->buildApartment(&p, i, floorHeight, map, potentialBalcony, shellOnly, stream);
 				newR.offset(FVector(0, 0, floorHeight*i));
 				toReturn.roomInfo.pols.Append(newR.pols);
@@ -868,18 +903,9 @@ void AHouseBuilder::BeginPlay()
 void AHouseBuilder::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (workerWantsToWork && workersWorking.load(std::memory_order_relaxed) < 3) {
-		workerWantsToWork = false;
-		workersWorking++;
-		workerWorking = true;
-		worker = new ThreadedWorker(this, shellOnly, simple, fullReplacement);
-	}
-
 	if (workerWorking && worker->IsFinished()) {
 		buildHouseFromInfo(worker->resultingInfo, worker->fullReplacement);
-		delete worker;
 		workerWorking = false;
-		workersWorking--;
 	}
 
 

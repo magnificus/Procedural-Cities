@@ -150,10 +150,10 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.housePosition = pol.getCenter();
-	pol.height = stream.RandRange(minFloors, minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(pol.housePosition.X, pol.housePosition.Y, noiseScale));//FMath::FRandRange(0,0.9999) * (maxFloors - minFloors) + minFloors;
-	//if (NoiseSingleton::getInstance()->noise((pol.housePosition.X + noiseXOffset)*noiseScale, (pol.housePosition.Y + noiseYOffset)*noiseScale) > 0.7) {
-	//	pol.height *= 2;
-	//}
+	pol.height = stream.RandRange(minFloors, maxFloors);// minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(pol.housePosition.X, pol.housePosition.Y, noiseScale));//FMath::FRandRange(0,0.9999) * (maxFloors - minFloors) + minFloors;
+	if (NoiseSingleton::getInstance()->noise((pol.housePosition.X + noiseXOffset)*noiseScale, (pol.housePosition.Y + noiseYOffset)*noiseScale) > 0.5) {
+		pol.height *= 2;
+	}
 	pol.type = type;
 	pol.offset(-pol.getCenter());
 	return pol;

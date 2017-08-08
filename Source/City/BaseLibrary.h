@@ -1146,7 +1146,8 @@ struct FRoomPolygon : public FPolygon
 		TArray<FRoomPolygon*> remaining;
 		FRoomPolygon* thisP = new FRoomPolygon();
 		*thisP = *this;
-		thisP->type = SubRoomType::hallway;
+		//if (blueprint.useHallway)
+		//	thisP->type = SubRoomType::hallway;
 		remaining.Add(thisP);
 		removeAllButOne(remaining[0]->entrances);
 
