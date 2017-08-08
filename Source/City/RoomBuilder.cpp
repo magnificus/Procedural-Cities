@@ -340,7 +340,7 @@ bool attemptPlaceOnTop(FMeshInfo toUse, TArray<FMeshInfo> &meshes, FString name,
 	pol.points.Add(FVector(min.X, max.Y, 0.0f) + toUse.transform.GetLocation());
 	FVector res = pol.getRandomPoint(true, minDist);
 	if (res.X != 0.0f) {
-		meshes.Add(FMeshInfo{ name, FTransform{FRotator(0,0,0), res + FVector(0,0,max.Z)}, true });
+		meshes.Add(FMeshInfo{ name, FTransform{FRotator(0,0,0), res + FVector(0,0,max.Z)}});
 		return true;
 	}
 	return false;
@@ -379,7 +379,7 @@ void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &me
 				// make sure it's fully inside the room
 				if (!testCollision(pol, placed, 0, *r2)) {// && intersection(pol, *r2).X == 0.0f) {
 					toPlace.Add(pol);
-					meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)), true });
+					meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f))});
 				}
 			}
 		}
@@ -456,7 +456,7 @@ static TArray<FMeshInfo> placeAwnings(FRoomPolygon *r2, TMap<FString, UHierarchi
 			return TArray<FMeshInfo>();
 		float width = max.Y - min.Y + 5;
 		for (int j = width / 2; j < len - width / 2; j += width) {
-			meshes.Add(FMeshInfo{ "awning", FTransform{ getNormal((*r2)[i%r2->points.Num()], (*r2)[i - 1], true).Rotation(), (*r2)[i - 1] + tan * j + FVector(0,0,350)}, true });
+			meshes.Add(FMeshInfo{ "awning", FTransform{ getNormal((*r2)[i%r2->points.Num()], (*r2)[i - 1], true).Rotation(), (*r2)[i - 1] + tan * j + FVector(0,0,350)}});
 
 		}
 	}

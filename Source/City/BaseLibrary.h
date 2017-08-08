@@ -74,7 +74,6 @@ bool selfIntersection(FPolygon &p1);
 bool testCollision(FPolygon &, TArray<FPolygon> &, float leniency, FPolygon &);
 bool testCollision(FPolygon &, FPolygon &, float leniency);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
-float randFloat();
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
 TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width);
 TArray<FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &first);
@@ -392,24 +391,16 @@ struct FMeshInfo {
 
 	FMeshInfo() :
 		description(""),
-		transform(FTransform()),
-		instanced(true) {}
-	FMeshInfo(const FString &description,const FTransform &transform, const bool &instanced) :
+		transform(FTransform()) {}
+		FMeshInfo(const FString &description, const FTransform &transform) :
 		description(description),
-		transform(transform),
-		instanced(instanced) {}
-	FMeshInfo(const FString &description, const FTransform &transform) :
-		description(description),
-		transform(transform),
-		instanced(true) {}
+		transform(transform) {}
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FString description;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FTransform transform;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool instanced;
 };
 
 UENUM(BlueprintType)

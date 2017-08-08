@@ -41,8 +41,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 		TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
-		TMap<FString, UStaticMesh*> staticMap;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+	//	TMap<FString, UStaticMesh*> staticMap;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = ProcMesh)
@@ -99,7 +99,6 @@ protected:
 
 public:	
 
-	//static TMap<FString, UHierarchicalInstancedStaticMeshComponent*> mapStatic;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

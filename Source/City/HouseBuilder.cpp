@@ -8,13 +8,12 @@
 struct FPolygon;
 
 
-// Sets default values
+std::atomic<int> AHouseBuilder::workersWorking{ 0 };
 AHouseBuilder::AHouseBuilder()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//mapStatic = map;
 }
 
 struct twoInt {
@@ -328,11 +327,11 @@ FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHol
 		simplePlot.pol.reverse();
 		simplePlot.pol.offset(offset);
 
-		f.addPoint(place, p1);
-		f.addPoint(place + 1, p2);
-		f.removePoint(place + 2);
-		f.windows.Add(place + 1);
-		f.entrances.Add(place + 1);
+		f.addPoint(place%f.points.Num(), p1);
+		f.addPoint((place + 1) % f.points.Num(), p2);
+		f.removePoint((place + 2) %f.points.Num());
+		f.windows.Add((place + 1));
+		f.entrances.Add((place + 1));
 		if (hadW)
 			f.windows.Add(place);
 		if (hadE)
@@ -362,10 +361,11 @@ FSimplePlot attemptTurnSideIntoU(FHousePolygon &f, int place, FPolygon &centerHo
 	simplePlot.pol.points.Add(snd);
 	simplePlot.pol.points.Add(snd2);
 	simplePlot.pol.points.Add(first2);
+	simplePlot.pol.normal = FVector(0, 0, -1);
+	simplePlot.pol.offset(offset);
 
 	FHousePolygon cp = f;
 	if (intersection(simplePlot.pol, centerHole).X == 0.0f && !selfIntersection(simplePlot.pol)) {
-		simplePlot.pol.offset(FVector(0, 0, 30));
 		simplePlot.type = f.simplePlotType;
 
 
@@ -384,10 +384,7 @@ FSimplePlot attemptTurnSideIntoU(FHousePolygon &f, int place, FPolygon &centerHo
 
 		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 200));
 
-		//if (selfIntersection(f)) {
-		//	f = cp;
-		//else
-			return simplePlot;
+		return simplePlot;
 	}
 	return FSimplePlot();
 }
@@ -668,11 +665,17 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	return toReturn;
 }
 
-void AHouseBuilder::buildHouse(bool shellOnly, bool simple, bool fullReplacement) {
-	housePol = f;
-
-	worker = new ThreadedWorker(this, shellOnly, simple, fullReplacement);
-	workerWorking = true;
+void AHouseBuilder::buildHouse(bool shellOnlyIn, bool simpleIn, bool fullReplacementIn) {
+	if (workerWantsToWork) {
+		workerWantsToWork = false;
+		return;
+		
+	}
+	shellOnly = shellOnlyIn;
+	simple = simpleIn;
+	fullReplacement = fullReplacementIn;
+	//housePol = f;
+	workerWantsToWork = true;
 }
 
 void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
@@ -689,32 +692,25 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
 	if (!procMeshActor)
 		return;
 	TArray<FSimplePlot> otherSides;
-	if (firstTime) {
-		firstTime = false;
+	//if (firstTime) {
+	//	firstTime = false;
 		for (FSimplePlot fs : res.remainingPlots) {
 			fs.decorate(map);
 			for (FMeshInfo mesh : fs.meshes) {
-				if (mesh.instanced) {
 					if (map.Find(mesh.description))
 						map[mesh.description]->AddInstance(mesh.transform);
 				}
-				else {
-					if (staticMap.Find(mesh.description)) {
-						auto object = NewObject<UStaticMeshComponent>(staticMap[mesh.description]);
-						object->SetWorldTransform(mesh.transform);
-					}
-
-				}
 			}
-		}
-	}
-	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
+		res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
+	//}
 
-	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
 	for (FMeshInfo mesh : res.roomInfo.meshes) {
 		if (map.Find(mesh.description))
 			map[mesh.description]->AddInstance(mesh.transform);
 	}
+
+	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
+
 }
 
 FHouseInfo AHouseBuilder::getHouseInfoSimple() {
@@ -782,6 +778,10 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 		spec = &liv;
 	else
 		spec = &off;
+
+	// this variable defines how violently the shape of the building will change for each floor, i.e. how often potentiallyShrink is called
+	float myChangeIntensity = stream.FRandRange(0, 0.3);
+
 	bool potentialBalcony = f.type == RoomType::apartment && floors < 10 && stream.FRand() < 0.3;
 	for (FRoomPolygon &p : roomPols) {
 		ApartmentSpecification *toUse = spec;
@@ -826,8 +826,8 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 			if (i == windowChangeCutoff)
 				currentWindowType = WindowType(stream.RandRange(0,3));
 
-			if (stream.FRand() < 0.15 && f.canBeModified) {
-				TArray<FMaterialPolygon> shrinkRes = potentiallyShrink(f, hole, stream, FVector(0, 0, floorHeight*i));
+			if (stream.FRand() < myChangeIntensity && f.canBeModified) {
+				TArray<FMaterialPolygon> shrinkRes = potentiallyShrink(f, hole, stream, FVector(0, 0, floorHeight*i + 1));
 				//for (FMaterialPolygon &fm : shrinkRes) {
 				//	fm.offset(FVector(0,0,floorHeight*i));
 				//}
@@ -903,11 +903,19 @@ void AHouseBuilder::BeginPlay()
 void AHouseBuilder::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (workerWantsToWork && workersWorking.load(std::memory_order_relaxed) < 100) {
+		workerWantsToWork = false;
+		workersWorking++;
+		worker = new ThreadedWorker(this, shellOnly, simple, fullReplacement);
+		workerWorking = true;
+	}
+
 	if (workerWorking && worker->IsFinished()) {
 		buildHouseFromInfo(worker->resultingInfo, worker->fullReplacement);
+		delete worker;
 		workerWorking = false;
+		workersWorking--;
 	}
 
 
 }
-

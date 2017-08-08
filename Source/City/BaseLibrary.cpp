@@ -592,21 +592,21 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 			other.type = PolygonType::interior;
 			//polygonSides = false;
 		}
-		if (p.type == PolygonType::floor)// || p.type == PolygonType::roof)
+		if (p.type == PolygonType::floor	)// || p.type == PolygonType::roof)
 			polygonSides = false;
 
 		other.offset(p.getDirection() * p.width);
 		if (polygonSides) {
 			for (int i = 1; i < p.points.Num()+1; i++) {
 				FMaterialPolygon newP1;
-				newP1.type = p.type;
+				newP1.type = other.type;
 				newP1.points.Add(other.points[i - 1]);
 				newP1.points.Add(p.points[i%p.points.Num()]);
 				newP1.points.Add(p.points[i - 1]);
 				otherSides.Add(newP1);
 
 				FMaterialPolygon newP2;
-				newP2.type = p.type;
+				newP2.type = other.type;
 				newP2.points.Add(other.points[i - 1]);
 				newP2.points.Add(other.points[i%other.points.Num()]);
 				newP2.points.Add(p.points[i%p.points.Num()]);
@@ -760,7 +760,6 @@ TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int nu
 				FMeshInfo toAdd;
 				toAdd.description = name;
 				toAdd.transform = FTransform(point);
-				toAdd.instanced = false;
 				meshes.Add(toAdd);
 				blocking.Add(temp);
 			}
@@ -781,7 +780,7 @@ TArray<FMeshInfo> attemptPlaceClusterAlongSide(FPolygon pol, TArray<FPolygon> &b
 		FVector loc = posStart + tan * i * distBetween + finRot.RotateVector(offset);
 		FPolygon toTest = useRealPolygon ? getPolygon(finRot, loc, name, *map) : getTinyPolygon(loc);
 		if (!testCollision(toTest, blocking, 0, pol)) {
-			meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc },true });
+			meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc }});
 		}
 
 	}
@@ -810,9 +809,16 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 	switch (type) {
 	case SimplePlotType::undecided:
 	case SimplePlotType::green: {
-		float treeAreaRatio = 0.01;
+		
+		float treeAreaRatio = 0.005;
+		float bushAreaRatio = 0.01;
+		if (pol.getArea() < 500) {
+			treeAreaRatio *= 15;
+			bushAreaRatio *= 15;
+		}
 		attemptPlaceCenter(pol, blocking, meshes, "fountain", FRotator(0, 0, 0), FVector(0, 0, 0), map);
 		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree"));
+		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*pol.getArea(), "bush"));
 		break;
 	}
 	case SimplePlotType::asphalt: {

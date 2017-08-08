@@ -12,9 +12,7 @@ struct FSidewalkInfo {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FMeshInfo> staticMeshes;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FMeshInfo> instancedMeshes;
+		TArray<FMeshInfo> meshes;
 };
 
 
@@ -31,8 +29,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 		TMap<FString, UHierarchicalInstancedStaticMeshComponent*> instancedMap;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
-		TMap<FString, UStaticMesh*> staticMap;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+	//	TMap<FString, UStaticMesh*> staticMap;
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static TArray<FMetaPolygon> sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others);

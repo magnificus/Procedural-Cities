@@ -6,6 +6,9 @@
 #include "ProcMeshActor.h"
 #include "polypartition.h"
 // Sets default values
+
+
+int AProcMeshActor::workersWorking{ 0 };
 AProcMeshActor::AProcMeshActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -31,13 +34,6 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 	if (mesh->GetNumSections() > 0 || pols.Num() == 0) {
 		return false;
 	}
-
-	//TArray<FPolygon> cp;
-	//for (FPolygon t : pols) {
-	//	t.reverse();
-	//	cp.Add(t);
-	//}
-	//pols.Append(cp);
 
 	TArray<FVector> vertices;
 	TArray<int32> triangles;
@@ -229,7 +225,14 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 
 
 	currentlyWorkingArray = 0;
-	isWorking = true;
+	wantsToWork = true;
+	if (isWorking) {
+		clearMeshes(true);
+		isWorking = false;
+		workersWorking--;
+	}
+
+	//isWorking = true;
 	//int a = buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
 	//a += buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
 	//a += buildPolygons(interior, offset, interiorMesh, interiorMat);
@@ -264,13 +267,20 @@ void AProcMeshActor::BeginPlay()
 void AProcMeshActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (wantsToWork && workersWorking < 100) {
+		workersWorking++;
+		wantsToWork = false;
+		isWorking = true;
+	}
+
 	if (isWorking) {
 		TArray<FPolygon> &current = polygons[currentlyWorkingArray];
 		buildPolygons(current, FVector(0, 0, 0), components[currentlyWorkingArray], materials[currentlyWorkingArray]);
 		currentlyWorkingArray++;
-		if (currentlyWorkingArray >= polygons.Num())
+		if (currentlyWorkingArray >= polygons.Num()) {
 			isWorking = false;
-		//buildPolygons(current, FVector(0,0,0), components[currentlyWorkingArray], materials[currentlyWorkingArray], currentlyWorkingIndex, currentlyWorkingIndex + buildPerTick);
+			workersWorking--;
+		}
 	}
 
 }

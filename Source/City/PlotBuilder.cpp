@@ -389,7 +389,7 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 				FVector tan = target - origin;
 				float len = tan.Size();
 				tan.Normalize();
-				toReturn.staticMeshes.Add(FMeshInfo{ "tree", FTransform(origin + j * tan * (len / toPlace)), false });
+				toReturn.meshes.Add(FMeshInfo{ "tree", FTransform(origin + j * tan * (len / toPlace)) });
 			}
 		}
 	}
@@ -405,7 +405,7 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 			FVector normal = getNormal(origin, target, true);
 			float len = tan.Size();
 			tan.Normalize();
-			toReturn.staticMeshes.Add(FMeshInfo{ "lamppost", FTransform(normal.Rotation(), origin + j * tan * (len / toPlace)) });
+			toReturn.meshes.Add(FMeshInfo{ "lamppost", FTransform(normal.Rotation(), origin + j * tan * (len / toPlace)) });
 		}
 	}
 
@@ -416,7 +416,7 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 		FVector rot = getNormal(sidewalk[place - 1], sidewalk[place], true);
 		rot.Normalize();
 		FVector loc = sidewalk[place - 1] + (sidewalk[place] - sidewalk.points[place - 1]) * FMath::FRand() + rot * 200 + FVector(0,0,15);
-		toReturn.staticMeshes.Add(FMeshInfo{ "fire_hydrant", FTransform(rot.Rotation(), loc) });
+		toReturn.meshes.Add(FMeshInfo{ "fire_hydrant", FTransform(rot.Rotation(), loc) });
 
 	}
 

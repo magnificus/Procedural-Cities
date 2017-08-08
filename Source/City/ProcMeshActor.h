@@ -14,7 +14,10 @@ class CITY_API AProcMeshActor : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
+public:
+
+	static int workersWorking;
+
 	// Sets default values for this actor's properties
 	AProcMeshActor();
 
@@ -64,6 +67,8 @@ public:
 private:
 	bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URuntimeMeshComponent* mesh, UMaterialInterface *mat);
 
+
+	bool wantsToWork = false;
 	bool isWorking = false;
 	int currentlyWorkingArray = 0;
 
