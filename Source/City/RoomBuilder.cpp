@@ -27,6 +27,19 @@ void ARoomBuilder::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
+
+
+static TArray<FMaterialPolygon> placeSigns(FRoomPolygon *r2) {
+	TArray<FMaterialPolygon> pols;
+	for (int i : r2->windows) {
+		FVector tan = (*r2)[i%r2->points.Num()] - (*r2)[i - 1];
+		float len = tan.Size();
+		tan.Normalize();
+	}
+	return pols;
+}
+
+
 TArray<FMaterialPolygon> ARoomBuilder::getSideWithHoles(FPolygon outer, TArray<FPolygon> holes, PolygonType type) {
 
 	TArray<FMaterialPolygon> polygons;
@@ -609,7 +622,7 @@ static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchica
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	r2->attemptPlace(placed, meshes, false, 2, "kitchen", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
+	r2->attemptPlace(placed, meshes, false, 2, "kitchen", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 	meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
 	r2->attemptPlace(placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, false);
 	r2->attemptPlace(placed, meshes, false, 1, "fridge", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);

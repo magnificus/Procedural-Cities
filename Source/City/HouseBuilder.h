@@ -29,11 +29,16 @@ class CITY_API AHouseBuilder : public AActor
 	bool generateRoofs = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = performance, meta = (AllowPrivateAccess = "true"))
-	bool proceduralLoadIn = false;
+	GenerationMode generationMode;
 
-	bool shellOnly, simple, fullReplacement;
+	unsigned int maxThreads = 1;
+
+	bool shellOnly = false;
+
+	TArray<UTextRenderComponent*> texts;
+
 public:
-	static std::atomic<int> workersWorking;
+	static std::atomic<unsigned int> workersWorking;
 
 	// Sets default values for this actor's properties
 	AHouseBuilder();
@@ -56,7 +61,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-		void init(FHousePolygon f_in, float floorHeight_in, float maxRoomArea_in, float minHouseArea_in, int makeInterestingAttempts_in, bool generateRoofs_in, bool proceduralLoadIn_in){
+		void init(FHousePolygon f_in, float floorHeight_in, float maxRoomArea_in, float minHouseArea_in, int makeInterestingAttempts_in, bool generateRoofs_in, GenerationMode generationMode_in){
 		f = f_in;
 		floorHeight = floorHeight_in;
 		maxRoomArea = maxRoomArea_in;
@@ -64,21 +69,26 @@ public:
 		makeInterestingAttempts = makeInterestingAttempts_in;
 		floorHeight = floorHeight_in;
 		generateRoofs = generateRoofs_in;
-		proceduralLoadIn = proceduralLoadIn_in;
+		generationMode = generationMode_in;
+		switch (generationMode) {
+		case GenerationMode::complete: maxThreads = 1000; break;
+		case GenerationMode::procedural_aggressive: maxThreads = 1000; break;
+		case GenerationMode::procedural_relaxed: maxThreads = 1; break;
+		}
 	}
 
 
-	UFUNCTION(BlueprintCallable, Category = "Generation")
-	FHouseInfo getHouseInfoSimple();
+	//UFUNCTION(BlueprintCallable, Category = "Generation")
+	//FHouseInfo getHouseInfoSimple();
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	FHouseInfo getHouseInfo(bool shellOnly);
+	FHouseInfo getHouseInfo();
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void buildHouse(bool shellOnly, bool simple, bool fullReplacement);
+	void buildHouse(bool shellOnly);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	void buildHouseFromInfo(FHouseInfo res, bool fullReplacement);
+	void buildHouseFromInfo(FHouseInfo res);
 
 	static void makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream);
 

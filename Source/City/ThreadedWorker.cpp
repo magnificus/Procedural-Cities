@@ -11,11 +11,8 @@
 ThreadedWorker* ThreadedWorker::Runnable = NULL;
 //***********************************************************
 
-ThreadedWorker::ThreadedWorker(AHouseBuilder* house, bool shellOnly, bool simple, bool fullReplacement)
+ThreadedWorker::ThreadedWorker(AHouseBuilder* house)
 	: houseBuilder(house)
-	, shellOnly(shellOnly)
-	, simple(simple)
-	, fullReplacement(fullReplacement)
 {
 	//Link to where data should be stored
 	Thread = FRunnableThread::Create(this, TEXT("ThreadedWorker"), 0, TPri_AboveNormal); //windows default = 8mb for thread, could specify more
@@ -37,7 +34,7 @@ bool ThreadedWorker::Init()
 uint32 ThreadedWorker::Run()
 {
 
-	resultingInfo = houseBuilder->getHouseInfo(shellOnly);
+	resultingInfo = houseBuilder->getHouseInfo();
 	done = true;
 	return 0;
 }

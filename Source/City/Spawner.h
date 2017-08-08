@@ -124,7 +124,7 @@ class CITY_API ASpawner : public AActor
 		float extraBlockingLen = 100;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = performance, meta = (AllowPrivateAccess = "true"))
-		bool loadInProcedurally = false;
+		GenerationMode generationMode;
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = plotCreation, meta = (AllowPrivateAccess = "true"))
 	//	float extraLen;
 public:	

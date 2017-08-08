@@ -12,7 +12,7 @@
 #include "Algo/Reverse.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include <functional>
-
+#include "Runtime/Engine/Classes/Engine/TextRenderActor.h"
 #include "BaseLibrary.generated.h"
 
 /**
@@ -37,6 +37,16 @@ enum class RoadType : uint8
 	main 	UMETA(DisplayName = "Main Road"),
 	secondary UMETA(DisplayName = "Secondary Road")
 };
+
+UENUM(BlueprintType)
+enum class GenerationMode : uint8
+{
+	complete 	UMETA(DisplayName = "Complete generation"),
+	procedural_aggressive UMETA(DisplayName = "Aggressive procedural generation"),
+	procedural_relaxed UMETA(DisplayName = "Relaxed procedural generation")
+
+};
+
 
 UENUM(BlueprintType)
 enum class RoomType : uint8
@@ -423,6 +433,9 @@ struct FRoomInfo {
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<FMeshInfo> meshes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<UTextRenderComponent*> texts;
 
 	void append(FRoomInfo info) {
 		pols.Append(info.pols);
@@ -1156,7 +1169,7 @@ struct FRoomPolygon : public FPolygon
 		//for (auto &a : blueprint.needed) {
 		//	neededTypes.Add(a.type);
 		//}
-		postFit(rooms, blueprint);
+		//postFit(rooms, blueprint);
 
 
 		return rooms;

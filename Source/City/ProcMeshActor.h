@@ -16,8 +16,9 @@ class CITY_API AProcMeshActor : public AActor
 	
 public:
 
-	static int workersWorking;
-
+	static unsigned int workersWorking;
+	GenerationMode generationMode;
+	unsigned int maxThreads = 10000;
 	// Sets default values for this actor's properties
 	AProcMeshActor();
 
@@ -26,6 +27,15 @@ public:
 
 	bool clearMeshes(bool fullReplacement);
 
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+		void init(GenerationMode generationMode_in) {
+		generationMode = generationMode_in;
+		switch (generationMode) {
+		case GenerationMode::complete: maxThreads = 1000; break;
+		case GenerationMode::procedural_aggressive: maxThreads = 1000; break;
+		case GenerationMode::procedural_relaxed: maxThreads = 1; break;
+		}
+	}
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))
 		UMaterial* exteriorMat;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = appearance, meta = (AllowPrivateAccess = "true"))

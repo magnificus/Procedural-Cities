@@ -8,7 +8,7 @@
 // Sets default values
 
 
-int AProcMeshActor::workersWorking{ 0 };
+unsigned int AProcMeshActor::workersWorking{ 0 };
 AProcMeshActor::AProcMeshActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -267,7 +267,7 @@ void AProcMeshActor::BeginPlay()
 void AProcMeshActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (wantsToWork && workersWorking < 100) {
+	if (wantsToWork && workersWorking < maxThreads) {
 		workersWorking++;
 		wantsToWork = false;
 		isWorking = true;

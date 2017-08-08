@@ -8,7 +8,7 @@
 struct FPolygon;
 
 
-std::atomic<int> AHouseBuilder::workersWorking{ 0 };
+std::atomic<unsigned int> AHouseBuilder::workersWorking{ 0 };
 AHouseBuilder::AHouseBuilder()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -665,32 +665,31 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	return toReturn;
 }
 
-void AHouseBuilder::buildHouse(bool shellOnlyIn, bool simpleIn, bool fullReplacementIn) {
+void AHouseBuilder::buildHouse(bool shellOnly_in) {
+	shellOnly = shellOnly_in;
 	if (workerWantsToWork) {
 		workerWantsToWork = false;
 		return;
 		
 	}
-	shellOnly = shellOnlyIn;
-	simple = simpleIn;
-	fullReplacement = fullReplacementIn;
 	//housePol = f;
 	workerWantsToWork = true;
 }
 
-void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
-	if (procMeshActorClass) {
-		if (procMeshActor) {
-			procMeshActor->clearMeshes(fullReplacement);
-			for (auto pair : map)
-				pair.Value->ClearInstances();
-		}
-		else {
-			procMeshActor = GetWorld()->SpawnActor<AProcMeshActor>(procMeshActorClass, FActorSpawnParameters());
-		}
+void AHouseBuilder::buildHouseFromInfo(FHouseInfo res) {
+	//if (procMeshActorClass) {
+	if (procMeshActor) {
+		procMeshActor->clearMeshes(false);
+		for (auto pair : map)
+			pair.Value->ClearInstances();
 	}
-	if (!procMeshActor)
-		return;
+	else {
+		procMeshActor = GetWorld()->SpawnActor<AProcMeshActor>(procMeshActorClass, FActorSpawnParameters());
+		procMeshActor->init(generationMode);
+	}
+	//}
+	//if (!procMeshActor)
+	//	return;
 	TArray<FSimplePlot> otherSides;
 	//if (firstTime) {
 	//	firstTime = false;
@@ -710,35 +709,41 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res, bool fullReplacement) {
 	}
 
 	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
+	//auto *text = GetWorld()->SpawnActor<ATextRenderActor>(ATextRenderActor::StaticClass(), FVector(0.f, 100, 170.f), FRotator(90.f, 180.f, 0.f));
+	//text->GetTextRender()->SetText(FText::FromString(TEXT("Dynamic Text")));
+	//text->GetTextRender()->SetFont()
+	//auto *font = GetWorld()->SpawnActor<UFont>(UFont::StaticClass(), FVector(0.f, 100, 170.f), FRotator(90.f, 180.f, 0.f));
+	//font->setf
+	//Text->
 
 }
 
-FHouseInfo AHouseBuilder::getHouseInfoSimple() {
-	FHouseInfo toReturn;
-	for (int i = 1; i < f.points.Num() + 1; i++) {
-		FMaterialPolygon side;
-		side.type = PolygonType::exterior;
-		side.points.Add(f.points[i - 1] + FVector(0, 0, f.height*floorHeight));
-		side.points.Add(f.points[i - 1]);
-		side.points.Add(f.points[i% f.points.Num()]);
-		side.points.Add(f.points[i% f.points.Num()] + FVector(0, 0, f.height*floorHeight));
-		side.reverse();
-		toReturn.roomInfo.pols.Add(side);
-	}
-	FMaterialPolygon roof;
-	roof.points = f.points;
-	roof.normal = FVector(0, 0, -1);
-	roof.type = PolygonType::roof;
-	roof.offset(FVector(0, 0, f.height*floorHeight));
-	roof.reverse();
-	toReturn.roomInfo.pols.Add(roof);
+//FHouseInfo AHouseBuilder::getHouseInfoSimple() {
+//	FHouseInfo toReturn;
+//	for (int i = 1; i < f.points.Num() + 1; i++) {
+//		FMaterialPolygon side;
+//		side.type = PolygonType::exterior;
+//		side.points.Add(f.points[i - 1] + FVector(0, 0, f.height*floorHeight));
+//		side.points.Add(f.points[i - 1]);
+//		side.points.Add(f.points[i% f.points.Num()]);
+//		side.points.Add(f.points[i% f.points.Num()] + FVector(0, 0, f.height*floorHeight));
+//		side.reverse();
+//		toReturn.roomInfo.pols.Add(side);
+//	}
+//	FMaterialPolygon roof;
+//	roof.points = f.points;
+//	roof.normal = FVector(0, 0, -1);
+//	roof.type = PolygonType::roof;
+//	roof.offset(FVector(0, 0, f.height*floorHeight));
+//	roof.reverse();
+//	toReturn.roomInfo.pols.Add(roof);
+//
+//	return toReturn;
+//
+//}
 
-	return toReturn;
 
-}
-
-
-FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
+FHouseInfo AHouseBuilder::getHouseInfo()
 {
 	float dist = FVector::Dist(f[0], f[f.points.Num() - 1]);
 	UE_LOG(LogTemp, Warning, TEXT("dist between start and end: %f"), dist);
@@ -746,16 +751,12 @@ FHouseInfo AHouseBuilder::getHouseInfo(bool shellOnly)
 	float corrWidth = 300;
 	FHousePolygon pre = f;
 	stream.Initialize(f.housePosition.X * 1000 + f.housePosition.Y);
-	//if (f.points.Num() < 3) {
-	//	return FHouseInfo();
-	//}
 	f.checkOrientation();
 	FPolygon hole = getShaftHolePolygon(f);
 	FHouseInfo toReturn;
 	if (f.canBeModified) {
 		for (int i = 0; i < makeInterestingAttempts; i++) {
 			makeInteresting(f, toReturn.remainingPlots, hole, stream);
-			//potentiallyShrink(f, hole, stream);
 		}
 	}
 	int floors = f.height;
@@ -903,15 +904,15 @@ void AHouseBuilder::BeginPlay()
 void AHouseBuilder::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (workerWantsToWork && workersWorking.load(std::memory_order_relaxed) < 100) {
+	if (workerWantsToWork && workersWorking.load(std::memory_order_relaxed) < maxThreads) {
 		workerWantsToWork = false;
 		workersWorking++;
-		worker = new ThreadedWorker(this, shellOnly, simple, fullReplacement);
+		worker = new ThreadedWorker(this);
 		workerWorking = true;
 	}
 
 	if (workerWorking && worker->IsFinished()) {
-		buildHouseFromInfo(worker->resultingInfo, worker->fullReplacement);
+		buildHouseFromInfo(worker->resultingInfo);
 		delete worker;
 		workerWorking = false;
 		workersWorking--;

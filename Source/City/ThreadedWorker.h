@@ -15,11 +15,7 @@ class ThreadedWorker : public FRunnable
 	FRunnableThread* Thread;
 
 	AHouseBuilder *houseBuilder;
-	FHousePolygon housePol;
-	bool shellOnly;
-	bool simple;
-	/** The PC */
-	//AVictoryGamePlayerController* ThePC;
+	//FHousePolygon housePol;
 
 	/** Stop this thread? Uses Thread Safe Counter */
 	FThreadSafeCounter StopTaskCounter;
@@ -28,7 +24,6 @@ private:
 
 public:
 	FHouseInfo resultingInfo;
-	bool fullReplacement;
 	bool done = false;
 
 	//Done?
@@ -40,7 +35,7 @@ public:
 	//~~~ Thread Core Functions ~~~
 
 	//Constructor / Destructor
-	ThreadedWorker(AHouseBuilder *house, bool shellOnly, bool simple, bool fullReplacement);
+	ThreadedWorker(AHouseBuilder *house);
 	virtual ~ThreadedWorker();
 
 	// Begin FRunnable interface.

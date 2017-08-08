@@ -748,7 +748,7 @@ FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHier
 TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int num, FString name, bool useRealPolygon , const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map) {
 	TArray<FMeshInfo> meshes;
 	for (int i = 0; i < num; i++) {
-		FVector point = pol.getRandomPoint(true, 150);
+		FVector point = pol.getRandomPoint(true, 0);
 		if (point.X != 0.0f) {
 			FPolygon temp;
 			if (useRealPolygon)
@@ -810,15 +810,22 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 	case SimplePlotType::undecided:
 	case SimplePlotType::green: {
 		
-		float treeAreaRatio = 0.005;
-		float bushAreaRatio = 0.01;
+		float treeAreaRatio = 0.001;
+		float bushAreaRatio = 0.005;
+		float grassRatio = 0.1;
 		if (pol.getArea() < 500) {
 			treeAreaRatio *= 15;
 			bushAreaRatio *= 15;
+			grassRatio *= 15;
 		}
 		attemptPlaceCenter(pol, blocking, meshes, "fountain", FRotator(0, 0, 0), FVector(0, 0, 0), map);
-		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree"));
-		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*pol.getArea(), "bush"));
+		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree1"));
+		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree2"));
+		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*pol.getArea(), "bush1"));
+		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*pol.getArea(), "bush2"));
+		meshes.Append(placeRandomly(pol, blocking, grassRatio*pol.getArea(), "grass"));
+
+
 		break;
 	}
 	case SimplePlotType::asphalt: {
