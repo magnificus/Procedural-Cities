@@ -2,7 +2,6 @@
 
 #include "City.h"
 #include "polypartition.h"
-//#include "gpc.h"
 #include "RoomBuilder.h"
 
 
@@ -28,13 +27,102 @@ void ARoomBuilder::Tick(float DeltaTime)
 
 }
 
+TArray<FMaterialPolygon> getRectangularWindow(FPolygon p, FVector center, float frameWidth, float frameLength, float frameDepth) {
+	TArray<FMaterialPolygon> toReturn;
+	for (int j = 1; j < p.points.Num()+1; j++) {
+		FMaterialPolygon frame;
+		frame.type = PolygonType::windowFrame;
+		frame.width = frameDepth;
+		FVector tangent1 = center - p.points[j - 1];
+		FVector tangent2 = center - p.points[j%p.points.Num()];
+		tangent1.Normalize();
+		tangent2.Normalize();
+		FVector windowNormal = getNormal(p.points[j%p.points.Num()], p.points[j - 1], true);
+		windowNormal.Normalize();
+		frame.points.Add(p.points[j - 1]);
+		frame.points.Add(p.points[j%p.points.Num()]);
+		frame.points.Add(p.points[j%p.points.Num()] + tangent2 * frameWidth);
+		frame.points.Add(p.points[j - 1] + tangent1 * frameWidth);
+		FVector frameDir = frame.getDirection();
+		frame.offset(frameDir*(frameDepth / 2 - 20));
+		toReturn.Add(frame);
+	}
+	return toReturn;
+}
 
-static TArray<FMaterialPolygon> placeSigns(FRoomPolygon *r2) {
+
+static TArray<FMaterialPolygon> getSign(FVector startP, FVector endP, FRandomStream stream, bool sideways) {
+	TArray<FMaterialPolygon> signPols;
+
+	float minHeight = 50;
+	float maxHeight = 100;
+	float minLen = 100;
+	float maxLen = 200;
+	FVector tangent = endP - startP;
+	float len = tangent.Size();
+	tangent.Normalize();
+	float actualLen = stream.FRandRange(minLen, maxLen);
+	float actualHeight = stream.FRandRange(minHeight, maxHeight);
+	if (sideways) {
+		float first = stream.FRandRange(0, len);
+		float outLen = 50;
+		len = actualLen;
+		startP += first * tangent;
+		tangent = FRotator(0, 90, 0).RotateVector(tangent);
+		FMaterialPolygon lineHorizontal;
+		lineHorizontal.type = PolygonType::roadMiddle;
+		lineHorizontal += startP + FVector(0, 0, actualHeight + 20);
+		lineHorizontal += startP + FVector(0, 0, actualHeight + 30);
+		lineHorizontal += startP + tangent*(actualLen + outLen*2) + FVector(0, 0, actualHeight + 30);
+		lineHorizontal += startP + tangent*(actualLen + outLen*2) + FVector(0, 0, actualHeight + 20);
+		lineHorizontal.width = 10;
+		signPols.Add(lineHorizontal);
+
+		startP += tangent * outLen;
+		// add two lines down, evenly spread
+		FVector lineStartP = startP + tangent * actualLen / 3 + FVector(0, 0, actualHeight + 20);
+		FMaterialPolygon lineVertical;
+		lineVertical.type = PolygonType::roadMiddle;
+		lineVertical += lineStartP;
+		lineVertical += lineStartP + tangent * 10;
+		lineVertical += lineStartP + tangent * 10 + FVector(0, 0, -20);
+		lineVertical += lineStartP + FVector(0, 0, -20);
+		lineVertical.width = 10;
+
+		FMaterialPolygon lineVertical2 = lineVertical;
+		lineVertical2.offset(tangent * actualLen / 3);
+
+		signPols.Add(lineVertical);
+		signPols.Add(lineVertical2);
+
+
+		//startP +=
+	}
+
+
+	float first = stream.FRandRange(0, len - actualLen);
+	FVector startLoc = startP + tangent * first;
+	FVector endLoc = startP + tangent * (first + actualLen);
+	FMaterialPolygon outline;
+	outline.type = PolygonType::roadMiddle;
+	outline += startLoc;
+	outline += startLoc + FVector(0, 0, actualHeight);
+	outline += endLoc + FVector(0, 0, actualHeight);
+	outline += endLoc;
+	TArray<FMaterialPolygon> around = getRectangularWindow(outline, outline.getCenter(), 30, 30, 40);
+	for (auto &a : around)
+		a.type = PolygonType::exteriorSnd;
+	signPols.Append(around);
+	signPols.Add(outline);
+	return signPols;
+}
+
+static TArray<FMaterialPolygon> placeSigns(FRoomPolygon *r2, FRandomStream stream) {
+	// one sign per room max
 	TArray<FMaterialPolygon> pols;
 	for (int i : r2->windows) {
-		FVector tan = (*r2)[i%r2->points.Num()] - (*r2)[i - 1];
-		float len = tan.Size();
-		tan.Normalize();
+		pols = getSign((*r2)[i - 1] + FVector(0,0,300), (*r2)[i%r2->points.Num()] + FVector(0, 0, 300), stream, stream.FRand() < 0.2);
+		return pols;
 	}
 	return pols;
 }
@@ -165,28 +253,7 @@ TArray<FMaterialPolygon> getCrossWindow(FPolygon p, FVector center, float frameW
 }
 
 
-TArray<FMaterialPolygon> getRectangularWindow(FPolygon p, FVector center, float frameWidth, float frameLength, float frameDepth) {
-	TArray<FMaterialPolygon> toReturn;
-	for (int j = 1; j < p.points.Num(); j++) {
-		FMaterialPolygon frame;
-		frame.type = PolygonType::windowFrame;
-		frame.width = frameDepth;
-		FVector tangent1 = center - p.points[j - 1];
-		FVector tangent2 = center - p.points[j];
-		tangent1.Normalize();
-		tangent2.Normalize();
-		FVector windowNormal = getNormal(p.points[j], p.points[j - 1], true);
-		windowNormal.Normalize();
-		frame.points.Add(p.points[j - 1]);
-		frame.points.Add(p.points[j]);
-		frame.points.Add(p.points[j] + tangent2 * frameWidth);
-		frame.points.Add(p.points[j - 1] + tangent1 * frameWidth);
-		FVector frameDir = frame.getDirection();
-		frame.offset(frameDir*(frameDepth / 2 - 20));
-		toReturn.Add(frame);
-	}
-	return toReturn;
-}
+
 
 TArray<FMaterialPolygon> getAppropriateWindowFrame(FPolygon p, FVector center, WindowType type) {
 	float frameWidth = 15;
@@ -205,15 +272,15 @@ TArray<FMaterialPolygon> getAppropriateWindowFrame(FPolygon p, FVector center, W
 	} break;
 	case WindowType::verticalLines: {
 		toReturn = getRectangularWindow(p, center, frameWidth, frameLength, frameDepth);
-		for (int i = 0; i < toReturn.Num(); i++) {
-			toReturn.RemoveAt(i);
-		}
+		//for (int i = 0; i < toReturn.Num(); i++) {
+		//	toReturn.RemoveAt(i);
+		//}
 	} break;
 	case WindowType::rectangularHorizontalBigger: {
 		toReturn = getRectangularWindow(p, center, frameWidth, frameLength, frameDepth);
-		for (int i = 1; i < toReturn.Num(); i++) {
-			toReturn.RemoveAt(i);
-		}
+		//for (int i = 1; i < toReturn.Num(); i++) {
+		//	toReturn.RemoveAt(i);
+		//}
 	} break;
 	}
 
@@ -358,6 +425,7 @@ bool attemptPlaceOnTop(FMeshInfo toUse, TArray<FMeshInfo> &meshes, FString name,
 	}
 	return false;
 }
+// first is height, second is width
 
 void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
 	// get a line through the room
@@ -408,50 +476,50 @@ void placeRows(FRoomPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &me
 
 
 
-static TArray<FMeshInfo> getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
+static FRoomInfo getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 	TArray<FPolygon> placed = getBlockingVolumes(r2, 200, 200);
 	FVector dir = r2->getRoomDirection();
 	FVector center = r2->getCenter();
 
-	attemptPlaceCenter(*r2, placed, meshes, "office_meeting_table", FRotator(0, 0, 0), FVector(0, 0, 10), map);
+	attemptPlaceCenter(*r2, placed, r.meshes, "office_meeting_table", FRotator(0, 0, 0), FVector(0, 0, 10), map);
 	float offsetLen = 100;
 
 	if (FMath::FRandRange(0,0.9999) < 0.5) {
-		r2->attemptPlace(placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
+		r2->attemptPlace(placed, r.meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	}
 
 	if (FMath::FRandRange(0,0.9999) < 0.5) {
-		r2->attemptPlace(placed, meshes, false, 1, "office_whiteboard", FRotator(0, 180, 0), FVector(0, 0, 180), map, true);
+		r2->attemptPlace(placed, r.meshes, false, 1, "office_whiteboard", FRotator(0, 180, 0), FVector(0, 0, 180), map, true);
 	}
 
-	r2->attemptPlace(placed, meshes, true, 1, "dispenser", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
+	r2->attemptPlace(placed, r.meshes, true, 1, "dispenser", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
 
-	return meshes;
+	return r;
 }
 
 
 
-static TArray<FMeshInfo> getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+static FRoomInfo getWorkingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	TArray<FMeshInfo> meshes;
+	FRoomInfo r;
 	TArray<FPolygon> placed;
 	placed = getBlockingVolumes(r2, 200, 200);
 	// first is height, second is width
 	placeRows(r2, placed, meshes, FRotator(0, 180, 0), "office_cubicle", 0.0016, 0.002, map);
-	TArray<FMeshInfo> finalMeshes;
 	for (FMeshInfo mesh : meshes) {
 		mesh.transform.SetLocation(mesh.transform.GetLocation() + FVector(0, 0, 15));
-		finalMeshes.Add(mesh);
+		r.meshes.Add(mesh);
 		FVector compUserOffset = FVector(90, 0, 115);
 		FRotator compUserRot = FRotator(0, -90, 0);
 		FVector compBoxOffset = FVector(90, 100, -45);
 		FVector chairOffset = FVector(230, 0, 0);
-		finalMeshes.Add(FMeshInfo{ "comp_user", FTransform{mesh.transform.Rotator() + compUserRot, mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compUserOffset) } });
-		finalMeshes.Add(FMeshInfo{ "comp_box", FTransform{ mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compBoxOffset) } });
-		finalMeshes.Add(FMeshInfo{ "office_chair", FTransform{mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(chairOffset) } });
+		r.meshes.Add(FMeshInfo{ "comp_user", FTransform{mesh.transform.Rotator() + compUserRot, mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compUserOffset) } });
+		r.meshes.Add(FMeshInfo{ "comp_box", FTransform{ mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(compBoxOffset) } });
+		r.meshes.Add(FMeshInfo{ "office_chair", FTransform{mesh.transform.Rotator(), mesh.transform.GetLocation() + mesh.transform.Rotator().RotateVector(chairOffset) } });
 	}
-	r2->attemptPlace(placed, finalMeshes, true, 1, "trash_can", FRotator(0, 0, 0), FVector(0, 0, 7), map, false);
-	return finalMeshes;
+	r2->attemptPlace(placed, r.meshes, true, 1, "trash_can", FRotator(0, 0, 0), FVector(0, 0, 7), map, false);
+	return r;
 }
 
 static TArray<FMeshInfo> placeAwnings(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
@@ -469,7 +537,7 @@ static TArray<FMeshInfo> placeAwnings(FRoomPolygon *r2, TMap<FString, UHierarchi
 			return TArray<FMeshInfo>();
 		float width = max.Y - min.Y + 5;
 		for (int j = width / 2; j < len - width / 2; j += width) {
-			meshes.Add(FMeshInfo{ "awning", FTransform{ getNormal((*r2)[i%r2->points.Num()], (*r2)[i - 1], true).Rotation(), (*r2)[i - 1] + tan * j + FVector(0,0,350)}});
+			meshes.Add(FMeshInfo{ "awning", FTransform{ getNormal((*r2)[i%r2->points.Num()], (*r2)[i - 1], true).Rotation(), (*r2)[i - 1] + tan * j + FVector(0,0,390)}});
 
 		}
 	}
@@ -481,7 +549,7 @@ static TArray<FMeshInfo> placeAwnings(FRoomPolygon *r2, TMap<FString, UHierarchi
 
 static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon *r2, TArray<FPolygon> &placed, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	TArray<FMeshInfo> meshes;
-
+	//FRoomInfo r;
 
 	FVector center = r2->getCenter();
 	FVector rot = r2->getRoomDirection();
@@ -525,34 +593,33 @@ static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon *r2, TArray<F
 
 }
 
-static TArray<FMeshInfo> getLivingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
-	
+static FRoomInfo getLivingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	FTransform res = r2->attemptGetPosition(placed, meshes, false, 3, "tv", FRotator(0, 0, 0), FVector(35, 0, 150), map, true);
+	FTransform res = r2->attemptGetPosition(placed, r.meshes, false, 3, "tv", FRotator(0, 0, 0), FVector(35, 0, 150), map, true);
 	if (res.GetLocation().X != 0.0f) {
-		meshes.Add({ "tv", res });
+		r.meshes.Add({ "tv", res });
 		placed.Add(getPolygon(res.Rotator(), res.GetLocation(), "tv", map));
 		FTransform sofaTrans = FTransform{ res.GetRotation(), res.GetLocation() + res.GetRotation().RotateVector(FVector(270, 0, 0)), FVector(1.0f, 1.0f, 1.0f) };
 		FPolygon pol = getPolygon(sofaTrans.Rotator() , sofaTrans.GetLocation(), "sofa", map);
 		if (!testCollision(pol, placed, 0, *r2)) {
 			placed.Add(pol);
-			meshes.Add({ "sofa", FTransform{sofaTrans.Rotator(), sofaTrans.GetLocation() - FVector(0,0,140), FVector(1,1,1)} });
+			r.meshes.Add({ "sofa", FTransform{sofaTrans.Rotator(), sofaTrans.GetLocation() - FVector(0,0,140), FVector(1,1,1)} });
 		}
 
 	}
-	meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
+	r.meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
 
-	return meshes;
+	return r;
 }
 
-static TArray<FMeshInfo> getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
+static FRoomInfo getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	r2->attemptPlace(placed, meshes, false, 1, "restaurant_bar", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
+	r2->attemptPlace(placed, r.meshes, false, 1, "restaurant_bar", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 	TArray<FMeshInfo> tables;
 
 	placeRows(r2, placed, tables, FRotator(0, 0, 0), "restaurant_table", FMath::FRandRange(0.0015, 0.003), FMath::FRandRange(0.0015, 0.003), map);
@@ -560,130 +627,133 @@ static TArray<FMeshInfo> getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHier
 	for (FMeshInfo table : tables) {
 		FTransform trans = table.transform;
 		if (FMath::RandBool())
-			meshes.Add({ "restaurant_chair", trans });
+			r.meshes.Add({ "restaurant_chair", trans });
 		trans.SetRotation(FQuat(trans.Rotator() + FRotator(0, 120, 0)));
 		if (FMath::RandBool())
-			meshes.Add({ "restaurant_chair", trans });
+			r.meshes.Add({ "restaurant_chair", trans });
 		trans.SetRotation(FQuat(trans.Rotator() + FRotator(0, 120, 0)));
 		if (FMath::RandBool())
-			meshes.Add({ "restaurant_chair", trans });
+			r.meshes.Add({ "restaurant_chair", trans });
 
 	}
 	if (FMath::FRand() < 0.3)
-		meshes.Append(placeAwnings(r2, map));
-	meshes.Append(tables);
-	return meshes;
+		r.meshes.Append(placeAwnings(r2, map));
+	r.meshes.Append(tables);
+	r.pols.Append(placeSigns(r2, FRandomStream(r2->points[0].X * 1000 + r2->points[0].Y * 100 + r2->points[0].Z)));
+	return r;
 }
 
-static TArray<FMeshInfo> getBathRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
+static FRoomInfo getBathRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 	TArray<FPolygon> placed;
 
 	TArray<FPolygon> blocking = getBlockingVolumes(r2, 200, 100);
 	placed.Append(blocking);
-	r2->attemptPlace(placed, meshes, false, 2, "toilet" , FRotator(0, 270, 0), FVector(0, 0, 0), map, false);
-	FTransform res = r2->attemptGetPosition(placed, meshes, false, 2, "sink", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
+	r2->attemptPlace(placed, r.meshes, false, 2, "toilet" , FRotator(0, 270, 0), FVector(0, 0, 0), map, false);
+	FTransform res = r2->attemptGetPosition(placed, r.meshes, false, 2, "sink", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
 	if (res.GetLocation().X != 0.0f) {
 		FPolygon pol = getPolygon(res.Rotator(), res.GetLocation(), "sink", map);
 		placed.Add(pol);
-		meshes.Add(FMeshInfo{ "sink", res});
+		r.meshes.Add(FMeshInfo{ "sink", res});
 		res.SetLocation(res.GetLocation() + FVector(0, 0, 150));
 		//res.Ro
-		meshes.Add(FMeshInfo{ "mirror", FTransform(res.Rotator() + FRotator(0, 270, 0), res.GetLocation() + FVector(0, 0, 55) - res.Rotator().Vector() * 40, FVector(1.0, 1.0, 1.0)) });
+		r.meshes.Add(FMeshInfo{ "mirror", FTransform(res.Rotator() + FRotator(0, 270, 0), res.GetLocation() + FVector(0, 0, 55) - res.Rotator().Vector() * 40, FVector(1.0, 1.0, 1.0)) });
 	}
-	return meshes;
+	return r;
 }
 
 
-static TArray<FMeshInfo> getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
+static FRoomInfo getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 	TArray<FPolygon> placed;
 	//placed.Add(r2);
 	placed.Append(getBlockingVolumes(r2, 200, 200));
-	r2->attemptPlace(placed, meshes, true, 2, "bed", FRotator(0, 270, 0), FVector(0, 0, 60), map, false);
-	r2->attemptPlace(placed, meshes, true, 1, "small_table", FRotator(0, 0, 0), FVector(0, 0, -50), map, false);
-	r2->attemptPlace(placed, meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
-	r2->attemptPlace(placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
+	r2->attemptPlace(placed, r.meshes, true, 2, "bed", FRotator(0, 270, 0), FVector(0, 0, 60), map, false);
+	r2->attemptPlace(placed, r.meshes, true, 1, "small_table", FRotator(0, 0, 0), FVector(0, 0, -50), map, false);
+	r2->attemptPlace(placed, r.meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
+	r2->attemptPlace(placed, r.meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
 
-	return meshes;
+	return r;
 }
 
-static TArray<FMeshInfo> getHallWay(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
+static FRoomInfo getHallWay(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 	TArray<FPolygon> placed;
 
-	r2->attemptPlace(placed, meshes, true, 1, "hanger", FRotator(0, 90, 0), FVector(0, 0, 10), map, false);
-	r2->attemptPlace(placed, meshes, false, 1, "mirror2", FRotator(0, 0, 0), FVector(0, 0, 100), map, true);
-	return meshes;
+	r2->attemptPlace(placed, r.meshes, true, 1, "hanger", FRotator(0, 90, 0), FVector(0, 0, 10), map, false);
+	r2->attemptPlace(placed, r.meshes, false, 1, "mirror2", FRotator(0, 0, 0), FVector(0, 0, 100), map, true);
+	return r;
 }
 
-static TArray<FMeshInfo> getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
+static FRoomInfo getKitchen(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	r2->attemptPlace(placed, meshes, false, 2, "kitchen", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
-	meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
-	r2->attemptPlace(placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, false);
-	r2->attemptPlace(placed, meshes, false, 1, "fridge", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
-	r2->attemptPlace(placed, meshes, false, 1, "oven", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
-	return meshes;
+	r2->attemptPlace(placed, r.meshes, false, 2, "kitchen", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
+	r.meshes.Append(potentiallyGetTableAndChairs(r2, placed, map));
+	r2->attemptPlace(placed, r.meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, false);
+	r2->attemptPlace(placed, r.meshes, false, 1, "fridge", FRotator(0, 90, 0), FVector(0, 0, 0), map, true);
+	r2->attemptPlace(placed, r.meshes, false, 1, "oven", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
+	return r;
 }
 
-static TArray<FMeshInfo> getCorridor(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
+static FRoomInfo getCorridor(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 	TArray<FPolygon> placed;
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	r2->attemptPlace(placed, meshes, false, 1, "locker", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
-	if (meshes.Num() == 1 && FMath::FRand() < 0.2) {
-		attemptPlaceOnTop(meshes[0], meshes, "vase", 50, map);
+	r2->attemptPlace(placed, r.meshes, false, 1, "locker", FRotator(0, 0, 0), FVector(0, 0, 0), map, true);
+	if (r.meshes.Num() == 1 && FMath::FRand() < 0.2) {
+		attemptPlaceOnTop(r.meshes[0], r.meshes, "vase", 50, map);
 
 	}
-	r2->attemptPlace(placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 10), map, true);
+	r2->attemptPlace(placed, r.meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 10), map, true);
 
 	if (FMath::FRand() < 0.15)
-		r2->attemptPlace(placed, meshes, false, 1, "mirror2", FRotator(0, 0, 0), FVector(0, 0, 100), map, true);
+		r2->attemptPlace(placed, r.meshes, false, 1, "mirror2", FRotator(0, 0, 0), FVector(0, 0, 100), map, true);
 
 
-	return meshes;
+	return r;
 }
 
 
-static TArray<FMeshInfo> getCloset(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
+static FRoomInfo getCloset(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
-	r2->attemptPlace(placed, meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 10), map, true);
-	r2->attemptPlace(placed, meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
+	r2->attemptPlace(placed, r.meshes, false, 1, "wardrobe", FRotator(0, 0, 0), FVector(0, 0, 10), map, true);
+	r2->attemptPlace(placed, r.meshes, false, 1, "shelf_upper_large", FRotator(0, 270, 0), FVector(0, 0, 200), map, true);
 
 
-	return meshes;
+	return r;
 }
 
-static TArray<FMeshInfo> getStoreFront(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
+static FRoomInfo getStoreFront(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
 	for (int i = 0; i < 5; i++) {
-		r2->attemptPlace(placed, meshes, false, 1, "counter", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
+		r2->attemptPlace(placed, r.meshes, false, 1, "counter", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	}
 	if (FMath::FRand() < 0.3)
-		meshes.Append(placeAwnings(r2, map));
+		r.meshes.Append(placeAwnings(r2, map));
 
+	placeRows(r2, placed, r.meshes, FRotator(0, 0, 0), "store_shelf", 0.003, 0.0025, map);
 
-	return meshes;
+	r.pols.Append(placeSigns(r2, FRandomStream(r2->points[0].X * 1000 + r2->points[0].Y * 100 + r2->points[0].Z)));
+	return r;
 }
 
-static TArray<FMeshInfo> getStoreBack(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
-	TArray<FMeshInfo> meshes;
+static FRoomInfo getStoreBack(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
+	FRoomInfo r;
 	TArray<FPolygon> placed;
 
 	placed.Append(getBlockingVolumes(r2, 200, 100));
 
 
-	return meshes;
+	return r;
 }
 
 
@@ -746,29 +816,27 @@ FRoomInfo ARoomBuilder::placeBalcony(FRoomPolygon *p, int place, TMap<FString, U
 }
 void ARoomBuilder::buildSpecificRoom(FRoomInfo &r, FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	switch (r2->type) {
-	case SubRoomType::living: r.meshes.Append(getLivingRoom(r2, map));
+	case SubRoomType::living: r.append(getLivingRoom(r2, map));
 		break;
-	case SubRoomType::bed: r.meshes.Append(getBedRoom(r2, map));
+	case SubRoomType::bed: r.append(getBedRoom(r2, map));
 		break;
-	case SubRoomType::closet: r.meshes.Append(getCloset(r2, map));
+	case SubRoomType::closet: r.append(getCloset(r2, map));
 		break;
-	case SubRoomType::corridor:
-		r.meshes.Append(getCorridor(r2, map));
+	case SubRoomType::corridor:	r.append(getCorridor(r2, map));
 		break;
-	case SubRoomType::kitchen:
-		r.meshes.Append(getKitchen(r2, map));
+	case SubRoomType::kitchen: r.append(getKitchen(r2, map));
 		break;
-	case SubRoomType::bath: r.meshes.Append(getBathRoom(r2, map));
+	case SubRoomType::bath: r.append(getBathRoom(r2, map));
 		break;
-	case SubRoomType::hallway: 	r.meshes.Append(getHallWay(r2, map));
+	case SubRoomType::hallway: 	r.append(getHallWay(r2, map));
 		break;
-	case SubRoomType::meeting: r.meshes.Append(getMeetingRoom(r2, map));
+	case SubRoomType::meeting: r.append(getMeetingRoom(r2, map));
 		break;
-	case SubRoomType::work: r.meshes.Append(getWorkingRoom(r2, map));
+	case SubRoomType::work: r.append(getWorkingRoom(r2, map));
 		break;
-	case SubRoomType::restaurant: r.meshes.Append(getRestaurantRoom(r2, map));
+	case SubRoomType::restaurant: r.append(getRestaurantRoom(r2, map));
 		break;
-	case SubRoomType::storeFront: r.meshes.Append(getStoreFront(r2, map));
+	case SubRoomType::storeFront: r.append(getStoreFront(r2, map));
 		break;
 
 	}

@@ -59,7 +59,6 @@ TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float h
 
 	TArray<FMaterialPolygon> pols;
 	pols.Add(roof);
-	//fillOutPolygons(pols);
 	return pols;
 }
 
@@ -298,7 +297,7 @@ FSimplePlot attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &center
 		pol.offset(offset);
 		f.windows.Add(place);
 		FSimplePlot simplePlot;
-		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 200));
+		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 1000));
 		simplePlot.pol = pol;
 		//simplePlot.pol.points.Add(FVector(simplePlot.pol.points[0]));
 		simplePlot.pol.reverse();
@@ -337,7 +336,7 @@ FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHol
 		if (hadE)
 			f.entrances.Add(place);
 
-		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 200));
+		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 1000));
 		return simplePlot;
 		//toReturn.Add(simplePlot);
 	}
@@ -382,7 +381,7 @@ FSimplePlot attemptTurnSideIntoU(FHousePolygon &f, int place, FPolygon &centerHo
 		f.windows.Add(place + 3);
 		f.windows.Add(place + 4);
 
-		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 200));
+		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 1000));
 
 		return simplePlot;
 	}

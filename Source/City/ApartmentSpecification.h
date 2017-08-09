@@ -21,6 +21,7 @@ public:
 	virtual float getWindowDensity(FRandomStream stream) = 0;
 	virtual float getWindowWidth(FRandomStream stream) = 0;
 	virtual float getWindowHeight(FRandomStream stream) = 0;
+	virtual bool getWindowFrames() = 0;
 };
 
 class CITY_API OfficeSpecification : public ApartmentSpecification
@@ -30,6 +31,7 @@ public:
 	float getWindowDensity(FRandomStream stream) { return 1; }
 	float getWindowWidth(FRandomStream stream) { return 190; }
 	float getWindowHeight(FRandomStream stream) { return 320; }
+	bool getWindowFrames() { return false; }
 
 };
 
@@ -42,6 +44,8 @@ public:
 	float getWindowDensity(FRandomStream stream) { return 0.003; }
 	float getWindowWidth(FRandomStream stream) { return 200.0f; }
 	float getWindowHeight(FRandomStream stream) { return 200.0f; }
+	bool getWindowFrames() { return true;}
+
 };
 
 class CITY_API StoreSpecification : public ApartmentSpecification
@@ -52,6 +56,8 @@ public:
 	float getWindowDensity(FRandomStream stream) { return stream.FRandRange(200, 300); }
 	float getWindowWidth(FRandomStream stream) { return stream.FRandRange(200, 300); }
 	float getWindowHeight(FRandomStream stream) { return stream.FRandRange(200, 300); }
+	bool getWindowFrames() { return true; }
+
 };
 
 class CITY_API RestaurantSpecification : public ApartmentSpecification
@@ -62,4 +68,6 @@ public:
 	float getWindowDensity(FRandomStream stream) { return stream.FRandRange(200, 300); }
 	float getWindowWidth(FRandomStream stream) { return stream.FRandRange(200, 300); }
 	float getWindowHeight(FRandomStream stream) { return stream.FRandRange(200, 300); }
+	bool getWindowFrames() { return true; }
+
 };

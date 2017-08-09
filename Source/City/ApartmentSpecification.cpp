@@ -16,7 +16,7 @@ FRoomInfo ApartmentSpecification::buildApartment(FRoomPolygon *f, int floor, flo
 	if (!f->canRefine) {
 		TArray<FRoomPolygon*> pols;
 		pols.Add(f);
-		r.pols = ARoomBuilder::interiorPlanToPolygons(pols, height, getWindowDensity(stream), getWindowHeight(stream), getWindowWidth(stream), floor, shellOnly, false);
+		r.pols = ARoomBuilder::interiorPlanToPolygons(pols, height, getWindowDensity(stream), getWindowHeight(stream), getWindowWidth(stream), floor, shellOnly, getWindowFrames());
 		return r;
 	}
 
@@ -28,7 +28,7 @@ FRoomInfo ApartmentSpecification::buildApartment(FRoomPolygon *f, int floor, flo
 			placeEntranceMeshes(r, r2);
 		}
 	}
-	r.pols.Append(ARoomBuilder::interiorPlanToPolygons(roomPols, height, getWindowDensity(stream), getWindowHeight(stream), getWindowWidth(stream), floor, shellOnly, false));
+	r.pols.Append(ARoomBuilder::interiorPlanToPolygons(roomPols, height, getWindowDensity(stream), getWindowHeight(stream), getWindowWidth(stream), floor, shellOnly, getWindowFrames()));
 	for (FRoomPolygon* roomP : roomPols)
 		delete(roomP);
 	return r;

@@ -592,7 +592,7 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 			other.type = PolygonType::interior;
 			//polygonSides = false;
 		}
-		if (p.type == PolygonType::floor	)// || p.type == PolygonType::roof)
+		if (p.type == PolygonType::floor || p.type == PolygonType::interior)// || p.type == PolygonType::roof)
 			polygonSides = false;
 
 		other.offset(p.getDirection() * p.width);
@@ -818,7 +818,7 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 			bushAreaRatio *= 15;
 			grassRatio *= 15;
 		}
-		attemptPlaceCenter(pol, blocking, meshes, "fountain", FRotator(0, 0, 0), FVector(0, 0, 0), map);
+		//attemptPlaceCenter(pol, blocking, meshes, "fountain", FRotator(0, 0, 0), FVector(0, 0, 0), map);
 		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree1"));
 		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree2"));
 		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*pol.getArea(), "bush1"));
