@@ -9,6 +9,8 @@ struct FPolygon;
 
 
 std::atomic<unsigned int> AHouseBuilder::workersWorking{ 0 };
+std::atomic<unsigned int> AHouseBuilder::housesWorking{ 0 };
+
 AHouseBuilder::AHouseBuilder()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -695,7 +697,7 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res) {
 		for (FSimplePlot fs : res.remainingPlots) {
 			fs.decorate(map);
 			for (FMeshInfo mesh : fs.meshes) {
-					if (map.Find(mesh.description))
+					//if (map.Find(mesh.description))
 						map[mesh.description]->AddInstance(mesh.transform);
 				}
 			}
@@ -703,7 +705,7 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res) {
 	//}
 
 	for (FMeshInfo mesh : res.roomInfo.meshes) {
-		if (map.Find(mesh.description))
+		//if (map.Find(mesh.description))
 			map[mesh.description]->AddInstance(mesh.transform);
 	}
 

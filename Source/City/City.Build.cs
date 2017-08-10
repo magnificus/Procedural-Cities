@@ -6,6 +6,6 @@ public class City : ModuleRules
 {
 	public City(TargetInfo Target)
 	{
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay","ProceduralMeshComponent","ShaderCore", "RenderCore", "RHI", "RuntimeMeshComponent" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay","ProceduralMeshComponent", "RuntimeMeshComponent", "ShaderCore", "RenderCore", "RHI"});
     }
 }

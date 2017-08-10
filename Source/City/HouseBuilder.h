@@ -35,9 +35,14 @@ class CITY_API AHouseBuilder : public AActor
 
 	bool shellOnly = false;
 
+	bool wantsToWork = false;
+	bool isWorking = false;
+	int currentMapIndex = 0;
 	TArray<UTextRenderComponent*> texts;
 
 public:
+	static std::atomic<unsigned int> housesWorking;
+
 	static std::atomic<unsigned int> workersWorking;
 
 	// Sets default values for this actor's properties
@@ -73,7 +78,7 @@ public:
 		switch (generationMode) {
 		case GenerationMode::complete: maxThreads = 1000; break;
 		case GenerationMode::procedural_aggressive: maxThreads = 1000; break;
-		case GenerationMode::procedural_relaxed: maxThreads = 1; break;
+		case GenerationMode::procedural_relaxed: maxThreads = 2; break;
 		}
 	}
 

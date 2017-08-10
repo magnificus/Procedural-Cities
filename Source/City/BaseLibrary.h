@@ -490,6 +490,22 @@ struct FSimplePlot {
 	void decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map);
 
 };
+
+USTRUCT(BlueprintType)
+struct FTextStruct {
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTransform pos;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString string;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString font;
+
+};
+
 USTRUCT(BlueprintType)
 struct FHouseInfo {
 	GENERATED_USTRUCT_BODY();
@@ -499,6 +515,7 @@ struct FHouseInfo {
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FSimplePlot> remainingPlots;
+
 
 };
 
@@ -1081,11 +1098,11 @@ struct FRoomPolygon : public FPolygon
 			if (p->entrances.Num() > p->specificEntrances.Num() && blueprint.useHallway) {
 				p->type = SubRoomType::hallway;
 			}
-			if (!splitableType(p->type) && p->getTotalConnections() > 1) {
+			if (!splitableType(p->type) && p->getTotalConnections() > 1 && !need.Contains(p->type)) {
 				p->type = SubRoomType::corridor;
 			}
-			if (need.Contains(p->type))
-				need[p->type] --;
+			//if (need.Contains(p->type))
+			//	need[p->type] --;
 		}
 
 		TArray<SubRoomType> remaining;
@@ -1165,11 +1182,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true, false));
 
 		rooms.Append(remaining);
-		//TArray<SubRoomType> neededTypes;
-		//for (auto &a : blueprint.needed) {
-		//	neededTypes.Add(a.type);
-		//}
-		//postFit(rooms, blueprint);
+		postFit(rooms, blueprint);
 
 
 		return rooms;

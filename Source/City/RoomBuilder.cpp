@@ -54,40 +54,46 @@ TArray<FMaterialPolygon> getRectangularWindow(FPolygon p, FVector center, float 
 static TArray<FMaterialPolygon> getSign(FVector startP, FVector endP, FRandomStream stream, bool sideways) {
 	TArray<FMaterialPolygon> signPols;
 
-	float minHeight = 50;
+	float minHeight = 100;
 	float maxHeight = 100;
 	float minLen = 100;
-	float maxLen = 200;
+	float maxLen = 500;
 	FVector tangent = endP - startP;
 	float len = tangent.Size();
 	tangent.Normalize();
 	float actualLen = stream.FRandRange(minLen, maxLen);
 	float actualHeight = stream.FRandRange(minHeight, maxHeight);
 	if (sideways) {
+
+		maxLen = 300;
+		actualLen = stream.FRandRange(minLen, maxLen);
 		float first = stream.FRandRange(0, len);
 		float outLen = 50;
+		float thickness = 20;
 		len = actualLen;
 		startP += first * tangent;
+		FVector tangentOld = tangent;
 		tangent = FRotator(0, 90, 0).RotateVector(tangent);
 		FMaterialPolygon lineHorizontal;
 		lineHorizontal.type = PolygonType::roadMiddle;
-		lineHorizontal += startP + FVector(0, 0, actualHeight + 20);
-		lineHorizontal += startP + FVector(0, 0, actualHeight + 30);
-		lineHorizontal += startP + tangent*(actualLen + outLen*2) + FVector(0, 0, actualHeight + 30);
-		lineHorizontal += startP + tangent*(actualLen + outLen*2) + FVector(0, 0, actualHeight + 20);
-		lineHorizontal.width = 10;
+		FVector startH = startP + -tangentOld * thickness / 3;
+		lineHorizontal += startH + FVector(0, 0, actualHeight + 20);
+		lineHorizontal += startH + FVector(0, 0, actualHeight + 30);
+		lineHorizontal += startH + tangent*(actualLen + outLen*2) + FVector(0, 0, actualHeight + 30);
+		lineHorizontal += startH + tangent*(actualLen + outLen*2) + FVector(0, 0, actualHeight + 20);
+		lineHorizontal.width = thickness/3;
 		signPols.Add(lineHorizontal);
 
 		startP += tangent * outLen;
 		// add two lines down, evenly spread
-		FVector lineStartP = startP + tangent * actualLen / 3 + FVector(0, 0, actualHeight + 20);
+		FVector lineStartP = startP + tangent * actualLen / 3 + FVector(0, 0, actualHeight + 20) + -tangentOld * thickness / 3;
 		FMaterialPolygon lineVertical;
 		lineVertical.type = PolygonType::roadMiddle;
 		lineVertical += lineStartP;
 		lineVertical += lineStartP + tangent * 10;
 		lineVertical += lineStartP + tangent * 10 + FVector(0, 0, -20);
 		lineVertical += lineStartP + FVector(0, 0, -20);
-		lineVertical.width = 10;
+		lineVertical.width = thickness / 3;
 
 		FMaterialPolygon lineVertical2 = lineVertical;
 		lineVertical2.offset(tangent * actualLen / 3);
@@ -109,10 +115,15 @@ static TArray<FMaterialPolygon> getSign(FVector startP, FVector endP, FRandomStr
 	outline += startLoc + FVector(0, 0, actualHeight);
 	outline += endLoc + FVector(0, 0, actualHeight);
 	outline += endLoc;
-	TArray<FMaterialPolygon> around = getRectangularWindow(outline, outline.getCenter(), 30, 30, 40);
-	for (auto &a : around)
-		a.type = PolygonType::exteriorSnd;
-	signPols.Append(around);
+	FVector norm = outline.getDirection();
+	//outline.offset(-norm*outline.width / 3);
+	float outlineWidth = 15;
+	//TArray<FMaterialPolygon> around = getRectangularWindow(outline, outline.getCenter(), 10, 10, 25);
+	//for (auto &a : around) {
+	//	a.offset(-norm * outlineWidth / 3);
+	//	a.type = PolygonType::exteriorSnd;
+	//}
+	//signPols.Append(around);
 	signPols.Add(outline);
 	return signPols;
 }
@@ -740,7 +751,7 @@ static FRoomInfo getStoreFront(FRoomPolygon *r2, TMap<FString, UHierarchicalInst
 	if (FMath::FRand() < 0.3)
 		r.meshes.Append(placeAwnings(r2, map));
 
-	placeRows(r2, placed, r.meshes, FRotator(0, 0, 0), "store_shelf", 0.003, 0.0025, map);
+	placeRows(r2, placed, r.meshes, FRotator(0, 0, 0), "store_shelf", 0.003, 0.002, map);
 
 	r.pols.Append(placeSigns(r2, FRandomStream(r2->points[0].X * 1000 + r2->points[0].Y * 100 + r2->points[0].Z)));
 	return r;

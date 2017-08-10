@@ -5,6 +5,7 @@
 #include "City.h"
 #include "ProcMeshActor.h"
 #include "polypartition.h"
+
 // Sets default values
 
 
@@ -53,12 +54,11 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 		FVector e1 = pol.points[1] - pol.points[0];
 		e1.Normalize();
 		FVector n =  pol.normal.Size() < 1.0f? FVector::CrossProduct(e1, pol.points[pol.points.Num() - 1] - pol.points[0]) : pol.normal;
-		//n = FVector(0, 0, -1);
 		FVector e2 = FVector::CrossProduct(e1, n);
 		e2.Normalize();
 
 
-		FVector origin = pol.points[0]; //FVector(0, 0, 0);
+		FVector origin = pol.points[0]; 
 
 		std::list<TPPLPoly> inTriangles;
 
@@ -96,7 +96,10 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 
 
 	mesh->SetMaterial(1, mat);
-	mesh->CreateMeshSection(1, vertices, triangles, normals, UV, vertexColors, tangents, false);
+	TWeakObjectPtr<URuntimeMeshComponent> Mesh = mesh;
+	//FRuntimeMeshBatchUpdateData::
+	//FRuntimeMeshAsync::CreateMeshSection(Mesh, 1, vertices, triangles, normals, UV, vertexColors, tangents, false, EUpdateFrequency::Infrequent);
+	//FRuntimeMeshAsync::CreateMeshSection<FRuntimeMeshVertexSimple>(mesh, 0, vertices, triangles);
 	return true;
 }
 
@@ -225,25 +228,25 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 
 
 	currentlyWorkingArray = 0;
-	wantsToWork = true;
-	if (isWorking) {
-		clearMeshes(true);
-		isWorking = false;
-		workersWorking--;
-	}
+	//wantsToWork = true;
+	//if (isWorking) {
+	//	clearMeshes(true);
+	//	isWorking = false;
+	//	workersWorking--;
+	//}
 
-	//isWorking = true;
-	//int a = buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
-	//a += buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
-	//a += buildPolygons(interior, offset, interiorMesh, interiorMat);
-	//a += buildPolygons(windows, offset, windowMesh, windowMat);
-	//a += buildPolygons(floors, offset, floorMesh, floorMat);
-	//a += buildPolygons(roofs, offset, roofMesh, roofMat);
-	//a += buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
-	//a += buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
-	//a += buildPolygons(concrete, offset, concreteMesh, concreteMat);
-	//a += buildPolygons(green, offset, greenMesh, greenMat);
-	//a += buildPolygons(roadMiddle, offset, roadMiddleMesh, roadMiddleMat);
+	isWorking = true;
+	int a = buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
+	a += buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
+	a += buildPolygons(interior, offset, interiorMesh, interiorMat);
+	a += buildPolygons(windows, offset, windowMesh, windowMat);
+	a += buildPolygons(floors, offset, floorMesh, floorMat);
+	a += buildPolygons(roofs, offset, roofMesh, roofMat);
+	a += buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
+	a += buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
+	a += buildPolygons(concrete, offset, concreteMesh, concreteMat);
+	a += buildPolygons(green, offset, greenMesh, greenMat);
+	a += buildPolygons(roadMiddle, offset, roadMiddleMesh, roadMiddleMat);
 
 	//if (a < 11) {
 	//	//UE_LOG(LogTemp, Warning, TEXT("a: %i"), a);
