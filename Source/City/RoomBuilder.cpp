@@ -416,6 +416,29 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 
 }
 
+static void attemptPlaceAroundPolygon(FPolygon center, FString itemName, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, float density, FPolygon &surrounding) {
+	for (int i = 1; i < center.points.Num() + 1; i++) {
+		FVector tan = center[i%center.points.Num()] - center[i - 1];
+		FVector dir = getNormal(center[i%center.points.Num()], center[i - 1], false);
+		float len = tan.Size();
+		tan.Normalize();
+		float numSteps = std::floor(len * density) + 1;
+		float stepLen = len / numSteps;
+		for (int j = 1; j < numSteps; j++) {
+			FVector pos = center[i - 1] + tan * j * stepLen;
+			FPolygon res = getPolygon(dir.Rotation() + offsetRot, pos, itemName, map);
+			FVector toMove = fitPolygonNextToPolygon(center, res, i, FRotator(0, 0, 0));
+			pos += toMove;
+			res.offset(toMove);
+			//if (!testCollision(res, placed, 0, surrounding)){
+			meshes.Add({ itemName, FTransform(dir.Rotation() + offsetRot, pos) });
+			placed.Add(res);
+			//}
+		}
+	}
+}
+
+
 bool attemptPlaceOnTop(FMeshInfo toUse, TArray<FMeshInfo> &meshes, FString name, float minDist, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
 	//getPolygon(toUse.transform.Rotator(), toUse.transform.GetLocation(), , map);
 	FVector min;
@@ -493,8 +516,12 @@ static FRoomInfo getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalIns
 	FVector dir = r2->getRoomDirection();
 	FVector center = r2->getCenter();
 
+
 	attemptPlaceCenter(*r2, placed, r.meshes, "office_meeting_table", FRotator(0, 0, 0), FVector(0, 0, 10), map);
 	float offsetLen = 100;
+
+	if (r.meshes.Num() > 0)
+		attemptPlaceAroundPolygon(placed[placed.Num() - 1], "office_chair", placed, r.meshes, FRotator(0, 0, 0), map, 0.01, *r2);
 
 	if (FMath::FRandRange(0,0.9999) < 0.5) {
 		r2->attemptPlace(placed, r.meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
@@ -548,12 +575,13 @@ static TArray<FMeshInfo> placeAwnings(FRoomPolygon *r2, TMap<FString, UHierarchi
 			return TArray<FMeshInfo>();
 		float width = max.Y - min.Y + 5;
 		for (int j = width / 2; j < len - width / 2; j += width) {
-			meshes.Add(FMeshInfo{ "awning", FTransform{ getNormal((*r2)[i%r2->points.Num()], (*r2)[i - 1], true).Rotation(), (*r2)[i - 1] + tan * j + FVector(0,0,390)}});
+			meshes.Add(FMeshInfo{ "awning", FTransform{ getNormal((*r2)[i%r2->points.Num()], (*r2)[i - 1], true).Rotation(), (*r2)[i - 1] + tan * j + FVector(0,0,380)}});
 
 		}
 	}
 	return meshes;
 }
+
 
 
 
@@ -568,37 +596,43 @@ static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon *r2, TArray<F
 	FVector tan = FRotator(0, 90, 0).RotateVector(rot);
 	tan.Normalize();
 	float extraChairHeight = 30;
-	FMeshInfo table{ "large_table", FTransform(rot.Rotation() , center, FVector(1.0f, 1.0f, 1.0f)) };
-	if (FMath::FRand() < 0.2)
-		attemptPlaceOnTop(table, meshes, "kettle", 30, map);
-	FVector c1 = center - rot * 70 + tan * 150;
-	FVector c2 = center + rot * 70 + tan * 150;
-	FVector c3 = center - rot * 70 - tan * 150;
-	FVector c4 = center + rot * 70 - tan * 150;
-	FPolygon c1P = getPolygon(rot.Rotation(), c1 + FVector(0, 0, extraChairHeight), "chair", map);
-	FPolygon c2P = getPolygon(rot.Rotation(), c2 + FVector(0, 0, extraChairHeight), "chair", map);
-	FPolygon c3P = getPolygon(FRotator(0, 180, 0) + rot.Rotation(), c3 + FVector(0, 0, extraChairHeight), "chair", map);
-	FPolygon c4P = getPolygon(FRotator(0, 180, 0) + rot.Rotation(), c4 + FVector(0, 0, extraChairHeight), "chair", map);
+
+
 	FPolygon tableP = getPolygon(rot.Rotation(), center, "large_table", map);
 	
 	if (!testCollision(tableP, placed, 0, *r2)) {
+		FMeshInfo table{ "large_table", FTransform(rot.Rotation() , center, FVector(1.0f, 1.0f, 1.0f)) };
 		meshes.Add(table);
+		placed.Add(tableP);
+		attemptPlaceAroundPolygon(tableP, "chair", placed, meshes, FRotator(0, 0, 0), map, 0.005, *r2);
+
+		if (FMath::FRand() < 0.35)
+			attemptPlaceOnTop(table, meshes, "kettle", 50, map);
 	}
-	else {
-		return meshes;
-	}
-	if (!testCollision(c1P, placed, 0, *r2)) {
-		meshes.Add({"chair", FTransform(rot.Rotation(), c1 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
-	}
-	if (!testCollision(c2P, placed, 0, *r2)) {
-		meshes.Add({ "chair", FTransform(rot.Rotation(), c2 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
-	}
-	if (!testCollision(c3P, placed, 0, *r2)) {
-		meshes.Add({ "chair", FTransform(rot.Rotation() + FRotator(0, 180, 0), c3 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
-	}
-	if (!testCollision(c4P, placed, 0, *r2)) {
-		meshes.Add({ "chair", FTransform(rot.Rotation() + FRotator(0, 180, 0), c4 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
-	}
+	//else {
+	//	return meshes;
+	//}
+
+	//FVector c1 = center - rot * 70 + tan * 150;
+	//FVector c2 = center + rot * 70 + tan * 150;
+	//FVector c3 = center - rot * 70 - tan * 150;
+	//FVector c4 = center + rot * 70 - tan * 150;
+	//FPolygon c1P = getPolygon(rot.Rotation(), c1 + FVector(0, 0, extraChairHeight), "chair", map);
+	//FPolygon c2P = getPolygon(rot.Rotation(), c2 + FVector(0, 0, extraChairHeight), "chair", map);
+	//FPolygon c3P = getPolygon(FRotator(0, 180, 0) + rot.Rotation(), c3 + FVector(0, 0, extraChairHeight), "chair", map);
+	//FPolygon c4P = getPolygon(FRotator(0, 180, 0) + rot.Rotation(), c4 + FVector(0, 0, extraChairHeight), "chair", map);
+	//if (!testCollision(c1P, placed, 0, *r2)) {
+	//	meshes.Add({"chair", FTransform(rot.Rotation(), c1 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
+	//}
+	//if (!testCollision(c2P, placed, 0, *r2)) {
+	//	meshes.Add({ "chair", FTransform(rot.Rotation(), c2 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
+	//}
+	//if (!testCollision(c3P, placed, 0, *r2)) {
+	//	meshes.Add({ "chair", FTransform(rot.Rotation() + FRotator(0, 180, 0), c3 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
+	//}
+	//if (!testCollision(c4P, placed, 0, *r2)) {
+	//	meshes.Add({ "chair", FTransform(rot.Rotation() + FRotator(0, 180, 0), c4 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
+	//}
 
 	return meshes;
 
@@ -634,7 +668,7 @@ static FRoomInfo getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHierarchical
 	TArray<FMeshInfo> tables;
 
 	placeRows(r2, placed, tables, FRotator(0, 0, 0), "restaurant_table", FMath::FRandRange(0.0015, 0.003), FMath::FRandRange(0.0015, 0.003), map);
-	tables.RemoveAt(0, tables.Num() / 2);
+	//tables.RemoveAt(0, tables.Num() / 2);
 	for (FMeshInfo table : tables) {
 		FTransform trans = table.transform;
 		if (FMath::RandBool())

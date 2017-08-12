@@ -642,7 +642,22 @@ TArray<FMaterialPolygon> BaseLibrary::getSimplePlotPolygons(TArray<FSimplePlot> 
 }
 
 
+FVector fitPolygonNextToPolygon(FPolygon &toFitAround, FPolygon &toMove, int place, FRotator offsetRot) {
+	FVector dir = getNormal(toFitAround[place%toFitAround.points.Num()], toFitAround[place - 1], true);
+	dir.Normalize();
 
+	float lenToMove = 0;
+	for (int k = 0; k < toMove.points.Num(); k++) {
+		FVector toPoint = toMove[k] - toFitAround.points[place - 1];
+		float dot = FVector::DotProduct(dir, toPoint);
+		if (dot < 0) {
+			// need to move forward
+			lenToMove = std::max(lenToMove, toPoint.ProjectOnToNormal(dir).Size());
+		}
+
+	}
+	return lenToMove * dir;
+}
 
 FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, bool windowAllowed, int testsPerSide, FString string, FRotator offsetRot, FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool onWall) {
 	for (int i = 1; i < points.Num()+1; i++) {
@@ -661,19 +676,20 @@ FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMe
 			FRotator rot = dir.Rotation() + offsetRot;
 			FPolygon pol = getPolygon(rot, pos, string, map);
 
-			// fit the polygon properly if possible
-			float lenToMove = 0;
-			for (int k = 0; k < pol.points.Num(); k++) {
-				FVector toPoint = pol[k] - points[place - 1];
-				float dot = FVector::DotProduct(dir, toPoint);
-				if (dot < 0) {
-					// need to move forward
-					lenToMove = std::max(lenToMove, toPoint.ProjectOnToNormal(dir).Size());
-				}
+			//// fit the polygon properly if possible
+			//float lenToMove = 0;
+			//for (int k = 0; k < pol.points.Num(); k++) {
+			//	FVector toPoint = pol[k] - points[place - 1];
+			//	float dot = FVector::DotProduct(dir, toPoint);
+			//	if (dot < 0) {
+			//		// need to move forward
+			//		lenToMove = std::max(lenToMove, toPoint.ProjectOnToNormal(dir).Size());
+			//	}
 
-			}
-			if (lenToMove != 0) {
-				pos += (lenToMove + 20)*dir;
+			//}
+			FVector toMove = fitPolygonNextToPolygon(*this, pol, place, rot);
+			if (toMove.X != 0.0f) {
+				pos += toMove + 20 * dir;
 				pol = getPolygon(rot, pos, string, map);
 			}
 			if (onWall) {
@@ -773,7 +789,6 @@ TArray<FMeshInfo> attemptPlaceClusterAlongSide(FPolygon pol, TArray<FPolygon> &b
 	int place = FMath::RandRange(1, pol.points.Num());
 	FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
 	FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
-	//float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
 	tan.Normalize();
 	for (int i = 0; i < num; i++) {
 		FRotator finRot = tan.Rotation();// +FRotator(0, 180, 0);
@@ -794,11 +809,14 @@ void attemptPlaceCenter(FPolygon &pol, TArray<FPolygon> &placed, TArray<FMeshInf
 	FPolygon objectPol = getPolygon(dir.Rotation(), center, string, map);
 	if (!testCollision(objectPol, placed, 0, pol)) {
 		meshes.Add(FMeshInfo{ string, FTransform(dir.Rotation() + offsetRot, center + offsetPos, FVector(1.0, 1.0, 1.0)) });
+		placed.Add(objectPol);
 	}
 	else {
 		objectPol = getPolygon(dir.Rotation() + FRotator(0, 90, 0), center, string, map);
 		if (!testCollision(objectPol, placed, 0, pol)) {
 			meshes.Add(FMeshInfo{string, FTransform(dir.Rotation() + offsetRot + FRotator(0, 90, 0), center + offsetPos, FVector(1.0, 1.0, 1.0)) });
+			placed.Add(objectPol);
+
 		}
 	}
 }
@@ -812,7 +830,7 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 		
 		float treeAreaRatio = 0.001;
 		float bushAreaRatio = 0.005;
-		float grassRatio = 0.1;
+		float grassRatio = 0.2;
 		if (pol.getArea() < 500) {
 			treeAreaRatio *= 15;
 			bushAreaRatio *= 15;
@@ -824,8 +842,6 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*pol.getArea(), "bush1"));
 		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*pol.getArea(), "bush2"));
 		meshes.Append(placeRandomly(pol, blocking, grassRatio*pol.getArea(), "grass"));
-
-
 		break;
 	}
 	case SimplePlotType::asphalt: {

@@ -97,6 +97,8 @@ static FVector getNormal(FVector p1, FVector p2, bool left) {
 	return FRotator(0, left ? 90 : 270, 0).RotateVector(p2 - p1);
 }
 
+FVector fitPolygonNextToPolygon(FPolygon &toFitAround, FPolygon &toMove, int place, FRotator offsetRot);
+
 FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map);
 
 
@@ -1000,6 +1002,7 @@ struct FRoomPolygon : public FPolygon
 				couldPlace = false;
 				bool specSmallerThanRooms = true;
 				float maxAreaAllowed = useMin ? (spec.maxArea + spec.minArea) / 2 : spec.maxArea;
+				//bool prefferedArea = useMin ? 
 				for (int i = 0; i < remaining.Num(); i++) {
 					FRoomPolygon *r = remaining[i];
 					float area = r->getArea();
@@ -1029,42 +1032,42 @@ struct FRoomPolygon : public FPolygon
 						}
 					}
 					remaining.RemoveAt(targetNum);
-					scale = spec.maxArea / target->getArea();
+					scale = maxAreaAllowed / target->getArea();
 					// keep cutting it down until small enough to place my room
-					while (scale < minPctSplit) {
+					while (scale < 1.0f) {
 						FRoomPolygon* newP = target->splitAlongMax(0.5, true);
 						if (newP == nullptr) {
 							break;
 						}
 						remaining.EmplaceAt(0, newP);
-						scale = spec.maxArea / target->getArea();
+						scale = maxAreaAllowed / target->getArea();
 					}
-					if (target->getArea() <= maxAreaAllowed && target->getArea() >= spec.minArea) {
-						target->type = spec.type;
-						toReturn.Add(target);
-						anyRoomPlaced = true;
-						couldPlace = true;
-					}
-					else /*if (scale > minPctSplit) */ {
-						float splitPct = spec.minArea / target->getArea();
-						if (splitableType(spec.type))
-							splitPct = 1-splitPct;
-						FRoomPolygon* newP = target->splitAlongMax(splitPct, true);
+					//if (target->getArea() <= maxAreaAllowed && target->getArea() >= spec.minArea) {
+					target->type = spec.type;
+					toReturn.Add(target);
+					anyRoomPlaced = true;
+					couldPlace = true;
+					//}
+					//else /*if (scale > minPctSplit) */ {
+					//	float splitPct = spec.maxArea / target->getArea();
+					//	//if (splitableType(spec.type))
+					//	//splitPct = 1-splitPct;
+					//	FRoomPolygon* newP = target->splitAlongMax(splitPct, true);
 
-						if (newP == nullptr) {
-							couldPlace = false;
-						}
-						else {
-							// if I'm in a splitable room, make use of that and make me the room with prioritized doors
-							if (splitableType(spec.type))
-								std::swap(newP, target);
-							newP->type = spec.type;
-							toReturn.Add(newP);
-							anyRoomPlaced = true;
-							couldPlace = true;
-						}
-						remaining.EmplaceAt(0, target);
-					}
+					//	if (newP == nullptr) {
+					//		couldPlace = false;
+					//	}
+					//	else {
+					//		// if I'm in a splitable room, make use of that and make me the room with prioritized doors
+					//		//if (splitableType(spec.type))
+					//		//	std::swap(newP, target);
+					//		newP->type = spec.type;
+					//		toReturn.Add(newP);
+					//		anyRoomPlaced = true;
+					//		couldPlace = true;
+					//	}
+					//	remaining.EmplaceAt(0, target);
+					//}
 				}
 			}
 		} while (repeating && anyRoomPlaced);
@@ -1133,7 +1136,7 @@ struct FRoomPolygon : public FPolygon
 				if (!splitableType(current)) {
 					// consider picking rooms that already contains an essential room
 					for (FRoomPolygon *p : rooms) {
-						if (p->getTotalConnections() < 2) {
+						if (splitableType(p->type) && p->getTotalConnections() < 2) {
 							SubRoomType prevType = p->type;
 							remaining.RemoveAt(remaining.Num() - 1);
 							need[current]--;

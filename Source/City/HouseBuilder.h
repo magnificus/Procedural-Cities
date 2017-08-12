@@ -35,9 +35,11 @@ class CITY_API AHouseBuilder : public AActor
 
 	bool shellOnly = false;
 
-	bool wantsToWork = false;
+	//bool wantsToWork = false;
 	bool isWorking = false;
-	int currentMapIndex = 0;
+	int currentIndex = 0;
+	int meshesPerTick = 3;
+	TArray<FMeshInfo> meshesToPlace;
 	TArray<UTextRenderComponent*> texts;
 
 public:
@@ -76,9 +78,19 @@ public:
 		generateRoofs = generateRoofs_in;
 		generationMode = generationMode_in;
 		switch (generationMode) {
-		case GenerationMode::complete: maxThreads = 1000; break;
-		case GenerationMode::procedural_aggressive: maxThreads = 1000; break;
-		case GenerationMode::procedural_relaxed: maxThreads = 2; break;
+		case GenerationMode::complete: maxThreads = 1000; meshesPerTick = 1000; break;
+		case GenerationMode::procedural_aggressive: maxThreads = 1000; meshesPerTick = 10; break;
+		case GenerationMode::procedural_relaxed: maxThreads = 1; meshesPerTick = 5; break;
+		}
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "Generation")
+		void setGenerationMode( GenerationMode generationMode_in) {
+		generationMode = generationMode_in;
+		switch (generationMode) {
+		case GenerationMode::complete: maxThreads = 1000; meshesPerTick = 1000; break;
+		case GenerationMode::procedural_aggressive: maxThreads = 1000; meshesPerTick = 10; break;
+		case GenerationMode::procedural_relaxed: maxThreads = 1; meshesPerTick = 5; break;
 		}
 	}
 

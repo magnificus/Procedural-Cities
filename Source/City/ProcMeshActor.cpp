@@ -5,6 +5,7 @@
 #include "City.h"
 #include "ProcMeshActor.h"
 #include "polypartition.h"
+#include "RuntimeMeshAsync.h"
 
 // Sets default values
 
@@ -80,10 +81,6 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 		poly.SetOrientation(TPPL_CCW);
 		int res = part.Triangulate_EC(&poly, &inTriangles);
 
-		if (res == 0) {
-			//UE_LOG(LogTemp, Warning, TEXT("Triangulation failed!"));
-			//return false;
-		}
 		for (auto i : inTriangles) {
 			triangles.Add(i[0].id);
 			triangles.Add(i[1].id);
@@ -95,11 +92,17 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 
 
 
-	mesh->SetMaterial(1, mat);
-	TWeakObjectPtr<URuntimeMeshComponent> Mesh = mesh;
+	mesh->SetMaterial(0, mat);
 	//FRuntimeMeshBatchUpdateData::
-	//FRuntimeMeshAsync::CreateMeshSection(Mesh, 1, vertices, triangles, normals, UV, vertexColors, tangents, false, EUpdateFrequency::Infrequent);
-	//FRuntimeMeshAsync::CreateMeshSection<FRuntimeMeshVertexSimple>(mesh, 0, vertices, triangles);
+	mesh->CreateMeshSection(0, vertices, triangles, normals, UV, vertexColors, tangents, false, EUpdateFrequency::Infrequent);
+	//TWeakObjectPtr<URuntimeMeshComponent> Mesh = mesh;
+	//FRuntimeMeshAsync::CreateMeshSection<FRuntimeMeshVertexSimple>(this, 0, Verts, Tris);
+	//FRuntimeMeshAsync::CreateMeshSection(Mesh, 0, vertices, triangles);
+	//FRuntimeMeshAsync::CreateMeshSection(Mesh, 1, vertices, triangles);
+	//FRuntimeMeshAsync::
+
+	//mesh->update
+
 	return true;
 }
 
@@ -125,6 +128,14 @@ bool AProcMeshActor::clearMeshes(bool fullReplacement) {
 
 // divides the polygon into the different materials used by the house
 bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset) {
+	if (isWorking) {
+		clearMeshes(true);
+		isWorking = false;
+		workersWorking--;
+		SetActorTickEnabled(false);
+
+		//return false;
+	}
 
 	TArray<FPolygon> exterior;
 	TArray<FPolygon> exteriorSnd;
@@ -183,6 +194,8 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 		}
 
 	}
+
+
 	polygons.Empty();
 	polygons.Add(exterior);
 	polygons.Add(exteriorSnd);
@@ -228,25 +241,26 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 
 
 	currentlyWorkingArray = 0;
-	//wantsToWork = true;
+	wantsToWork = true;
+	SetActorTickEnabled(true);
 	//if (isWorking) {
-	//	clearMeshes(true);
 	//	isWorking = false;
 	//	workersWorking--;
 	//}
 
-	isWorking = true;
-	int a = buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
-	a += buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
-	a += buildPolygons(interior, offset, interiorMesh, interiorMat);
-	a += buildPolygons(windows, offset, windowMesh, windowMat);
-	a += buildPolygons(floors, offset, floorMesh, floorMat);
-	a += buildPolygons(roofs, offset, roofMesh, roofMat);
-	a += buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
-	a += buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
-	a += buildPolygons(concrete, offset, concreteMesh, concreteMat);
-	a += buildPolygons(green, offset, greenMesh, greenMat);
-	a += buildPolygons(roadMiddle, offset, roadMiddleMesh, roadMiddleMat);
+	//isWorking = true;
+	//buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
+	//buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
+	//buildPolygons(interior, offset, interiorMesh, interiorMat);
+	//buildPolygons(windows, offset, windowMesh, windowMat);
+	//buildPolygons(floors, offset, floorMesh, floorMat);
+	//buildPolygons(roofs, offset, roofMesh, roofMat);
+	//buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
+	//buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
+	//buildPolygons(concrete, offset, concreteMesh, concreteMat);
+	//buildPolygons(green, offset, greenMesh, greenMat);
+	//buildPolygons(roadMiddle, offset, roadMiddleMesh, roadMiddleMat);
+
 
 	//if (a < 11) {
 	//	//UE_LOG(LogTemp, Warning, TEXT("a: %i"), a);
@@ -283,6 +297,7 @@ void AProcMeshActor::Tick(float DeltaTime)
 		if (currentlyWorkingArray >= polygons.Num()) {
 			isWorking = false;
 			workersWorking--;
+			SetActorTickEnabled(false);
 		}
 	}
 

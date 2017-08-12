@@ -186,7 +186,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 
 		bool normalPlacement = !(p.getArea() > 5500 && stream.FRand() < 0.2);
 		if (!normalPlacement) {
-			// create a special plot with several identical houses placed around a green area, this happens in real cities sometimes
+			// create a special plot with several similar houses placed around an area, this happens in real cities sometimes
 			FHousePolygon model = getRandomModel(3500,6000, minFloors, maxFloors, noiseScale, p.type, stream);
 			model.checkOrientation();
 			model.canBeModified = false;

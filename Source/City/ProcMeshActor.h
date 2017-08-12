@@ -7,8 +7,6 @@
 #include "BaseLibrary.h"
 //#include "RuntimeMeshCore.h"
 #include "RuntimeMeshComponent.h"
-//#include "RuntimeMeshAsync.h"
-//#include "RuntimeMeshComponentPlugin.h"
 
 #include "ProcMeshActor.generated.h"
 
