@@ -132,7 +132,7 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 		clearMeshes(true);
 		isWorking = false;
 		workersWorking--;
-		SetActorTickEnabled(false);
+		//SetActorTickEnabled(false);
 
 		//return false;
 	}
@@ -242,7 +242,7 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 
 	currentlyWorkingArray = 0;
 	wantsToWork = true;
-	SetActorTickEnabled(true);
+	//SetActorTickEnabled(true);
 	//if (isWorking) {
 	//	isWorking = false;
 	//	workersWorking--;
@@ -297,7 +297,7 @@ void AProcMeshActor::Tick(float DeltaTime)
 		if (currentlyWorkingArray >= polygons.Num()) {
 			isWorking = false;
 			workersWorking--;
-			SetActorTickEnabled(false);
+			//SetActorTickEnabled(false);
 		}
 	}
 

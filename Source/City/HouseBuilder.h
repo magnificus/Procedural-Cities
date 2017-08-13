@@ -111,7 +111,7 @@ public:
 
 	static TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height);
 
-	static FPolygon getShaftHolePolygon(FHousePolygon f);
+	static FPolygon getShaftHolePolygon(FHousePolygon f, FRandomStream stream);
 
 	ThreadedWorker *worker;
 

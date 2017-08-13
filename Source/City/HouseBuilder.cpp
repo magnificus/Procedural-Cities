@@ -15,7 +15,7 @@ AHouseBuilder::AHouseBuilder()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	SetActorTickEnabled(false);
+	//SetActorTickEnabled(false);
 
 }
 
@@ -249,9 +249,11 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 }
 
 
-FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f) {
+FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f, FRandomStream stream) {
 	FPolygon hole;
-	FVector center = f.getCenter();
+	FVector center = f.getRandomPoint(true, 2000, stream);
+	if (center.X == 0.0f)
+		center = f.getCenter();
 
 	float holeSizeX = 900;
 	float holeSizeY = 1200;
@@ -265,7 +267,6 @@ FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f) {
 	hole.points.Add(center - 0.5 * tangent1 * holeSizeX + 0.5 * tangent2 * holeSizeY);
 	hole.points.Add(center - 0.5 * tangent1 * holeSizeX - 0.5 * tangent2 * holeSizeY);
 	hole.points.Add(center + 0.5 * tangent1 * holeSizeX - 0.5 * tangent2 * holeSizeY);
-	//hole.points.Add(center + 0.5 * tangent1 * holeSizeX + 0.5 * tangent2 * holeSizeY);
 
 
 
@@ -687,11 +688,11 @@ void AHouseBuilder::buildHouse(bool shellOnly_in) {
 		//wantsToWork = false;
 		isWorking = false;
 		workerWantsToWork = false;
-		SetActorTickEnabled(false);
+		//SetActorTickEnabled(false);
 		return;
 		
 	}
-	SetActorTickEnabled(true);
+	//SetActorTickEnabled(true);
 	//housePol = f;
 	workerWantsToWork = true;
 }
@@ -750,7 +751,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	FHousePolygon pre = f;
 	stream.Initialize(f.housePosition.X * 1000 + f.housePosition.Y);
 	f.checkOrientation();
-	FPolygon hole = getShaftHolePolygon(f);
+	FPolygon hole = getShaftHolePolygon(f, stream);
 	FHouseInfo toReturn;
 	if (f.canBeModified) {
 		for (int i = 0; i < makeInterestingAttempts; i++) {
@@ -820,52 +821,55 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 
 	int windowChangeCutoff = stream.RandRange(1, 20);
 	WindowType currentWindowType = WindowType(stream.RandRange(0, 3));
-	bool facade = stream.FRand() < 0.2;
-		for (int i = 1; i < floors; i++) {
-			if (i == windowChangeCutoff)
-				currentWindowType = WindowType(stream.RandRange(0,3));
 
-			if (stream.FRand() < myChangeIntensity && f.canBeModified) {
-				TArray<FMaterialPolygon> shrinkRes = potentiallyShrink(f, hole, stream, FVector(0, 0, floorHeight*i + 1));
-				//for (FMaterialPolygon &fm : shrinkRes) {
-				//	fm.offset(FVector(0,0,floorHeight*i));
-				//}
-				toReturn.roomInfo.pols.Append(shrinkRes);
-			}
+	bool roofAccess = stream.FRand() < 0.2;
+	bool horizontalFacade = stream.FRand() < 0.15;
+	for (int i = 1; i < floors; i++) {
+		if (i == windowChangeCutoff)
+			currentWindowType = WindowType(stream.RandRange(0,3));
 
-			if (!shellOnly) {
-				TArray<FMaterialPolygon> floor = getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol);
-				toReturn.roomInfo.pols.Append(floor);
-				toReturn.roomInfo.meshes.Add(FMeshInfo{ "stair", FTransform(rot.Rotation(), stairPos + FVector(0, 0, floorHeight * (i - 1)), FVector(1.0f, 1.0f, 1.0f)) });
-			}
-			if (facade)
-				addFacade(f, toReturn.roomInfo, floorHeight*i + 1, 70, 20);
-
-			roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
-			for (FRoomPolygon &p : roomPols) {
-				p.windowType = currentWindowType;
-				//FRoomInfo newR = ARoomBuilder::buildRoom(&p, 1, floorHeight, map, potentialBalcony, shellOnly, stream);
-				FRoomInfo newR = spec->buildApartment(&p, i, floorHeight, map, potentialBalcony, shellOnly, stream);
-				newR.offset(FVector(0, 0, floorHeight*i));
-				toReturn.roomInfo.pols.Append(newR.pols);
-				toReturn.roomInfo.meshes.Append(newR.meshes);
-			}
+		if (stream.FRand() < myChangeIntensity && f.canBeModified) {
+			TArray<FMaterialPolygon> shrinkRes = potentiallyShrink(f, hole, stream, FVector(0, 0, floorHeight*i + 1));
+			toReturn.roomInfo.pols.Append(shrinkRes);
 		}
+
 		if (!shellOnly) {
-			for (int i = 1; i <= floors; i++) {
-				FVector elDir = elevatorPol.points[2] - elevatorPol.points[1];
-				elDir.Normalize();
-				toReturn.roomInfo.meshes.Add(FMeshInfo{ "elevator", FTransform(rot.Rotation() + FRotator(0, 180, 0), elevatorPos + FVector(0, 0, floorHeight * (i - 1)) + elDir * 180, FVector(1.0f, 1.0f, 1.0f)) }); // elevator doors
-				FMaterialPolygon above; // space above elevator
-				above.type = PolygonType::interior;
-				above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 290));
-				above.points.Add(elevatorPol.points[3] + FVector(0, 0, floorHeight * (i - 1) + 290));
-				above.points.Add(elevatorPol.points[3] + FVector(0, 0, floorHeight * (i - 1) + 400));
-				above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 400));
-
-				toReturn.roomInfo.pols.Add(above);
-			}
+			TArray<FMaterialPolygon> floor = getFloorPolygonsWithHole(f, floorHeight*i + 1, stairPol);
+			toReturn.roomInfo.pols.Append(floor);
+			//toReturn.roomInfo.meshes.Add(FMeshInfo{ "stair", FTransform(rot.Rotation(), stairPos + FVector(0, 0, floorHeight * (i - 1)), FVector(1.0f, 1.0f, 1.0f)) });
 		}
+		if (horizontalFacade)
+			addFacade(f, toReturn.roomInfo, floorHeight*i + 1, 70, 20);
+
+		roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
+		for (FRoomPolygon &p : roomPols) {
+			p.windowType = currentWindowType;
+			//FRoomInfo newR = ARoomBuilder::buildRoom(&p, 1, floorHeight, map, potentialBalcony, shellOnly, stream);
+			FRoomInfo newR = spec->buildApartment(&p, i, floorHeight, map, potentialBalcony, shellOnly, stream);
+			newR.offset(FVector(0, 0, floorHeight*i));
+			toReturn.roomInfo.pols.Append(newR.pols);
+			toReturn.roomInfo.meshes.Append(newR.meshes);
+		}
+	}
+	int levels = roofAccess ? floors + 1 : floors;
+	if (!shellOnly) {
+		for (int i = 1; i <= levels; i++) {
+			FVector elDir = elevatorPol.points[2] - elevatorPol.points[1];
+			elDir.Normalize();
+			toReturn.roomInfo.meshes.Add(FMeshInfo{ "elevator", FTransform(rot.Rotation() + FRotator(0, 180, 0), elevatorPos + FVector(0, 0, floorHeight * (i - 1)) + elDir * 180, FVector(1.0f, 1.0f, 1.0f)) }); // elevator doors
+			FMaterialPolygon above; // space above elevator
+			above.type = PolygonType::interior;
+			above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 290));
+			above.points.Add(elevatorPol.points[3] + FVector(0, 0, floorHeight * (i - 1) + 290));
+			above.points.Add(elevatorPol.points[3] + FVector(0, 0, floorHeight * (i - 1) + 400));
+			above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 400));
+			toReturn.roomInfo.pols.Add(above);
+
+			if (i != levels)
+				toReturn.roomInfo.meshes.Add(FMeshInfo{ "stair", FTransform(rot.Rotation(), stairPos + FVector(0, 0, floorHeight * (i - 1)), FVector(1.0f, 1.0f, 1.0f)) });
+
+		}
+	}
 
 
 
@@ -876,9 +880,23 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	roof.type = PolygonType::roof;
 	roof.normal = FVector(0, 0, -1);
 
-	if (generateRoofs)
-		toReturn.roomInfo.pols.Add(roof);
-
+	if (generateRoofs) {
+		if (roofAccess) {
+			toReturn.roomInfo.pols.Append(getFloorPolygonsWithHole(f, floorHeight*floors + 1, stairPol));
+			FMaterialPolygon boxRoof;
+			boxRoof.normal = FVector(0, 0, 1);
+			boxRoof.type = PolygonType::roof;
+			boxRoof.points = stairPol.points;
+			boxRoof.offset(FVector(0, 0, floorHeight*(floors + 1) + 1));
+			TArray<FMaterialPolygon> sides = getSidesOfPolygon(boxRoof, PolygonType::exterior, floorHeight);
+			sides.RemoveAt(sides.Num() - 1);
+			toReturn.roomInfo.pols.Append(sides);
+			toReturn.roomInfo.pols.Add(boxRoof);
+		}
+		else {
+			toReturn.roomInfo.pols.Add(roof);
+		}
+	}
 	if (!shellOnly) {
 		TArray<FMaterialPolygon> otherSides = fillOutPolygons(toReturn.roomInfo.pols);
 		toReturn.roomInfo.pols.Append(otherSides);
@@ -914,7 +932,7 @@ void AHouseBuilder::Tick(float DeltaTime)
 		delete worker;
 		workerWorking = false;
 		workersWorking--;
-		SetActorTickEnabled(false);
+		//SetActorTickEnabled(false);
 
 	}
 

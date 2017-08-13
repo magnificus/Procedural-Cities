@@ -521,7 +521,7 @@ static FRoomInfo getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalIns
 	float offsetLen = 100;
 
 	if (r.meshes.Num() > 0)
-		attemptPlaceAroundPolygon(placed[placed.Num() - 1], "office_chair", placed, r.meshes, FRotator(0, 0, 0), map, 0.01, *r2);
+		attemptPlaceAroundPolygon(placed[placed.Num() - 1], "office_chair", placed, r.meshes, FRotator(0, 180, 0), map, 0.01, *r2);
 
 	if (FMath::FRandRange(0,0.9999) < 0.5) {
 		r2->attemptPlace(placed, r.meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
@@ -595,7 +595,6 @@ static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon *r2, TArray<F
 	rot.Normalize();
 	FVector tan = FRotator(0, 90, 0).RotateVector(rot);
 	tan.Normalize();
-	float extraChairHeight = 30;
 
 
 	FPolygon tableP = getPolygon(rot.Rotation(), center, "large_table", map);
@@ -604,7 +603,7 @@ static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon *r2, TArray<F
 		FMeshInfo table{ "large_table", FTransform(rot.Rotation() , center, FVector(1.0f, 1.0f, 1.0f)) };
 		meshes.Add(table);
 		placed.Add(tableP);
-		attemptPlaceAroundPolygon(tableP, "chair", placed, meshes, FRotator(0, 0, 0), map, 0.005, *r2);
+		attemptPlaceAroundPolygon(tableP, "chair", placed, meshes, FRotator(0, 0, 0), map, 0.007, *r2);
 
 		if (FMath::FRand() < 0.35)
 			attemptPlaceOnTop(table, meshes, "kettle", 50, map);

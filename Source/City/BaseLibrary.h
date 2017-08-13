@@ -147,10 +147,10 @@ struct FPolygon
 	}
 
 	// not totally random, favors placement closer to the sides a bit, but good enough
-	FVector getRandomPoint(bool left, float minDist) {
-		int place = FMath::RandRange(1, points.Num());
+	FVector getRandomPoint(bool left, float minDist, FRandomStream stream = FRandomStream()) {
+		int place = stream.RandRange(1, points.Num());
 		FVector tangent = (points[place%points.Num()] - points[place - 1]);
-		FVector beginPlace = FMath::FRand() * tangent + points[place - 1];
+		FVector beginPlace = stream.FRand() * tangent + points[place - 1];
 		tangent.Normalize();
 		FVector pointNormal = FRotator(0, left ? 90 : 270, 0).RotateVector(tangent);
 		int a;
@@ -158,7 +158,7 @@ struct FPolygon
 		getSplitCorrespondingPoint(place, beginPlace, pointNormal, a, target);
 		if (target.X == 0.0f || FVector::Dist(beginPlace, target) < minDist * 2)
 			return FVector(0, 0, 0);
-		FVector point = FMath::FRandRange(minDist, FVector::Dist(beginPlace, target) - minDist) * pointNormal + beginPlace;
+		FVector point = stream.FRandRange(minDist, FVector::Dist(beginPlace, target) - minDist) * pointNormal + beginPlace;
 		return point;
 	}
 

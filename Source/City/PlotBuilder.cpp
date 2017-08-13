@@ -190,7 +190,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			FHousePolygon model = getRandomModel(3500,6000, minFloors, maxFloors, noiseScale, p.type, stream);
 			model.checkOrientation();
 			model.canBeModified = false;
-			FPolygon shaft = AHouseBuilder::getShaftHolePolygon(model);
+			FPolygon shaft = AHouseBuilder::getShaftHolePolygon(model, stream);
 			for (int i = 0; i < 3; i++) {
 				TArray<FSimplePlot> temp;
 				AHouseBuilder::makeInteresting(model, temp, shaft, stream);
