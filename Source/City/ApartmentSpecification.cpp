@@ -39,11 +39,12 @@ void ApartmentSpecification::placeEntranceMeshes(FRoomInfo &r, FRoomPolygon *r2)
 		if (FVector::DistSquared(r2->points[i%r2->points.Num()], r2->points[i - 1]) < 22500)
 			continue;
 		FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
-		FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
-		dir1.Normalize();
-		FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
-		dir2.Normalize();
-		r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
+		r.meshes.Add(getEntranceMesh(r2->points[i%r2->points.Num()], r2->points[i - 1], doorPos));
+		//FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
+		//dir1.Normalize();
+		//FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
+		//dir2.Normalize();
+		//r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
 		//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
 	}
 }

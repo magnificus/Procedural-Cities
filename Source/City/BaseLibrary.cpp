@@ -581,6 +581,25 @@ TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float w
 	return toReturn;
 }
 
+FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHeight, float doorWidth, FVector doorPos) {
+	FVector side = p2 - p1;
+	float sideLen = side.Size();
+	side.Normalize();
+	float distToDoor = FVector::Dist(doorPos, p1) - doorWidth / 2;
+	FMaterialPolygon doorPolygon;
+	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
+	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 2));
+	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 2));
+	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, doorHeight));
+	return doorPolygon;
+}
+
+FMeshInfo getEntranceMesh(FVector p1, FVector p2, FVector doorPos) {
+	FVector dir1 = getNormal(p2, p1, true);
+	dir1.Normalize();
+	return FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos - dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) };
+}
+
 TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 	TArray<FMaterialPolygon> otherSides;
 	for (FMaterialPolygon &p : inPols) {
@@ -590,9 +609,9 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 		// exterior walls are interiors on the inside
 		if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
 			other.type = PolygonType::interior;
-			//polygonSides = false;
+			polygonSides = false;
 		}
-		if (p.type == PolygonType::floor || p.type == PolygonType::interior)// || p.type == PolygonType::roof)
+		if (p.type == PolygonType::floor)// || p.type == PolygonType::interior)// || p.type == PolygonType::roof)
 			polygonSides = false;
 
 		other.offset(p.getDirection() * p.width);
@@ -871,5 +890,44 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 
 		break;
 	}
+	}
+}
+
+void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
+	for (int k = 1; k < r2->points.Num() + 1; k++) {
+		FVector origin = middle(r2->points[k%r2->points.Num()], r2->points[k - 1]);
+		FVector tangent = r2->points[k%r2->points.Num()] - r2->points[k - 1];
+		tangent.Normalize();
+		FVector normal = FRotator(0, 270, 0).RotateVector(tangent);
+		int target = -1;
+		FVector targetP;
+		r2->getSplitCorrespondingPoint(k, origin, normal, target, targetP);
+		if (target == -1) {
+			UE_LOG(LogTemp, Warning, TEXT("Couldn't place row, no corresponding split point"));
+			return;
+		}
+		float width = FVector::Dist(r2->points[k%r2->points.Num()], r2->points[k - 1]);
+		float height = FVector::Dist(origin, targetP);
+
+		int numWidth = FMath::FloorToInt(width * horDens) + 1;
+		int numHeight = FMath::FloorToInt(height * vertDens) + 1;
+
+		float intervalWidth = width / numWidth;
+		float intervalHeight = height / numHeight;
+		TArray<FPolygon> toPlace;
+		for (int i = 1; i < numWidth; i++) {
+			for (int j = 1; j < numHeight; j++) {
+				FPolygon pol = getPolygon(normal.Rotation(), r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
+				// make sure it's fully inside the room
+				if (!testCollision(pol, placed, 0, *r2)) {// && intersection(pol, *r2).X == 0.0f) {
+					toPlace.Add(pol);
+					meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)) });
+				}
+			}
+		}
+		if (toPlace.Num() > 0) {
+			placed.Append(toPlace);
+			return;
+		}
 	}
 }
