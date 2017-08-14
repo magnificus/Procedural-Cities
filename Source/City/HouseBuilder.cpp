@@ -489,20 +489,20 @@ void addFacade(FHousePolygon &f, FRoomInfo &toReturn, float beginHeight, float f
 
 
 // recursive method for adding details to part of a roof
-void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon pol, FRoomInfo &toReturn, FRandomStream stream, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
-	TArray<FPolygon> placed;
+void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon pol, FRoomInfo &toReturn, FRandomStream stream, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, TArray<FPolygon> placed) {
 	if (depth == maxDepth)
 		return;
 	TArray<FMaterialPolygon> nextShapes;
-	if (stream.FRand() < 1.0) {
+	if (stream.FRand() < 0.55) {
 		// edge detail
 		FMaterialPolygon shape = pol;
 		shape.reverse();
 		float size = stream.FRandRange(50, 500);
 		shape.offset(FVector(0, 0, size));
 		TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exteriorSnd, size);
+		float width = stream.FRandRange(20, 150);
 		for (auto &p : sides)
-			p.width = stream.FRandRange(20, 150);
+			p.width = width;
 
 		toReturn.pols.Append(fillOutPolygons(sides));
 		toReturn.pols.Append(sides);
@@ -512,7 +512,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	float maxHeight = 1000;
 	float len = 500;
 	float offset = stream.FRandRange(minHeight, maxHeight);
-	if (stream.FRand() < 0.6) {
+	if (stream.FRand() < 0.45) {
 		int numBoxes = stream.RandRange(0, maxBoxes);
 		// add box shapes on top of pol
 		for (int j = 0; j < numBoxes; j++) {
@@ -539,9 +539,9 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 				tangent = FRotator(0, 90, 0).RotateVector(tangent);
 				FVector p4 = p3 + tangent * firstLen;
 				box.points.Add(p1);
-				box.points.Add(p4);
-				box.points.Add(p3);
 				box.points.Add(p2);
+				box.points.Add(p3);
+				box.points.Add(p4);
 
 				count++;
 
@@ -552,9 +552,9 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 					FMaterialPolygon side;
 					side.type = PolygonType::exteriorSnd;
 					side.points.Add(box.points[i - 1]);
-					side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
-					side.points.Add(box.points[i%box.points.Num()] - FVector(0, 0, offset));
 					side.points.Add(box.points[i%box.points.Num()]);
+					side.points.Add(box.points[i%box.points.Num()] - FVector(0, 0, offset));
+					side.points.Add(box.points[i - 1] - FVector(0, 0, offset));
 					toReturn.pols.Add(side);
 				}
 				placed.Add(box);
@@ -568,12 +568,9 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 		// same shape as pol, but smaller 
 		FMaterialPolygon shape = pol;
 		shape.offset(FVector(0, 0, offset));
-		//shape.reverse();
 		FVector center = shape.getCenter();
-		//shape.symmetricShrink(stream.FRandRange(500, 2000), false);
 		for (FVector &point : shape.points) {
 			FVector tangent = center - point;
-			//tangent.Normalize();
 			point += tangent / 4;
 		}
 		if (!pol.getIsClockwise())
@@ -596,35 +593,54 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 		nextShapes.Add(shape);
 	}
 
-	//else if (stream.FRand() < 0.2) {
-
-	//	// pointy shape upwards
-	//}
+	else if (stream.FRand() < 0.5) {
+		// pointy shape upwards
+		FVector centerP = pol.getCenter();
+		centerP += FVector(0, 0, stream.FRandRange(100, 400));
+		for (int i = 1; i < pol.points.Num() + 1; i++) {
+			FMaterialPolygon rPol;
+			rPol.type = PolygonType::roof;
+			rPol += pol.points[i - 1];
+			rPol += centerP;
+			rPol += pol.points[i%pol.points.Num()];
+			toReturn.pols.Add(rPol);
+		}
+	}
 	
 	// try placing meshes
-	FRoomPolygon tempR;
-	tempR.points = pol.points;
-	//void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
-
-	if (stream.FRand() < 1.0) {
-		placeRows(&pol, placed, toReturn.meshes, FRotator(0, 0, 0), "rooftop_solar", 0.002, 0.002, map);
+	TArray<FMeshInfo> toPlaceMeshes;
+	if (stream.FRand() < 0.45) {
+		placeRows(&pol, placed, toPlaceMeshes, FRotator(0, 0, 0), "rooftop_solar", 0.005, 0.005, map, true);
 		//for (int i = 0; i < 10; i++)
 		//	tempR.attemptPlace(placed, toReturn.meshes, true, 1, "rooftop_solar", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
 	}
-	else if (stream.FRand() < 0.2) {
-		placeRows(&pol, placed, toReturn.meshes, FRotator(0, 0, 0), "rooftop_ac", 0.005, 0.005, map);
+	int toKeepStart = stream.RandRange(0, toPlaceMeshes.Num() - 1);
+	int toKeepEnd = stream.RandRange(toKeepStart + 1, toKeepStart + 15);
+	for (int i = toKeepStart; i < std::min(toKeepEnd, toPlaceMeshes.Num()); i++) {
+		toReturn.meshes.Add(toPlaceMeshes[i]);
+	}
+	toPlaceMeshes.Empty();
+	if (stream.FRand() < 0.45) {
+		placeRows(&pol, placed, toPlaceMeshes, FRotator(0, 0, 0), "rooftop_ac", 0.007, 0.007, map, true);
 
 		//for (int i = 0; i < 10; i++)
 		//	tempR.attemptPlace(placed, toReturn.meshes, true, 1, "rooftop_ac", FRotator(0, 0, 0), FVector(0, 0, 0), map, false);
 	}
+	toKeepStart = stream.RandRange(0, toPlaceMeshes.Num() - 1);
+	toKeepEnd = stream.RandRange(toKeepStart + 1, toKeepStart + 12);
+	for (int i = toKeepStart; i < std::min(toKeepEnd, toPlaceMeshes.Num()); i++) {
+		toReturn.meshes.Add(toPlaceMeshes[i]);
+	}
+
+
 
 	for (FMaterialPolygon p : nextShapes)
-		addDetailOnPolygon(++depth, maxDepth, 1, p, toReturn, stream, map);
+		addDetailOnPolygon(++depth, maxDepth, 1, p, toReturn, stream, map, TArray<FPolygon>());
 }
 
-void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
+void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, TArray<FPolygon> placed) {
 
-	addDetailOnPolygon(0, 3, 3, roof, toReturn, stream, map);
+	addDetailOnPolygon(0, 3, 3, roof, toReturn, stream, map, placed);
 }
 
 
@@ -703,15 +719,12 @@ void AHouseBuilder::buildHouse(bool shellOnly_in) {
 
 	shellOnly = shellOnly_in;
 	if (workerWantsToWork) {
-		//wantsToWork = false;
-		//isWorking = false;
 		workerWantsToWork = false;
-		//SetActorTickEnabled(false);
+		if (worker)
+			delete worker;
 		return;
 		
 	}
-	//SetActorTickEnabled(true);
-	//housePol = f;
 	workerWantsToWork = true;
 }
 
@@ -882,9 +895,9 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	//int levels = roofAccess ? floors + 1 : floors;
 	if (!shellOnly) {
 		for (int i = 1; i <= floors; i++) {
-			FVector elDir = elevatorPol.points[2] - elevatorPol.points[1];
+			FVector elDir = elevatorPol.points[3] - elevatorPol.points[2];
 			elDir.Normalize();
-			toReturn.roomInfo.meshes.Add(FMeshInfo{ "elevator", FTransform(rot.Rotation() + FRotator(0, 180, 0), elevatorPos + FVector(0, 0, floorHeight * (i - 1)) + elDir * 180, FVector(1.0f, 1.0f, 1.0f)) }); // elevator doors
+			toReturn.roomInfo.meshes.Add(FMeshInfo{ "elevator", FTransform(rot.Rotation() + FRotator(0, 180, 0), elevatorPos + FVector(0, 0, floorHeight * (i - 1)) + elDir * 180) }); // elevator doors
 			FMaterialPolygon above; // space above elevator
 			above.type = PolygonType::interior;
 			above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 290));
@@ -904,10 +917,11 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 
 	FMaterialPolygon roof;
 	roof.points = f.points;
+	//roof.reverse();
 	roof.offset(FVector(0, 0, floorHeight*floors + 1));
 	roof.type = PolygonType::roof;
 	roof.normal = FVector(0, 0, -1);
-
+	TArray<FPolygon> placed;
 	if (generateRoofs) {
 		if (roofAccess) {
 			auto newRoof = getFloorPolygonsWithHole(f, floorHeight*floors + 1, stairPol);
@@ -915,7 +929,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 				a.type = PolygonType::roof;
 			toReturn.roomInfo.pols.Append(newRoof);
 			FMaterialPolygon boxRoof;
-			boxRoof.normal = FVector(0, 0, -1);
+			boxRoof.normal = FVector(0, 0, 1);
 			boxRoof.type = PolygonType::roof;
 			boxRoof.points = hole.points;
 			boxRoof.offset(FVector(0, 0, floorHeight*(floors + 1) + 1));
@@ -925,14 +939,14 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			//sides.RemoveAt(0);
 			FVector middleP = middle(exitSide[2], exitSide[1]);
 			FPolygon entH = getEntranceHole(exitSide[2], exitSide[1], floorHeight, 297, 137, middleP);
-			exitSide.points.EmplaceAt(2, entH[1]);
-			exitSide.points.EmplaceAt(3, entH[0]);
-			exitSide.points.EmplaceAt(4, entH[3]);
-			exitSide.points.EmplaceAt(5, entH[2]);
+			exitSide.points.EmplaceAt(2, entH[2]);
+			exitSide.points.EmplaceAt(3, entH[3]);
+			exitSide.points.EmplaceAt(4, entH[0]);
+			exitSide.points.EmplaceAt(5, entH[1]);
 
 			sides.Add(boxRoof);
 			//sides.Add(newP);
-
+			placed.Add(boxRoof);
 			toReturn.roomInfo.meshes.Add(getEntranceMesh(exitSide[2], exitSide[1], middleP));
 			toReturn.roomInfo.pols.Append(fillOutPolygons(sides));
 			toReturn.roomInfo.pols.Append(sides);
@@ -947,7 +961,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	}
 
 	if (generateRoofs) {
-		addRoofDetail(roof, toReturn.roomInfo, stream, map);
+		addRoofDetail(roof, toReturn.roomInfo, stream, map, placed);
 	}
 	f = pre;
 	return toReturn;
@@ -967,6 +981,7 @@ void AHouseBuilder::Tick(float DeltaTime)
 	if (workerWantsToWork && workersWorking.load(std::memory_order_relaxed) < maxThreads) {
 		workerWantsToWork = false;
 		workersWorking++;
+		//delete worker;
 		worker = new ThreadedWorker(this);
 		workerWorking = true;
 	}

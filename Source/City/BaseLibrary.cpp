@@ -588,8 +588,8 @@ FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHe
 	float distToDoor = FVector::Dist(doorPos, p1) - doorWidth / 2;
 	FMaterialPolygon doorPolygon;
 	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, doorHeight));
-	doorPolygon.points.Add(p1 + side*distToDoor + FVector(0, 0, 2));
-	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, 2));
+	doorPolygon.points.Add(p1 + side*distToDoor);
+	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth);
 	doorPolygon.points.Add(p1 + side*distToDoor + side*doorWidth + FVector(0, 0, doorHeight));
 	return doorPolygon;
 }
@@ -609,7 +609,7 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 		// exterior walls are interiors on the inside
 		if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
 			other.type = PolygonType::interior;
-			polygonSides = false;
+			//polygonSides = false;
 		}
 		if (p.type == PolygonType::floor)// || p.type == PolygonType::interior)// || p.type == PolygonType::roof)
 			polygonSides = false;
@@ -893,12 +893,12 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 	}
 }
 
-void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
+void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool left) {
 	for (int k = 1; k < r2->points.Num() + 1; k++) {
 		FVector origin = middle(r2->points[k%r2->points.Num()], r2->points[k - 1]);
 		FVector tangent = r2->points[k%r2->points.Num()] - r2->points[k - 1];
 		tangent.Normalize();
-		FVector normal = FRotator(0, 270, 0).RotateVector(tangent);
+		FVector normal = FRotator(0, left ? 90 : 270, 0).RotateVector(tangent);
 		int target = -1;
 		FVector targetP;
 		r2->getSplitCorrespondingPoint(k, origin, normal, target, targetP);

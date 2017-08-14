@@ -467,7 +467,7 @@ enum class SimplePlotType : uint8
 TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int num, FString name, bool useRealPolygon = false, const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map = nullptr);
 TArray<FMeshInfo> attemptPlaceClusterAlongSide(FPolygon pol, TArray<FPolygon> &blocking, int num, float distBetween, FString name, FVector offset, bool useRealPolygon = false, const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map = nullptr);
 void attemptPlaceCenter(FPolygon &pol, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FString string, FRotator offsetRot, FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map);
-void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map);
+void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool left = false);
 FMeshInfo getEntranceMesh(FVector p1, FVector p2, FVector doorPos);
 
 
@@ -1025,7 +1025,7 @@ struct FRoomPolygon : public FPolygon
 					FRoomPolygon *target = remaining[0];
 					int targetNum = 0;
 					float scale = 0.0f;
-					for (int i = 1; i < remaining.Num(); i++) {
+					for (int i = 0; i < remaining.Num(); i++) {
 						target = remaining[i];
 						targetNum = i;
 						scale = spec.minArea / target->getArea();

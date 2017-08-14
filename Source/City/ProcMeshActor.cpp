@@ -122,6 +122,7 @@ bool AProcMeshActor::clearMeshes(bool fullReplacement) {
 	occlusionWindowMesh->ClearAllMeshSections();
 	floorMesh->ClearAllMeshSections();
 	roadMiddleMesh->ClearAllMeshSections();
+	asphaltMesh->ClearAllMeshSections();
 	return true;
 }
 
@@ -243,10 +244,6 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 	currentlyWorkingArray = 0;
 	wantsToWork = true;
 	//SetActorTickEnabled(true);
-	//if (isWorking) {
-	//	isWorking = false;
-	//	workersWorking--;
-	//}
 
 	//isWorking = true;
 	//buildPolygons(exterior, offset, exteriorMesh, exteriorMat);

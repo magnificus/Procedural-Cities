@@ -36,10 +36,10 @@ class CITY_API AHouseBuilder : public AActor
 	bool shellOnly = false;
 
 	//bool wantsToWork = false;
-	bool isWorking = false;
+	//bool isWorking = false;
 	int currentIndex = 0;
 	int meshesPerTick = 3;
-	TArray<FMeshInfo> meshesToPlace;
+	//TArray<FMeshInfo> meshesToPlace;
 	TArray<UTextRenderComponent*> texts;
 
 public:
