@@ -596,7 +596,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	else if (stream.FRand() < 0.5) {
 		// pointy shape upwards
 		FVector centerP = pol.getCenter();
-		centerP += FVector(0, 0, stream.FRandRange(100, 400));
+		centerP += FVector(0, 0, stream.FRandRange(200, 900));
 		for (int i = 1; i < pol.points.Num() + 1; i++) {
 			FMaterialPolygon rPol;
 			rPol.type = PolygonType::roof;
@@ -604,6 +604,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 			rPol += centerP;
 			rPol += pol.points[i%pol.points.Num()];
 			toReturn.pols.Add(rPol);
+			placed.Add(pol);
 		}
 	}
 	
