@@ -32,18 +32,18 @@ AProcMeshActor::AProcMeshActor()
 
 AProcMeshActor::~AProcMeshActor()
 {
-	delete exteriorMesh;
-	delete sndExteriorMesh;
-	delete interiorMesh;
-	delete windowMesh;
-	delete windowFrameMesh;
-	delete occlusionWindowMesh;
-	delete floorMesh;
-	delete roofMesh;
-	delete greenMesh;
-	delete concreteMesh;
-	delete roadMiddleMesh;
-	delete asphaltMesh;
+	//exteriorMesh->DestroyComponent();
+	//sndExteriorMesh->DestroyComponent();
+	//interiorMesh->DestroyComponent();
+	//windowMesh->DestroyComponent();
+	//windowFrameMesh->DestroyComponent();
+	//occlusionWindowMesh->DestroyComponent();
+	//floorMesh->DestroyComponent();
+	//roofMesh->DestroyComponent();
+	//greenMesh->DestroyComponent();
+	//concreteMesh->DestroyComponent();
+	//roadMiddleMesh->DestroyComponent();
+	//asphaltMesh->DestroyComponent();
 
 }
 

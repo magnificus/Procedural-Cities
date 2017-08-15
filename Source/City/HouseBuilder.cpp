@@ -22,9 +22,9 @@ AHouseBuilder::AHouseBuilder()
 AHouseBuilder::~AHouseBuilder()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	//SetActorTickEnabled(false);
 	if (worker)
 		delete worker;
-	//SetActorTickEnabled(false);
 
 }
 
@@ -502,13 +502,13 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	if (depth == maxDepth)
 		return;
 	TArray<FMaterialPolygon> nextShapes;
-	if (stream.FRand() < 0.55) {
+	if (stream.FRand() < 0.6) {
 		// edge detail
 		FMaterialPolygon shape = pol;
 		shape.reverse();
 		float size = stream.FRandRange(50, 500);
 		shape.offset(FVector(0, 0, size));
-		TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exteriorSnd, size);
+		TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exterior, size);
 		float width = stream.FRandRange(20, 150);
 		for (auto &p : sides)
 			p.width = width;
@@ -521,7 +521,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	float maxHeight = 1000;
 	float len = 500;
 	float offset = stream.FRandRange(minHeight, maxHeight);
-	if (stream.FRand() < 0.4) {
+	if (stream.FRand() < 0.5) {
 		int numBoxes = stream.RandRange(0, maxBoxes);
 		// add box shapes on top of pol
 		for (int j = 0; j < numBoxes; j++) {
@@ -573,7 +573,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 			}
 		}
 	}
-	else if (stream.FRand() < 0.45 && canCoverCompletely) {
+	else if (stream.FRand() < 0.4 && canCoverCompletely) {
 
 		// same shape as pol, but smaller 
 		FMaterialPolygon shape = pol;
@@ -601,7 +601,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 		nextShapes.Add(shape);
 	}
 
-	else if (stream.FRand() < 0.5 && canCoverCompletely) {
+	else if (stream.FRand() < 0.4 && canCoverCompletely) {
 		// pointy shape upwards
 		FVector centerP = pol.getCenter();
 		centerP += FVector(0, 0, stream.FRandRange(200, 900));
@@ -649,7 +649,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 
 void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, TArray<FPolygon> placed, bool canCoverCompletely) {
 
-	addDetailOnPolygon(0, 2, 3, roof, toReturn, stream, map, placed, canCoverCompletely);
+	addDetailOnPolygon(0, 1, 3, roof, toReturn, stream, map, placed, canCoverCompletely);
 }
 
 
@@ -929,7 +929,6 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	roof.offset(FVector(0, 0, floorHeight*floors + 1));
 	roof.type = PolygonType::roof;
 	roof.normal = FVector(0, 0, -1);
-	toReturn.roomInfo.pols.Add(roof);
 	TArray<FPolygon> placed;
 	if (generateRoofs) {
 		if (roofAccess) {
@@ -938,7 +937,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 				a.type = PolygonType::roof;
 			toReturn.roomInfo.pols.Append(newRoof);
 			FMaterialPolygon boxRoof;
-			boxRoof.normal = FVector(0, 0, 1);
+			boxRoof.normal = FVector(0, 0, -1);
 			boxRoof.type = PolygonType::roof;
 			boxRoof.points = hole.points;
 			boxRoof.offset(FVector(0, 0, floorHeight*(floors + 1) + 1));
@@ -960,9 +959,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			//toReturn.roomInfo.pols.Append(fillOutPolygons(sides));
 			toReturn.roomInfo.pols.Append(sides);
 		}
-		else {
-			toReturn.roomInfo.pols.Add(roof);
-		}
+		toReturn.roomInfo.pols.Add(roof);
 	}
 	if (!shellOnly) {
 		TArray<FMaterialPolygon> otherSides = fillOutPolygons(toReturn.roomInfo.pols);
