@@ -150,17 +150,19 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.housePosition = pol.getCenter();
-	pol.height = stream.RandRange(minFloors, maxFloors);// minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(pol.housePosition.X, pol.housePosition.Y, noiseScale));//FMath::FRandRange(0,0.9999) * (maxFloors - minFloors) + minFloors;
-	if (NoiseSingleton::getInstance()->noise((pol.housePosition.X + noiseXOffset)*noiseScale, (pol.housePosition.Y + noiseYOffset)*noiseScale) > 0.5) {
-		pol.height *= 2;
+	float modifier = -std::log(stream.FRandRange(0.135 /* e^(-1) */, 1)) / 2;
+	if (stream.FRand() < 0.1) {
+		// invert curve for some buldings, to make some super tall
+		modifier = 1 - modifier;
 	}
+	pol.height = minFloors + (maxFloors - minFloors)*modifier;
 	pol.type = type;
 	pol.offset(-pol.getCenter());
 	return pol;
 }
 
 
-FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int minFloors, float noiseScale) {
+FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int maxFloors, float noiseScale) {
 	FPlotInfo info;
 	FVector cen = p.getCenter();
 	FRandomStream stream(cen.X * 1000 + cen.Y);
@@ -226,11 +228,15 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int maxFloors, int
 			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
 				r.housePosition = r.getCenter();
-				r.height = stream.FRandRange(minFloors, minFloors + (maxFloors - minFloors) * NoiseSingleton::getInstance()->noise(r.housePosition.X, r.housePosition.Y, noiseScale));
-
-				if (stream.FRand() < 0.2) {
-					r.height *= 2;
+				//exponential distribution with lambda = 1
+				float modifier = -std::log(stream.FRandRange(0.135 /* e^(-3) */, 1))/2;
+				if (stream.FRand() < 0.1) {
+					// invert curve for some buldings, to make some super tall
+					modifier = 1 - modifier;
 				}
+				r.height = minFloors + (maxFloors - minFloors)*modifier;
+
+
 				r.type = p.type;
 				r.simplePlotType = r.type == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
 

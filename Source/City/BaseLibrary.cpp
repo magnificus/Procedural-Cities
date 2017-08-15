@@ -783,7 +783,7 @@ FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHier
 TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int num, FString name, bool useRealPolygon , const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map) {
 	TArray<FMeshInfo> meshes;
 	for (int i = 0; i < num; i++) {
-		FVector point = pol.getRandomPoint(true, 0);
+		FVector point = pol.getRandomPoint(true, 50, FRandomStream(pol[0].X * 100 + pol[0].Y));
 		if (point.X != 0.0f) {
 			FPolygon temp;
 			if (useRealPolygon)

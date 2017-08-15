@@ -23,8 +23,8 @@ AHouseBuilder::~AHouseBuilder()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	//SetActorTickEnabled(false);
-	if (worker)
-		delete worker;
+	//if (worker)
+	//	delete worker;
 
 }
 
@@ -536,7 +536,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 				}
 				box = FMaterialPolygon();
 				box.type = PolygonType::exteriorSnd;
-				box.normal = FVector(0, 0, 1);
+				box.normal = FVector(0, 0, -1);
 				FVector center = pol.getCenter();
 				FVector p1 = center + FVector(stream.FRandRange(0, 4000) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 4000) * (stream.FRand() < 0.5 ? 1 : -1), offset);
 				FVector tangent = pol.points[1] - pol.points[0];
@@ -959,7 +959,8 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			//toReturn.roomInfo.pols.Append(fillOutPolygons(sides));
 			toReturn.roomInfo.pols.Append(sides);
 		}
-		toReturn.roomInfo.pols.Add(roof);
+		else
+			toReturn.roomInfo.pols.Add(roof);
 	}
 	if (!shellOnly) {
 		TArray<FMaterialPolygon> otherSides = fillOutPolygons(toReturn.roomInfo.pols);

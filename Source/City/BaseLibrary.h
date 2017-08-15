@@ -997,6 +997,7 @@ struct FRoomPolygon : public FPolygon
 
 		bool couldPlace = false;
 		bool anyRoomPlaced = false;
+		int count = 0;
 		do {
 			anyRoomPlaced = false;
 			for (RoomSpecification spec : specs) {
@@ -1073,7 +1074,7 @@ struct FRoomPolygon : public FPolygon
 					//}
 				}
 			}
-		} while (repeating && anyRoomPlaced);
+		} while (repeating && anyRoomPlaced && ++count < 5);
 
 		return toReturn;
 
@@ -1124,7 +1125,7 @@ struct FRoomPolygon : public FPolygon
 			bool found = false;
 			for (FRoomPolygon *p : rooms) {
 				// first pick non-needed rooms
-				if (!need.Contains(p->type) && (splitableType(current) || p->getTotalConnections() < 2)) {
+				if (!need.Contains(p->type) && ((splitableType(current) || p->getTotalConnections() < 2))) {
 					p->type = current;
 					found = true;
 					break;
@@ -1186,7 +1187,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true, false));
 
 		rooms.Append(remaining);
-		postFit(rooms, blueprint);
+		//postFit(rooms, blueprint);
 
 
 		return rooms;

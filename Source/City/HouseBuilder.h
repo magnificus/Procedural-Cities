@@ -110,7 +110,7 @@ public:
 
 	static void makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream);
 
-	static TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height);
+	//static TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height);
 
 	static FPolygon getShaftHolePolygon(FHousePolygon f, FRandomStream stream);
 
