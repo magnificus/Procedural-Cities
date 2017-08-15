@@ -30,6 +30,24 @@ AProcMeshActor::AProcMeshActor()
 
 }
 
+AProcMeshActor::~AProcMeshActor()
+{
+	delete exteriorMesh;
+	delete sndExteriorMesh;
+	delete interiorMesh;
+	delete windowMesh;
+	delete windowFrameMesh;
+	delete occlusionWindowMesh;
+	delete floorMesh;
+	delete roofMesh;
+	delete greenMesh;
+	delete concreteMesh;
+	delete roadMiddleMesh;
+	delete asphaltMesh;
+
+}
+
+
 
 
 bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URuntimeMeshComponent* mesh, UMaterialInterface *mat) {

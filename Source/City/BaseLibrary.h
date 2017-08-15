@@ -1107,8 +1107,8 @@ struct FRoomPolygon : public FPolygon
 			if (!splitableType(p->type) && p->getTotalConnections() > 1 && !need.Contains(p->type)) {
 				p->type = SubRoomType::corridor;
 			}
-			//if (need.Contains(p->type))
-			//	need[p->type] --;
+			if (need.Contains(p->type))
+				need[p->type] --;
 		}
 
 		TArray<SubRoomType> remaining;

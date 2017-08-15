@@ -22,6 +22,7 @@ public:
 	unsigned int maxThreads = 10000;
 	// Sets default values for this actor's properties
 	AProcMeshActor();
+	~AProcMeshActor();
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	bool buildPolygons(TArray<FMaterialPolygon> pols, FVector offset);

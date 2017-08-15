@@ -49,6 +49,7 @@ public:
 
 	// Sets default values for this actor's properties
 	AHouseBuilder();
+	~AHouseBuilder();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 		TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map;

@@ -15,7 +15,7 @@ ThreadedWorker::ThreadedWorker(AHouseBuilder* house)
 	: houseBuilder(house)
 {
 	//Link to where data should be stored
-	Thread = FRunnableThread::Create(this, TEXT("ThreadedWorker"), 0, TPri_AboveNormal); //windows default = 8mb for thread, could specify more
+	Thread = FRunnableThread::Create(this, TEXT("ThreadedWorker"), 0, TPri_Normal); //windows default = 8mb for thread, could specify more
 }
 
 ThreadedWorker::~ThreadedWorker()

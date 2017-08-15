@@ -19,6 +19,15 @@ AHouseBuilder::AHouseBuilder()
 
 }
 
+AHouseBuilder::~AHouseBuilder()
+{
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	if (worker)
+		delete worker;
+	//SetActorTickEnabled(false);
+
+}
+
 struct twoInt {
 	int32 a;
 	int32 b;
@@ -489,7 +498,7 @@ void addFacade(FHousePolygon &f, FRoomInfo &toReturn, float beginHeight, float f
 
 
 // recursive method for adding details to part of a roof
-void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon pol, FRoomInfo &toReturn, FRandomStream stream, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, TArray<FPolygon> placed) {
+void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon pol, FRoomInfo &toReturn, FRandomStream stream, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, TArray<FPolygon> placed, bool canCoverCompletely) {
 	if (depth == maxDepth)
 		return;
 	TArray<FMaterialPolygon> nextShapes;
@@ -512,7 +521,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	float maxHeight = 1000;
 	float len = 500;
 	float offset = stream.FRandRange(minHeight, maxHeight);
-	if (stream.FRand() < 0.45) {
+	if (stream.FRand() < 0.4) {
 		int numBoxes = stream.RandRange(0, maxBoxes);
 		// add box shapes on top of pol
 		for (int j = 0; j < numBoxes; j++) {
@@ -527,6 +536,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 				}
 				box = FMaterialPolygon();
 				box.type = PolygonType::exteriorSnd;
+				box.normal = FVector(0, 0, 1);
 				FVector center = pol.getCenter();
 				FVector p1 = center + FVector(stream.FRandRange(0, 4000) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 4000) * (stream.FRand() < 0.5 ? 1 : -1), offset);
 				FVector tangent = pol.points[1] - pol.points[0];
@@ -563,7 +573,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 			}
 		}
 	}
-	else if (stream.FRand() < 0.5) {
+	else if (stream.FRand() < 0.45 && canCoverCompletely) {
 
 		// same shape as pol, but smaller 
 		FMaterialPolygon shape = pol;
@@ -586,25 +596,23 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 			side.points.Add(shape.points[i - 1] - FVector(0, 0, offset));
 			toReturn.pols.Add(side);
 		}
-
 		placed.Add(shape);
-
 		toReturn.pols.Add(shape);
 		nextShapes.Add(shape);
 	}
 
-	else if (stream.FRand() < 0.5) {
+	else if (stream.FRand() < 0.5 && canCoverCompletely) {
 		// pointy shape upwards
 		FVector centerP = pol.getCenter();
 		centerP += FVector(0, 0, stream.FRandRange(200, 900));
-		for (int i = 1; i < pol.points.Num() + 1; i++) {
-			FMaterialPolygon rPol;
-			rPol.type = PolygonType::roof;
-			rPol += pol.points[i - 1];
-			rPol += centerP;
-			rPol += pol.points[i%pol.points.Num()];
-			toReturn.pols.Add(rPol);
-			placed.Add(pol);
+			for (int i = 1; i < pol.points.Num() + 1; i++) {
+				FMaterialPolygon rPol;
+				rPol.type = PolygonType::roof;
+				rPol += pol.points[i - 1];
+				rPol += centerP;
+				rPol += pol.points[i%pol.points.Num()];
+				toReturn.pols.Add(rPol);
+				placed.Add(pol);
 		}
 	}
 	
@@ -636,12 +644,12 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 
 
 	for (FMaterialPolygon p : nextShapes)
-		addDetailOnPolygon(++depth, maxDepth, 1, p, toReturn, stream, map, TArray<FPolygon>());
+		addDetailOnPolygon(++depth, maxDepth, 1, p, toReturn, stream, map, TArray<FPolygon>(), true);
 }
 
-void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, TArray<FPolygon> placed) {
+void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, TArray<FPolygon> placed, bool canCoverCompletely) {
 
-	addDetailOnPolygon(0, 3, 3, roof, toReturn, stream, map, placed);
+	addDetailOnPolygon(0, 2, 3, roof, toReturn, stream, map, placed, canCoverCompletely);
 }
 
 
@@ -651,7 +659,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	int place = stream.RandRange(1, f.points.Num());
 	float len = stream.FRandRange(400, 1500);
 	// only shrink one side
-	if (stream.FRand() < 0.3) {
+	if (stream.FRand() < 0.2) {
 		//float modifier = f.windows.Contains(place) && stream.FRand() < 0.1 ? -0.5 : 1;
 		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len, offset);
 		if (res.pol.points.Num() > 2) {
@@ -665,7 +673,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		}
 	}
 	// shrink whole symmetrically
-	else if (stream.FRand() < 0.2) {
+	else if (stream.FRand() < 0.15) {
 		float shrinkLen = stream.FRandRange(0.1, 0.3);
 		FHousePolygon cp = FHousePolygon(f);
 		cp.symmetricShrink(shrinkLen, false);
@@ -687,7 +695,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	}
 
 	// side into u
-	else if (stream.FRand() < 0.1) {
+	else if (stream.FRand() < 0.07) {
 		FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, offset, stream);
 		if (res.pol.points.Num() > 2) {
 			FMaterialPolygon pol;
@@ -701,16 +709,14 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	}
 
 	// remove corner
-	else if (stream.FRand() < 0.2) {
+	else if (stream.FRand() < 0.15) {
 		FSimplePlot res = attemptRemoveCorner(f, place, centerHole, len, offset);
 		if (res.pol.points.Num() > 2) {
 			FMaterialPolygon pol;
 			pol.points = res.pol.points;
 			pol.type = PolygonType::roof;
 			pol.normal = FVector(0, 0, -1);
-			//pol.offset(FVector(0, 0, 1));
 			toReturn.Add(pol);
-			//return toReturn;
 		}
 	}
 	return toReturn;
@@ -864,7 +870,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	int windowChangeCutoff = stream.RandRange(1, 20);
 	WindowType currentWindowType = WindowType(stream.RandRange(0, 3));
 
-	bool roofAccess = stream.FRand() < 0.5;
+	bool roofAccess = stream.FRand() < 0.2;
 	bool horizontalFacade = stream.FRand() < 0.15;
 	for (int i = 1; i < floors; i++) {
 		if (i == windowChangeCutoff)
@@ -918,10 +924,12 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 
 	FMaterialPolygon roof;
 	roof.points = f.points;
-	//roof.reverse();
+	//if (!roof.getIsClockwise())
+	//	roof.reverse();
 	roof.offset(FVector(0, 0, floorHeight*floors + 1));
 	roof.type = PolygonType::roof;
 	roof.normal = FVector(0, 0, -1);
+	toReturn.roomInfo.pols.Add(roof);
 	TArray<FPolygon> placed;
 	if (generateRoofs) {
 		if (roofAccess) {
@@ -934,7 +942,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			boxRoof.type = PolygonType::roof;
 			boxRoof.points = hole.points;
 			boxRoof.offset(FVector(0, 0, floorHeight*(floors + 1) + 1));
-			//boxRoof.reverse();
+			boxRoof.reverse();
 			TArray<FMaterialPolygon> sides = getSidesOfPolygon(boxRoof, PolygonType::exterior, floorHeight);
 			FMaterialPolygon &exitSide = sides[0];
 			//sides.RemoveAt(0);
@@ -949,7 +957,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			//sides.Add(newP);
 			placed.Add(boxRoof);
 			toReturn.roomInfo.meshes.Add(getEntranceMesh(exitSide[2], exitSide[1], middleP));
-			toReturn.roomInfo.pols.Append(fillOutPolygons(sides));
+			//toReturn.roomInfo.pols.Append(fillOutPolygons(sides));
 			toReturn.roomInfo.pols.Append(sides);
 		}
 		else {
@@ -962,7 +970,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	}
 
 	if (generateRoofs) {
-		addRoofDetail(roof, toReturn.roomInfo, stream, map, placed);
+		addRoofDetail(roof, toReturn.roomInfo, stream, map, placed, !roofAccess);
 	}
 	f = pre;
 	return toReturn;
