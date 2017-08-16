@@ -148,7 +148,7 @@ struct FPolygon
 	}
 
 	// not totally random, favors placement closer to the sides a bit, but good enough
-	FVector getRandomPoint(bool left, float minDist, FRandomStream stream = FRandomStream()) {
+	FVector getRandomPoint(bool left, float minDist, FRandomStream stream = FRandomStream(FMath::FRand())) {
 		int place = stream.RandRange(1, points.Num());
 		FVector tangent = (points[place%points.Num()] - points[place - 1]);
 		FVector beginPlace = stream.FRand() * tangent + points[place - 1];
@@ -457,9 +457,9 @@ struct FRoomInfo {
 UENUM(BlueprintType)
 enum class SimplePlotType : uint8
 {
-	undecided UMETA(DisplayName = "Undecided"),
 	asphalt UMETA(DisplayName = "Asphalt"),
-	green UMETA(DisplayName = "Green")
+	green UMETA(DisplayName = "Green"),
+	undecided UMETA(DisplayName = "Undecided")
 };
 
 
@@ -1038,19 +1038,24 @@ struct FRoomPolygon : public FPolygon
 					remaining.RemoveAt(targetNum);
 					scale = maxAreaAllowed / target->getArea();
 					// keep cutting it down until small enough to place my room
+					bool canPlace = true;
 					while (scale < 1.0f) {
 						FRoomPolygon* newP = target->splitAlongMax(0.5, true);
 						if (newP == nullptr) {
+							canPlace = false;
 							break;
 						}
 						remaining.EmplaceAt(0, newP);
 						scale = maxAreaAllowed / target->getArea();
 					}
 					//if (target->getArea() <= maxAreaAllowed && target->getArea() >= spec.minArea) {
-					target->type = spec.type;
-					toReturn.Add(target);
-					anyRoomPlaced = true;
-					couldPlace = true;
+					if (canPlace) {
+						target->type = spec.type;
+						toReturn.Add(target);
+						anyRoomPlaced = true;
+						couldPlace = true;
+					}
+
 					//}
 					//else /*if (scale > minPctSplit) */ {
 					//	float splitPct = spec.maxArea / target->getArea();

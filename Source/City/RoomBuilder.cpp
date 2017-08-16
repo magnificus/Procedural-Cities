@@ -508,9 +508,9 @@ static FRoomInfo getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalIns
 	float offsetLen = 100;
 
 	if (r.meshes.Num() > 0)
-		attemptPlaceAroundPolygon(placed[placed.Num() - 1], "office_chair", placed, r.meshes, FRotator(0, 180, 0), map, 0.01, *r2);
+		attemptPlaceAroundPolygon(placed[placed.Num() - 1], "office_chair", placed, r.meshes, FRotator(0, 180, 0), map, FMath::FRandRange(0.005, 0.01), *r2);
 
-	if (FMath::FRandRange(0,0.9999) < 0.5) {
+	if (FMath::FRand() < 0.5) {
 		r2->attemptPlace(placed, r.meshes, false, 1, "shelf", FRotator(0, 270, 0), FVector(0, 0, 0), map, true);
 	}
 

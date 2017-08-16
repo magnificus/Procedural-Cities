@@ -782,24 +782,27 @@ FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHier
 
 TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int num, FString name, bool useRealPolygon , const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map) {
 	TArray<FMeshInfo> meshes;
+	int hits = 0;
 	for (int i = 0; i < num; i++) {
-		FVector point = pol.getRandomPoint(true, 50, FRandomStream(pol[0].X * 100 + pol[0].Y));
+		FVector point = pol.getRandomPoint(true, 50);
 		if (point.X != 0.0f) {
+			hits++;
 			FPolygon temp;
-			if (useRealPolygon)
-				temp = getPolygon(FRotator(0, 0, 0), point, name, *map);
-			else
-				temp = getTinyPolygon(point);
-			bool collision = testCollision(temp, blocking, 0, pol);
-			if (!collision) {
+			//if (useRealPolygon)
+			//	temp = getPolygon(FRotator(0, 0, 0), point, name, *map);
+			//else
+			//	temp = getTinyPolygon(point);
+			//bool collision = testCollision(temp, blocking, 0, pol);
+			//if (!collision) {
 				FMeshInfo toAdd;
 				toAdd.description = name;
 				toAdd.transform = FTransform(point);
 				meshes.Add(toAdd);
 				blocking.Add(temp);
-			}
+			//}
 		}
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Out of %i attempts at placing %s randomly %i were successful"), num, *name, hits);
 	return meshes;
 }
 
@@ -850,17 +853,17 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 		float treeAreaRatio = 0.001;
 		float bushAreaRatio = 0.005;
 		float grassRatio = 0.2;
-		if (pol.getArea() < 500) {
+		if (area < 500) {
 			treeAreaRatio *= 15;
 			bushAreaRatio *= 15;
 			grassRatio *= 15;
 		}
 		//attemptPlaceCenter(pol, blocking, meshes, "fountain", FRotator(0, 0, 0), FVector(0, 0, 0), map);
-		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree1"));
-		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*pol.getArea(), "tree2"));
-		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*pol.getArea(), "bush1"));
-		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*pol.getArea(), "bush2"));
-		meshes.Append(placeRandomly(pol, blocking, grassRatio*pol.getArea(), "grass"));
+		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*area, "tree1"));
+		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*area, "tree2"));
+		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*area, "bush1"));
+		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*area, "bush2"));
+		meshes.Append(placeRandomly(pol, blocking, grassRatio*area, "grass"));
 		break;
 	}
 	case SimplePlotType::asphalt: {
@@ -903,7 +906,7 @@ void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes
 		FVector targetP;
 		r2->getSplitCorrespondingPoint(k, origin, normal, target, targetP);
 		if (target == -1) {
-			UE_LOG(LogTemp, Warning, TEXT("Couldn't place row, no corresponding split point"));
+			//UE_LOG(LogTemp, Warning, TEXT("Couldn't place row, no corresponding split point"));
 			return;
 		}
 		float width = FVector::Dist(r2->points[k%r2->points.Num()], r2->points[k - 1]);

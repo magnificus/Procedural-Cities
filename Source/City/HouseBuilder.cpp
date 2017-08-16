@@ -420,20 +420,20 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 	float len = stream.FRandRange(400, 1500);
 	if (stream.FRand() < 0.2f) {
 		// move side inwards
-		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
+		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,20));
 		if (res.pol.points.Num() > 0) {
 			toReturn.Add(res);
 		}
 	}
 
 	else if (stream.FRand() < 0.15f && FVector::Dist(f.points[place%f.points.Num()], f.points[place-1]) > 500) {
-		FSimplePlot res = attemptRemoveCorner(f, place, centerHole, len, FVector(0, 0, 30));
+		FSimplePlot res = attemptRemoveCorner(f, place, centerHole, len, FVector(0, 0, 20));
 		if (res.pol.points.Num() > 0) {
 			toReturn.Add(res);
 		}
 	}
 	else if (stream.FRand() < 0.1f && FVector::Dist(f.points[place%f.points.Num()],f.points[place - 1]) > 3000) {
-		FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, FVector(0, 0, 30), stream);
+		FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, FVector(0, 0, 20), stream);
 		if (res.pol.points.Num() > 0) {
 			toReturn.Add(res);
 		}
@@ -904,13 +904,13 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 		for (int i = 1; i <= floors; i++) {
 			FVector elDir = elevatorPol.points[3] - elevatorPol.points[2];
 			elDir.Normalize();
-			toReturn.roomInfo.meshes.Add(FMeshInfo{ "elevator", FTransform(rot.Rotation() + FRotator(0, 180, 0), elevatorPos + FVector(0, 0, floorHeight * (i - 1)) + elDir * 180) }); // elevator doors
+			toReturn.roomInfo.meshes.Add(FMeshInfo{ "elevator", FTransform(rot.Rotation() + FRotator(0, 180, 0), elevatorPos + FVector(0, 0, floorHeight * (i - 1)) - elDir * 180) }); // elevator doors
 			FMaterialPolygon above; // space above elevator
 			above.type = PolygonType::interior;
+			above.points.Add(elevatorPol.points[1] + FVector(0, 0, floorHeight * (i - 1) + 290));
 			above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 290));
-			above.points.Add(elevatorPol.points[3] + FVector(0, 0, floorHeight * (i - 1) + 290));
-			above.points.Add(elevatorPol.points[3] + FVector(0, 0, floorHeight * (i - 1) + 400));
 			above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 400));
+			above.points.Add(elevatorPol.points[1] + FVector(0, 0, floorHeight * (i - 1) + 400));
 			toReturn.roomInfo.pols.Add(above);
 
 			if (i != floors || roofAccess)

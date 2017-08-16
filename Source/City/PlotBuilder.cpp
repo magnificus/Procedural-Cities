@@ -151,7 +151,7 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 	}
 	pol.housePosition = pol.getCenter();
 	float modifier = -std::log(stream.FRandRange(0.135 /* e^(-1) */, 1)) / 2;
-	if (stream.FRand() < 0.1) {
+	if (stream.FRand() < 0.05) {
 		// invert curve for some buldings, to make some super tall
 		modifier = 1 - modifier;
 	}
@@ -169,7 +169,8 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 
 	float maxArea = 4500.0f;
 	float minArea = 1200.0f;
- 
+	//p.type = stream.FRand() < 0.5 ? RoomType::office : RoomType::apartment;// NoiseSingleton::getInstance()->noise(original.housePosition.X, original.housePosition.Y, noiseScale) > 0.5 ? RoomType::office : RoomType::apartment;
+
 	if (!p.open) {
 		FHousePolygon original;
 		original.points = p.points;
@@ -179,12 +180,12 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 		original.population = p.population;
 		original.type = p.type;
 		original.housePosition = original.getCenter();
+		original.simplePlotType = p.simplePlotType;
 		for (int32 i = 1; i < original.points.Num()+1; i++) {
 			original.entrances.Add(i);
 			original.windows.Add(i);
 		}
 		FVector center = p.getCenter();
-		p.type = stream.FRand() < 0.5 ? RoomType::office : RoomType::apartment;// NoiseSingleton::getInstance()->noise(original.housePosition.X, original.housePosition.Y, noiseScale) > 0.5 ? RoomType::office : RoomType::apartment;
 
 		bool normalPlacement = !(p.getArea() > 5500 && stream.FRand() < 0.2);
 		if (!normalPlacement) {
@@ -205,6 +206,8 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 				newH.offset(p.getRandomPoint(true, 2000));
 				newH.housePosition = newH.getCenter();
 				newH.type = p.type;
+				newH.simplePlotType = p.simplePlotType;
+
 				if (!testCollision(newH, placed, 0, p)) {
 					info.houses.Add(newH);
 					placed.Add(newH);
@@ -218,7 +221,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 				//fm.points.RemoveAt(fm.points.Nfum() - 1);
 				fs.pol = p;
 				fs.pol.offset(FVector(0, 0, 30));
-				fs.type = p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
+				fs.type = p.simplePlotType;
 				fs.decorate(placed, instancedMap);
 				info.leftovers.Add(fs);
 
@@ -230,7 +233,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 				r.housePosition = r.getCenter();
 				//exponential distribution with lambda = 1
 				float modifier = -std::log(stream.FRandRange(0.135 /* e^(-3) */, 1))/2;
-				if (stream.FRand() < 0.1) {
+				if (stream.FRand() < 0.05) {
 					// invert curve for some buldings, to make some super tall
 					modifier = 1 - modifier;
 				}
@@ -238,7 +241,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 
 
 				r.type = p.type;
-				r.simplePlotType = r.type == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
+				r.simplePlotType = p.simplePlotType;// == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
 
 				float area = r.getArea();
 
@@ -249,8 +252,8 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 					//r.points.RemoveAt(r.points.Num() - 1);
 					FSimplePlot fs;
 					fs.pol = r;
-					fs.pol.offset(FVector(0, 0, 30));
-					fs.type = p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
+					fs.pol.offset(FVector(0, 0, 20));
+					fs.type = p.simplePlotType;//p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
 					fs.decorate(instancedMap);
 					info.leftovers.Add(fs);
 				}
@@ -395,7 +398,7 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 				FVector tan = target - origin;
 				float len = tan.Size();
 				tan.Normalize();
-				toReturn.meshes.Add(FMeshInfo{ "tree", FTransform(origin + j * tan * (len / toPlace)) });
+				toReturn.meshes.Add(FMeshInfo{ "tree1", FTransform(origin + j * tan * (len / toPlace)) });
 			}
 		}
 	}
