@@ -259,21 +259,21 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 
 
 
-	//currentlyWorkingArray = 0;
-	//wantsToWork = true;
+	currentlyWorkingArray = 0;
+	wantsToWork = true;
 
 	//isWorking = true;
-	buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
-	buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
-	buildPolygons(interior, offset, interiorMesh, interiorMat);
-	buildPolygons(windows, offset, windowMesh, windowMat);
-	buildPolygons(floors, offset, floorMesh, floorMat);
-	buildPolygons(roofs, offset, roofMesh, roofMat);
-	buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
-	buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
-	buildPolygons(concrete, offset, concreteMesh, concreteMat);
-	buildPolygons(green, offset, greenMesh, greenMat);
-	buildPolygons(roadMiddle, offset, roadMiddleMesh, roadMiddleMat);
+	//buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
+	//buildPolygons(exteriorSnd, offset, sndExteriorMesh, sndExteriorMat);
+	//buildPolygons(interior, offset, interiorMesh, interiorMat);
+	//buildPolygons(windows, offset, windowMesh, windowMat);
+	//buildPolygons(floors, offset, floorMesh, floorMat);
+	//buildPolygons(roofs, offset, roofMesh, roofMat);
+	//buildPolygons(occlusionWindows, offset, occlusionWindowMesh, occlusionWindowMat);
+	//buildPolygons(windowFrames, offset, windowFrameMesh, windowFrameMat);
+	//buildPolygons(concrete, offset, concreteMesh, concreteMat);
+	//buildPolygons(green, offset, greenMesh, greenMat);
+	//buildPolygons(roadMiddle, offset, roadMiddleMesh, roadMiddleMat);
 
 
 	//if (a < 11) {

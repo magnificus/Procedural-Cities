@@ -595,30 +595,6 @@ static TArray<FMeshInfo> potentiallyGetTableAndChairs(FRoomPolygon *r2, TArray<F
 		if (FMath::FRand() < 0.35)
 			attemptPlaceOnTop(table, meshes, "kettle", 50, map);
 	}
-	//else {
-	//	return meshes;
-	//}
-
-	//FVector c1 = center - rot * 70 + tan * 150;
-	//FVector c2 = center + rot * 70 + tan * 150;
-	//FVector c3 = center - rot * 70 - tan * 150;
-	//FVector c4 = center + rot * 70 - tan * 150;
-	//FPolygon c1P = getPolygon(rot.Rotation(), c1 + FVector(0, 0, extraChairHeight), "chair", map);
-	//FPolygon c2P = getPolygon(rot.Rotation(), c2 + FVector(0, 0, extraChairHeight), "chair", map);
-	//FPolygon c3P = getPolygon(FRotator(0, 180, 0) + rot.Rotation(), c3 + FVector(0, 0, extraChairHeight), "chair", map);
-	//FPolygon c4P = getPolygon(FRotator(0, 180, 0) + rot.Rotation(), c4 + FVector(0, 0, extraChairHeight), "chair", map);
-	//if (!testCollision(c1P, placed, 0, *r2)) {
-	//	meshes.Add({"chair", FTransform(rot.Rotation(), c1 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
-	//}
-	//if (!testCollision(c2P, placed, 0, *r2)) {
-	//	meshes.Add({ "chair", FTransform(rot.Rotation(), c2 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
-	//}
-	//if (!testCollision(c3P, placed, 0, *r2)) {
-	//	meshes.Add({ "chair", FTransform(rot.Rotation() + FRotator(0, 180, 0), c3 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
-	//}
-	//if (!testCollision(c4P, placed, 0, *r2)) {
-	//	meshes.Add({ "chair", FTransform(rot.Rotation() + FRotator(0, 180, 0), c4 + FVector(0, 0, extraChairHeight),  FVector(1.0f, 1.0f, 1.0f)) });
-	//}
 
 	return meshes;
 

@@ -150,7 +150,7 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.housePosition = pol.getCenter();
-	float modifier = -std::log(stream.FRandRange(0.135 /* e^(-1) */, 1)) / 2;
+	float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1)) / 3;
 	if (stream.FRand() < 0.05) {
 		// invert curve for some buldings, to make some super tall
 		modifier = 1 - modifier;
@@ -232,7 +232,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			for (FHousePolygon r : refinedPolygons) {
 				r.housePosition = r.getCenter();
 				//exponential distribution with lambda = 1
-				float modifier = -std::log(stream.FRandRange(0.135 /* e^(-3) */, 1))/2;
+				float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1))/3;
 				if (stream.FRand() < 0.05) {
 					// invert curve for some buldings, to make some super tall
 					modifier = 1 - modifier;

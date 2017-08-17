@@ -148,7 +148,7 @@ struct FPolygon
 	}
 
 	// not totally random, favors placement closer to the sides a bit, but good enough
-	FVector getRandomPoint(bool left, float minDist, FRandomStream stream = FRandomStream(FMath::FRand())) {
+	FVector getRandomPoint(bool left, float minDist, FRandomStream stream = FRandomStream(FMath::Rand())) {
 		int place = stream.RandRange(1, points.Num());
 		FVector tangent = (points[place%points.Num()] - points[place - 1]);
 		FVector beginPlace = stream.FRand() * tangent + points[place - 1];
@@ -396,6 +396,7 @@ struct FMaterialPolygon : public FPolygon {
 
 	PolygonType type = PolygonType::exterior;
 	float width = 20;
+	bool overridePolygonSides = false;
 };
 
 USTRUCT(BlueprintType)
@@ -1194,7 +1195,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true, false));
 
 		rooms.Append(remaining);
-		//postFit(rooms, blueprint);
+		postFit(rooms, blueprint);
 
 
 		return rooms;

@@ -116,7 +116,7 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 			prevAttach = sndAttach;
 		}
 		connections[i - 1].b = conn;
-		roomPols[i - 1].points.Add(hole.points[i-1]);
+		//roomPols[i - 1].points.Add(hole.points[i-1]);
 		roomPols[i - 1].points.Add(firstAttach);
 		roomPols[i - 1].entrances.Add(roomPols[i - 1].points.Num());
 		roomPols[i - 1].points.Add(sndAttach);
@@ -157,14 +157,14 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 			roomPols[0].points.EmplaceAt(0, sndAttach);
 			roomPols[0].entrances.Add(1);
 			roomPols[0].points.EmplaceAt(1, firstAttach);
-			roomPols[0].points.EmplaceAt(2, hole.points[i%hole.points.Num()]);
+			//roomPols[0].points.EmplaceAt(2, hole.points[i%hole.points.Num()]);
 		}
 		else {
 			connections[i].a = conn;
 			roomPols[i].points.Add(sndAttach);
 			roomPols[i].entrances.Add(roomPols[i].points.Num());
 			roomPols[i].points.Add(firstAttach);
-			roomPols[i].points.Add(hole.points[i%hole.points.Num()]);
+			//roomPols[i].points.Add(hole.points[i%hole.points.Num()]);
 		}
 
 
@@ -200,18 +200,18 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 			if (newP) {
 				//newP->entrances.Add(1);
 				//p.entrances.Add(1);
-				//if (newP->getArea() > maxRoomArea) {
-				//	FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false);
-				//	extra.Add(*newP2);
-				//	delete(newP2);
-				//}
+				if (newP->getArea() > maxRoomArea) {
+					FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false);
+					extra.Add(*newP2);
+					delete(newP2);
+				}
 				extra.Add(*newP);
 				delete(newP);
-				//if (p.getArea() > maxRoomArea) {
-				//	FRoomPolygon* newP3 = p.splitAlongMax(0.5, false);
-				//	extra.Add(*newP3);
-				//	delete newP3;
-				//}
+				if (p.getArea() > maxRoomArea) {
+					FRoomPolygon* newP3 = p.splitAlongMax(0.5, false);
+					extra.Add(*newP3);
+					delete newP3;
+				}
 			}
 		}
 	}
@@ -275,8 +275,8 @@ FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f, FRandomStream strea
 	//if (center.X == 0.0f)
 	//	center = f.getCenter();
 
-	float holeSizeX = 900;
-	float holeSizeY = 1200;
+	float holeSizeX = 1200;
+	float holeSizeY = 1600;
 
 	FVector tangent1 = f.points[1] - f.points[0];
 	tangent1.Normalize();
@@ -441,25 +441,6 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 }
 
 
-//TArray<FMaterialPolygon> AHouseBuilder::getShaftSides(FPolygon hole, int openSide, float height) {
-//	TArray<FMaterialPolygon> sides;
-//	FVector center = hole.getCenter();
-//	for (int i = 1; i < hole.points.Num()+1; i++) {
-//		if (i == openSide)
-//			continue;
-//		FMaterialPolygon side;
-//		side.type = PolygonType::interior;
-//		side.points.Add(hole.points[i - 1]);
-//		side.points.Add(hole.points[i - 1] + FVector(0, 0, height));
-//		side.points.Add(hole.points[i%hole.points.Num()] + FVector(0, 0, height));
-//		side.points.Add(hole.points[i%hole.points.Num()]);
-//		sides.Add(side);
-//	}
-//
-//	return sides;
-//}
-
-
 void addStairInfo(FRoomInfo &info, float height, FPolygon &hole) {
 	float distFromCorners = 300;
 	TArray<FMaterialPolygon> sides;
@@ -505,10 +486,12 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	if (stream.FRand() < 0.6) {
 		// edge detail
 		FMaterialPolygon shape = pol;
-		//shape.reverse();
+		shape.reverse();
 		float size = stream.FRandRange(50, 500);
 		shape.offset(FVector(0, 0, size));
 		TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exterior, size);
+		for (auto &a : sides)
+			a.overridePolygonSides = true;
 		float width = stream.FRandRange(20, 150);
 		for (auto &p : sides)
 			p.width = width;
@@ -727,8 +710,8 @@ void AHouseBuilder::buildHouse(bool shellOnly_in) {
 	shellOnly = shellOnly_in;
 	if (workerWantsToWork) {
 		workerWantsToWork = false;
-		if (worker)
-			delete worker;
+		//if (worker)
+		//	delete worker;
 		return;
 		
 	}
@@ -736,7 +719,7 @@ void AHouseBuilder::buildHouse(bool shellOnly_in) {
 }
 
 void AHouseBuilder::buildHouseFromInfo(FHouseInfo res) {
-	//if (procMeshActorClass) {
+	isWorking = false;
 	if (procMeshActor) {
 		procMeshActor->clearMeshes(false);
 		for (auto pair : map)
@@ -746,36 +729,23 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res) {
 		procMeshActor = GetWorld()->SpawnActor<AProcMeshActor>(procMeshActorClass, FActorSpawnParameters());
 		procMeshActor->init(generationMode);
 	}
-	//}
-	//if (!procMeshActor)
-	//	return;
-	TArray<FSimplePlot> otherSides;
-	//if (firstTime) {
-	//	firstTime = false;
-		for (FSimplePlot fs : res.remainingPlots) {
-			fs.decorate(map);
-			for (FMeshInfo mesh : fs.meshes) {
-					//if (map.Find(mesh.description))
-						map[mesh.description]->AddInstance(mesh.transform);
-				}
+	FRandomStream str(FMath::Rand());
+	for (FSimplePlot fs : res.remainingPlots) {
+		fs.decorate(map);
+		for (FMeshInfo mesh : fs.meshes) {
+					map[mesh.description]->AddInstance(mesh.transform);
 			}
-		res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
-	//}
-
-	for (FMeshInfo mesh : res.roomInfo.meshes) {
-		//if (map.Find(mesh.description))
-			map[mesh.description]->AddInstance(mesh.transform);
 	}
+	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
 
+	//for (FMeshInfo mesh : res.roomInfo.meshes) {
+	//	//if (map.Find(mesh.description))
+	//		map[mesh.description]->AddInstance(mesh.transform);
+	//}
+	currentIndex = 0;
 	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
-	//meshesToPlace = res.roomInfo.meshes;
-	//isWorking = true;
-	//auto *text = GetWorld()->SpawnActor<ATextRenderActor>(ATextRenderActor::StaticClass(), FVector(0.f, 100, 170.f), FRotator(90.f, 180.f, 0.f));
-	//text->GetTextRender()->SetText(FText::FromString(TEXT("Dynamic Text")));
-	//text->GetTextRender()->SetFont()
-	//auto *font = GetWorld()->SpawnActor<UFont>(UFont::StaticClass(), FVector(0.f, 100, 170.f), FRotator(90.f, 180.f, 0.f));
-	//font->setf
-	//Text->
+	meshesToPlace = res.roomInfo.meshes;
+	isWorking = true;
 
 }
 
@@ -853,9 +823,13 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 		corrHeightElevator.offset(FVector(0, 0, floorHeight*floors));
 		auto pols = getSidesOfPolygon(corrHeightElevator, PolygonType::interior, floorHeight*floors);
 		pols.RemoveAt(1);
+		for (auto &a : pols)
+			a.overridePolygonSides = true;
 		toReturn.roomInfo.pols.Append(pols);
 		pols = getSidesOfPolygon(corrHeightStair, PolygonType::interior, floorHeight*floors);
 		pols.RemoveAt(1);
+		for (auto &a : pols)
+			a.overridePolygonSides = true;
 		toReturn.roomInfo.pols.Append(pols);
 		//toReturn.roomInfo.pols.Append(getShaftSides(elevatorPol, 3, floorHeight * floors));
 		//toReturn.roomInfo.pols.Append(getShaftSides(stairPol, 3, floorHeight * floors));
@@ -938,7 +912,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			toReturn.roomInfo.pols.Append(newRoof);
 			FMaterialPolygon boxRoof;
 			boxRoof.normal = FVector(0, 0, -1);
-			boxRoof.type = PolygonType::roof;
+			boxRoof.type = PolygonType::exterior;
 			boxRoof.points = hole.points;
 			boxRoof.offset(FVector(0, 0, floorHeight*(floors + 1) + 1));
 			boxRoof.reverse();
@@ -953,7 +927,6 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			exitSide.points.EmplaceAt(5, entH[1]);
 
 			sides.Add(boxRoof);
-			//sides.Add(newP);
 			placed.Add(boxRoof);
 			toReturn.roomInfo.meshes.Add(getEntranceMesh(exitSide[2], exitSide[1], middleP));
 			//toReturn.roomInfo.pols.Append(fillOutPolygons(sides));
@@ -996,21 +969,22 @@ void AHouseBuilder::Tick(float DeltaTime)
 	if (workerWorking && worker->IsFinished()) {
 		buildHouseFromInfo(worker->resultingInfo);
 		delete worker;
+		worker = nullptr;
 		workerWorking = false;
 		workersWorking--;
 		//SetActorTickEnabled(false);
 
 	}
 
-	//if (isWorking) {
-	//	int nextStop = std::min(currentIndex + meshesPerTick, meshesToPlace.Num());
-	//	for (;currentIndex < nextStop; currentIndex++) {
-	//		FMeshInfo curr = meshesToPlace[currentIndex];
-	//		map[curr.description]->AddInstance(curr.transform);
-	//	}
-	//	if (nextStop == meshesToPlace.Num())
-	//		isWorking = false;
-	//}
+	if (isWorking) {
+		int nextStop = std::min(currentIndex + meshesPerTick, meshesToPlace.Num());
+		for (;currentIndex < nextStop; currentIndex++) {
+			FMeshInfo curr = meshesToPlace[currentIndex];
+			map[curr.description]->AddInstance(curr.transform);
+		}
+		if (nextStop == meshesToPlace.Num())
+			isWorking = false;
+	}
 
 
 }

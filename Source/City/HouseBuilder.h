@@ -35,11 +35,11 @@ class CITY_API AHouseBuilder : public AActor
 
 	bool shellOnly = false;
 
-	//bool wantsToWork = false;
-	//bool isWorking = false;
+	bool wantsToWork = false;
+	bool isWorking = false;
 	int currentIndex = 0;
 	int meshesPerTick = 3;
-	//TArray<FMeshInfo> meshesToPlace;
+	TArray<FMeshInfo> meshesToPlace;
 	TArray<UTextRenderComponent*> texts;
 
 public:
@@ -54,8 +54,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 		TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
-	//	TMap<FString, UStaticMesh*> staticMap;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = ProcMesh)
@@ -80,7 +78,7 @@ public:
 		generationMode = generationMode_in;
 		switch (generationMode) {
 		case GenerationMode::complete: maxThreads = 1000; meshesPerTick = 1000; break;
-		case GenerationMode::procedural_aggressive: maxThreads = 1000; meshesPerTick = 10; break;
+		case GenerationMode::procedural_aggressive: maxThreads = 1000; meshesPerTick = 50; break;
 		case GenerationMode::procedural_relaxed: maxThreads = 1; meshesPerTick = 5; break;
 		}
 	}
@@ -90,7 +88,7 @@ public:
 		generationMode = generationMode_in;
 		switch (generationMode) {
 		case GenerationMode::complete: maxThreads = 1000; meshesPerTick = 1000; break;
-		case GenerationMode::procedural_aggressive: maxThreads = 1000; meshesPerTick = 10; break;
+		case GenerationMode::procedural_aggressive: maxThreads = 1000; meshesPerTick = 50; break;
 		case GenerationMode::procedural_relaxed: maxThreads = 1; meshesPerTick = 5; break;
 		}
 	}
