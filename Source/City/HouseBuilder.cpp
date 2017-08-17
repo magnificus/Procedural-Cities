@@ -198,20 +198,20 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 		if (p.getArea() > maxRoomArea) {
 			FRoomPolygon* newP = p.splitAlongMax(0.5, false);
 			if (newP) {
-				newP->entrances.Add(1);
-				p.entrances.Add(1);
-				if (newP->getArea() > maxRoomArea) {
-					FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false);
-					extra.Add(*newP2);
-					delete(newP2);
-				}
+				//newP->entrances.Add(1);
+				//p.entrances.Add(1);
+				//if (newP->getArea() > maxRoomArea) {
+				//	FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false);
+				//	extra.Add(*newP2);
+				//	delete(newP2);
+				//}
 				extra.Add(*newP);
 				delete(newP);
-				if (p.getArea() > maxRoomArea) {
-					FRoomPolygon* newP3 = p.splitAlongMax(0.5, false);
-					extra.Add(*newP3);
-					delete newP3;
-				}
+				//if (p.getArea() > maxRoomArea) {
+				//	FRoomPolygon* newP3 = p.splitAlongMax(0.5, false);
+				//	extra.Add(*newP3);
+				//	delete newP3;
+				//}
 			}
 		}
 	}
@@ -505,7 +505,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	if (stream.FRand() < 0.6) {
 		// edge detail
 		FMaterialPolygon shape = pol;
-		shape.reverse();
+		//shape.reverse();
 		float size = stream.FRandRange(50, 500);
 		shape.offset(FVector(0, 0, size));
 		TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exterior, size);

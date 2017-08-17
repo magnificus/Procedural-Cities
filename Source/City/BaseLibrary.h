@@ -1039,13 +1039,15 @@ struct FRoomPolygon : public FPolygon
 					scale = maxAreaAllowed / target->getArea();
 					// keep cutting it down until small enough to place my room
 					bool canPlace = true;
-					while (scale < 1.0f) {
+					int count2 = 0;
+					while (scale < 1.0f && ++count2 < 5) {
 						FRoomPolygon* newP = target->splitAlongMax(0.5, true);
 						if (newP == nullptr) {
+							remaining.Add(target);
 							canPlace = false;
 							break;
 						}
-						remaining.EmplaceAt(0, newP);
+						remaining.Add(newP);
 						scale = maxAreaAllowed / target->getArea();
 					}
 					//if (target->getArea() <= maxAreaAllowed && target->getArea() >= spec.minArea) {
