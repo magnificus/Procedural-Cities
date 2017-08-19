@@ -1042,13 +1042,17 @@ struct FRoomPolygon : public FPolygon
 					bool canPlace = true;
 					int count2 = 0;
 					while (scale < 1.0f && ++count2 < 5) {
-						FRoomPolygon* newP = target->splitAlongMax(0.5, true);
+						FRoomPolygon* newP = target->splitAlongMax(0.5, true, splitableType(spec.type));
 						if (newP == nullptr) {
 							remaining.Add(target);
 							canPlace = false;
 							break;
 						}
-						remaining.Add(newP);
+						if (!splitableType(spec.type) && newP->getTotalConnections() < target->getTotalConnections() || splitableType(spec.type) && newP->getTotalConnections() > target->getTotalConnections()) {
+							// swap rooms if newP is more suited for the purpose of the new room
+							std::swap(newP, target);
+						}
+						remaining.EmplaceAt(0, newP);
 						scale = maxAreaAllowed / target->getArea();
 					}
 					//if (target->getArea() <= maxAreaAllowed && target->getArea() >= spec.minArea) {
