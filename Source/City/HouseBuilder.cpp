@@ -75,7 +75,7 @@ TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float h
 }
 
 // this function returns all of the first grade Room Polygons, these can later be expanded upon when finalizing the room in RoomBuilder
-TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth, float maxRoomArea, FRandomStream &stream, TArray<FMaterialPolygon> &pols){
+TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth, float maxRoomArea, FRandomStream stream, TArray<FMaterialPolygon> &pols){
 	TArray<FLine> lines;
 	
 	TArray<FRoomPolygon> roomPols;
@@ -198,20 +198,20 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 		if (p.getArea() > maxRoomArea) {
 			FRoomPolygon* newP = p.splitAlongMax(0.5, false);
 			if (newP) {
-				//newP->entrances.Add(1);
-				//p.entrances.Add(1);
-				if (newP->getArea() > maxRoomArea) {
-					FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false);
-					extra.Add(*newP2);
-					delete(newP2);
-				}
+				newP->entrances.Add(2);
+				//p.entrances.Add(2);
+				//if (newP->getArea() > maxRoomArea) {
+				//	FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false);
+				//	extra.Add(*newP2);
+				//	delete(newP2);
+				//}
 				extra.Add(*newP);
 				delete(newP);
-				if (p.getArea() > maxRoomArea) {
-					FRoomPolygon* newP3 = p.splitAlongMax(0.5, false);
-					extra.Add(*newP3);
-					delete newP3;
-				}
+				//if (p.getArea() > maxRoomArea) {
+				//	FRoomPolygon* newP3 = p.splitAlongMax(0.5, false);
+				//	extra.Add(*newP3);
+				//	delete newP3;
+				//}
 			}
 		}
 	}
@@ -304,8 +304,6 @@ FSimplePlot attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &center
 	dir2.Normalize();
 
 	FPolygon line;
-	//intersection()
-	//FSimplePlot simplePlot;
 	FPolygon pol;
 	pol.points.Add(f.points[place%f.points.Num()]);
 	pol.points.Add(f.points[place - 1]);
@@ -760,6 +758,17 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	stream.Initialize(f.housePosition.X * 1000 + f.housePosition.Y);
 	f.checkOrientation();
 	FPolygon hole = getShaftHolePolygon(f, stream);
+	if (intersection(hole, f).X != 0.0f) {
+		// the house is too small for the shaft to fit, don't build the house, just turn the area into a simpleplot
+		FHouseInfo emptyH;
+		FSimplePlot whole;
+		whole.pol = f;
+		whole.pol.offset(FVector(0, 0, 20));
+		whole.type = f.simplePlotType;
+		emptyH.remainingPlots.Add(whole);
+		return emptyH;
+
+	}
 	FHouseInfo toReturn;
 	if (f.canBeModified) {
 		for (int i = 0; i < makeInterestingAttempts; i++) {
@@ -767,12 +776,6 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 		}
 	}
 	int floors = f.height;
-
-
-	float wDens = stream.FRand() * 0.0010 + 0.0005;
-
-	float wWidth = stream.FRand() * 500 + 500;
-	float wHeight = stream.FRand() * 400 + 200;
 
 	TArray<FRoomPolygon> roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, true, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
 
@@ -787,8 +790,8 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	else
 		spec = &off;
 
-	// this variable defines how violently the shape of the building will change for each floor, i.e. how often potentiallyShrink is called
-	float myChangeIntensity = stream.FRandRange(0, 0.3);
+	// this variable defines how violently the shape of the building will change, i.e. how often potentiallyShrink is called
+	float myChangeIntensity = stream.FRandRange(0, 0.35);
 
 	bool potentialBalcony = f.type == RoomType::apartment && floors < 10 && stream.FRand() < 0.3;
 	for (FRoomPolygon &p : roomPols) {
@@ -831,8 +834,6 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 		for (auto &a : pols)
 			a.overridePolygonSides = true;
 		toReturn.roomInfo.pols.Append(pols);
-		//toReturn.roomInfo.pols.Append(getShaftSides(elevatorPol, 3, floorHeight * floors));
-		//toReturn.roomInfo.pols.Append(getShaftSides(stairPol, 3, floorHeight * floors));
 
 		FMaterialPolygon floor;
 		floor.points = f.points;
@@ -844,7 +845,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	int windowChangeCutoff = stream.RandRange(1, 20);
 	WindowType currentWindowType = WindowType(stream.RandRange(0, 3));
 
-	bool roofAccess = stream.FRand() < 0.2;
+	bool roofAccess = stream.FRand() < 0.35;
 	bool horizontalFacade = stream.FRand() < 0.15;
 	for (int i = 1; i < floors; i++) {
 		if (i == windowChangeCutoff)
