@@ -9,13 +9,13 @@ Optional additions remaining:
 * building entrances
 * ground level details
     
-* heatmaps
-  * heightmap
-  * road type heatmap
+* <strike>heatmaps</strike>
+  * <strike>heightmap</strike>
+  * <strike>road type heatmap</strike>
 * add more to sidewalks
 * add detail to building exterior
  * facades
-* water
-  * bridges
-  * docks
-  * water heatmap
+* <strike>water</strike>
+  * <strike>bridges</strike>
+  * <strike>docks</strike>
+  * <strike>water heatmap</strike>
