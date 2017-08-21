@@ -727,7 +727,7 @@ struct FRoomPolygon : public FPolygon
 	}
 
 
-	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween, bool clusterDoorsInThis = true) {
+	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween, bool clusterDoorsInThis = true, bool splitEntrances = false) {
 		SplitStruct p = getSplitProposal(false, approxRatio);
 		if (p.p1.X == 0.0f) {
 			return NULL;
@@ -736,34 +736,39 @@ struct FRoomPolygon : public FPolygon
 		updateConnections(p.min, p.p1, newP, true, 1, clusterDoorsInThis);
 
 		if (entrances.Contains(p.min)){
-			// potentially add responsibility of child
-			FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(p.p1, points[p.min-1]);
-			if (isOnLine(entrancePoint, p.p1, points[p.min])) {
-				if (specificEntrances.Contains(p.min))
-					newP->specificEntrances.Add(1, entrancePoint);
+			if (splitEntrances)	{
 				newP->entrances.Add(1);
-				TArray<FRoomPolygon*> toRemove;
-				for (auto &pair : activeConnections) {
-					if (pair.Value == p.min) {
-						for (auto &pair2 : pair.Key->passiveConnections) {
-							if (pair2.Value.Contains(this)) {
-								pair.Key->passiveConnections[pair2.Key].Add(newP);
-								pair.Key->passiveConnections[pair2.Key].Remove(this);
-								break;
+			}
+			else {
+
+				// potentially add responsibility of child
+				FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(p.p1, points[p.min - 1]);
+				if (isOnLine(entrancePoint, p.p1, points[p.min])) {
+					if (specificEntrances.Contains(p.min))
+						newP->specificEntrances.Add(1, entrancePoint);
+					newP->entrances.Add(1);
+					TArray<FRoomPolygon*> toRemove;
+					for (auto &pair : activeConnections) {
+						if (pair.Value == p.min) {
+							for (auto &pair2 : pair.Key->passiveConnections) {
+								if (pair2.Value.Contains(this)) {
+									pair.Key->passiveConnections[pair2.Key].Add(newP);
+									pair.Key->passiveConnections[pair2.Key].Remove(this);
+									break;
+								}
 							}
+							newP->activeConnections.Add(pair.Key, 1);
+							toRemove.Add(pair.Key);
+							break;
 						}
-						newP->activeConnections.Add(pair.Key, 1);
-						toRemove.Add(pair.Key);
-						break;
+					}
+					specificEntrances.Remove(p.min);
+					entrances.Remove(p.min);
+					for (FRoomPolygon* p2 : toRemove) {
+						activeConnections.Remove(p2);
 					}
 				}
-				specificEntrances.Remove(p.min);
-				entrances.Remove(p.min);
-				for (FRoomPolygon* p2 : toRemove) {
-					activeConnections.Remove(p2);
-				}
 			}
-
 		}
 
 
@@ -774,10 +779,10 @@ struct FRoomPolygon : public FPolygon
 			newP->exteriorWalls.Add(1);
 		}
 
-		// move intersection to make more sense if possible
-		FVector res = intersection(p.p1, p.p1 + FRotator(0, 270, 0).RotateVector(points[p.min] - points[p.min - 1]) * 50, points[p.max%points.Num()], points[p.max - 1]);
-		if (res.X != 0.0f)
-			p.p2 = res;
+		//// move intersection to make more sense if possible
+		//FVector res = intersection(p.p1, p.p1 + FRotator(0, 270, 0).RotateVector(points[p.min] - points[p.min - 1]) * 50, points[p.max%points.Num()], points[p.max - 1]);
+		//if (res.X != 0.0f)
+		//	p.p2 = res;
 		if (toIgnore.Contains(p.min)) {
 			newP->toIgnore.Add(1);
 		}
@@ -813,8 +818,6 @@ struct FRoomPolygon : public FPolygon
 				for (FRoomPolygon *f : toRemove) {
 					activeConnections.Remove(f);
 				}
-	
-
 			}
 			if (windows.Contains(i)) {
 				windows.Remove(i);
@@ -844,31 +847,37 @@ struct FRoomPolygon : public FPolygon
 
 
 		if (entrances.Contains(p.max)){
-			FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max%points.Num()]);
-			if (isOnLine(entrancePoint, p.p2, points[p.max-1])) {
-				if (specificEntrances.Contains(p.max))
-					newP->specificEntrances.Add(newP->points.Num(), entrancePoint);
 
+			if (splitEntrances) {
 				newP->entrances.Add(newP->points.Num());
-				TArray<FRoomPolygon*> toRemove;
-				for (auto &pair : activeConnections) {
-					if (pair.Value == p.max) {
-						for (auto &pair2 : pair.Key->passiveConnections) {
-							if (pair2.Value.Contains(this)) {
-								pair.Key->passiveConnections[pair2.Key].Add(newP);
-								pair.Key->passiveConnections[pair2.Key].Remove(this);
-								break;
+			}
+			else {
+				FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max%points.Num()]);
+				if (isOnLine(entrancePoint, p.p2, points[p.max - 1])) {
+					if (specificEntrances.Contains(p.max))
+						newP->specificEntrances.Add(newP->points.Num(), entrancePoint);
+
+					newP->entrances.Add(newP->points.Num());
+					TArray<FRoomPolygon*> toRemove;
+					for (auto &pair : activeConnections) {
+						if (pair.Value == p.max) {
+							for (auto &pair2 : pair.Key->passiveConnections) {
+								if (pair2.Value.Contains(this)) {
+									pair.Key->passiveConnections[pair2.Key].Add(newP);
+									pair.Key->passiveConnections[pair2.Key].Remove(this);
+									break;
+								}
 							}
+							newP->activeConnections.Add(pair.Key, newP->points.Num());
+							toRemove.Add(pair.Key);
+							break;
 						}
-						newP->activeConnections.Add(pair.Key, newP->points.Num());
-						toRemove.Add(pair.Key);
-						break;
 					}
-				}
-				specificEntrances.Remove(p.max);
-				entrances.Remove(p.max);
-				for (FRoomPolygon* p2 : toRemove) {
-					activeConnections.Remove(p2);
+					specificEntrances.Remove(p.max);
+					entrances.Remove(p.max);
+					for (FRoomPolygon* p2 : toRemove) {
+						activeConnections.Remove(p2);
+					}
 				}
 			}
 		}

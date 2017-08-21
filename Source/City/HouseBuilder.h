@@ -110,7 +110,7 @@ public:
 
 	//static TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height);
 
-	static FPolygon getShaftHolePolygon(FHousePolygon f, FRandomStream stream);
+	static FPolygon getShaftHolePolygon(FHousePolygon f, FRandomStream stream, bool useCenter = false);
 
 	ThreadedWorker *worker;
 

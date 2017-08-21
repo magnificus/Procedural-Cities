@@ -29,8 +29,8 @@ class CITY_API OfficeSpecification : public ApartmentSpecification
 public:
 	RoomBlueprint getBlueprint(float areaScale);
 	float getWindowDensity(FRandomStream stream) { return 1; }
-	float getWindowWidth(FRandomStream stream) { return 190; }
-	float getWindowHeight(FRandomStream stream) { return 320; }
+	float getWindowWidth(FRandomStream stream) { return 200; }
+	float getWindowHeight(FRandomStream stream) { return 300; }
 	bool getWindowFrames() { return false; }
 
 };
@@ -53,8 +53,8 @@ class CITY_API StoreSpecification : public ApartmentSpecification
 public:
 	RoomBlueprint getBlueprint(float areaScale);
 	void intermediateInteractWithRooms(TArray<FRoomPolygon*> &roomPols, FRoomInfo &r, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony);
-	float getWindowDensity(FRandomStream stream) { return stream.FRandRange(200, 300); }
-	float getWindowWidth(FRandomStream stream) { return stream.FRandRange(200, 300); }
+	float getWindowDensity(FRandomStream stream) { return 1; }
+	float getWindowWidth(FRandomStream stream) { return stream.FRandRange(200, 400); }
 	float getWindowHeight(FRandomStream stream) { return stream.FRandRange(200, 300); }
 	bool getWindowFrames() { return true; }
 
@@ -65,8 +65,8 @@ class CITY_API RestaurantSpecification : public ApartmentSpecification
 public:
 	RoomBlueprint getBlueprint(float areaScale);
 	void intermediateInteractWithRooms(TArray<FRoomPolygon*> &roomPols, FRoomInfo &r, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony);
-	float getWindowDensity(FRandomStream stream) { return stream.FRandRange(200, 300); }
-	float getWindowWidth(FRandomStream stream) { return stream.FRandRange(200, 300); }
+	float getWindowDensity(FRandomStream stream) { return 1; }
+	float getWindowWidth(FRandomStream stream) { return stream.FRandRange(200, 400); }
 	float getWindowHeight(FRandomStream stream) { return stream.FRandRange(200, 300); }
 	bool getWindowFrames() { return true; }
 

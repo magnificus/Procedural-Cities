@@ -151,7 +151,7 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 			for (int32 j : toRemove) {
 				roomPols[0].entrances.Remove(j);
 				// offset bc of the new points we're adding here
-				roomPols[0].entrances.Add(j + 3);
+				roomPols[0].entrances.Add(j + 2);
 			}
 			connections[0].a = conn;
 			roomPols[0].points.EmplaceAt(0, sndAttach);
@@ -193,22 +193,30 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 
 
 	TArray<FRoomPolygon> extra;
-	// we can split a polygon to the depth of 2 without fearing that any room is left without entrance (proof is omitted as an excercise to the reader)
+	// we can split a polygon one time without fearing that any room is left without entrance 
 	for (FRoomPolygon &p : roomPols) {
 		if (p.getArea() > maxRoomArea) {
-			FRoomPolygon* newP = p.splitAlongMax(0.5, false);
+			FRoomPolygon* newP = p.splitAlongMax(0.5, false, true);
 			if (newP) {
-				newP->entrances.Add(2);
-				//p.entrances.Add(2);
+				// gotta make sure both apartments have an entrance
+				if (newP->exteriorWalls.Contains(1))
+					newP->entrances.Add(newP->points.Num() - 1);
+				else
+					newP->entrances.Add(1);
+
+				if (p.exteriorWalls.Contains(1))
+					p.entrances.Add(p.points.Num() - 1);
+				else
+					p.entrances.Add(1);
 				//if (newP->getArea() > maxRoomArea) {
-				//	FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false);
+				//	FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false, true);
 				//	extra.Add(*newP2);
 				//	delete(newP2);
 				//}
 				extra.Add(*newP);
 				delete(newP);
 				//if (p.getArea() > maxRoomArea) {
-				//	FRoomPolygon* newP3 = p.splitAlongMax(0.5, false);
+				//	FRoomPolygon* newP3 = p.splitAlongMax(0.5, false, true);
 				//	extra.Add(*newP3);
 				//	delete newP3;
 				//}
@@ -269,11 +277,11 @@ TArray<FMaterialPolygon> getFloorPolygonsWithHole(FPolygon f, float floorBegin, 
 }
 
 
-FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f, FRandomStream stream) {
+FPolygon AHouseBuilder::getShaftHolePolygon(FHousePolygon f, FRandomStream stream, bool useCenter) {
 	FPolygon hole;
-	FVector center = f.getCenter(); //f.getRandomPoint(true, 3000, stream);
-	//if (center.X == 0.0f)
-	//	center = f.getCenter();
+	FVector center = useCenter ? f.getCenter() : f.getRandomPoint(true, 2000, stream);
+	if (center.X == 0.0f)
+		center = f.getCenter();
 
 	float holeSizeX = 1200;
 	float holeSizeY = 1600;
@@ -640,7 +648,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	int place = stream.RandRange(1, f.points.Num());
 	float len = stream.FRandRange(400, 1500);
 	// only shrink one side
-	if (stream.FRand() < 0.2) {
+	if (stream.FRand() < 0.25) {
 		//float modifier = f.windows.Contains(place) && stream.FRand() < 0.1 ? -0.5 : 1;
 		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len, offset);
 		if (res.pol.points.Num() > 2) {
@@ -648,13 +656,12 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 			pol.points = res.pol.points;
 			pol.type = PolygonType::roof;
 			pol.normal = FVector(0, 0, -1);
-			//pol.offset(FVector(0, 0, 1));
 			toReturn.Add(pol);
 			//return toReturn;
 		}
 	}
 	// shrink whole symmetrically
-	else if (stream.FRand() < 0.15) {
+	else if (stream.FRand() < 0.25) {
 		float shrinkLen = stream.FRandRange(0.1, 0.3);
 		FHousePolygon cp = FHousePolygon(f);
 		cp.symmetricShrink(shrinkLen, false);
@@ -674,9 +681,20 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 			}
 		}
 	}
+	// remove corner
+	else if (stream.FRand() < 0.2) {
+		FSimplePlot res = attemptRemoveCorner(f, place, centerHole, len, offset);
+		if (res.pol.points.Num() > 2) {
+			FMaterialPolygon pol;
+			pol.points = res.pol.points;
+			pol.type = PolygonType::roof;
+			pol.normal = FVector(0, 0, -1);
+			toReturn.Add(pol);
+		}
+	}
 
 	// side into u
-	else if (stream.FRand() < 0.07) {
+	else if (stream.FRand() < 0.1) {
 		FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, offset, stream);
 		if (res.pol.points.Num() > 2) {
 			FMaterialPolygon pol;
@@ -689,17 +707,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		}
 	}
 
-	// remove corner
-	else if (stream.FRand() < 0.15) {
-		FSimplePlot res = attemptRemoveCorner(f, place, centerHole, len, offset);
-		if (res.pol.points.Num() > 2) {
-			FMaterialPolygon pol;
-			pol.points = res.pol.points;
-			pol.type = PolygonType::roof;
-			pol.normal = FVector(0, 0, -1);
-			toReturn.Add(pol);
-		}
-	}
+
 	return toReturn;
 }
 
@@ -759,14 +767,17 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	f.checkOrientation();
 	FPolygon hole = getShaftHolePolygon(f, stream);
 	if (intersection(hole, f).X != 0.0f) {
-		// the house is too small for the shaft to fit, don't build the house, just turn the area into a simpleplot
-		FHouseInfo emptyH;
-		FSimplePlot whole;
-		whole.pol = f;
-		whole.pol.offset(FVector(0, 0, 20));
-		whole.type = f.simplePlotType;
-		emptyH.remainingPlots.Add(whole);
-		return emptyH;
+		hole = getShaftHolePolygon(f, stream, true);
+		if (intersection(hole, f).X != 0.0f) {
+			// the house is too small for the shaft to fit, don't build the house, just turn the area into a simpleplot
+			FHouseInfo emptyH;
+			FSimplePlot whole;
+			whole.pol = f;
+			whole.pol.offset(FVector(0, 0, 20));
+			whole.type = f.simplePlotType;
+			emptyH.remainingPlots.Add(whole);
+			return emptyH;
+		}
 
 	}
 	FHouseInfo toReturn;
