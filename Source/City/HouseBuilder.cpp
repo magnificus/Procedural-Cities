@@ -196,7 +196,7 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 	// we can split a polygon one time without fearing that any room is left without entrance 
 	for (FRoomPolygon &p : roomPols) {
 		if (p.getArea() > maxRoomArea) {
-			FRoomPolygon* newP = p.splitAlongMax(0.5, false, true);
+			FRoomPolygon* newP = p.splitAlongMax(0.5, false);
 			if (newP) {
 				// gotta make sure both apartments have an entrance
 				if (newP->exteriorWalls.Contains(1))

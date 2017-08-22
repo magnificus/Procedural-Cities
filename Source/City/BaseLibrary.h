@@ -727,19 +727,28 @@ struct FRoomPolygon : public FPolygon
 	}
 
 
-	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween, bool clusterDoorsInThis = true, bool splitEntrances = false) {
+	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween) {
 		SplitStruct p = getSplitProposal(false, approxRatio);
 		if (p.p1.X == 0.0f) {
 			return NULL;
 		}
+
+		// determine if any room has no entrances yet, so we can try to cluster all entrances in the other room
+		int prelEntrancesNewP = 0;
+		for (int i = p.min + 1; i < p.max - 1; i++) {
+			if (entrances.Contains(i))
+				prelEntrancesNewP++;
+		}
+		bool clusterDoorsInThis = prelEntrancesNewP == 0;
+
 		FRoomPolygon* newP = new FRoomPolygon();
 		updateConnections(p.min, p.p1, newP, true, 1, clusterDoorsInThis);
 
 		if (entrances.Contains(p.min)){
-			if (splitEntrances)	{
-				newP->entrances.Add(1);
-			}
-			else {
+			//if (splitEntrances)	{
+			//	newP->entrances.Add(1);
+			//}
+			//else {
 
 				// potentially add responsibility of child
 				FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(p.p1, points[p.min - 1]);
@@ -767,7 +776,7 @@ struct FRoomPolygon : public FPolygon
 					for (FRoomPolygon* p2 : toRemove) {
 						activeConnections.Remove(p2);
 					}
-				}
+				//}
 			}
 		}
 
@@ -848,10 +857,10 @@ struct FRoomPolygon : public FPolygon
 
 		if (entrances.Contains(p.max)){
 
-			if (splitEntrances) {
-				newP->entrances.Add(newP->points.Num());
-			}
-			else {
+			//if (splitEntrances) {
+			//	newP->entrances.Add(newP->points.Num());
+			//}
+			//else {
 				FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max%points.Num()]);
 				if (isOnLine(entrancePoint, p.p2, points[p.max - 1])) {
 					if (specificEntrances.Contains(p.max))
@@ -879,7 +888,7 @@ struct FRoomPolygon : public FPolygon
 						activeConnections.Remove(p2);
 					}
 				}
-			}
+			//}
 		}
 		if (windows.Contains(p.max)) {
 			newP->windows.Add(newP->points.Num());
@@ -1051,7 +1060,7 @@ struct FRoomPolygon : public FPolygon
 					bool canPlace = true;
 					int count2 = 0;
 					while (scale < 1.0f && ++count2 < 5) {
-						FRoomPolygon* newP = target->splitAlongMax(0.5, true, splitableType(spec.type));
+						FRoomPolygon* newP = target->splitAlongMax(0.5, true);
 						if (newP == nullptr) {
 							remaining.Add(target);
 							canPlace = false;
@@ -1208,7 +1217,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true, false));
 
 		rooms.Append(remaining);
-		postFit(rooms, blueprint);
+		//postFit(rooms, blueprint);
 
 
 		return rooms;
