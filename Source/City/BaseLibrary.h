@@ -283,23 +283,27 @@ struct FPolygon
 
 	}
 
-	SplitStruct getSplitProposal(bool buildLeft, float approxRatio) {
+	SplitStruct getSplitProposal(bool buildLeft, float approxRatio, int preDeterminedNum = -1) {
 
 		if (points.Num() < 3) {
 			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
 		}
 		int longest = -1;
-
-		float longestLen = 0.0f;
-
 		FVector curr;
-		for (int i = 1; i < points.Num()+1; i++) {
-			float dist = FVector::DistSquared(points[i%points.Num()], points[i - 1]);
-			if (dist > longestLen) {
-				longestLen = dist;
-				longest = i;
+		if (preDeterminedNum > -1) {
+			longest = preDeterminedNum;
+		}
+		else {
+			float longestLen = 0.0f;
+			for (int i = 1; i < points.Num() + 1; i++) {
+				float dist = FVector::DistSquared(points[i%points.Num()], points[i - 1]);
+				if (dist > longestLen) {
+					longestLen = dist;
+					longest = i;
+				}
 			}
 		}
+
 		if (longest == -1) {
 			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
 		}
@@ -327,7 +331,7 @@ struct FPolygon
 		int min = longest;
 		int max = split;
 
-		// rearrange if split comes before longest in the array
+		// rearrange if split comes before longest in the array, they are expected to come out in order
 		if (longest > split) {
 			FVector temp = p1;
 			p1 = p2;
@@ -349,20 +353,9 @@ struct FPolygon
 
 		dir1.Normalize();
 		dir2.Normalize();
-		//dir1 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir1);
-		//dir2 = FRotator(0, left ? 90 : 270, 0).RotateVector(dir2);
 
 		FVector totDir = dir1 + dir2;
 		totDir.Normalize();
-
-		//totDir.X = std::min(totDir.X, 1.0f);
-		//totDir.Y = std::min(totDir.Y, 1.0f);
-		//totDir.Z = std::min(totDir.Z, 1.0f);
-		//totDir.X = std::max(totDir.X, -1.0f);
-		//totDir.Y = std::max(totDir.Y, -1.0f);
-		//totDir.Z = std::max(totDir.Z, -1.0f);
-
-		//totDir.Normalize();
 		return totDir;
 	//}
 
@@ -727,7 +720,7 @@ struct FRoomPolygon : public FPolygon
 	}
 
 
-	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween) {
+	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween, int preDeterminedNum = -1) {
 		SplitStruct p = getSplitProposal(false, approxRatio);
 		if (p.p1.X == 0.0f) {
 			return NULL;
