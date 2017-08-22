@@ -135,10 +135,10 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 
 float getHeight(FRandomStream &stream, int minFloors, int maxFloors) {
 	float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1)) / 3;
-	if (stream.FRand() < 0.15) {
+	if (stream.FRand() < 0.1) {
 		// invert curve for some buldings, to make some super tall
-		modifier = 1 - modifier;
-		//modifier *= 2;
+		//modifier = stream.FRandRange(0.7, 1.0) - modifier;
+		modifier *= stream.FRandRange(1.5,2);
 	}
 	return minFloors + (maxFloors - minFloors)*modifier;
 }
