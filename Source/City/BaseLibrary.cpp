@@ -471,7 +471,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		if (curr->child && taken.Contains(curr->child)) {
 			// closed polygon since last point continues into first
 			FVector res = getProperIntersection(curr->line.p1, curr->line.p2, curr->child->line.p1, curr->child->line.p2);
-			//f.points.EmplaceAt(0, res);
 			f.points.RemoveAt(0);
 			f.points.Add(res);
 
@@ -869,27 +868,28 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 	}
 	case SimplePlotType::asphalt: {
 		if (FMath::FRand() < 0.3) {
-			FRoomPolygon rp;
-			rp.points = pol.points;
-			rp.reverse();
-			for (int i = 0; i < FMath::RandRange(1, 5); i++)
-				rp.attemptPlace(blocking, meshes, true, 1, "trash_box", FRotator(0, 0, 270), FVector(0, 0, 0), map, false);
+			//FRoomPolygon rp;
+			//rp.points = pol.points;
+			//rp.reverse();
+			//for (int i = 0; i < FMath::RandRange(1, 5); i++)
+			//	rp.attemptPlace(blocking, meshes, true, 1, "trash_box", FRotator(0, 0, 270), FVector(0, 0, 0), map, false);
 			//meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "trash_box", FVector(100, 0, 0), true, &map));
-			//int place = FMath::RandRange(1, pol.points.Num());
-			//FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
-			//FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
-			//float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
-			//tan.Normalize();
-			//FString name = "trash_box";
-			//for (int i = 0; i < numToPlace; i++) {
-			//	FRotator finRot = tan.Rotation() + FRotator(0, 180, 0);
-			//	FVector loc = posStart + tan * i * 250 + finRot.RotateVector(FVector(-120, 0, 0));
-			//	FPolygon toTest = getPolygon(finRot, loc, name, map); //getTinyPolygon(loc);
-			//	//if (!testCollision(toTest, blocking, 0, pol)) {
-			//		meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc},true });
-			//	//}
+			int numToPlace = FMath::RandRange(1, 5);
+			int place = FMath::RandRange(1, pol.points.Num());
+			FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
+			FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
+			float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
+			tan.Normalize();
+			FString name = "trash_box";
+			for (int i = 0; i < numToPlace; i++) {
+				FRotator finRot = tan.Rotation() + FRotator(0, 180, 0);
+				FVector loc = posStart + tan * i * 250 + finRot.RotateVector(FVector(-120, 0, 0));
+				FPolygon toTest = getPolygon(finRot, loc, name, map); //getTinyPolygon(loc);
+				//if (!testCollision(toTest, blocking, 0, pol)) {
+					meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc}});
+				//}
 
-			//}
+			}
 		}
 
 		break;

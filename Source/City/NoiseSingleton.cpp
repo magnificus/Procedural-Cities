@@ -19,7 +19,6 @@ float NoiseSingleton::noise(float x, float y, float noiseScale, float xOffset, f
 	if (!useTexture)
 		return raw_noise_2d(noiseScale * (x + xOffset), noiseScale*(y + yOffset));
 	else {
-
 		FTexture2DMipMap* MyMipMap = &image->PlatformData->Mips[0];
 		FByteBulkData* RawImageData = &MyMipMap->BulkData;
 		FColor* FormatedImageData = static_cast<FColor*>(RawImageData->Lock(LOCK_READ_ONLY));
@@ -33,10 +32,6 @@ float NoiseSingleton::noise(float x, float y, float noiseScale, float xOffset, f
 			RawImageData->Unlock();
 			return 0.0f;
 		}
-		//if (intX < 0)
-		//	intX = TextureWidth + intX;
-		//if (intY < 0)
-		//	intY = TextureHeight + intY;
 
 		PixelColor = FormatedImageData[intY * TextureWidth + intX];
 		RawImageData->Unlock();

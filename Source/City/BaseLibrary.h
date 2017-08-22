@@ -648,14 +648,15 @@ struct FRoomPolygon : public FPolygon
 	TSet<int32> windows;
 	// sides of the polygon with entrances from my end
 	TSet<int32> entrances;
-	// sides of polygons that are towards the outside
+	// sides of polygons that are face the outside of the building
 	TSet<int32> exteriorWalls;
-	// a subset of entrances where the entrance is not in the middle but in a specified position
+	// a subset of entrances where the entrance is not neccessarily in the middle but in a specified position
 	TMap<int32, FVector> specificEntrances;
+	// sides that should not be rendered when building the room
 	TSet<int32> toIgnore;
-	// members of toIgnore that correspond to an entrance from the neighboring polygon
+	// a subset of toIgnore that have entrances from neighboring rooms
 	TMap<int32, TSet<FRoomPolygon*>> passiveConnections;
-	// pointers to recievers of entrances from my end
+	// a subset of entrances where the have a side which I have an entrance towards
 	TMap<FRoomPolygon*, int32> activeConnections;
 
 	WindowType windowType;
@@ -674,7 +675,7 @@ struct FRoomPolygon : public FPolygon
 			if (FVector::Dist(inPoint, specificEntrances[num]) < 100) {
 				FVector tangent = points[num%points.Num()] - points[num - 1];
 				tangent.Normalize();
-				inPoint = preferEntrancesInThis ? specificEntrances[num] - tangent * 100 : specificEntrances[num] + tangent * 100;
+				inPoint = preferEntrancesInThis ^ !first ? specificEntrances[num] - tangent * 100 : specificEntrances[num] + tangent * 100;
 				//float toMove = FVector::Dist(inPoint, specificEntrances[num] - tangent * 100);
 				//inPoint -= toMove * tangent;
 			}
@@ -691,7 +692,7 @@ struct FRoomPolygon : public FPolygon
 			if (dist < 100) {
 				FVector tangent = points[num%points.Num()] - points[num - 1];
 				tangent.Normalize();
-				inPoint = preferEntrancesInThis ? point - tangent * 100 : point + tangent * 100;
+				inPoint = preferEntrancesInThis^!first ? point - tangent * 100 : point + tangent * 100;
 				//float toMove = FVector::Dist(inPoint, point - tangent * 100);
 				//inPoint -= toMove * tangent;
 				// our child is now free from our master, but we're still slaves
@@ -987,13 +988,6 @@ struct FRoomPolygon : public FPolygon
 		int entrancesThis = getTotalConnections();
 		int entrancesNewP = newP->getTotalConnections();
 
-		//if (clusterDoorsInThis && entrancesNewP > entrancesThis) {
-		//	// this calls for a swaperino
-		//	//std::swap(this, newP);
-		//	//FRoomPolygon *temp = this;
-		//	//*this = *newP;
-		//	//newP = temp;
-		//}
 
 
 		return newP;
@@ -1018,7 +1012,6 @@ struct FRoomPolygon : public FPolygon
 				couldPlace = false;
 				bool specSmallerThanRooms = true;
 				float maxAreaAllowed = useMin ? (spec.maxArea + spec.minArea) / 2 : spec.maxArea;
-				//bool prefferedArea = useMin ? 
 				for (int i = 0; i < remaining.Num(); i++) {
 					FRoomPolygon *r = remaining[i];
 					float area = r->getArea();
@@ -1066,7 +1059,6 @@ struct FRoomPolygon : public FPolygon
 						remaining.EmplaceAt(0, newP);
 						scale = maxAreaAllowed / target->getArea();
 					}
-					//if (target->getArea() <= maxAreaAllowed && target->getArea() >= spec.minArea) {
 					if (canPlace) {
 						target->type = spec.type;
 						toReturn.Add(target);
@@ -1074,27 +1066,6 @@ struct FRoomPolygon : public FPolygon
 						couldPlace = true;
 					}
 
-					//}
-					//else /*if (scale > minPctSplit) */ {
-					//	float splitPct = spec.maxArea / target->getArea();
-					//	//if (splitableType(spec.type))
-					//	//splitPct = 1-splitPct;
-					//	FRoomPolygon* newP = target->splitAlongMax(splitPct, true);
-
-					//	if (newP == nullptr) {
-					//		couldPlace = false;
-					//	}
-					//	else {
-					//		// if I'm in a splitable room, make use of that and make me the room with prioritized doors
-					//		//if (splitableType(spec.type))
-					//		//	std::swap(newP, target);
-					//		newP->type = spec.type;
-					//		toReturn.Add(newP);
-					//		anyRoomPlaced = true;
-					//		couldPlace = true;
-					//	}
-					//	remaining.EmplaceAt(0, target);
-					//}
 				}
 			}
 		} while (repeating && anyRoomPlaced && ++count < 5);
@@ -1195,8 +1166,8 @@ struct FRoomPolygon : public FPolygon
 		TArray<FRoomPolygon*> remaining;
 		FRoomPolygon* thisP = new FRoomPolygon();
 		*thisP = *this;
-		//if (blueprint.useHallway)
-		//	thisP->type = SubRoomType::hallway;
+		if (blueprint.useHallway)
+			thisP->type = SubRoomType::hallway;
 		remaining.Add(thisP);
 		removeAllButOne(remaining[0]->entrances);
 
@@ -1382,12 +1353,10 @@ struct FHousePolygon : public FMetaPolygon {
 	TArray<FHousePolygon> recursiveSplit(float maxArea, float minArea, int depth, float spaceBetween) {
 
 		double area = getArea();
-		//UE_LOG(LogTemp, Warning, TEXT("area of new house: %f"), area);
 
 		TArray<FHousePolygon> tot;
 
 		if (points.Num() < 3 || area <= minArea) {
-			//tot.Add(*this);
 			return tot;
 		}
 		else if (depth > 2) {
@@ -1526,16 +1495,6 @@ struct Point {
 	float x;
 	float y;
 };
-/*
-Get min and max value projected on FVector tangent, used in SAT collision detection for rectangles
-*/
-
-
-/*
-Calculate whether two lines intersect and where
-*/
-
-
 
 class CITY_API BaseLibrary
 {

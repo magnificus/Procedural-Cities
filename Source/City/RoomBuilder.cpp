@@ -9,7 +9,7 @@
 ARoomBuilder::ARoomBuilder()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 }
 
@@ -446,55 +446,6 @@ bool attemptPlaceOnTop(FMeshInfo toUse, TArray<FMeshInfo> &meshes, FString name,
 	}
 	return false;
 }
-// first is height, second is width
-
-//void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
-//	// get a line through the room
-//	//SplitStruct res = r2->getSplitProposal(false, 0.5);
-//	//if (res.min == 0) {
-//	//	return;
-//	//}
-//	for (int k = 1; k < r2->points.Num()+1; k++) {
-//		FVector origin = middle(r2->points[k%r2->points.Num()], r2->points[k - 1]);
-//		FVector tangent = r2->points[k%r2->points.Num()] - r2->points[k - 1];
-//		tangent.Normalize();
-//		FVector normal = FRotator(0, 270, 0).RotateVector(tangent);
-//		int target = -1;
-//		FVector targetP;
-//		r2->getSplitCorrespondingPoint(k, origin, normal, target, targetP);
-//		if (target == -1) {
-//			UE_LOG(LogTemp, Warning, TEXT("Couldn't place row, no corresponding split point"));
-//			return;
-//		}
-//		float width = FVector::Dist(r2->points[k%r2->points.Num()], r2->points[k - 1]);
-//		float height = FVector::Dist(origin, targetP);
-//
-//		int numWidth = FMath::FloorToInt(width * horDens) + 1;
-//		int numHeight = FMath::FloorToInt(height * vertDens) + 1;
-//			
-//		float intervalWidth = width / numWidth;
-//		float intervalHeight = height / numHeight;
-//		TArray<FPolygon> toPlace;
-//		for (int i = 1; i < numWidth; i++) {
-//			for (int j = 1; j < numHeight; j++) {
-//				FPolygon pol = getPolygon(normal.Rotation(), r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
-//				// make sure it's fully inside the room
-//				if (!testCollision(pol, placed, 0, *r2)) {// && intersection(pol, *r2).X == 0.0f) {
-//					toPlace.Add(pol);
-//					meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f))});
-//				}
-//			}
-//		}
-//		if (toPlace.Num() > 0) {
-//			placed.Append(toPlace);
-//			return;
-//		}
-//	}
-//	
-//
-//	//FVector start =
-//}
-
 
 
 static FRoomInfo getMeetingRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {

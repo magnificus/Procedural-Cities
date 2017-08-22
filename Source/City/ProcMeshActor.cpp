@@ -13,7 +13,6 @@
 unsigned int AProcMeshActor::workersWorking{ 0 };
 AProcMeshActor::AProcMeshActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	exteriorMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("exteriorMesh"));
 	sndExteriorMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("sndExteriorMesh"));
@@ -27,6 +26,7 @@ AProcMeshActor::AProcMeshActor()
 	concreteMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("concreteMesh"));
 	roadMiddleMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("roadMiddleMesh"));
 	asphaltMesh = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("asphaltMesh"));
+	SetActorTickEnabled(false);
 
 }
 
@@ -151,7 +151,6 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 		clearMeshes(true);
 		isWorking = false;
 		workersWorking--;
-		//SetActorTickEnabled(false);
 
 		//return false;
 	}
@@ -261,6 +260,7 @@ bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset
 
 	currentlyWorkingArray = 0;
 	wantsToWork = true;
+	SetActorTickEnabled(true);
 
 	//isWorking = true;
 	//buildPolygons(exterior, offset, exteriorMesh, exteriorMat);
@@ -311,7 +311,7 @@ void AProcMeshActor::Tick(float DeltaTime)
 		if (currentlyWorkingArray >= polygons.Num()) {
 			isWorking = false;
 			workersWorking--;
-			//SetActorTickEnabled(false);
+			SetActorTickEnabled(false);
 		}
 	}
 

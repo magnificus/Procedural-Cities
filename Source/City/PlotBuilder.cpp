@@ -3,6 +3,7 @@
 #include "City.h"
 #include "NoiseSingleton.h"
 #include "PlotBuilder.h"
+#include <random>
 
 
 
@@ -134,12 +135,12 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 }
 
 float getHeight(FRandomStream &stream, int minFloors, int maxFloors) {
-	float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1)) / 3;
-	if (stream.FRand() < 0.1) {
-		// invert curve for some buldings, to make some super tall
-		//modifier = stream.FRandRange(0.7, 1.0) - modifier;
-		modifier *= stream.FRandRange(1.5,2);
-	}
+	//std::exponential_distribution<float>(lambda);//
+	float modifier = -std::log(stream.FRandRange(0.02 /* e^(-3) */, 1)) / 3;
+	//if (stream.FRand() < 0.1) {
+	//	// increase height drastically for some buldings, to make some super tall
+	//	modifier *= stream.FRandRange(1.5,2);
+	//}
 	return minFloors + (maxFloors - minFloors)*modifier;
 }
 
@@ -161,12 +162,6 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.housePosition = pol.getCenter();
-	//float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1)) / 3;
-	//if (stream.FRand() < 0.05) {
-	//	// invert curve for some buldings, to make some super tall
-	//	modifier = 1 - modifier;
-	//}
-	//pol.height = minFloors + (maxFloors - minFloors)*modifier;
 	pol.height = getHeight(stream, minFloors, maxFloors);
 	pol.type = type;
 	pol.offset(-pol.getCenter());
@@ -181,7 +176,6 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 
 	float maxArea = 4500.0f;
 	float minArea = 1200.0f;
-	//p.type = stream.FRand() < 0.5 ? RoomType::office : RoomType::apartment;// NoiseSingleton::getInstance()->noise(original.housePosition.X, original.housePosition.Y, noiseScale) > 0.5 ? RoomType::office : RoomType::apartment;
 
 	if (!p.open) {
 		FHousePolygon original;
@@ -230,7 +224,6 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			}
 			else {
 				FSimplePlot fs;
-				//fm.points.RemoveAt(fm.points.Nfum() - 1);
 				fs.pol = p;
 				fs.pol.offset(FVector(0, 0, 30));
 				fs.type = p.simplePlotType;
@@ -243,29 +236,18 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
 				r.housePosition = r.getCenter();
-				//exponential distribution with lambda = 1
-				//float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1))/3;
-				//if (stream.FRand() < 0.05) {
-				//	// invert curve for some buldings, to make some super tall
-				//	modifier = 1 - modifier;
-				//}
-				//r.height = minFloors + (maxFloors - minFloors)*modifier;
 				r.height = getHeight(stream, minFloors, maxFloors);
 
 				r.type = p.type;
-				r.simplePlotType = p.simplePlotType;// == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
+				r.simplePlotType = p.simplePlotType;
 
 				float area = r.getArea();
 
 				if (area < minArea || area > maxArea) {
-
-					//if (r.getIsClockwise())
-					//	r.reverse();
-					//r.points.RemoveAt(r.points.Num() - 1);
 					FSimplePlot fs;
 					fs.pol = r;
 					fs.pol.offset(FVector(0, 0, 20));
-					fs.type = p.simplePlotType;//p.type == RoomType::apartment ? SimplePlotType::green : SimplePlotType::asphalt;
+					fs.type = p.simplePlotType;
 					fs.decorate(instancedMap);
 					info.leftovers.Add(fs);
 				}

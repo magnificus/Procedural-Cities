@@ -94,9 +94,6 @@ public:
 	}
 
 
-	//UFUNCTION(BlueprintCallable, Category = "Generation")
-	//FHouseInfo getHouseInfoSimple();
-
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	FHouseInfo getHouseInfo();
 
