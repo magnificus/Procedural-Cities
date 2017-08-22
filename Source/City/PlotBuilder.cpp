@@ -132,6 +132,17 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 
 	return dec;
 }
+
+float getHeight(FRandomStream &stream, int minFloors, int maxFloors) {
+	float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1)) / 3;
+	if (stream.FRand() < 0.15) {
+		// invert curve for some buldings, to make some super tall
+		modifier = 1 - modifier;
+		//modifier *= 2;
+	}
+	return minFloors + (maxFloors - minFloors)*modifier;
+}
+
 FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int maxFloors, float noiseScale, RoomType type, FRandomStream stream) {
 	FHousePolygon pol;
 	float xLen = stream.FRandRange(minSize, maxSize);
@@ -150,12 +161,13 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.housePosition = pol.getCenter();
-	float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1)) / 3;
-	if (stream.FRand() < 0.05) {
-		// invert curve for some buldings, to make some super tall
-		modifier = 1 - modifier;
-	}
-	pol.height = minFloors + (maxFloors - minFloors)*modifier;
+	//float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1)) / 3;
+	//if (stream.FRand() < 0.05) {
+	//	// invert curve for some buldings, to make some super tall
+	//	modifier = 1 - modifier;
+	//}
+	//pol.height = minFloors + (maxFloors - minFloors)*modifier;
+	pol.height = getHeight(stream, minFloors, maxFloors);
 	pol.type = type;
 	pol.offset(-pol.getCenter());
 	return pol;
@@ -232,13 +244,13 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			for (FHousePolygon r : refinedPolygons) {
 				r.housePosition = r.getCenter();
 				//exponential distribution with lambda = 1
-				float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1))/3;
-				if (stream.FRand() < 0.05) {
-					// invert curve for some buldings, to make some super tall
-					modifier = 1 - modifier;
-				}
-				r.height = minFloors + (maxFloors - minFloors)*modifier;
-
+				//float modifier = -std::log(stream.FRandRange(0.05 /* e^(-3) */, 1))/3;
+				//if (stream.FRand() < 0.05) {
+				//	// invert curve for some buldings, to make some super tall
+				//	modifier = 1 - modifier;
+				//}
+				//r.height = minFloors + (maxFloors - minFloors)*modifier;
+				r.height = getHeight(stream, minFloors, maxFloors);
 
 				r.type = p.type;
 				r.simplePlotType = p.simplePlotType;// == RoomType::office ? SimplePlotType::asphalt : SimplePlotType::green;
