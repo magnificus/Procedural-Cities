@@ -7,12 +7,17 @@
  */
 class CITY_API NoiseSingleton
 {
+	//static float noiseTextureScale;
+	//static float noiseScale;
 private:
 	NoiseSingleton();// {}
 	static NoiseSingleton* instance;
 	UTexture2D* image;
-	float noiseTextureScale;
+
 public:
+	float noiseScale = 0.0;
+	float noiseTextureScale = 0.0;
+	void setNoiseScale(float inScale) { noiseScale = inScale; }
 
 	static NoiseSingleton* getInstance() {
 		if (instance == nullptr)
@@ -20,8 +25,8 @@ public:
 		return instance;
 	}
 
-	float noise(float x, float y, float noiseScale = 1.0f, float xOffset = 0, float yOffset = 0);
-	FVector getStartSuggestion(float noiseScale);
+	float noise(float x, float y);
+	FVector getStartSuggestion();
 	bool useTexture = false;
 
 	void setUseTexture(UTexture2D* inImage, float scale) {

@@ -29,14 +29,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 		TMap<FString, UHierarchicalInstancedStaticMeshComponent*> instancedMap;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
-	//	TMap<FString, UStaticMesh*> staticMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
+		float noiseHeightInfluence = 0.0;
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static TArray<FMetaPolygon> sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	FPlotInfo generateHousePolygons(FPlotPolygon p, int minFloors, int maxFloors, float noiseScale);
+	FPlotInfo generateHousePolygons(FPlotPolygon p, int minFloors, int maxFloors);
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
 	static FPolygon generateSidewalkPolygon(FPlotPolygon p, float offsetSize);

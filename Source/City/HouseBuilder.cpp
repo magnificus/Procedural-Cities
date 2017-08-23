@@ -354,7 +354,7 @@ FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHol
 
 		simplePlot.type = f.simplePlotType; // stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 
-		simplePlot.pol.reverse();
+		//simplePlot.pol.reverse();
 		simplePlot.pol.offset(offset);
 
 		f.addPoint(place%f.points.Num(), p1);

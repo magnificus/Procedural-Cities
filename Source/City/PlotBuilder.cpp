@@ -134,17 +134,16 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 	return dec;
 }
 
-float getHeight(FRandomStream &stream, int minFloors, int maxFloors) {
-	//std::exponential_distribution<float>(lambda);//
-	float modifier = -std::log(stream.FRandRange(0.02 /* e^(-3) */, 1)) / 3;
-	//if (stream.FRand() < 0.1) {
-	//	// increase height drastically for some buldings, to make some super tall
-	//	modifier *= stream.FRandRange(1.5,2);
-	//}
-	return minFloors + (maxFloors - minFloors)*modifier;
+float getHeight(FRandomStream &stream, int minFloors, int maxFloors, FVector position, float noiseHeightInfluence) {
+	float modifier = -std::log(stream.FRandRange(0.02 /* e^(-4) */, 1)) / 4;
+	//modifier = 1.0f;
+	float noise = NoiseSingleton::getInstance()->noise(position.X, position.Y);
+
+	return minFloors + (maxFloors - minFloors)*modifier*((1.0 - noiseHeightInfluence) + (noise*noiseHeightInfluence));
+	//return 5;
 }
 
-FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int maxFloors, float noiseScale, RoomType type, FRandomStream stream) {
+FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int maxFloors, RoomType type, FRandomStream stream, float noiseHeightInfluence) {
 	FHousePolygon pol;
 	float xLen = stream.FRandRange(minSize, maxSize);
 	float yLen = stream.FRandRange(minSize, maxSize);
@@ -162,14 +161,14 @@ FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int ma
 		pol.open = false;
 	}
 	pol.housePosition = pol.getCenter();
-	pol.height = getHeight(stream, minFloors, maxFloors);
+	pol.height = getHeight(stream, minFloors, maxFloors, pol.getCenter(), noiseHeightInfluence);
 	pol.type = type;
 	pol.offset(-pol.getCenter());
 	return pol;
 }
 
 
-FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int maxFloors, float noiseScale) {
+FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int maxFloors) {
 	FPlotInfo info;
 	FVector cen = p.getCenter();
 	FRandomStream stream(cen.X * 1000 + cen.Y);
@@ -196,7 +195,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 		bool normalPlacement = !(p.getArea() > 5500 && stream.FRand() < 0.2);
 		if (!normalPlacement) {
 			// create a special plot with several similar houses placed around an area, this happens in real cities sometimes
-			FHousePolygon model = getRandomModel(3500,6000, minFloors, maxFloors, noiseScale, p.type, stream);
+			FHousePolygon model = getRandomModel(3500,6000, minFloors, maxFloors, p.type, stream, noiseHeightInfluence);
 			model.checkOrientation();
 			model.canBeModified = false;
 			FPolygon shaft = AHouseBuilder::getShaftHolePolygon(model, stream);
@@ -236,7 +235,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
 				r.housePosition = r.getCenter();
-				r.height = getHeight(stream, minFloors, maxFloors);
+				r.height = getHeight(stream, minFloors, maxFloors, r.getCenter(), noiseHeightInfluence);
 
 				r.type = p.type;
 				r.simplePlotType = p.simplePlotType;

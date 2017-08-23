@@ -163,8 +163,8 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 
 }
 
-float getValueOfRotation(FVector testPoint, float noiseScale, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
-	float val = NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y, noiseScale);//noise(noiseScale, testPoint.X, testPoint.Y);
+float getValueOfRotation(FVector testPoint, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
+	float val = NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y);//noise(noiseScale, testPoint.X, testPoint.Y);
 	for (logicRoadSegment* t : others) {
 		if (FVector::Dist(t->segment->getMiddle(), testPoint) < maxDist)
 			val -= detriment * (FVector::Dist(t->segment->getMiddle(), testPoint))/maxDist;
@@ -174,16 +174,16 @@ float getValueOfRotation(FVector testPoint, float noiseScale, TArray<logicRoadSe
 
 
 
-FRotator getBestRotation(float maxDiffAllowed, FRotator original, FVector originalPoint, FVector step, float noiseScale, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
+FRotator getBestRotation(float maxDiffAllowed, FRotator original, FVector originalPoint, FVector step, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
 	float bestVal = -1000000;
 	FRotator bestRotator;
 	for (int i = 0; i < 10; i++) {
 		FRotator curr = original + FRotator(0, FMath::FRandRange(-maxDiffAllowed, maxDiffAllowed), 0);
 		FVector testPoint = originalPoint + curr.RotateVector(step);
-		float val = getValueOfRotation(testPoint, noiseScale, others, maxDist, detriment);
+		float val = getValueOfRotation(testPoint, others, maxDist, detriment);
 		if (val > bestVal) {
 			bestRotator = curr;
-			bestVal = NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y, noiseScale);
+			bestVal = NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y);
 		}
 	}
 	return bestRotator;
@@ -208,7 +208,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	}
 
 
-	FRotator bestRotator = getBestRotation((prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity), previous->firstDegreeRot,newRoad->p1, stepLength, noiseScale, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
+	FRotator bestRotator = getBestRotation((prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity), previous->firstDegreeRot,newRoad->p1, stepLength, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
 
 	newRoadL->firstDegreeRot = bestRotator;//previous->firstDegreeRot + newRoadL->secondDegreeRot;
 
@@ -220,7 +220,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->type = prevSeg->type;
 	newRoad->endTangent = newRoad->p2 - newRoad->p1;
 	newRoadL->segment = newRoad;
-	float val = getValueOfRotation(newRoad->p2, noiseScale, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
+	float val = getValueOfRotation(newRoad->p2, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
 	newRoadL->time = -val + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.1*previous->time);// + FMath::FRand() * 0.1;
 	newRoadL->roadLength = previous->roadLength + 1;
 	newRoadL->previous = previous;
@@ -251,7 +251,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 			}
 		}
 	}
-	FRotator bestRotator = getBestRotation(secondaryChangeIntensity, newRoadL->firstDegreeRot, newRoad->p1, stepLength, noiseScale, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
+	FRotator bestRotator = getBestRotation(secondaryChangeIntensity, newRoadL->firstDegreeRot, newRoad->p1, stepLength, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
 	newRoadL->firstDegreeRot = bestRotator;//previous->firstDegreeRot + newRoadL->secondDegreeRot;
 
 
@@ -266,7 +266,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	// every side track has less priority
 
 	//FVector mP = middle(newRoad->p1, newRoad->p2);
-	float val = getValueOfRotation(newRoad->p2, noiseScale, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
+	float val = getValueOfRotation(newRoad->p2, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
 	newRoadL->time = -val + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.1*previous->time);// + FMath::FRand() * 0.1;
 
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
@@ -328,7 +328,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	FVector origin;
 	TArray<FRoadSegment*> determinedSegments;
 	TArray<FRoadSegment> finishedSegments;
-
+	NoiseSingleton::getInstance()->setNoiseScale(noiseScale);
 
 	std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> queue;
 
@@ -339,7 +339,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	FRoadSegment* startR = new FRoadSegment();
 	startR->beginTangent = primaryStepLength;
 
-	FVector point = NoiseSingleton::getInstance()->getStartSuggestion(noiseScale);
+	FVector point = NoiseSingleton::getInstance()->getStartSuggestion();
 
 	startR->p1 = point;
 
@@ -349,8 +349,8 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	FRotator bestRot;
 	for (int i = 0; i < 360; i++) {
 		FVector testPoint = point + FRotator(0, i, 0).RotateVector(primaryStepLength);
-		if (NoiseSingleton::getInstance()->noise(point.X, point.Y, noiseScale) > bestVal) {
-			bestVal = NoiseSingleton::getInstance()->noise(point.X, point.Y, noiseScale);
+		if (NoiseSingleton::getInstance()->noise(point.X, point.Y) > bestVal) {
+			bestVal = NoiseSingleton::getInstance()->noise(point.X, point.Y);
 			bestRot = FRotator(0, i, 0);
 		}
 	}
@@ -520,7 +520,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 		for (int j = -numSide/2; j < numSide/2; j++) {
 			FTransform f;
 			f.SetLocation(FVector(posMultiplier * i, posMultiplier * j, 0));
-			float res = NoiseSingleton::getInstance()->noise(f.GetLocation().X, f.GetLocation().Y, noiseMultiplier);
+			float res = NoiseSingleton::getInstance()->noise(f.GetLocation().X, f.GetLocation().Y);
 
 			f.SetScale3D(FVector(posMultiplier/100, posMultiplier/100,  res* posMultiplier/10));
 			toReturn.Add(f);
