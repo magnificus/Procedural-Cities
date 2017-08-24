@@ -9,6 +9,9 @@ NoiseSingleton* NoiseSingleton::instance;
 
 NoiseSingleton::NoiseSingleton()
 {
+	xOffset = FMath::FRandRange(-100000, 100000);
+	yOffset = FMath::FRandRange(-100000, 100000);
+
 }
 
 NoiseSingleton::~NoiseSingleton()
@@ -17,7 +20,7 @@ NoiseSingleton::~NoiseSingleton()
 
 float NoiseSingleton::noise(float x, float y){
 	if (!useTexture)
-		return raw_noise_2d(noiseScale * x, noiseScale*y);
+		return raw_noise_2d(noiseScale * x + xOffset, noiseScale*y + yOffset);
 	else {
 		FTexture2DMipMap* MyMipMap = &image->PlatformData->Mips[0];
 		FByteBulkData* RawImageData = &MyMipMap->BulkData;

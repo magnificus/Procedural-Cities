@@ -909,8 +909,10 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	if (generateRoofs) {
 		if (roofAccess) {
 			auto newRoof = getFloorPolygonsWithHole(f, floorHeight*floors + 1, stairPol);
-			for (auto &a : newRoof)
+			for (auto &a : newRoof) {
 				a.type = PolygonType::roof;
+				a.normal = FVector(0, 0, -1);
+			}
 			toReturn.roomInfo.pols.Append(newRoof);
 			FMaterialPolygon boxRoof;
 			boxRoof.normal = FVector(0, 0, -1);

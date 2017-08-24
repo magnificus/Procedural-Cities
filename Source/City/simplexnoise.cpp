@@ -52,11 +52,6 @@ dimension, you can ensure that each gets a unique noise value and they don't
 all look identical.
 */
 
-
-// 2D Multi-octave Simplex noise.
-//
-// For each octave, a higher frequency/lower amplitude function will be added to the original.
-// The higher the persistence [0-1], the more of each succeeding octave will be added.
 float octave_noise_2d(const float octaves, const float persistence, const float scale, const float x, const float y) {
 	float total = 0;
 	float frequency = scale;

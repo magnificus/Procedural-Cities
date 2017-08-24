@@ -17,6 +17,8 @@ private:
 public:
 	float noiseScale = 0.0;
 	float noiseTextureScale = 0.0;
+	float xOffset = 0;
+	float yOffset = 0;
 	void setNoiseScale(float inScale) { noiseScale = inScale; }
 
 	static NoiseSingleton* getInstance() {

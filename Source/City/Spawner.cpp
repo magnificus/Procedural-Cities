@@ -166,8 +166,8 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 float getValueOfRotation(FVector testPoint, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
 	float val = NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y);//noise(noiseScale, testPoint.X, testPoint.Y);
 	for (logicRoadSegment* t : others) {
-		if (FVector::Dist(t->segment->getMiddle(), testPoint) < maxDist)
-			val -= detriment * (FVector::Dist(t->segment->getMiddle(), testPoint))/maxDist;
+		//if (FVector::Dist(t->segment->getMiddle(), testPoint) < maxDist)
+			val -= std::max(0.0f, detriment * (maxDist - FVector::Dist(t->segment->getMiddle(), testPoint))/maxDist);
 	}
 	return val;
 }
@@ -288,19 +288,15 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 		if (current->roadLength < maxMainRoadLength)
 			addRoadForward(queue, current, allsegments);
 
-		if (FMath::FRandRange(0, 0.9999) < mainRoadBranchChance) {
-			if (FMath::FRandRange(0, 0.9999) < 0.5) {
-				addRoadSide(queue, current, true, mainRoadSize, allsegments, RoadType::main);
-			}
-
-			else{
-				addRoadSide(queue, current, false, mainRoadSize, allsegments, RoadType::main);
-			}
-		}
-		else {
+		if (FMath::FRandRange(0, 1) < mainRoadBranchChance)
+			addRoadSide(queue, current, true, mainRoadSize, allsegments, RoadType::main);
+		else
 			addRoadSide(queue, current, true, sndRoadSize, allsegments, RoadType::secondary);
+		if (FMath::FRandRange(0, 1) < mainRoadBranchChance)
+			addRoadSide(queue, current, false, mainRoadSize, allsegments, RoadType::main);
+		else 
 			addRoadSide(queue, current, false, sndRoadSize, allsegments, RoadType::secondary);
-		}
+
 	}
 
 	else if (current->segment->type == RoadType::secondary) {
@@ -321,10 +317,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	if (useTexture)
 		NoiseSingleton::getInstance()->setUseTexture(noiseTexture, noiseTextureScale);
-	else {
-		noiseXOffset = FMath::FRandRange(-1000000, 1000000);
-		noiseYOffset = FMath::FRandRange(-1000000, 1000000);
-	}
+
 	FVector origin;
 	TArray<FRoadSegment*> determinedSegments;
 	TArray<FRoadSegment> finishedSegments;
@@ -366,7 +359,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	queue.push(start);
 
-	// map for faster comparisons
+	// map for faster comparisons, unused
 	TMap <int, TArray<FRoadSegment*>*> segmentsOrganized;
 
 	// loop for everything else
