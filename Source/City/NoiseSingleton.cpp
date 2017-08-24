@@ -6,6 +6,9 @@
 
 NoiseSingleton* NoiseSingleton::instance;
 
+#define MAX(a, b) ( a > b ? a : b)
+#define MIN(a, b) ( a < b ? a : b)
+
 
 NoiseSingleton::NoiseSingleton()
 {
@@ -19,8 +22,13 @@ NoiseSingleton::~NoiseSingleton()
 }
 
 float NoiseSingleton::noise(float x, float y){
-	if (!useTexture)
-		return raw_noise_2d(noiseScale * x + xOffset, noiseScale*y + yOffset);
+	// octaves, persistence, scale, loBound, hiBound, x, y
+	if (!useTexture) {
+		float val = scaled_octave_noise_2d(1, 1.0, 1.0, 0.0, 1.0, noiseScale * x + xOffset, noiseScale*y + yOffset);
+		//val = MAX(0.0, MIN(1.0, 0.5 + (val - 0.5) * 2));
+		return val;
+
+	}
 	else {
 		FTexture2DMipMap* MyMipMap = &image->PlatformData->Mips[0];
 		FByteBulkData* RawImageData = &MyMipMap->BulkData;
