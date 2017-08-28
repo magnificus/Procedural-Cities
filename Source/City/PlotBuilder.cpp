@@ -192,7 +192,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 		}
 		FVector center = p.getCenter();
 
-		bool normalPlacement = !(p.getArea() > 5500 && stream.FRand() < 0.2);
+		bool normalPlacement = !(p.getArea() > 5000 && stream.FRand() < 0.2);
 		if (!normalPlacement) {
 			// create a special plot with several similar houses placed around an area, this happens in real cities sometimes
 			FHousePolygon model = getRandomModel(3500,6000, minFloors, maxFloors, p.type, stream, noiseHeightInfluence);
@@ -232,6 +232,15 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			}
 		}
 		if (normalPlacement) {
+			// have a chance of just making it empty
+			if (stream.FRand() < 0.05) {
+				FSimplePlot fs;
+				fs.pol = p;
+				fs.pol.offset(FVector(0, 0, 30));
+				fs.type = p.simplePlotType;
+				fs.decorate(instancedMap);
+				info.leftovers.Add(fs);
+			}
 			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
 				r.housePosition = r.getCenter();

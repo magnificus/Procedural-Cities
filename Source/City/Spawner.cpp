@@ -196,7 +196,6 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	FVector stepLength = prevSeg->type == RoadType::main ? primaryStepLength : secondaryStepLength;
 
 	newRoad->p1 = prevSeg->p2;
-	// set seconddegreerot to attempt to change towards that direction
 
 	TArray<logicRoadSegment*> others;
 	if (prevSeg->type == RoadType::main) {

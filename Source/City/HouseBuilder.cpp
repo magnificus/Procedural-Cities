@@ -354,7 +354,7 @@ FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHol
 
 		simplePlot.type = f.simplePlotType; // stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 
-		//simplePlot.pol.reverse();
+		simplePlot.pol.reverse();
 		simplePlot.pol.offset(offset);
 
 		f.addPoint(place%f.points.Num(), p1);
@@ -388,12 +388,13 @@ FSimplePlot attemptTurnSideIntoU(FHousePolygon &f, int place, FPolygon &centerHo
 
 	FSimplePlot simplePlot;
 	simplePlot.pol.points.Add(first);
-	simplePlot.pol.points.Add(snd);
-	simplePlot.pol.points.Add(snd2);
 	simplePlot.pol.points.Add(first2);
+	simplePlot.pol.points.Add(snd2);
+	simplePlot.pol.points.Add(snd);
 	simplePlot.pol.normal = FVector(0, 0, -1);
 	simplePlot.pol.offset(offset);
-
+	simplePlot.pol.reverse();
+		
 	FHousePolygon cp = f;
 	if (intersection(simplePlot.pol, centerHole).X == 0.0f && !selfIntersection(simplePlot.pol)) {
 		simplePlot.type = f.simplePlotType;
@@ -407,7 +408,6 @@ FSimplePlot attemptTurnSideIntoU(FHousePolygon &f, int place, FPolygon &centerHo
 		f.addPoint(place + 2, snd2);
 		f.windows.Add(place + 2);
 		f.entrances.Add(place + 2);
-
 		f.addPoint(place + 3, snd);
 		f.windows.Add(place + 3);
 		f.windows.Add(place + 4);
@@ -496,14 +496,17 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 		shape.reverse();
 		float size = stream.FRandRange(50, 500);
 		shape.offset(FVector(0, 0, size));
-		TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exterior, size);
+		TArray<FMaterialPolygon> sides = getSidesOfPolygon(shape, PolygonType::exteriorSnd, size);
 		for (auto &a : sides)
 			a.overridePolygonSides = true;
 		float width = stream.FRandRange(20, 150);
 		for (auto &p : sides)
 			p.width = width;
 
-		toReturn.pols.Append(fillOutPolygons(sides));
+		auto otherS = fillOutPolygons(sides);
+		for (auto &a : otherS)
+			a.type = PolygonType::exteriorSnd;
+		toReturn.pols.Append(otherS);
 		toReturn.pols.Append(sides);
 
 	}
@@ -511,6 +514,9 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	float maxHeight = 1000;
 	float len = 500;
 	float offset = stream.FRandRange(minHeight, maxHeight);
+
+	//SplitStruct s = pol.getSplitProposal(true, 0.5);
+	//float boxMaxSize = FVector::Dist(s.p1, s.p2);
 	if (stream.FRand() < 0.5) {
 		int numBoxes = stream.RandRange(0, maxBoxes);
 		// add box shapes on top of pol
@@ -528,10 +534,10 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 				box.type = PolygonType::exteriorSnd;
 				box.normal = FVector(0, 0, -1);
 				FVector center = pol.getCenter();
-				FVector p1 = center + FVector(stream.FRandRange(0, 4000) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 4000) * (stream.FRand() < 0.5 ? 1 : -1), offset);
+				FVector p1 = center + FVector(stream.FRandRange(0, 3000) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 3000) * (stream.FRand() < 0.5 ? 1 : -1), offset);
 				FVector tangent = pol.points[1] - pol.points[0];
-				float firstLen = stream.FRandRange(500, 4000);
-				float sndLen = stream.FRandRange(500, 4000);
+				float firstLen = stream.FRandRange(500, 3000);
+				float sndLen = stream.FRandRange(500, 3000);
 				tangent.Normalize();
 				FVector p2 = p1 + tangent * firstLen;
 				tangent = FRotator(0, 90, 0).RotateVector(tangent);
@@ -569,10 +575,15 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 		FMaterialPolygon shape = pol;
 		shape.offset(FVector(0, 0, offset));
 		FVector center = shape.getCenter();
-		for (FVector &point : shape.points) {
-			FVector tangent = center - point;
-			point += tangent / 4;
+		float dist = stream.FRandRange(150.0f, 1000.0f);
+		for (int i = 0; i < shape.points.Num(); i++) {
+			FVector tangent = shape.getPointDirection(i, false);
+			shape[i] += dist*tangent;
 		}
+		//for (FVector &point : shape.points) {
+		//	FVector tangent = center - point;
+		//	point += tangent / 4;
+		//}
 		if (!pol.getIsClockwise())
 			shape.reverse();
 		shape.normal = FVector(0, 0, -1);
@@ -660,7 +671,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	}
 	// shrink whole symmetrically
 	else if (stream.FRand() < 0.25) {
-		float shrinkLen = stream.FRandRange(0.1, 0.3);
+		float shrinkLen = stream.FRandRange(150, 1500);
 		FHousePolygon cp = FHousePolygon(f);
 		cp.symmetricShrink(shrinkLen, false);
 		if (intersection(cp, centerHole).X == 0.0f && !selfIntersection(cp)) {
@@ -909,10 +920,8 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	if (generateRoofs) {
 		if (roofAccess) {
 			auto newRoof = getFloorPolygonsWithHole(f, floorHeight*floors + 1, stairPol);
-			for (auto &a : newRoof) {
+			for (auto &a : newRoof)
 				a.type = PolygonType::roof;
-				a.normal = FVector(0, 0, -1);
-			}
 			toReturn.roomInfo.pols.Append(newRoof);
 			FMaterialPolygon boxRoof;
 			boxRoof.normal = FVector(0, 0, -1);

@@ -354,7 +354,7 @@ struct FPolygon
 		dir1.Normalize();
 		dir2.Normalize();
 
-		FVector totDir = dir1 + dir2;
+		FVector totDir = dir1 + dir2;// - FVector::DotProduct(dir1, dir2) * (dir1);
 		totDir.Normalize();
 		return totDir;
 	//}
@@ -363,8 +363,8 @@ struct FPolygon
 
 	void symmetricShrink(float length, bool left) {
 		for (int i = 0; i < points.Num(); i++) {
-			float distToCenter = FVector::Dist(getCenter(), points[i]);
-			points[i] += getPointDirection(i, left)*length*distToCenter;
+			//float distToCenter = FVector::Dist(getCenter(), points[i]);
+			points[i] += getPointDirection(i, left)*length;
 		}
 	}
 
