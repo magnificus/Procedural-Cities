@@ -101,8 +101,8 @@ FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 }
 
 FVector intersection(FVector p1, FVector p2, FPolygon p) {
-	for (int i = 1; i < p.points.Num(); i++) {
-		FVector res = intersection(p1, p2, p.points[i - 1], p.points[i]);
+	for (int i = 1; i < p.points.Num()+1; i++) {
+		FVector res = intersection(p1, p2, p.points[i - 1], p.points[i%p.points.Num()]);
 		if (res.X != 0.0f) {
 			return res;
 		}
