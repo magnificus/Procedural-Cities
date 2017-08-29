@@ -132,8 +132,8 @@ bool AProcMeshActor::clearMeshes(bool fullReplacement) {
 		sndExteriorMesh->ClearAllMeshSections();
 		greenMesh->ClearAllMeshSections();
 		concreteMesh->ClearAllMeshSections();
-		roofMesh->ClearAllMeshSections();
 	}
+	roofMesh->ClearAllMeshSections();
 	interiorMesh->ClearAllMeshSections();
 	windowMesh->ClearAllMeshSections();
 	windowFrameMesh->ClearAllMeshSections();

@@ -427,24 +427,51 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 	float len = stream.FRandRange(400, 1500);
 	if (stream.FRand() < 0.2f) {
 		// move side inwards
-		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,20));
+		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
 		if (res.pol.points.Num() > 0) {
 			toReturn.Add(res);
 		}
 	}
 
 	else if (stream.FRand() < 0.15f && FVector::Dist(f.points[place%f.points.Num()], f.points[place-1]) > 500) {
-		FSimplePlot res = attemptRemoveCorner(f, place, centerHole, len, FVector(0, 0, 20));
+		FSimplePlot res = attemptRemoveCorner(f, place, centerHole, len, FVector(0, 0, 30));
 		if (res.pol.points.Num() > 0) {
 			toReturn.Add(res);
 		}
 	}
-	else if (stream.FRand() < 0.1f && FVector::Dist(f.points[place%f.points.Num()],f.points[place - 1]) > 3000) {
-		FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, FVector(0, 0, 20), stream);
-		if (res.pol.points.Num() > 0) {
-			toReturn.Add(res);
+
+	else if (stream.FRand() < 0.15f) {
+		float shrinkLen = stream.FRandRange(150, 1500);
+		FHousePolygon cp = FHousePolygon(f);
+		cp.symmetricShrink(shrinkLen, false);
+		if (intersection(cp, centerHole).X == 0.0f && !selfIntersection(cp)) {
+			TArray<FPolygon> holes;
+			holes.Add(cp);
+			TArray<FMaterialPolygon> res = ARoomBuilder::getSideWithHoles(f, holes, PolygonType::roof);
+			TArray<FSimplePlot> sPlots;
+			for (auto a : res) {
+				FSimplePlot plot;
+				plot.type = f.simplePlotType;
+				plot.pol = a;
+				plot.pol.normal = FVector(0, 0, -1);
+				plot.pol.offset(FVector(0, 0, 30));
+				//a.normal = FVector(0, 0, -1);
+				//a.offset(FVector(0,0,30));
+				sPlots.Add(plot);
+			}
+			toReturn.Append(sPlots);
+			f = cp;
+			for (int i = 1; i < f.points.Num() + 1; i++) {
+				f.windows.Add(i);
+			}
 		}
 	}
+	//else if (stream.FRand() < 0.1f && FVector::Dist(f.points[place%f.points.Num()],f.points[place - 1]) > 3000) {
+	//	FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, FVector(0, 0, 20), stream);
+	//	if (res.pol.points.Num() > 0) {
+	//		toReturn.Add(res);
+	//	}
+	//}
 }
 
 
@@ -645,7 +672,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 
 void addRoofDetail(FMaterialPolygon &roof, FRoomInfo &toReturn, FRandomStream stream, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, TArray<FPolygon> placed, bool canCoverCompletely) {
 
-	addDetailOnPolygon(0, 1, 3, roof, toReturn, stream, map, placed, canCoverCompletely);
+	addDetailOnPolygon(0, 2, 3, roof, toReturn, stream, map, placed, canCoverCompletely);
 }
 
 
@@ -703,16 +730,16 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	}
 
 	// side into u
-	else if (stream.FRand() < 0.1) {
-		FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, offset, stream);
-		if (res.pol.points.Num() > 2) {
-			FMaterialPolygon pol;
-			pol.points = res.pol.points;
-			pol.type = PolygonType::roof;
-			pol.normal = FVector(0, 0, -1);
-			toReturn.Add(pol);
-		}
-	}
+	//else if (stream.FRand() < 0.1) {
+	//	FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, offset, stream);
+	//	if (res.pol.points.Num() > 2) {
+	//		FMaterialPolygon pol;
+	//		pol.points = res.pol.points;
+	//		pol.type = PolygonType::roof;
+	//		pol.normal = FVector(0, 0, -1);
+	//		toReturn.Add(pol);
+	//	}
+	//}
 
 
 	return toReturn;
@@ -897,9 +924,9 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			FMaterialPolygon above; // space above elevator
 			above.type = PolygonType::interior;
 			above.points.Add(elevatorPol.points[1] + FVector(0, 0, floorHeight * (i - 1) + 290));
-			above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 290));
-			above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 400));
 			above.points.Add(elevatorPol.points[1] + FVector(0, 0, floorHeight * (i - 1) + 400));
+			above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 400));
+			above.points.Add(elevatorPol.points[2] + FVector(0, 0, floorHeight * (i - 1) + 290));
 			toReturn.roomInfo.pols.Add(above);
 
 			if (i != floors || roofAccess)
@@ -916,12 +943,18 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	roof.offset(FVector(0, 0, floorHeight*floors + 1));
 	roof.type = PolygonType::roof;
 	roof.normal = FVector(0, 0, -1);
+
 	TArray<FPolygon> placed;
 	if (generateRoofs) {
 		if (roofAccess) {
 			auto newRoof = getFloorPolygonsWithHole(f, floorHeight*floors + 1, stairPol);
-			for (auto &a : newRoof)
+			for (auto &a : newRoof) {
 				a.type = PolygonType::roof;
+				a.reverse();
+				a.overridePolygonSides = true;
+			}
+
+
 			toReturn.roomInfo.pols.Append(newRoof);
 			FMaterialPolygon boxRoof;
 			boxRoof.normal = FVector(0, 0, -1);
@@ -942,11 +975,11 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			sides.Add(boxRoof);
 			placed.Add(boxRoof);
 			toReturn.roomInfo.meshes.Add(getEntranceMesh(exitSide[2], exitSide[1], middleP));
-			//toReturn.roomInfo.pols.Append(fillOutPolygons(sides));
 			toReturn.roomInfo.pols.Append(sides);
 		}
-		else
+		else {
 			toReturn.roomInfo.pols.Add(roof);
+		}
 	}
 	if (!shellOnly) {
 		TArray<FMaterialPolygon> otherSides = fillOutPolygons(toReturn.roomInfo.pols);
