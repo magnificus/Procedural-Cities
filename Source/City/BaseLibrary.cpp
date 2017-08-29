@@ -611,8 +611,10 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 			if (!p.overridePolygonSides)
 				polygonSides = false;
 		}
-		if (!p.overridePolygonSides && (p.type == PolygonType::floor || p.type == PolygonType::interior))// || p.type == PolygonType::roof)
+		if (!p.overridePolygonSides && (p.type == PolygonType::floor || p.type == PolygonType::interior) || p.type == PolygonType::roof) {
 			polygonSides = false;
+			other.type = PolygonType::interior;
+		}
 
 		other.offset(p.getDirection() * p.width);
 		if (polygonSides) {

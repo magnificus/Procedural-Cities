@@ -138,9 +138,10 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 
 float getHeight(FRandomStream &stream, int minFloors, int maxFloors, FVector position, float noiseHeightInfluence) {
 	float noise = NoiseSingleton::getInstance()->noise(position.X, position.Y);
-	float modifier = -std::log(stream.FRandRange(0.98 - noise/* e^(-4) */, 1)) / 4;
+	float adjustedNoiseFactor = (1.0 - noiseHeightInfluence) + (noise*noiseHeightInfluence);
+	float modifier = -std::log(stream.FRandRange(1.02f - adjustedNoiseFactor/* e^(-4) */, 1)) / 4;
 
-	return minFloors + (maxFloors - minFloors)*modifier*((1.0 - noiseHeightInfluence) + (noise*noiseHeightInfluence));
+	return minFloors + (maxFloors - minFloors)*modifier*adjustedNoiseFactor;
 	//return 5;
 }
 
