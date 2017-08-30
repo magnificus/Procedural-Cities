@@ -324,6 +324,8 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	TArray<FRoadSegment*> determinedSegments;
 	TArray<FRoadSegment> finishedSegments;
 	NoiseSingleton::getInstance()->setNoiseScale(noiseScale);
+	NoiseSingleton::getInstance()->xOffset = baseLibraryStream.RandRange(-10000, 10000);
+	NoiseSingleton::getInstance()->yOffset = baseLibraryStream.RandRange(-10000, 10000);
 
 	std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> queue;
 

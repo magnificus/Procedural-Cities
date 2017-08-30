@@ -39,11 +39,11 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 	return added;
 }
 FLine getCrossingLine(float dist, FPolygon road) {
-	FVector tanL = road.points[2] - road.points[1];
+	FVector tanL = road.points[1] - road.points[0];
 	float totLen = tanL.Size();
 	tanL.Normalize();
-	FVector startP = road.points[1] + totLen*dist*tanL;
-	FVector endP = intersection(startP, startP + FRotator(0, 270, 0).RotateVector(tanL) * 10000, road.points[0], road.points[3]);
+	FVector startP = road.points[0] + totLen*dist*tanL;
+	FVector endP = intersection(startP, startP + FRotator(0, 270, 0).RotateVector(tanL) * 10000, road.points[2], road.points[3]);
 	if (endP.X == 0.0f)
 		return{ FVector(0,0,0),FVector(0,0,0)};
 	return{ startP, endP };
@@ -84,12 +84,10 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 	FCityDecoration dec;
 	TMap<FMetaPolygon*, TSet<FMetaPolygon*>> connectionsMap;
 
-	UE_LOG(LogTemp, Warning, TEXT("getting city decoration"));
-
 	for (FPolygon road : roads) {
 		FMetaPolygon *firstHit = nullptr;
 		FMetaPolygon *sndHit = nullptr;
-		FLine line = getCrossingLine(0.3, road);
+		FLine line = getCrossingLine(0.25, road);
 		FLine testLine;
 		FVector tan = line.p2 - line.p1;
 		tan.Normalize();
@@ -115,11 +113,10 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 						offset.Normalize();
 						offset *= -300;
 						offset += lookingDir.RotateVector(FVector(700, 0, 0));
-						if (baseLibraryStream.FRandRange(0,0.9999) < 0.5) {
+						if (FMath::FRandRange(0,0.9999) < 0.5) {
 							dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,90,0), crossingLine.p1 - offset, FVector(1.0,1.0,1.0) } });
 							dec.meshes.Add(FMeshInfo{ "traffic_light", FTransform{ lookingDir + FRotator(0,270,0), crossingLine.p2 + offset, FVector(1.0,1.0,1.0) } });
 						}
-						UE_LOG(LogTemp, Warning, TEXT("placing traffic lights"));
 
 
 						break;

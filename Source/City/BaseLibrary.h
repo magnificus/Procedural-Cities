@@ -148,7 +148,7 @@ struct FPolygon
 	}
 
 	// not totally random, favors placement closer to the sides a bit, but good enough
-	FVector getRandomPoint(bool left, float minDist, FRandomStream stream = baseLibraryStream) {
+	FVector getRandomPoint(bool left, float minDist, FRandomStream &stream = baseLibraryStream) {
 		int place = stream.RandRange(1, points.Num());
 		FVector tangent = (points[place%points.Num()] - points[place - 1]);
 		FVector beginPlace = stream.FRand() * tangent + points[place - 1];
