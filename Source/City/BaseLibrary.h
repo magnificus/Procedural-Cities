@@ -25,8 +25,8 @@ struct SplitStruct {
 	FVector p2;
 };
 
-static float noiseXOffset = 0;
-static float noiseYOffset = 0;
+
+static FRandomStream baseLibraryStream;
 
 struct FPolygon;
 struct FMaterialPolygon;
@@ -148,7 +148,7 @@ struct FPolygon
 	}
 
 	// not totally random, favors placement closer to the sides a bit, but good enough
-	FVector getRandomPoint(bool left, float minDist, FRandomStream stream = FRandomStream(FMath::Rand())) {
+	FVector getRandomPoint(bool left, float minDist, FRandomStream stream = baseLibraryStream) {
 		int place = stream.RandRange(1, points.Num());
 		FVector tangent = (points[place%points.Num()] - points[place - 1]);
 		FVector beginPlace = stream.FRand() * tangent + points[place - 1];
@@ -345,8 +345,6 @@ struct FPolygon
 
 	FVector getPointDirection(int place, bool left) {
 		int prev = place == 0 ? points.Num() - 1 : place - 1;
-		//FVector dir1 = points[place] - points[prev];
-		//FVector dir2 = points[(place + 1)%points.Num()] - points[place];
 
 		FVector dir1 = getNormal(points[place], points[prev], left);
 		FVector dir2 = getNormal(points[(place + 1) % points.Num()], points[place] , left);
@@ -357,13 +355,11 @@ struct FPolygon
 		FVector totDir = dir1 + dir2;// - FVector::DotProduct(dir1, dir2) * (dir1);
 		totDir.Normalize();
 		return totDir;
-	//}
 
 	}
 
 	void symmetricShrink(float length, bool left) {
 		for (int i = 0; i < points.Num(); i++) {
-			//float distToCenter = FVector::Dist(getCenter(), points[i]);
 			points[i] += getPointDirection(i, left)*length;
 		}
 	}
@@ -739,11 +735,6 @@ struct FRoomPolygon : public FPolygon
 		updateConnections(p.min, p.p1, newP, true, 1, clusterDoorsInThis);
 
 		if (entrances.Contains(p.min)){
-			//if (splitEntrances)	{
-			//	newP->entrances.Add(1);
-			//}
-			//else {
-
 				// potentially add responsibility of child
 				FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(p.p1, points[p.min - 1]);
 				if (isOnLine(entrancePoint, p.p1, points[p.min])) {
@@ -770,7 +761,6 @@ struct FRoomPolygon : public FPolygon
 					for (FRoomPolygon* p2 : toRemove) {
 						activeConnections.Remove(p2);
 					}
-				//}
 			}
 		}
 
@@ -782,10 +772,6 @@ struct FRoomPolygon : public FPolygon
 			newP->exteriorWalls.Add(1);
 		}
 
-		//// move intersection to make more sense if possible
-		//FVector res = intersection(p.p1, p.p1 + FRotator(0, 270, 0).RotateVector(points[p.min] - points[p.min - 1]) * 50, points[p.max%points.Num()], points[p.max - 1]);
-		//if (res.X != 0.0f)
-		//	p.p2 = res;
 		if (toIgnore.Contains(p.min)) {
 			newP->toIgnore.Add(1);
 		}
@@ -851,10 +837,6 @@ struct FRoomPolygon : public FPolygon
 
 		if (entrances.Contains(p.max)){
 
-			//if (splitEntrances) {
-			//	newP->entrances.Add(newP->points.Num());
-			//}
-			//else {
 				FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max%points.Num()]);
 				if (isOnLine(entrancePoint, p.p2, points[p.max - 1])) {
 					if (specificEntrances.Contains(p.max))
@@ -882,7 +864,6 @@ struct FRoomPolygon : public FPolygon
 						activeConnections.Remove(p2);
 					}
 				}
-			//}
 		}
 		if (windows.Contains(p.max)) {
 			newP->windows.Add(newP->points.Num());

@@ -10,7 +10,7 @@ class CITY_API NoiseSingleton
 	//static float noiseTextureScale;
 	//static float noiseScale;
 private:
-	NoiseSingleton();// {}
+	NoiseSingleton();
 	static NoiseSingleton* instance;
 	UTexture2D* image;
 

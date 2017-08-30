@@ -541,7 +541,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 	// remove redundant points, zip together open polygons where end and beginning are really close together, and check orientation, and remove very pointy edges
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
-		while (f.points.Num() > 1 && FVector::Dist(f.points[f.points.Num() - 2], f.points[f.points.Num() - 1]) < 10.0f) {
+		while (f.points.Num() > 3 && FVector::Dist(f.points[f.points.Num() - 2], f.points[f.points.Num() - 1]) < 10.0f) {
 			f.points.RemoveAt(f.points.Num() - 1);
 		}
 		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) < maxConnect) {
@@ -550,7 +550,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		}
 		f.checkOrientation();
 
-		f.clipEdges(-0.9f);
+		f.clipEdges(-0.95f);
 		if (f.points.Num() < 3) {
 			polygons.RemoveAt(i);
 			i--;
@@ -790,21 +790,21 @@ TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int nu
 		if (point.X != 0.0f) {
 			hits++;
 			FPolygon temp;
-			//if (useRealPolygon)
-			//	temp = getPolygon(FRotator(0, 0, 0), point, name, *map);
-			//else
-			//	temp = getTinyPolygon(point);
-			//bool collision = testCollision(temp, blocking, 0, pol);
-			//if (!collision) {
+			if (useRealPolygon)
+				temp = getPolygon(FRotator(0, 0, 0), point, name, *map);
+			else
+				temp = getTinyPolygon(point);
+			bool collision = testCollision(temp, blocking, 0, pol);
+			if (!collision) {
 				FMeshInfo toAdd;
 				toAdd.description = name;
 				toAdd.transform = FTransform(point);
 				meshes.Add(toAdd);
 				blocking.Add(temp);
-			//}
+			}
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Out of %i attempts at placing %s randomly %i were successful"), num, *name, hits);
+	//UE_LOG(LogTemp, Warning, TEXT("Out of %i attempts at placing %s randomly %i were successful"), num, *name, hits);
 	return meshes;
 }
 
@@ -869,23 +869,23 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 		break;
 	}
 	case SimplePlotType::asphalt: {
-		if (FMath::FRand() < 0.3) {
+		if (baseLibraryStream.FRand() < 0.3) {
 			//FRoomPolygon rp;
 			//rp.points = pol.points;
 			//rp.reverse();
 			//for (int i = 0; i < FMath::RandRange(1, 5); i++)
 			//	rp.attemptPlace(blocking, meshes, true, 1, "trash_box", FRotator(0, 0, 270), FVector(0, 0, 0), map, false);
 			//meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "trash_box", FVector(100, 0, 0), true, &map));
-			int numToPlace = FMath::RandRange(1, 5);
-			int place = FMath::RandRange(1, pol.points.Num());
+			int numToPlace = baseLibraryStream.RandRange(1, 5);
+			int place = baseLibraryStream.RandRange(1, pol.points.Num());
 			FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
 			FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
 			float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
 			tan.Normalize();
 			FString name = "trash_box";
 			for (int i = 0; i < numToPlace; i++) {
-				FRotator finRot = tan.Rotation() + FRotator(0, 180, 0);
-				FVector loc = posStart + tan * i * 250 + finRot.RotateVector(FVector(-120, 0, 0));
+				FRotator finRot = tan.Rotation();
+				FVector loc = posStart + tan * i * 250 + finRot.RotateVector(FVector(0, 0, 0));
 				FPolygon toTest = getPolygon(finRot, loc, name, map); //getTinyPolygon(loc);
 				//if (!testCollision(toTest, blocking, 0, pol)) {
 					meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc}});

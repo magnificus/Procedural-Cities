@@ -178,7 +178,7 @@ FRotator getBestRotation(float maxDiffAllowed, FRotator original, FVector origin
 	float bestVal = -1000000;
 	FRotator bestRotator;
 	for (int i = 0; i < 10; i++) {
-		FRotator curr = original + FRotator(0, FMath::FRandRange(-maxDiffAllowed, maxDiffAllowed), 0);
+		FRotator curr = original + FRotator(0, baseLibraryStream.FRandRange(-maxDiffAllowed, maxDiffAllowed), 0);
 		FVector testPoint = originalPoint + curr.RotateVector(step);
 		float val = getValueOfRotation(testPoint, others, maxDist, detriment);
 		if (val > bestVal) {
@@ -220,7 +220,7 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	newRoad->endTangent = newRoad->p2 - newRoad->p1;
 	newRoadL->segment = newRoad;
 	float val = getValueOfRotation(newRoad->p2, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
-	newRoadL->time = -val + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.1*previous->time);// + FMath::FRand() * 0.1;
+	newRoadL->time = -val + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.1*previous->time);// + baseLibraryStream.FRand() * 0.1;
 	newRoadL->roadLength = previous->roadLength + 1;
 	newRoadL->previous = previous;
 	addVertices(newRoad);
@@ -266,7 +266,7 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 
 	//FVector mP = middle(newRoad->p1, newRoad->p2);
 	float val = getValueOfRotation(newRoad->p2, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
-	newRoadL->time = -val + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.1*previous->time);// + FMath::FRand() * 0.1;
+	newRoadL->time = -val + ((newRoad->type == RoadType::main) ? mainRoadAdvantage : 0) + std::abs(0.1*previous->time);// + baseLibraryStream.FRand() * 0.1;
 
 	newRoadL->roadLength = (previous->segment->type == RoadType::main && newType != RoadType::main) ? 1 : previous->roadLength+1;
 	newRoadL->previous = previous;
@@ -287,11 +287,11 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 		if (current->roadLength < maxMainRoadLength)
 			addRoadForward(queue, current, allsegments);
 
-		if (FMath::FRandRange(0, 1) < mainRoadBranchChance)
+		if (baseLibraryStream.FRandRange(0, 1) < mainRoadBranchChance)
 			addRoadSide(queue, current, true, mainRoadSize, allsegments, RoadType::main);
 		else
 			addRoadSide(queue, current, true, sndRoadSize, allsegments, RoadType::secondary);
-		if (FMath::FRandRange(0, 1) < mainRoadBranchChance)
+		if (baseLibraryStream.FRandRange(0, 1) < mainRoadBranchChance)
 			addRoadSide(queue, current, false, mainRoadSize, allsegments, RoadType::main);
 		else 
 			addRoadSide(queue, current, false, sndRoadSize, allsegments, RoadType::secondary);
@@ -316,6 +316,9 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	if (useTexture)
 		NoiseSingleton::getInstance()->setUseTexture(noiseTexture, noiseTextureScale);
+
+	// set the common random stream
+	baseLibraryStream = stream;
 
 	FVector origin;
 	TArray<FRoadSegment*> determinedSegments;
