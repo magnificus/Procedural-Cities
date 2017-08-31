@@ -715,13 +715,7 @@ struct FRoomPolygon : public FPolygon
 			passiveConnections[num].Remove(t);
 		}
 	}
-
-
-	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween, int preDeterminedNum = -1) {
-		SplitStruct p = getSplitProposal(false, approxRatio, preDeterminedNum);
-		if (p.p1.X == 0.0f) {
-			return NULL;
-		}
+	FRoomPolygon* splitAlongSplitStruct(SplitStruct p, bool entranceBetween) {
 
 		// determine if any room has no entrances yet, so we can try to cluster all entrances in the other room
 		int prelEntrancesNewP = 0;
@@ -1061,11 +1055,55 @@ struct FRoomPolygon : public FPolygon
 		for (auto &list : passiveConnections) {
 			totPassive += list.Value.Num();
 		}
-		return entrances.Num()	 + totPassive;
+		return entrances.Num()	+ totPassive;
 	}
 
 
 	// post placement part of algorithm, makes sure the required rooms are there and modifies existing rooms
+
+
+	static SplitStruct getSealOffLine(FRoomPolygon *r2) {
+		// make the bathroom just part of the room
+		FVector p1 = FVector(0, 0, 0);
+		FVector p2 = FVector(0, 0, 0);
+		int i1 = 0;
+		int i2 = 0;
+		auto it = r2->entrances.CreateIterator();
+		while (it && p2.X == 0.0f) {
+			if (p1.X == 0.0f) {
+				p1 = r2->specificEntrances.Contains(*it) ? r2->specificEntrances[*it] : middle(r2->points[*it%r2->points.Num()], r2->points[*it-1]);
+				i1 = *it;
+			}
+			else {
+				p2 = r2->specificEntrances.Contains(*it) ? r2->specificEntrances[*it] : middle(r2->points[*it%r2->points.Num()], r2->points[*it - 1]);
+				i2 = *it;
+			}
+			++it;
+		}
+		if (p2.X == 0.0f) {
+			auto it2 = r2->passiveConnections.CreateIterator();
+			while (it2 && p2.X == 0.0f) {
+				if (p1.X == 0.0f) {
+					i1 = it2->Key;
+					p1 = middle(r2->points[it2->Key%r2->points.Num()], r2->points[it2->Key - 1]);
+
+				}
+				else {
+					i2 = it2->Key;
+					p2 = middle(r2->points[it2->Key%r2->points.Num()], r2->points[it2->Key - 1]);
+				}
+				++it2;
+			}
+		}
+		if (i1 < i2) {
+			std::swap(i1, i2);
+			std::swap(p1, p2);
+		}
+		return SplitStruct{i1,i2, p1, p2 };
+	}
+
+
+
 	void postFit(TArray<FRoomPolygon*> &rooms, RoomBlueprint blueprint){
 
 		TArray<RoomSpecification> neededRooms = blueprint.needed;
@@ -1127,9 +1165,29 @@ struct FRoomPolygon : public FPolygon
 							break;
 						}
 					}
+
+					for (FRoomPolygon *p : rooms) {
+						if (p->getTotalConnections() == 2) {
+							FRoomPolygon *newP = p->splitAlongSplitStruct(getSealOffLine(p), true);
+							newP->type = current;
+							//SubRoomType prevType = p->type;
+							//remaining.RemoveAt(remaining.Num() - 1);
+							need[current]--;
+							//if (++need[prevType] > 0) {
+							//	remaining.Add(prevType);
+							//}
+							//p->type = current;
+							found = true;
+							rooms.Add(newP);
+							break;
+						}
+					}
 					// if this fails, there are no possible places for this room, TODO create a new room somewhere
-					need[current] --;
-					remaining.RemoveAt(remaining.Num() - 1);
+					if (!found) {
+						need[current] --;
+						remaining.RemoveAt(remaining.Num() - 1);
+					}
+
 				}
 				else {
 					// if this fails, there are no possible places for this room, TODO create a new room somewhere
@@ -1140,6 +1198,14 @@ struct FRoomPolygon : public FPolygon
 			}
 		}
 
+	}
+
+	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween, int preDeterminedNum = -1) {
+		SplitStruct p = getSplitProposal(false, approxRatio, preDeterminedNum);
+		if (p.p1.X == 0.0f) {
+			return NULL;
+		}
+		return splitAlongSplitStruct(p, entranceBetween);
 	}
 
 	TArray<FRoomPolygon*> getRooms(RoomBlueprint blueprint) {
@@ -1167,8 +1233,6 @@ struct FRoomPolygon : public FPolygon
 
 		return rooms;
 	}
-
-
 
 };
 

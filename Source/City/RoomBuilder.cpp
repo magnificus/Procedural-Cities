@@ -602,33 +602,6 @@ static FRoomInfo getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHierarchical
 }
 
 
-struct Line {
-	FVector p1;
-	FVector p2;
-};
-
-static Line getSealOffLine(FRoomPolygon *r2) {
-	// make the bathroom just part of the room
-	FVector p1 = FVector(0, 0, 0);
-	FVector p2 = FVector(0, 0, 0);
-	auto it = r2->entrances.CreateIterator();
-	while (it && p2.X == 0.0f) {
-		if (p1.X == 0.0f)
-			p1 = r2->specificEntrances[*it];
-		else
-			p2 = r2->specificEntrances[*it];
-	}
-	if (p2.X == 0.0f) {
-		auto it2 = r2->passiveConnections.CreateIterator();
-		while (it2 && p2.X == 0.0f) {
-			if (p1.X == 0.0f)
-				p1 = r2->specificEntrances[*it];
-			else
-				p2 = r2->specificEntrances[*it];
-		}
-	}
-	return Line{ p1, p2 };
-}
 
 
 static FRoomInfo getBathRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {

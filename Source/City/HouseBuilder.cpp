@@ -76,7 +76,7 @@ TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float h
 }
 
 // this function returns all of the first grade Room Polygons, these can later be expanded upon when finalizing the room in RoomBuilder
-TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth, float maxRoomArea, FRandomStream stream, TArray<FMaterialPolygon> &pols, float maxApartmentSize){
+TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth, FRandomStream stream, TArray<FMaterialPolygon> &pols, float maxApartmentSize){
 	TArray<FLine> lines;
 	
 	TArray<FRoomPolygon> roomPols;
@@ -213,11 +213,11 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 				}
 				extra.Add(*newP);
 				delete(newP);
-				if (p.getArea() > maxApartmentSize) {
-					FRoomPolygon* newP3 = p.splitAlongMax(0.5, false, p.points.Num()-1);
-					extra.Add(*newP3);
-					delete newP3;
-				}
+				//if (p.getArea() > maxApartmentSize) {
+				//	FRoomPolygon* newP3 = p.splitAlongMax(0.5, false, p.points.Num()-1);
+				//	extra.Add(*newP3);
+				//	delete newP3;
+				//}
 			}
 		}
 	}
@@ -827,7 +827,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	else
 		spec = &off;
 
-	TArray<FRoomPolygon> roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, true, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols, spec->getMaxApartmentSize());
+	TArray<FRoomPolygon> roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, true, corrWidth, stream, toReturn.roomInfo.pols, spec->getMaxApartmentSize());
 
 
 	// this variable defines how violently the shape of the building will change, i.e. how often potentiallyShrink is called
@@ -904,7 +904,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 		if (horizontalFacade)
 			addFacade(f, toReturn.roomInfo, floorHeight*i + 1, 70, 20);
 
-		roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols, spec->getMaxApartmentSize());
+		roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, stream, toReturn.roomInfo.pols, spec->getMaxApartmentSize());
 		for (FRoomPolygon &p : roomPols) {
 			p.windowType = currentWindowType;
 			//FRoomInfo newR = ARoomBuilder::buildRoom(&p, 1, floorHeight, map, potentialBalcony, shellOnly, stream);
