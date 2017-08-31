@@ -22,6 +22,7 @@ public:
 	virtual float getWindowWidth(FRandomStream stream) = 0;
 	virtual float getWindowHeight(FRandomStream stream) = 0;
 	virtual bool getWindowFrames() = 0;
+	virtual float getMaxApartmentSize() = 0;
 };
 
 class CITY_API OfficeSpecification : public ApartmentSpecification
@@ -32,6 +33,7 @@ public:
 	float getWindowWidth(FRandomStream stream) { return 200; }
 	float getWindowHeight(FRandomStream stream) { return 300; }
 	bool getWindowFrames() { return false; }
+	float getMaxApartmentSize() { return 500; }
 
 };
 
@@ -45,6 +47,7 @@ public:
 	float getWindowWidth(FRandomStream stream) { return 200.0f; }
 	float getWindowHeight(FRandomStream stream) { return 200.0f; }
 	bool getWindowFrames() { return true;}
+	float getMaxApartmentSize() { return 200; }
 
 };
 
@@ -57,6 +60,8 @@ public:
 	float getWindowWidth(FRandomStream stream) { return stream.FRandRange(200, 400); }
 	float getWindowHeight(FRandomStream stream) { return stream.FRandRange(200, 300); }
 	bool getWindowFrames() { return true; }
+	float getMaxApartmentSize() { return 5000; }
+
 
 };
 
@@ -69,5 +74,6 @@ public:
 	float getWindowWidth(FRandomStream stream) { return stream.FRandRange(200, 400); }
 	float getWindowHeight(FRandomStream stream) { return stream.FRandRange(200, 300); }
 	bool getWindowFrames() { return true; }
+	float getMaxApartmentSize() { return 5000; }
 
 };

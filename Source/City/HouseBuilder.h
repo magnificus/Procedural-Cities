@@ -19,7 +19,6 @@ class CITY_API AHouseBuilder : public AActor
 
 	FHousePolygon f;
 	float floorHeight = 400.0;
-	float maxRoomArea = 500;
 	float maxHouseArea = 2000.0f;
 
 	float minHouseArea = 100.0f;
@@ -67,10 +66,9 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-		void init(FHousePolygon f_in, float floorHeight_in, float maxRoomArea_in, float minHouseArea_in, int makeInterestingAttempts_in, bool generateRoofs_in, GenerationMode generationMode_in){
+		void init(FHousePolygon f_in, float floorHeight_in, float minHouseArea_in, int makeInterestingAttempts_in, bool generateRoofs_in, GenerationMode generationMode_in){
 		f = f_in;
 		floorHeight = floorHeight_in;
-		maxRoomArea = maxRoomArea_in;
 		minHouseArea = minHouseArea_in;
 		makeInterestingAttempts = makeInterestingAttempts_in;
 		floorHeight = floorHeight_in;

@@ -601,10 +601,51 @@ static FRoomInfo getRestaurantRoom(FRoomPolygon *r2, TMap<FString, UHierarchical
 	return r;
 }
 
+
+struct Line {
+	FVector p1;
+	FVector p2;
+};
+
+static Line getSealOffLine(FRoomPolygon *r2) {
+	// make the bathroom just part of the room
+	FVector p1 = FVector(0, 0, 0);
+	FVector p2 = FVector(0, 0, 0);
+	auto it = r2->entrances.CreateIterator();
+	while (it && p2.X == 0.0f) {
+		if (p1.X == 0.0f)
+			p1 = r2->specificEntrances[*it];
+		else
+			p2 = r2->specificEntrances[*it];
+	}
+	if (p2.X == 0.0f) {
+		auto it2 = r2->passiveConnections.CreateIterator();
+		while (it2 && p2.X == 0.0f) {
+			if (p1.X == 0.0f)
+				p1 = r2->specificEntrances[*it];
+			else
+				p2 = r2->specificEntrances[*it];
+		}
+	}
+	return Line{ p1, p2 };
+}
+
+
 static FRoomInfo getBathRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	FRoomInfo r;
 	TArray<FPolygon> placed;
 
+
+	//if (r2->getTotalConnections() > 1) {
+	//	Line line = getSealOffLine(r2);
+	//	FMaterialPolygon newP;
+	//	newP.type = PolygonType::interior;
+	//	newP.points.Add(line.p1 + FVector(0, 0, 400));
+	//	newP.points.Add(line.p1 + FVector(0, 0, 0));
+	//	newP.points.Add(line.p2 + FVector(0, 0, 0));
+	//	newP.points.Add(line.p2 + FVector(0, 0, 400));
+	//	r.pols.Add(newP);
+	//}
 	TArray<FPolygon> blocking = getBlockingVolumes(r2, 200, 100);
 	placed.Append(blocking);
 	r2->attemptPlace(placed, r.meshes, false, 2, "toilet" , FRotator(0, 270, 0), FVector(0, 0, 0), map, false);

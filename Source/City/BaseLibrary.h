@@ -718,7 +718,7 @@ struct FRoomPolygon : public FPolygon
 
 
 	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween, int preDeterminedNum = -1) {
-		SplitStruct p = getSplitProposal(false, approxRatio);
+		SplitStruct p = getSplitProposal(false, approxRatio, preDeterminedNum);
 		if (p.p1.X == 0.0f) {
 			return NULL;
 		}
@@ -1080,7 +1080,7 @@ struct FRoomPolygon : public FPolygon
 			if (p->entrances.Num() > p->specificEntrances.Num() && blueprint.useHallway) {
 				p->type = SubRoomType::hallway;
 			}
-			if (!splitableType(p->type) && p->getTotalConnections() > 1 && !need.Contains(p->type)) {
+			if (!splitableType(p->type) && p->getTotalConnections() > 1) {
 				p->type = SubRoomType::corridor;
 			}
 			if (need.Contains(p->type))
@@ -1162,7 +1162,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true, false));
 
 		rooms.Append(remaining);
-		//postFit(rooms, blueprint);
+		postFit(rooms, blueprint);
 
 
 		return rooms;

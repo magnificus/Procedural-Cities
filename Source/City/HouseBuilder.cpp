@@ -76,7 +76,7 @@ TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float h
 }
 
 // this function returns all of the first grade Room Polygons, these can later be expanded upon when finalizing the room in RoomBuilder
-TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth, float maxRoomArea, FRandomStream stream, TArray<FMaterialPolygon> &pols){
+TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth, float maxRoomArea, FRandomStream stream, TArray<FMaterialPolygon> &pols, float maxApartmentSize){
 	TArray<FLine> lines;
 	
 	TArray<FRoomPolygon> roomPols;
@@ -196,31 +196,28 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 	TArray<FRoomPolygon> extra;
 	// we can split a polygon one time without fearing that any room is left without entrance 
 	for (FRoomPolygon &p : roomPols) {
-		if (p.getArea() > maxRoomArea) {
-			FRoomPolygon* newP = p.splitAlongMax(0.5, false);
+		if (p.getArea() > maxApartmentSize) {
+			FRoomPolygon* newP = p.splitAlongMax(0.5, false, 1);
 			if (newP) {
 				// gotta make sure both apartments have an entrance
-				if (newP->exteriorWalls.Contains(1))
-					newP->entrances.Add(newP->points.Num() - 1);
-				else
-					newP->entrances.Add(1);
+				int newPEntrance = newP->exteriorWalls.Contains(1) ? newP->points.Num() - 1 : 1;
+				newP->entrances.Add(newPEntrance);
+				
+				int pEntrance = p.exteriorWalls.Contains(1) ? p.points.Num() - 1 : 1;
+				p.entrances.Add(pEntrance);
 
-				if (p.exteriorWalls.Contains(1))
-					p.entrances.Add(p.points.Num() - 1);
-				else
-					p.entrances.Add(1);
-				//if (newP->getArea() > maxRoomArea) {
-				//	FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false, true);
-				//	extra.Add(*newP2);
-				//	delete(newP2);
-				//}
+				if (newP->getArea() > maxApartmentSize) {
+					FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false, newPEntrance);
+					extra.Add(*newP2);
+					delete(newP2);
+				}
 				extra.Add(*newP);
 				delete(newP);
-				//if (p.getArea() > maxRoomArea) {
-				//	FRoomPolygon* newP3 = p.splitAlongMax(0.5, false, true);
-				//	extra.Add(*newP3);
-				//	delete newP3;
-				//}
+				if (p.getArea() > maxApartmentSize) {
+					FRoomPolygon* newP3 = p.splitAlongMax(0.5, false, p.points.Num()-1);
+					extra.Add(*newP3);
+					delete newP3;
+				}
 			}
 		}
 	}
@@ -818,7 +815,6 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	}
 	int floors = f.height;
 
-	TArray<FRoomPolygon> roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, true, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
 
 	LivingSpecification liv;
 	OfficeSpecification off;
@@ -830,6 +826,9 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 		spec = &liv;
 	else
 		spec = &off;
+
+	TArray<FRoomPolygon> roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, true, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols, spec->getMaxApartmentSize());
+
 
 	// this variable defines how violently the shape of the building will change, i.e. how often potentiallyShrink is called
 	float myChangeIntensity = stream.FRandRange(0, 0.35);
@@ -905,7 +904,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 		if (horizontalFacade)
 			addFacade(f, toReturn.roomInfo, floorHeight*i + 1, 70, 20);
 
-		roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols);
+		roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, maxRoomArea, stream, toReturn.roomInfo.pols, spec->getMaxApartmentSize());
 		for (FRoomPolygon &p : roomPols) {
 			p.windowType = currentWindowType;
 			//FRoomInfo newR = ARoomBuilder::buildRoom(&p, 1, floorHeight, map, potentialBalcony, shellOnly, stream);

@@ -133,9 +133,9 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
 		float offsetSize = 500;
 
-	// maximum size of apartment
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = rooms, meta = (AllowPrivateAccess = "true"))
-		float maxRoomSize = 500;
+	//// maximum size of apartment
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = rooms, meta = (AllowPrivateAccess = "true"))
+	//	float maxRoomSize = 500;
 		
 
 	// extra length of lines placed for plot generation
