@@ -786,12 +786,12 @@ struct FRoomPolygon : public FPolygon
 				for (auto &pair : activeConnections) {
 					if (pair.Value == i) {
 						FRoomPolygon *p1 = pair.Key;
-						for (int j = 1; j < p1->points.Num(); j++) {
-							if (p1->passiveConnections.Contains(j) && p1->passiveConnections[j].Contains(this)) {
+						for (auto &a : p1->passiveConnections) {
+							if (a.Value.Contains(this)) {
 								toRemove.Add(p1);
 								//activeConnections.Remove(p1);
-								p1->passiveConnections[j].Remove(this);
-								p1->passiveConnections[j].Add(newP);
+								a.Value.Remove(this);
+								a.Value.Add(newP);
 								newP->activeConnections.Add(p1, newP->points.Num());
 								break;
 							}
@@ -1063,140 +1063,208 @@ struct FRoomPolygon : public FPolygon
 
 
 	static SplitStruct getSealOffLine(FRoomPolygon *r2) {
-		// make the bathroom just part of the room
-		FVector p1 = FVector(0, 0, 0);
-		FVector p2 = FVector(0, 0, 0);
+		// get split struct for cut off room inside current room
+
+		std::vector<FVector> max;
+		std::vector<FVector> min;
+
+
+		FVector p1Min = FVector(0, 0, 0);
+		FVector p1Max = FVector(0, 0, 0);
+		FVector p2Min = FVector(0, 0, 0);
+		FVector p2Max = FVector(0, 0, 0);
 		int i1 = 0;
 		int i2 = 0;
 		auto it = r2->entrances.CreateIterator();
-		while (it && p2.X == 0.0f) {
-			if (p1.X == 0.0f) {
-				p1 = r2->specificEntrances.Contains(*it) ? r2->specificEntrances[*it] : middle(r2->points[*it%r2->points.Num()], r2->points[*it-1]);
+		while (it && p2Min.X == 0.0f) {
+			FVector pos = r2->specificEntrances.Contains(*it) ? r2->specificEntrances[*it] : middle(r2->points[*it%r2->points.Num()], r2->points[*it - 1]);
+			FVector tan = r2->points[*it%r2->points.Num()] - r2->points[*it - 1];
+			tan.Normalize();
+			FVector beginPos = pos - tan * 100;
+			FVector endPos = pos + tan * 100;
+			if (p1Min.X == 0.0f) {
+				p1Min = beginPos;
+				p1Max = endPos;
 				i1 = *it;
 			}
 			else {
-				p2 = r2->specificEntrances.Contains(*it) ? r2->specificEntrances[*it] : middle(r2->points[*it%r2->points.Num()], r2->points[*it - 1]);
+				p2Min = beginPos;
+				p2Max = endPos;
 				i2 = *it;
 			}
 			++it;
 		}
-		if (p2.X == 0.0f) {
+		if (p2Min.X == 0.0f) {
 			auto it2 = r2->passiveConnections.CreateIterator();
-			while (it2 && p2.X == 0.0f) {
-				if (p1.X == 0.0f) {
+			while (it2 && p2Min.X == 0.0f) {
+				FVector beginPos;
+				FVector endPos;
+				for (auto &room : it2->Value) {
+					for (auto &passiveConn : room->passiveConnections) {
+						if (passiveConn.Value.Contains(r2)) {
+							int pos = room->activeConnections[r2];
+							FVector tan = room->points[pos%room->points.Num()] - room->points[pos - 1];
+							tan.Normalize();
+							beginPos = room->specificEntrances[pos] - tan * 100;
+							endPos = room->specificEntrances[pos] + tan * 100;
+						}
+					}
+				}
+				if (p1Min.X == 0.0f) {
 					i1 = it2->Key;
-					p1 = middle(r2->points[it2->Key%r2->points.Num()], r2->points[it2->Key - 1]);
+					p1Min = beginPos;
+					p1Max = endPos;
 
 				}
 				else {
 					i2 = it2->Key;
-					p2 = middle(r2->points[it2->Key%r2->points.Num()], r2->points[it2->Key - 1]);
+					p2Min = beginPos;
+					p2Max = endPos;
 				}
 				++it2;
 			}
 		}
-		if (i1 < i2) {
+		FVector p1 = p1Max;
+		FVector p2 = p2Min;
+		if (i1 > i2) {
 			std::swap(i1, i2);
-			std::swap(p1, p2);
+			p1 = p2Max;
+			p2 = p1Min;
 		}
+		if (p1.X == 0.0f || p2.X == 0.0f)
+			return SplitStruct{ -1, -1, FVector(0,0,0), FVector(0, 0, 0) };
 		return SplitStruct{i1,i2, p1, p2 };
 	}
 
 
 
-	void postFit(TArray<FRoomPolygon*> &rooms, RoomBlueprint blueprint){
+	FRoomPolygon* splitAndCreateSingleEntranceRoom(FRoomPolygon* room) {
+		//FRoomPolygon cp = *room;
+		//for (int i = 1; i < room->points.Num(); i++) {
+		//	FRoomPolygon *newP = room->splitAlongMax(0.5, true, i);
 
-		TArray<RoomSpecification> neededRooms = blueprint.needed;
-		TMap<SubRoomType, int32> need;
-		for (RoomSpecification r : neededRooms) {
-			if (need.Contains(r.type))
-				need[r.type] ++;
-			else
-				need.Add(r.type, 1);
-		}
-		for (FRoomPolygon *p : rooms) {
-			if (p->entrances.Num() > p->specificEntrances.Num() && blueprint.useHallway) {
-				p->type = SubRoomType::hallway;
-			}
-			if (!splitableType(p->type) && p->getTotalConnections() > 1) {
-				p->type = SubRoomType::corridor;
-			}
-			if (need.Contains(p->type))
-				need[p->type] --;
-		}
+		//	if (newP != NULL) {
+		//		if (newP->getTotalConnections() < 2) {
+		//			newP->type = room->type;
+		//			room->type = SubRoomType::corridor;
+		//			return newP;
+		//		}
+		//		else {
+		//			delete newP;
+		//			*room = cp;
+		//		}
+		//	}
+		//}
+		//return nullptr;
+	}
 
-		TArray<SubRoomType> remaining;
-		for (auto &spec : need) {
-			for (int i = 0; i < spec.Value; i++) {
-				remaining.Add(spec.Key);
-			}
-		}
+	void postFit(TArray<FRoomPolygon*> &rooms){
 
-		while (remaining.Num() > 0) {
-			SubRoomType current = remaining[remaining.Num() - 1];
-
-			bool found = false;
-			for (FRoomPolygon *p : rooms) {
-				// first pick non-needed rooms
-				if (!need.Contains(p->type) && ((splitableType(current) || p->getTotalConnections() < 2))) {
-					p->type = current;
-					found = true;
-					break;
-				}
-			}
-			if (found) {
-				remaining.RemoveAt(remaining.Num() - 1);
-				need[current] --;
-				continue;
-			}
-			else {
-				if (!splitableType(current)) {
-					// consider picking rooms that already contains an essential room
-					for (FRoomPolygon *p : rooms) {
-						if (splitableType(p->type) && p->getTotalConnections() < 2) {
-							SubRoomType prevType = p->type;
-							remaining.RemoveAt(remaining.Num() - 1);
-							need[current]--;
-							if (++need[prevType] > 0) {
-								remaining.Add(prevType);
-							}
-							p->type = current;
-							found = true;
-							break;
-						}
-					}
-
-					for (FRoomPolygon *p : rooms) {
-						if (p->getTotalConnections() == 2) {
-							FRoomPolygon *newP = p->splitAlongSplitStruct(getSealOffLine(p), true);
-							newP->type = current;
-							//SubRoomType prevType = p->type;
-							//remaining.RemoveAt(remaining.Num() - 1);
-							need[current]--;
-							//if (++need[prevType] > 0) {
-							//	remaining.Add(prevType);
-							//}
-							//p->type = current;
-							found = true;
-							rooms.Add(newP);
-							break;
-						}
-					}
-					// if this fails, there are no possible places for this room, TODO create a new room somewhere
-					if (!found) {
-						need[current] --;
-						remaining.RemoveAt(remaining.Num() - 1);
-					}
-
-				}
-				else {
-					// if this fails, there are no possible places for this room, TODO create a new room somewhere
-					need[current] --;
-					remaining.RemoveAt(remaining.Num() - 1);
-				}
-
+		TArray<FRoomPolygon*> toAdd;
+		for (FRoomPolygon *room : rooms) {
+			if (!splitableType(room->type) && room->getTotalConnections() > 1) {
+				// need to modify room
+				FRoomPolygon* res = splitAndCreateSingleEntranceRoom(room);
+				if (res != nullptr)
+					toAdd.Add(res);
 			}
 		}
+		rooms.Append(toAdd);
+		//TArray<RoomSpecification> neededRooms = blueprint.needed;
+		//TMap<SubRoomType, int32> need;
+		//for (RoomSpecification r : neededRooms) {
+		//	if (need.Contains(r.type))
+		//		need[r.type] ++;
+		//	else
+		//		need.Add(r.type, 1);
+		//}
+		//for (FRoomPolygon *p : rooms) {
+		//	if (p->entrances.Num() > p->specificEntrances.Num() && blueprint.useHallway) {
+		//		p->type = SubRoomType::hallway;
+		//	}
+		//	if (!splitableType(p->type) && p->getTotalConnections() > 1) {
+		//		p->type = SubRoomType::corridor;
+		//	}
+		//	if (need.Contains(p->type))
+		//		need[p->type] --;
+		//}
+
+		//TArray<SubRoomType> remaining;
+		//for (auto &spec : need) {
+		//	for (int i = 0; i < spec.Value; i++) {
+		//		remaining.Add(spec.Key);
+		//	}
+		//}
+
+		//while (remaining.Num() > 0) {
+		//	SubRoomType current = remaining[remaining.Num() - 1];
+
+		//	bool found = false;
+		//	for (FRoomPolygon *p : rooms) {
+		//		// first pick non-needed rooms
+		//		if (!need.Contains(p->type) && ((splitableType(current) || p->getTotalConnections() < 2))) {
+		//			p->type = current;
+		//			found = true;
+		//			break;
+		//		}
+		//	}
+		//	if (found) {
+		//		remaining.RemoveAt(remaining.Num() - 1);
+		//		need[current] --;
+		//		continue;
+		//	}
+		//	else {
+		//		if (!splitableType(current)) {
+		//			// consider picking rooms that already contains an essential room
+		//			for (FRoomPolygon *p : rooms) {
+		//				if (splitableType(p->type) && p->getTotalConnections() < 2) {
+		//					SubRoomType prevType = p->type;
+		//					remaining.RemoveAt(remaining.Num() - 1);
+		//					need[current]--;
+		//					if (++need[prevType] > 0) {
+		//						remaining.Add(prevType);
+		//					}
+		//					p->type = current;
+		//					found = true;
+		//					break;
+		//				}
+		//			}
+
+		//			for (FRoomPolygon *p : rooms) {
+		//				if (p->getTotalConnections() == 2 && p->getArea() > 100) {
+		//					SplitStruct res = getSealOffLine(p);
+		//					if (res.p1.X == 0.0f)
+		//						continue;
+		//					FRoomPolygon *newP = p->splitAlongSplitStruct(res, true);
+		//					newP->type = current;
+		//					//SubRoomType prevType = p->type;
+		//					need[current]--;
+		//					remaining.RemoveAt(remaining.Num() - 1);
+
+		//					//if (++need[prevType] > 0) {
+		//					//	remaining.Add(prevType);
+		//					//}
+		//					//p->type = current;
+		//					found = true;
+		//					rooms.Add(newP);
+		//					break;
+		//				}
+		//			}
+		//			// if this fails, there are no possible places for this room, TODO create a new room somewhere
+		//			if (!found) {
+		//				need[current] --;
+		//				remaining.RemoveAt(remaining.Num() - 1);
+		//			}
+
+		//		}
+		//		else {
+		//			// if this fails, there are no possible places for this room, TODO create a new room somewhere
+		//			need[current] --;
+		//			remaining.RemoveAt(remaining.Num() - 1);
+		//		}
+
+		//	}
+		//}
 
 	}
 
@@ -1228,7 +1296,9 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true, false));
 
 		rooms.Append(remaining);
-		postFit(rooms, blueprint);
+		// fix unSplitable rooms
+
+		postFit(rooms);
 
 
 		return rooms;
