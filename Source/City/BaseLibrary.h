@@ -1062,10 +1062,6 @@ struct FRoomPolygon : public FPolygon
 	static SplitStruct getSealOffLine(FRoomPolygon *r2) {
 		// get split struct for cut off room inside current room
 
-		std::vector<int> points;
-		std::vector<FVector> max;
-		std::vector<FVector> min;
-
 		int current = 0;
 		
 		FVector firstB = FVector(0,0,0);
@@ -1222,7 +1218,7 @@ struct FRoomPolygon : public FPolygon
 	FRoomPolygon* splitAndCreateSingleEntranceRoom(FRoomPolygon* room) {
 		FRoomPolygon cp = *room;
 		SplitStruct res = getSealOffLine(room);
-		if (res.max == -1)
+		if (res.p1.X == 0.0f)
 			return nullptr;
 		FRoomPolygon *other = room->splitAlongSplitStruct(res, true);
 		if (other == nullptr)
@@ -1369,7 +1365,7 @@ struct FRoomPolygon : public FPolygon
 	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween, int preDeterminedNum = -1) {
 		SplitStruct p = getSplitProposal(false, approxRatio, preDeterminedNum);
 		if (p.p1.X == 0.0f) {
-			return NULL;
+			return nullptr;
 		}
 		return splitAlongSplitStruct(p, entranceBetween);
 	}
