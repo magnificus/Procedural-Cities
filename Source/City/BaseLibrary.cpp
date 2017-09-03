@@ -263,7 +263,7 @@ TArray<FPolygon> getBlockingEntrances(TArray<FVector> points, TSet<int32> entran
 	for (int i : entrances) {
 		FPolygon entranceBlock;
 
-		FVector inMiddle = specificEntrances.Contains(i) ? specificEntrances[i] : middle(points[i%points.Num()], points[i - 1]);
+		FVector inMiddle = specificEntrances.Contains(i) ? specificEntrances[i] : middle(points[i%points.Num()], points[(i - 1)%points.Num()]);
 		FVector tangent = points[i%points.Num()] - points[i - 1];
 		tangent.Normalize();
 		FVector altTangent = FRotator(0, 90, 0).RotateVector(tangent);

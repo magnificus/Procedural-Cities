@@ -1059,87 +1059,185 @@ struct FRoomPolygon : public FPolygon
 	}
 
 
-	// post placement part of algorithm, makes sure the required rooms are there and modifies existing rooms
-
-
 	static SplitStruct getSealOffLine(FRoomPolygon *r2) {
 		// get split struct for cut off room inside current room
 
+		std::vector<int> points;
 		std::vector<FVector> max;
 		std::vector<FVector> min;
 
+		int current = 0;
+		
+		FVector firstB = FVector(0,0,0);
+		FVector firstE = FVector(0,0,0);
+		int firstI = -1;
+		FVector currB = FVector(0,0,0);
+		FVector currE = FVector(0,0,0);
+		int currI = -1;
+		float biggestArea = 10;
+		FVector bestP1;
+		FVector bestP2;
+		int bestMin = -1;
+		int bestMax = -1;
 
-		FVector p1Min = FVector(0, 0, 0);
-		FVector p1Max = FVector(0, 0, 0);
-		FVector p2Min = FVector(0, 0, 0);
-		FVector p2Max = FVector(0, 0, 0);
-		int i1 = 0;
-		int i2 = 0;
-		auto it = r2->entrances.CreateIterator();
-		while (it && p2Min.X == 0.0f) {
-			FVector pos = r2->specificEntrances.Contains(*it) ? r2->specificEntrances[*it] : middle(r2->points[*it%r2->points.Num()], r2->points[*it - 1]);
-			FVector tan = r2->points[*it%r2->points.Num()] - r2->points[*it - 1];
-			tan.Normalize();
-			FVector beginPos = pos - tan * 100;
-			FVector endPos = pos + tan * 100;
-			if (p1Min.X == 0.0f) {
-				p1Min = beginPos;
-				p1Max = endPos;
-				i1 = *it;
+		for (int i = 1; i < r2->points.Num() + 1; i++) {
+			FVector point = FVector(0, 0, 0);
+			FVector tan = FVector(0, 0, 0);
+			if (r2->entrances.Contains(i)) {
+				point = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
+				tan = r2->points[i%r2->points.Num()] - r2->points[i - 1];
+				tan.Normalize();
 			}
-			else {
-				p2Min = beginPos;
-				p2Max = endPos;
-				i2 = *it;
-			}
-			++it;
-		}
-		if (p2Min.X == 0.0f) {
-			auto it2 = r2->passiveConnections.CreateIterator();
-			while (it2 && p2Min.X == 0.0f) {
-				FVector beginPos;
-				FVector endPos;
-				for (auto &room : it2->Value) {
-					for (auto &passiveConn : room->passiveConnections) {
-						if (passiveConn.Value.Contains(r2)) {
-							int pos = room->activeConnections[r2];
-							FVector tan = room->points[pos%room->points.Num()] - room->points[pos - 1];
-							tan.Normalize();
-							beginPos = room->specificEntrances[pos] - tan * 100;
-							endPos = room->specificEntrances[pos] + tan * 100;
-						}
-					}
+			else if (r2->passiveConnections.Contains(i)) {
+				for (auto room : r2->passiveConnections[i]) {
+					int loc = room->activeConnections[r2];
+					point = room->specificEntrances[loc];
+					tan = -room->points[loc%room->points.Num()] - room->points[loc - 1];
+					tan.Normalize();
 				}
-				if (p1Min.X == 0.0f) {
-					i1 = it2->Key;
-					p1Min = beginPos;
-					p1Max = endPos;
+			}
+			if (point.X != 0.0f) {
+				FVector newCurrB = point - tan * 101;
+				FVector newCurrE = point + tan * 101;
+				if (firstB.X == 0.0f) {
+					firstB = newCurrB;
+					firstE = newCurrE;
+					firstI = i;
 
 				}
 				else {
-					i2 = it2->Key;
-					p2Min = beginPos;
-					p2Max = endPos;
+					// try building polygon with newCurr and curr as split
+					FPolygon temp;
+					//temp += newCurrB;
+					temp += currE;
+					for (int j = currI; j < i; j++)
+						temp += r2->points[j];
+					temp += newCurrB;
+
+					if (temp.getArea() > biggestArea) {
+						bestP1 = currE;
+						bestP2 = newCurrB;
+						bestMin = currI;
+						bestMax = i;
+						biggestArea = temp.getArea();
+					}
+					//;temp
 				}
-				++it2;
+
+				currE = newCurrE;
+				currB = newCurrB;
+				currI = i;
+
 			}
 		}
-		FVector p1 = p1Max;
-		FVector p2 = p2Min;
-		if (i1 > i2) {
-			std::swap(i1, i2);
-			p1 = p2Max;
-			p2 = p1Min;
+
+		FPolygon temp;
+		//temp += newCurrB;
+		temp += firstE;
+		for (int j = firstI; j < currI; j++)
+			temp += r2->points[j];
+		temp += currB;
+
+		if (temp.getArea() > biggestArea) {
+			bestP1 = firstE;
+			bestP2 = currB;
+			bestMin = firstI;
+			bestMax = currI;
+			biggestArea = temp.getArea();
 		}
-		if (p1.X == 0.0f || p2.X == 0.0f)
-			return SplitStruct{ -1, -1, FVector(0,0,0), FVector(0, 0, 0) };
-		return SplitStruct{i1,i2, p1, p2 };
+
+
+		return SplitStruct{ bestMin, bestMax , bestP1, bestP2};
+
+
+		//FVector p1Min = FVector(0, 0, 0);
+		//FVector p1Max = FVector(0, 0, 0);
+		//FVector p2Min = FVector(0, 0, 0);
+		//FVector p2Max = FVector(0, 0, 0);
+		//int i1 = 0;
+		//int i2 = 0;
+		//auto it = r2->entrances.CreateIterator();
+		//while (it && p2Min.X == 0.0f) {
+		//	FVector pos = r2->specificEntrances.Contains(*it) ? r2->specificEntrances[*it] : middle(r2->points[*it%r2->points.Num()], r2->points[*it - 1]);
+		//	FVector tan = r2->points[*it%r2->points.Num()] - r2->points[*it - 1];
+		//	tan.Normalize();
+		//	FVector beginPos = pos - tan * 100;
+		//	FVector endPos = pos + tan * 100;
+		//	if (p1Min.X == 0.0f) {
+		//		p1Min = beginPos;
+		//		p1Max = endPos;
+		//		i1 = *it;
+		//	}
+		//	else {
+		//		p2Min = beginPos;
+		//		p2Max = endPos;
+		//		i2 = *it;
+		//	}
+		//	++it;
+		//}
+		//if (p2Min.X == 0.0f) {
+		//	auto it2 = r2->passiveConnections.CreateIterator();
+		//	while (it2 && p2Min.X == 0.0f) {
+		//		FVector beginPos;
+		//		FVector endPos;
+		//		for (auto &room : it2->Value) {
+		//			for (auto &passiveConn : room->passiveConnections) {
+		//				if (passiveConn.Value.Contains(r2)) {
+		//					int pos = room->activeConnections[r2];
+		//					FVector tan = room->points[pos%room->points.Num()] - room->points[pos - 1];
+		//					tan.Normalize();
+		//					beginPos = room->specificEntrances[pos] - tan * 100;
+		//					endPos = room->specificEntrances[pos] + tan * 100;
+		//				}
+		//			}
+		//		}
+		//		if (p1Min.X == 0.0f) {
+		//			i1 = it2->Key;
+		//			p1Min = beginPos;
+		//			p1Max = endPos;
+
+		//		}
+		//		else {
+		//			i2 = it2->Key;
+		//			p2Min = beginPos;
+		//			p2Max = endPos;
+		//		}
+		//		++it2;
+		//	}
+		//}
+		//FVector p1 = p1Max;
+		//FVector p2 = p2Min;
+		//if (i1 > i2) {
+		//	std::swap(i1, i2);
+		//	p1 = p2Max;
+		//	p2 = p1Min;
+		//}
+		//if (p1.X == 0.0f || p2.X == 0.0f)
+		//	return SplitStruct{ -1, -1, FVector(0,0,0), FVector(0, 0, 0) };
+		//return SplitStruct{i1,i2, p1, p2 };
 	}
 
 
 
 	FRoomPolygon* splitAndCreateSingleEntranceRoom(FRoomPolygon* room) {
-		//FRoomPolygon cp = *room;
+		FRoomPolygon cp = *room;
+		SplitStruct res = getSealOffLine(room);
+		if (res.max == -1)
+			return nullptr;
+		FRoomPolygon *other = room->splitAlongSplitStruct(res, true);
+		if (other == nullptr)
+			return nullptr;
+		if (other->getTotalConnections() > 1) {
+			room->type = room->type;
+			other->type = SubRoomType::corridor;
+		}
+		else {
+			other->type = room->type;
+			room->type = SubRoomType::corridor;
+		}
+		//	std::swap(other, room);
+
+		return other;
 		//for (int i = 1; i < room->points.Num(); i++) {
 		//	FRoomPolygon *newP = room->splitAlongMax(0.5, true, i);
 
@@ -1298,7 +1396,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(remaining);
 		// fix unSplitable rooms
 
-		postFit(rooms);
+		//postFit(rooms);
 
 
 		return rooms;
