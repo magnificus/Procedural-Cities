@@ -39,11 +39,11 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 	return added;
 }
 FLine getCrossingLine(float dist, FPolygon road) {
-	FVector tanL = road.points[1] - road.points[0];
+	FVector tanL = road.points[2] - road.points[1];
 	float totLen = tanL.Size();
 	tanL.Normalize();
-	FVector startP = road.points[0] + totLen*dist*tanL;
-	FVector endP = intersection(startP, startP + FRotator(0, 270, 0).RotateVector(tanL) * 10000, road.points[2], road.points[3]);
+	FVector startP = road.points[1] + totLen*dist*tanL;
+	FVector endP = intersection(startP, startP + FRotator(0, 90, 0).RotateVector(tanL) * 10000, road.points[0], road.points[3]);
 	if (endP.X == 0.0f)
 		return{ FVector(0,0,0),FVector(0,0,0)};
 	return{ startP, endP };
@@ -87,7 +87,7 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 	for (FPolygon road : roads) {
 		FMetaPolygon *firstHit = nullptr;
 		FMetaPolygon *sndHit = nullptr;
-		FLine line = getCrossingLine(0.25, road);
+		FLine line = getCrossingLine(0.3, road);
 		FLine testLine;
 		FVector tan = line.p2 - line.p1;
 		tan.Normalize();
@@ -139,7 +139,7 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 float getHeight(FRandomStream &stream, int minFloors, int maxFloors, FVector position, float noiseHeightInfluence) {
 	float noise = NoiseSingleton::getInstance()->noise(position.X, position.Y);
 	float adjustedNoiseFactor = (1.0 - noiseHeightInfluence) + (noise*noiseHeightInfluence);
-	float modifier = -std::log(stream.FRandRange(1.02f - adjustedNoiseFactor/* e^(-4) */, 1)) / 4;
+	float modifier = -std::log(stream.FRandRange(1.02 - adjustedNoiseFactor/* e^(-4) */, 1)) / 4;
 
 	return minFloors + (maxFloors - minFloors)*modifier*adjustedNoiseFactor;
 	//return 5;
@@ -178,7 +178,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 	float maxArea = 4500.0f;
 	float minArea = 1200.0f;
 
-	if (true || !p.open) {
+	if (!p.open) {
 		FHousePolygon original;
 		original.points = p.points;
 		original.checkOrientation();
@@ -392,7 +392,7 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 	if (sidewalk.points.Num() < 2)
 		return toReturn;
 	// trees
-	if (baseLibraryStream.FRand() < 0.1f) {
+	if (FMath::FRand() < 0.1f) {
 		float placeRatio = 0.001;
 		for (int i = 1; i < sidewalk.points.Num(); i += 2) {
 			int toPlace = placeRatio * (sidewalk.points[i] - sidewalk.points[i - 1]).Size();
@@ -424,11 +424,11 @@ FSidewalkInfo APlotBuilder::getSideWalkInfo(FPolygon sidewalk)
 
 	// fire hydrants
 	float placeChance = 0.4;
-	if (baseLibraryStream.FRand() < placeChance) {
-		int place = baseLibraryStream.FRandRange(1, sidewalk.points.Num()-1);
+	if (FMath::FRand() < placeChance) {
+		int place = FMath::FRandRange(1, sidewalk.points.Num()-1);
 		FVector rot = getNormal(sidewalk[place - 1], sidewalk[place], true);
 		rot.Normalize();
-		FVector loc = sidewalk[place - 1] + (sidewalk[place] - sidewalk.points[place - 1]) * baseLibraryStream.FRand() + rot * 200 + FVector(0,0,15);
+		FVector loc = sidewalk[place - 1] + (sidewalk[place] - sidewalk.points[place - 1]) * FMath::FRand() + rot * 200 + FVector(0,0,15);
 		toReturn.meshes.Add(FMeshInfo{ "fire_hydrant", FTransform(rot.Rotation(), loc) });
 
 	}

@@ -385,7 +385,7 @@ struct FMaterialPolygon : public FPolygon {
 
 	PolygonType type = PolygonType::exterior;
 	float width = 20;
-	bool overridePolygonSides = false;
+	bool overridePolygonSides = true;
 };
 
 USTRUCT(BlueprintType)
@@ -1218,7 +1218,7 @@ struct FRoomPolygon : public FPolygon
 	FRoomPolygon* splitAndCreateSingleEntranceRoom(FRoomPolygon* room) {
 		FRoomPolygon cp = *room;
 		SplitStruct res = getSealOffLine(room);
-		if (res.p1.X == 0.0f)
+		if (res.min == -1)
 			return nullptr;
 		FRoomPolygon *other = room->splitAlongSplitStruct(res, true);
 		if (other == nullptr)
@@ -1392,7 +1392,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(remaining);
 		// fix unSplitable rooms
 
-		//postFit(rooms);
+		postFit(rooms);
 
 
 		return rooms;
