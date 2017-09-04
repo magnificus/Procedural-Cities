@@ -1390,7 +1390,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(fitSpecificationOnRooms(blueprint.optional, remaining, true, false));
 
 		rooms.Append(remaining);
-		// fix unSplitable rooms
+		// fix unsplitable rooms
 
 		//postFit(rooms);
 

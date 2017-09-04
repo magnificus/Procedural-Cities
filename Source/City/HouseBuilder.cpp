@@ -766,7 +766,6 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res) {
 		procMeshActor = GetWorld()->SpawnActor<AProcMeshActor>(procMeshActorClass, FActorSpawnParameters());
 		procMeshActor->init(generationMode);
 	}
-	FRandomStream str(FMath::Rand());
 	for (FSimplePlot fs : res.remainingPlots) {
 		fs.decorate(map);
 		for (FMeshInfo mesh : fs.meshes) {
@@ -790,9 +789,9 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 	FRandomStream stream;
 	float corrWidth = 300;
 	FHousePolygon pre = f;
-	stream.Initialize(f.housePosition.X * 1000 + f.housePosition.Y);
+	stream.Initialize(f.housePosition.X + (f.housePosition.Y/1000));
 	f.checkOrientation();
-	FPolygon hole = getShaftHolePolygon(f, stream);
+	FPolygon hole = getShaftHolePolygon(f, stream, true);
 	if (intersection(hole, f).X != 0.0f) {
 		hole = getShaftHolePolygon(f, stream, true);
 		if (intersection(hole, f).X != 0.0f) {
