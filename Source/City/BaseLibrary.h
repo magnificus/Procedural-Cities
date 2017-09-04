@@ -1392,7 +1392,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(remaining);
 		// fix unSplitable rooms
 
-		postFit(rooms);
+		//postFit(rooms);
 
 
 		return rooms;
