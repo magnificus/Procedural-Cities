@@ -717,16 +717,17 @@ struct FRoomPolygon : public FPolygon
 	}
 	FRoomPolygon* splitAlongSplitStruct(SplitStruct p, bool entranceBetween) {
 
+		FRandomStream stream{ p.p1.X + p.p1.Y / 1000 };
 		// determine if any room has no entrances yet, so we can try to cluster all entrances in the other room
 		int prelEntrancesNewP = 0;
-		if (entrances.Contains(p.min)) {
-			FVector point = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(points[p.min], points[p.min - 1]);
+		if (specificEntrances.Contains(p.min)) {
+			FVector point = specificEntrances[p.min];
 			if (FVector::DistSquared(point, points[p.min - 1]) > FVector::DistSquared(point, points[p.min])) {
 				prelEntrancesNewP++;
 			}
 		}
-		if (entrances.Contains(p.max)) {
-			FVector point = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(points[p.max%points.Num()], points[p.max - 1]);
+		if (specificEntrances.Contains(p.max)) {
+			FVector point = specificEntrances[p.max];
 			if (FVector::DistSquared(point, points[p.max - 1]) < FVector::DistSquared(point, points[p.max%points.Num()])) {
 				prelEntrancesNewP++;
 			}
@@ -955,14 +956,19 @@ struct FRoomPolygon : public FPolygon
 
 		newP->points.Add(p.p2);
 
-		//// dont place the wall twice
+		// dont place the wall twice
 		toIgnore.Add(p.min+1);
-		//	// entrance to next room
+		// entrance to next room
 		if (entranceBetween){
 			TSet<FRoomPolygon*> passive = newP->passiveConnections.Contains(newP->points.Num()) ? newP->passiveConnections[newP->points.Num()] : TSet<FRoomPolygon*>();
 			passive.Add(newP);
 			passiveConnections.Add(p.min + 1, passive);
-			newP->specificEntrances.Add(newP->points.Num(), middle(p.p1, p.p2));
+			FVector tan = p.p2 - p.p1;
+			float tanLen = tan.Size();
+			tan.Normalize();
+			FVector center = newP->getCenter();
+			float place = stream.FRandRange(100, tanLen - 100);
+			newP->specificEntrances.Add(newP->points.Num(), p.p1 + tan*tanLen);
 			newP->entrances.Add(newP->points.Num());
 			newP->activeConnections.Add(this, newP->points.Num());
 		}
