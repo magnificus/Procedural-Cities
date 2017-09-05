@@ -385,7 +385,7 @@ struct FMaterialPolygon : public FPolygon {
 
 	PolygonType type = PolygonType::exterior;
 	float width = 20;
-	bool overridePolygonSides = true;
+	bool overridePolygonSides = false;
 };
 
 USTRUCT(BlueprintType)
@@ -719,6 +719,18 @@ struct FRoomPolygon : public FPolygon
 
 		// determine if any room has no entrances yet, so we can try to cluster all entrances in the other room
 		int prelEntrancesNewP = 0;
+		if (entrances.Contains(p.min)) {
+			FVector point = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(points[p.min], points[p.min - 1]);
+			if (FVector::DistSquared(point, points[p.min - 1]) > FVector::DistSquared(point, points[p.min])) {
+				prelEntrancesNewP++;
+			}
+		}
+		if (entrances.Contains(p.max)) {
+			FVector point = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(points[p.max%points.Num()], points[p.max - 1]);
+			if (FVector::DistSquared(point, points[p.max - 1]) < FVector::DistSquared(point, points[p.max%points.Num()])) {
+				prelEntrancesNewP++;
+			}
+		}
 		for (int i = p.min + 1; i < p.max - 1; i++) {
 			if (entrances.Contains(i))
 				prelEntrancesNewP++;
@@ -1070,7 +1082,7 @@ struct FRoomPolygon : public FPolygon
 		FVector currB = FVector(0,0,0);
 		FVector currE = FVector(0,0,0);
 		int currI = -1;
-		float biggestArea = 10;
+		float biggestArea = 15;
 		FVector bestP1;
 		FVector bestP2;
 		int bestMin = -1;
@@ -1078,18 +1090,16 @@ struct FRoomPolygon : public FPolygon
 
 		for (int i = 1; i < r2->points.Num() + 1; i++) {
 			FVector point = FVector(0, 0, 0);
-			FVector tan = FVector(0, 0, 0);
+			FVector tan = r2->points[i%r2->points.Num()] - r2->points[i - 1];
+			tan.Normalize();
 			if (r2->entrances.Contains(i)) {
 				point = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
-				tan = r2->points[i%r2->points.Num()] - r2->points[i - 1];
-				tan.Normalize();
 			}
 			else if (r2->passiveConnections.Contains(i)) {
 				for (auto room : r2->passiveConnections[i]) {
 					int loc = room->activeConnections[r2];
 					point = room->specificEntrances[loc];
-					tan = -room->points[loc%room->points.Num()] - room->points[loc - 1];
-					tan.Normalize();
+					break;
 				}
 			}
 			if (point.X != 0.0f) {
@@ -1129,14 +1139,14 @@ struct FRoomPolygon : public FPolygon
 
 		FPolygon temp;
 		//temp += newCurrB;
-		temp += firstE;
+		temp += firstB;
 		for (int j = firstI; j < currI; j++)
 			temp += r2->points[j];
-		temp += currB;
+		temp += currE;
 
 		if (temp.getArea() > biggestArea) {
-			bestP1 = firstE;
-			bestP2 = currB;
+			bestP1 = firstB;
+			bestP2 = currE;
 			bestMin = firstI;
 			bestMax = currI;
 			biggestArea = temp.getArea();
@@ -1224,7 +1234,6 @@ struct FRoomPolygon : public FPolygon
 		if (other == nullptr)
 			return nullptr;
 		if (other->getTotalConnections() > 1) {
-			room->type = room->type;
 			other->type = SubRoomType::corridor;
 		}
 		else {
@@ -1392,7 +1401,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(remaining);
 		// fix unsplitable rooms
 
-		//postFit(rooms);
+		postFit(rooms);
 
 
 		return rooms;
