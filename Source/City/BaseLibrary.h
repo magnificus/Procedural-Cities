@@ -103,6 +103,8 @@ FVector fitPolygonNextToPolygon(FPolygon &toFitAround, FPolygon &toMove, int pla
 FPolygon getPolygon(FRotator rot, FVector pos, FString name, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map);
 
 
+FVector getRandomPointOnLine(FVector start, FVector end, float minDistFromEdges, FRandomStream &stream = baseLibraryStream);
+
 static FVector middle(FVector p1, FVector p2) {
 	return (p2 + p1) / 2;
 }
@@ -672,8 +674,6 @@ struct FRoomPolygon : public FPolygon
 				FVector tangent = points[num%points.Num()] - points[num - 1];
 				tangent.Normalize();
 				inPoint = preferEntrancesInThis ^ !first ? specificEntrances[num] - tangent * 100 : specificEntrances[num] + tangent * 100;
-				//float toMove = FVector::Dist(inPoint, specificEntrances[num] - tangent * 100);
-				//inPoint -= toMove * tangent;
 			}
 		}
 
@@ -689,11 +689,8 @@ struct FRoomPolygon : public FPolygon
 				FVector tangent = points[num%points.Num()] - points[num - 1];
 				tangent.Normalize();
 				inPoint = preferEntrancesInThis^!first ? point - tangent * 100 : point + tangent * 100;
-				//float toMove = FVector::Dist(inPoint, point - tangent * 100);
-				//inPoint -= toMove * tangent;
 				// our child is now free from our master, but we're still slaves
 			}
-			//else {
 				// new cut doesn't interfere overlap with the entrance, now to see who gets it
 				if (first && isOnLine(point, points[num - 1], inPoint) || !first && !isOnLine(point, points[num - 1], inPoint)) {
 					// i got it, no change
@@ -715,9 +712,22 @@ struct FRoomPolygon : public FPolygon
 			passiveConnections[num].Remove(t);
 		}
 	}
+
+
+	void offsetIntSetFromIndex(TSet<int> *ints, int index, int offset) {
+		TSet<int> newInts;
+		for (int i : *ints) {
+			if (i >= index)
+				newInts.Add(i + offset);
+			else
+				newInts.Add(i);
+		}
+		*ints = newInts;
+
+	}
 	FRoomPolygon* splitAlongSplitStruct(SplitStruct p, bool entranceBetween) {
 
-		FRandomStream stream{ p.p1.X + p.p1.Y / 1000 };
+		FRandomStream stream{ int(p.p1.X + p.p1.Y / 1000.0f) };
 		// determine if any room has no entrances yet, so we can try to cluster all entrances in the other room
 		int prelEntrancesNewP = 0;
 		if (specificEntrances.Contains(p.min)) {
@@ -740,10 +750,12 @@ struct FRoomPolygon : public FPolygon
 
 		FRoomPolygon* newP = new FRoomPolygon();
 		updateConnections(p.min, p.p1, newP, true, 1, clusterDoorsInThis);
+		int a;
+		getSplitCorrespondingPoint(p.min, p.p1, p.p2 - p.p1, a, p.p2);
 
 		if (entrances.Contains(p.min)){
 				// potentially add responsibility of child
-				FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : middle(p.p1, points[p.min - 1]);
+			FVector entrancePoint = specificEntrances.Contains(p.min) ? specificEntrances[p.min] : (clusterDoorsInThis ? getRandomPointOnLine(points[p.min - 1], p.p1, 100, stream) : getRandomPointOnLine(points[p.min], p.p1, 100, stream)); //middle(p.p1, points[p.min - 1]);
 				if (isOnLine(entrancePoint, p.p1, points[p.min])) {
 					if (specificEntrances.Contains(p.min))
 						newP->specificEntrances.Add(1, entrancePoint);
@@ -844,7 +856,8 @@ struct FRoomPolygon : public FPolygon
 
 		if (entrances.Contains(p.max)){
 
-				FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : middle(p.p2, points[p.max%points.Num()]);
+				FVector entrancePoint = specificEntrances.Contains(p.max) ? specificEntrances[p.max] : (!clusterDoorsInThis ? getRandomPointOnLine(points[p.max - 1], p.p2, 100, stream) : getRandomPointOnLine(points[p.max%points.Num()], p.p2, 100, stream)); //middle(p.p1, points[p.min - 1]);
+
 				if (isOnLine(entrancePoint, p.p2, points[p.max - 1])) {
 					if (specificEntrances.Contains(p.max))
 						newP->specificEntrances.Add(newP->points.Num(), entrancePoint);
@@ -904,31 +917,35 @@ struct FRoomPolygon : public FPolygon
 		specificEntrances = newSpecificList;
 
 		newList.Empty();
-		for (int32 i : windows) {
-			if (i >= p.max)
-				newList.Add(i - (p.max - p.min) + 2);
-			else
-				newList.Add(i);
-		}
-		windows = newList;
+		offsetIntSetFromIndex(&windows, p.max, -(p.max - p.min) + 2);
+		offsetIntSetFromIndex(&exteriorWalls, p.max, -(p.max - p.min) + 2);
+		offsetIntSetFromIndex(&toIgnore, p.max, - (p.max - p.min) + 2);
 
-		newList.Empty();
-		for (int32 i : exteriorWalls) {
-			if (i >= p.max)
-				newList.Add(i - (p.max - p.min) + 2);
-			else
-				newList.Add(i);
-		}
-		exteriorWalls = newList;
+		//for (int32 i : windows) {
+		//	if (i >= p.max)
+		//		newList.Add(i - (p.max - p.min) + 2);
+		//	else
+		//		newList.Add(i);
+		//}
+		//windows = newList;
 
-		newList.Empty();
-		for (int32 i : toIgnore) {
-			if (i >= p.max)
-				newList.Add(i - (p.max - p.min) + 2);
-			else
-				newList.Add(i);
-		}
-		toIgnore = newList;
+		//newList.Empty();
+		//for (int32 i : exteriorWalls) {
+		//	if (i >= p.max)
+		//		newList.Add(i - (p.max - p.min) + 2);
+		//	else
+		//		newList.Add(i);
+		//}
+		//exteriorWalls = newList;
+
+		//newList.Empty();
+		//for (int32 i : toIgnore) {
+		//	if (i >= p.max)
+		//		newList.Add(i - (p.max - p.min) + 2);
+		//	else
+		//		newList.Add(i);
+		//}
+		//toIgnore = newList;
 
 
 
@@ -963,12 +980,7 @@ struct FRoomPolygon : public FPolygon
 			TSet<FRoomPolygon*> passive = newP->passiveConnections.Contains(newP->points.Num()) ? newP->passiveConnections[newP->points.Num()] : TSet<FRoomPolygon*>();
 			passive.Add(newP);
 			passiveConnections.Add(p.min + 1, passive);
-			FVector tan = p.p2 - p.p1;
-			float tanLen = tan.Size();
-			tan.Normalize();
-			FVector center = newP->getCenter();
-			float place = stream.FRandRange(100, tanLen - 100);
-			newP->specificEntrances.Add(newP->points.Num(), p.p1 + tan*tanLen);
+			newP->specificEntrances.Add(newP->points.Num(), getRandomPointOnLine(p.p1, p.p2, 100, stream));
 			newP->entrances.Add(newP->points.Num());
 			newP->activeConnections.Add(this, newP->points.Num());
 		}
@@ -1088,7 +1100,7 @@ struct FRoomPolygon : public FPolygon
 		FVector currB = FVector(0,0,0);
 		FVector currE = FVector(0,0,0);
 		int currI = -1;
-		float biggestArea = 15;
+		float biggestArea = 30;
 		FVector bestP1;
 		FVector bestP2;
 		int bestMin = -1;
@@ -1109,13 +1121,12 @@ struct FRoomPolygon : public FPolygon
 				}
 			}
 			if (point.X != 0.0f) {
-				FVector newCurrB = point - tan * 101;
-				FVector newCurrE = point + tan * 101;
+				FVector newCurrB = point - tan * 150;
+				FVector newCurrE = point + tan * 150;
 				if (firstB.X == 0.0f) {
 					firstB = newCurrB;
 					firstE = newCurrE;
 					firstI = i;
-
 				}
 				else {
 					// try building polygon with newCurr and curr as split
@@ -1249,22 +1260,6 @@ struct FRoomPolygon : public FPolygon
 		//	std::swap(other, room);
 
 		return other;
-		//for (int i = 1; i < room->points.Num(); i++) {
-		//	FRoomPolygon *newP = room->splitAlongMax(0.5, true, i);
-
-		//	if (newP != NULL) {
-		//		if (newP->getTotalConnections() < 2) {
-		//			newP->type = room->type;
-		//			room->type = SubRoomType::corridor;
-		//			return newP;
-		//		}
-		//		else {
-		//			delete newP;
-		//			*room = cp;
-		//		}
-		//	}
-		//}
-		//return nullptr;
 	}
 
 	void postFit(TArray<FRoomPolygon*> &rooms){
@@ -1279,101 +1274,6 @@ struct FRoomPolygon : public FPolygon
 			}
 		}
 		rooms.Append(toAdd);
-		//TArray<RoomSpecification> neededRooms = blueprint.needed;
-		//TMap<SubRoomType, int32> need;
-		//for (RoomSpecification r : neededRooms) {
-		//	if (need.Contains(r.type))
-		//		need[r.type] ++;
-		//	else
-		//		need.Add(r.type, 1);
-		//}
-		//for (FRoomPolygon *p : rooms) {
-		//	if (p->entrances.Num() > p->specificEntrances.Num() && blueprint.useHallway) {
-		//		p->type = SubRoomType::hallway;
-		//	}
-		//	if (!splitableType(p->type) && p->getTotalConnections() > 1) {
-		//		p->type = SubRoomType::corridor;
-		//	}
-		//	if (need.Contains(p->type))
-		//		need[p->type] --;
-		//}
-
-		//TArray<SubRoomType> remaining;
-		//for (auto &spec : need) {
-		//	for (int i = 0; i < spec.Value; i++) {
-		//		remaining.Add(spec.Key);
-		//	}
-		//}
-
-		//while (remaining.Num() > 0) {
-		//	SubRoomType current = remaining[remaining.Num() - 1];
-
-		//	bool found = false;
-		//	for (FRoomPolygon *p : rooms) {
-		//		// first pick non-needed rooms
-		//		if (!need.Contains(p->type) && ((splitableType(current) || p->getTotalConnections() < 2))) {
-		//			p->type = current;
-		//			found = true;
-		//			break;
-		//		}
-		//	}
-		//	if (found) {
-		//		remaining.RemoveAt(remaining.Num() - 1);
-		//		need[current] --;
-		//		continue;
-		//	}
-		//	else {
-		//		if (!splitableType(current)) {
-		//			// consider picking rooms that already contains an essential room
-		//			for (FRoomPolygon *p : rooms) {
-		//				if (splitableType(p->type) && p->getTotalConnections() < 2) {
-		//					SubRoomType prevType = p->type;
-		//					remaining.RemoveAt(remaining.Num() - 1);
-		//					need[current]--;
-		//					if (++need[prevType] > 0) {
-		//						remaining.Add(prevType);
-		//					}
-		//					p->type = current;
-		//					found = true;
-		//					break;
-		//				}
-		//			}
-
-		//			for (FRoomPolygon *p : rooms) {
-		//				if (p->getTotalConnections() == 2 && p->getArea() > 100) {
-		//					SplitStruct res = getSealOffLine(p);
-		//					if (res.p1.X == 0.0f)
-		//						continue;
-		//					FRoomPolygon *newP = p->splitAlongSplitStruct(res, true);
-		//					newP->type = current;
-		//					//SubRoomType prevType = p->type;
-		//					need[current]--;
-		//					remaining.RemoveAt(remaining.Num() - 1);
-
-		//					//if (++need[prevType] > 0) {
-		//					//	remaining.Add(prevType);
-		//					//}
-		//					//p->type = current;
-		//					found = true;
-		//					rooms.Add(newP);
-		//					break;
-		//				}
-		//			}
-		//			// if this fails, there are no possible places for this room, TODO create a new room somewhere
-		//			if (!found) {
-		//				need[current] --;
-		//				remaining.RemoveAt(remaining.Num() - 1);
-		//			}
-
-		//		}
-		//		else {
-		//			// if this fails, there are no possible places for this room, TODO create a new room somewhere
-		//			need[current] --;
-		//			remaining.RemoveAt(remaining.Num() - 1);
-		//		}
-
-		//	}
-		//}
 
 	}
 

@@ -20,6 +20,13 @@ FPolygon getTinyPolygon(FVector point) {
 	return temp;
 }
 
+FVector getRandomPointOnLine(FVector start, FVector end, float minDistFromEdges, FRandomStream &stream) {
+	FVector tan = end - start;
+	float tanLen = tan.Size();
+	tan.Normalize();
+	return start + tan * stream.FRandRange(minDistFromEdges, tanLen - minDistFromEdges);
+}
+
 void getMinMax(float &min, float &max, FVector tangent, TArray<FVector> points) {
 	if (points.Num() == 0)
 		return;
