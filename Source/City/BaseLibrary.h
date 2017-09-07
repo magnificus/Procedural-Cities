@@ -539,7 +539,7 @@ static void removeAllButOne(TSet<int32> &entries) {
 	for (int32 i : entries) {
 		numbers.Add(i);
 	}
-	int place = FMath::Rand() % numbers.Num();
+	int place = 0;
 	numbers.RemoveAt(place);
 	for (int32 i : numbers) {
 		entries.Remove(i);
@@ -750,8 +750,8 @@ struct FRoomPolygon : public FPolygon
 
 		FRoomPolygon* newP = new FRoomPolygon();
 		updateConnections(p.min, p.p1, newP, true, 1, clusterDoorsInThis);
-		int a;
-		getSplitCorrespondingPoint(p.min, p.p1, p.p2 - p.p1, a, p.p2);
+		//int temp;
+		//getSplitCorrespondingPoint(p.min, p.p1, p.p2 - p.p1, temp, p.p2);
 
 		if (entrances.Contains(p.min)){
 				// potentially add responsibility of child
@@ -1031,6 +1031,8 @@ struct FRoomPolygon : public FPolygon
 						break;
 					}
 				}
+
+
 				if (!couldPlace && specSmallerThanRooms) {
 					// could not find a fitting room since all remaining are too big, cut them down to size
 					FRoomPolygon *target = remaining[0];
@@ -1038,11 +1040,12 @@ struct FRoomPolygon : public FPolygon
 					float scale = 0.0f;
 					for (int i = 0; i < remaining.Num(); i++) {
 						target = remaining[i];
-						targetNum = i;
-						scale = spec.minArea / target->getArea();
-						if (scale < 1.0f) {
-							//current target is bigger than my requirement
+						
+						float newScale = spec.minArea / target->getArea();
+						if (newScale < 1.0) {
+							targetNum = i;
 							break;
+							//current target is bigger than my requirement
 						}
 					}
 					remaining.RemoveAt(targetNum);
@@ -1052,11 +1055,11 @@ struct FRoomPolygon : public FPolygon
 					int count2 = 0;
 					while (scale < 1.0f && ++count2 < 5) {
 						FRoomPolygon* newP = target->splitAlongMax(0.5, true);
-						if (newP == nullptr) {
-							remaining.Add(target);
-							canPlace = false;
-							break;
-						}
+						//if (newP == nullptr) {
+						//	remaining.Add(target);
+						//	canPlace = false;
+						//	break;
+						//}
 						if (!splitableType(spec.type) && newP->getTotalConnections() < target->getTotalConnections() || splitableType(spec.type) && newP->getTotalConnections() > target->getTotalConnections()) {
 							// swap rooms if newP is more suited for the purpose of the new room
 							std::swap(newP, target);

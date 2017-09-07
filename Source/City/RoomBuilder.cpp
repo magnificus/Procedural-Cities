@@ -608,17 +608,6 @@ static FRoomInfo getBathRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstan
 	FRoomInfo r;
 	TArray<FPolygon> placed;
 
-
-	//if (r2->getTotalConnections() > 1) {
-	//	Line line = getSealOffLine(r2);
-	//	FMaterialPolygon newP;
-	//	newP.type = PolygonType::interior;
-	//	newP.points.Add(line.p1 + FVector(0, 0, 400));
-	//	newP.points.Add(line.p1 + FVector(0, 0, 0));
-	//	newP.points.Add(line.p2 + FVector(0, 0, 0));
-	//	newP.points.Add(line.p2 + FVector(0, 0, 400));
-	//	r.pols.Add(newP);
-	//}
 	TArray<FPolygon> blocking = getBlockingVolumes(r2, 200, 100);
 	placed.Append(blocking);
 	r2->attemptPlace(placed, r.meshes, false, 2, "toilet" , FRotator(0, 270, 0), FVector(0, 0, 0), map, false);

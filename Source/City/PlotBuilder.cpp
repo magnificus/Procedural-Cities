@@ -175,7 +175,8 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 	FVector cen = p.getCenter();
 	FRandomStream stream(cen.X * 1000 + cen.Y);
 
-	float maxArea = 4500.0f;
+	float maxMaxArea = 6000.0f;
+	float minMaxArea = 3000;
 	float minArea = 1200.0f;
 
 	if (!p.open) {
@@ -207,7 +208,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			}
 
 			TArray<FPolygon> placed;
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 6; i++) {
 				FHousePolygon newH = model;
 				newH.rotate(FRotator(0, stream.FRandRange(0, 360), 0));
 				newH.offset(p.getRandomPoint(true, 2000));
@@ -243,7 +244,8 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 				fs.decorate(instancedMap);
 				info.leftovers.Add(fs);
 			}
-			TArray<FHousePolygon> refinedPolygons = original.refine(maxArea, 0, 0);
+			float currMaxArea = stream.FRandRange(minMaxArea, maxMaxArea);
+			TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, 0, 0);
 			for (FHousePolygon r : refinedPolygons) {
 				r.housePosition = r.getCenter();
 				r.height = getHeight(stream, minFloors, maxFloors, r.getCenter(), noiseHeightInfluence);
@@ -253,7 +255,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 
 				float area = r.getArea();
 
-				if (area < minArea || area > maxArea) {
+				if (area < minArea || area > currMaxArea) {
 					FSimplePlot fs;
 					fs.pol = r;
 					fs.pol.offset(FVector(0, 0, 20));
