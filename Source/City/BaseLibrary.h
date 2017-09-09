@@ -750,8 +750,8 @@ struct FRoomPolygon : public FPolygon
 
 		FRoomPolygon* newP = new FRoomPolygon();
 		updateConnections(p.min, p.p1, newP, true, 1, clusterDoorsInThis);
-		//int temp;
-		//getSplitCorrespondingPoint(p.min, p.p1, p.p2 - p.p1, temp, p.p2);
+		int temp;
+		getSplitCorrespondingPoint(p.min, p.p1, p.p2 - p.p1, temp, p.p2);
 
 		if (entrances.Contains(p.min)){
 				// potentially add responsibility of child
@@ -1097,6 +1097,83 @@ struct FRoomPolygon : public FPolygon
 
 		int current = 0;
 		
+
+		for (int i = 1; i < r2->points.Num(); i++) {
+			if (r2->entrances.Contains(i)) {
+				FVector point = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle((*r2)[i - 1], (*r2)[i]);
+				FVector tan = (*r2)[i] - (*r2)[i - 1];
+				tan.Normalize();
+				point += tan * 100;
+				int split = -1;
+				FVector otherP;
+				r2->getSplitCorrespondingPoint(i, point, getNormal((*r2)[i - 1], (*r2)[i], false), split, otherP);
+				int connectionsFound = 0;
+				if (split == -1)
+					continue;
+
+				int toUse = i;
+				if (split < toUse) {
+					std::swap(toUse, split);
+					std::swap(point, otherP);
+				}
+				if (r2->specificEntrances.Contains(toUse)) {
+					if (FVector::DistSquared(r2->specificEntrances[toUse], (*r2)[toUse - 1]) > FVector::DistSquared(point, (*r2)[toUse-1])) {
+						connectionsFound++;
+					}
+				}
+
+				for (int j = toUse+1; j < split; j++) {
+					if (r2->specificEntrances.Contains(j))
+						connectionsFound++;
+				}
+				if (r2->specificEntrances.Contains(split)) {
+					if (FVector::DistSquared(r2->specificEntrances[split], (*r2)[split - 1]) < FVector::DistSquared(otherP, (*r2)[split - 1])) {
+						connectionsFound++;
+					}
+				}
+				if (connectionsFound == 0) {
+					r2->specificEntrances.Add(toUse, point);
+					UE_LOG(LogTemp, Warning, TEXT("sealing off room 1"));
+					return SplitStruct{ toUse, split, point, otherP };
+				}
+
+				point -= tan * 200;
+				r2->getSplitCorrespondingPoint(i, point, getNormal((*r2)[i - 1], (*r2)[i], false), split, otherP);
+				connectionsFound = 0;
+				if (split == -1)
+					continue;
+
+				toUse = i;
+				if (split < toUse) {
+					std::swap(toUse, split);
+					std::swap(point, otherP);
+				}
+				if (r2->specificEntrances.Contains(toUse)) {
+					if (FVector::DistSquared(r2->specificEntrances[toUse], (*r2)[toUse - 1]) > FVector::DistSquared(point, (*r2)[toUse - 1])) {
+						connectionsFound++;
+					}
+				}
+
+				for (int j = toUse + 1; j < split; j++) {
+					if (r2->specificEntrances.Contains(j))
+						connectionsFound++;
+				}
+				if (r2->specificEntrances.Contains(split)) {
+					if (FVector::DistSquared(r2->specificEntrances[split], (*r2)[split - 1]) < FVector::DistSquared(otherP, (*r2)[split - 1])) {
+						connectionsFound++;
+					}
+				}
+				if (connectionsFound == 0) {
+					r2->specificEntrances.Add(toUse, point);
+					UE_LOG(LogTemp, Warning, TEXT("sealing off room 2"));
+					return SplitStruct{ toUse, split, point, otherP };
+				}
+
+			}
+		}
+		return SplitStruct{ -1, -1, FVector(0,0,0), FVector(0,0,0) };
+
+
 		FVector firstB = FVector(0,0,0);
 		FVector firstE = FVector(0,0,0);
 		int firstI = -1;
@@ -1250,7 +1327,7 @@ struct FRoomPolygon : public FPolygon
 		SplitStruct res = getSealOffLine(room);
 		if (res.min == -1)
 			return nullptr;
-		FRoomPolygon *other = room->splitAlongSplitStruct(res, true);
+		FRoomPolygon *other = room->splitAlongSplitStruct(res, false);
 		if (other == nullptr)
 			return nullptr;
 		if (other->getTotalConnections() > 1) {
@@ -1269,7 +1346,7 @@ struct FRoomPolygon : public FPolygon
 
 		TArray<FRoomPolygon*> toAdd;
 		for (FRoomPolygon *room : rooms) {
-			if (!splitableType(room->type) && room->getTotalConnections() > 1) {
+			if (true || !splitableType(room->type) && room->getTotalConnections() > 1) {
 				// need to modify room
 				FRoomPolygon* res = splitAndCreateSingleEntranceRoom(room);
 				if (res != nullptr)
