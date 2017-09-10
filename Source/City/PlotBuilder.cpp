@@ -137,12 +137,14 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 }
 
 float getHeight(FRandomStream &stream, int minFloors, int maxFloors, FVector position, float noiseHeightInfluence) {
+	// value inbetween 0..1
 	float noise = NoiseSingleton::getInstance()->noise(position.X, position.Y);
+	// value inbetween 0..1
 	float adjustedNoiseFactor = (1.0 - noiseHeightInfluence) + (noise*noiseHeightInfluence);
-	float modifier = -std::log(stream.FRandRange(1.02 - adjustedNoiseFactor/* e^(-4) */, 1)) / 4;
-
-	return minFloors + (maxFloors - minFloors)*modifier*adjustedNoiseFactor;
-	//return 5;
+	// value inbetween 0..1
+	float modifier = -std::log(stream.FRandRange(std::min(1.02 - adjustedNoiseFactor/* e^(-4) */, 1.0), 1.0)) / 4;
+	// value inbetween minFloors..maxFloors
+	return minFloors + (maxFloors - minFloors)*modifier;//*adjustedNoiseFactor;
 }
 
 FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int maxFloors, RoomType type, FRandomStream stream, float noiseHeightInfluence) {
