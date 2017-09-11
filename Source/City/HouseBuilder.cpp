@@ -338,6 +338,7 @@ FSimplePlot attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &center
 
 FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHole, float len, FVector offset) {
 	// remove corner
+	//return FSimplePlot();
 	FVector p1 = middle(f.points[place - 1], f.points[place%f.points.Num()]);
 	FVector p2 = middle(f.points[(place + 1) % f.points.Num()], f.points[place%f.points.Num()]);
 
@@ -354,8 +355,8 @@ FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHol
 		simplePlot.pol.reverse();
 		simplePlot.pol.offset(offset);
 
-		f.addPoint(place%f.points.Num(), p1);
-		f.addPoint((place + 1) % f.points.Num(), p2);
+		f.addPoint(place, p1);
+		f.addPoint((place + 1), p2);
 		f.removePoint((place + 2) %f.points.Num());
 		f.windows.Add((place + 1));
 		f.entrances.Add((place + 1));
@@ -366,7 +367,6 @@ FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHol
 
 		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 1000));
 		return simplePlot;
-		//toReturn.Add(simplePlot);
 	}
 	return FSimplePlot();
 }

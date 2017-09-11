@@ -1430,6 +1430,7 @@ struct FHousePolygon : public FMetaPolygon {
 			return;
 		}
 		std::vector<int> toRemove;
+		windows.Remove(place);
 		for (int i : windows) {
 			if (i > place) {
 				toRemove.push_back(i);
@@ -1437,9 +1438,10 @@ struct FHousePolygon : public FMetaPolygon {
 		}
 		for (int i : toRemove) {
 			windows.Remove(i);
-			windows.Add(i - 1);
+			windows.Add(i - 1 <= 0 ? i - 1 + points.Num() : i - 1);
 		}
 		toRemove.clear();
+		entrances.Remove(place);
 		for (int i : entrances) {
 			if (i > place) {
 				toRemove.push_back(i);
@@ -1447,7 +1449,7 @@ struct FHousePolygon : public FMetaPolygon {
 		}
 		for (int i : toRemove) {
 			entrances.Remove(i);
-			entrances.Add(i - 1);
+			entrances.Add(i - 1 <= 0 ? i - 1 + points.Num() : i - 1);
 		}
 		points.RemoveAt(place);
 	}
