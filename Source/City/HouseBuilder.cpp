@@ -558,7 +558,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 				box.type = PolygonType::exteriorSnd;
 				box.normal = FVector(0, 0, -1);
 				FVector center = pol.getCenter();
-				FVector p1 = center + FVector(stream.FRandRange(0, 3000) * (stream.FRand() < 0.5 ? 1 : -1), stream.FRandRange(0, 3000) * (stream.FRand() < 0.5 ? 1 : -1), offset);
+				FVector p1 = pol.getRandomPoint(true, 1000, stream) + FVector(0,0,offset);
 				FVector tangent = pol.points[1] - pol.points[0];
 				float firstLen = stream.FRandRange(500, 3000);
 				float sndLen = stream.FRandRange(500, 3000);
@@ -832,6 +832,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 
 	// this variable defines how violently the shape of the building will change, i.e. how often potentiallyShrink is called
 	float myChangeIntensity = stream.FRandRange(0, 0.35);
+	//myChangeIntensity = 0;
 
 	bool potentialBalcony = f.type == RoomType::apartment && floors < 10 && stream.FRand() < 0.3;
 	for (FRoomPolygon &p : roomPols) {
