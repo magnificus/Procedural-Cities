@@ -144,7 +144,7 @@ float getHeight(FRandomStream &stream, int minFloors, int maxFloors, FVector pos
 	// value inbetween 0..1
 	float modifier = -std::log(stream.FRandRange(std::min(1.02 - adjustedNoiseFactor/* e^(-4) */, 1.0), 1.0)) / 4;
 	// value inbetween minFloors..maxFloors
-	return minFloors + (maxFloors - minFloors)*modifier;//*adjustedNoiseFactor;
+	return minFloors + (maxFloors - minFloors)*modifier;/*adjustedNoiseFactor;
 }
 
 FHousePolygon getRandomModel(float minSize, float maxSize, int minFloors, int maxFloors, RoomType type, FRandomStream stream, float noiseHeightInfluence) {
