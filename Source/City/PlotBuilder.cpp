@@ -65,7 +65,7 @@ TArray<FMaterialPolygon> getCrossingAt(float dist, FPolygon road, float lineWidt
 	for (int i = 1; i < spaces; i++) {
 		FVector startPos = tangent * lineInterval * i + line.p1;
 		FVector endPos = startPos + tangent*lineLen;
-		FVector normal = getNormal(endPos, startPos, true);
+		FVector normal = getNormal(endPos, startPos, false);
 		normal.Normalize();
 		FMaterialPolygon newLine;
 		newLine.type = PolygonType::roadMiddle;
@@ -87,23 +87,23 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 	for (FPolygon road : roads) {
 		FMetaPolygon *firstHit = nullptr;
 		FMetaPolygon *sndHit = nullptr;
-		FLine line = getCrossingLine(0.3, road);
+		FLine line = getCrossingLine(0.25, road);
 		FLine testLine;
 		FVector tan = line.p2 - line.p1;
 		tan.Normalize();
 		testLine.p1 = line.p1 - tan * 100;
 		testLine.p2 = line.p2 + tan * 100;
-		for (FMetaPolygon &plot : plots) {
-			if (intersection(testLine.p1, testLine.p2, plot).X != 0.0f) {
-				if (firstHit) {
-					sndHit = &plot;
-					// if these two plots werent previously connected, connections are added and crossing is placed, otherwise discard
-					if (!connectionsMap[firstHit].Contains(sndHit)) {
-						if (!connectionsMap.Contains(sndHit)) {
-							connectionsMap.Add(sndHit, TSet<FMetaPolygon*>());
-						}
-						connectionsMap[firstHit].Add(sndHit);
-						connectionsMap[sndHit].Add(firstHit);
+		//for (FMetaPolygon &plot : plots) {
+			//if (intersection(testLine.p1, testLine.p2, plot).X != 0.0f) {
+			//	if (firstHit) {
+			//		sndHit = &plot;
+			//		// if these two plots werent previously connected, connections are added and crossing is placed, otherwise discard
+			//		if (!connectionsMap[firstHit].Contains(sndHit)) {
+			//			if (!connectionsMap.Contains(sndHit)) {
+			//				connectionsMap.Add(sndHit, TSet<FMetaPolygon*>());
+			//			}
+						//connectionsMap[firstHit].Add(sndHit);
+						//connectionsMap[sndHit].Add(firstHit);
 						float width = 300;
 						dec.polygons.Append(getCrossingAt(0.25, road, width));
 						// add traffic lights
@@ -119,18 +119,18 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 						}
 
 
-						break;
+			//			break;
 
-					}
-				}
-				else {
-					firstHit = &plot;
-					if (!connectionsMap.Contains(firstHit)) {
-						connectionsMap.Add(firstHit, TSet<FMetaPolygon*>());
-					}
-				}
-			}
-		}
+			//		}
+			//	}
+			//	else {
+			//		firstHit = &plot;
+			//		if (!connectionsMap.Contains(firstHit)) {
+			//			connectionsMap.Add(firstHit, TSet<FMetaPolygon*>());
+			//		}
+			//	}
+			//}
+		//}
 	}
 
 	return dec;

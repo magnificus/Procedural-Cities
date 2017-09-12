@@ -421,7 +421,7 @@ FSimplePlot attemptTurnSideIntoU(FHousePolygon &f, int place, FPolygon &centerHo
 // this method changes the shape of the house to make it less cube-like, can be called several times for more interesting shapes 
 void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream) {
 	int place = stream.RandRange(1, f.points.Num());
-	float len = stream.FRandRange(400, 1500);
+	float len = stream.FRandRange(300, 1500);
 	if (stream.FRand() < 0.2f) {
 		// move side inwards
 		FSimplePlot res = attemptMoveSideInwards(f, place, centerHole, len, FVector(0,0,30));
@@ -684,7 +684,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	TArray<FMaterialPolygon> toReturn;
 	FHousePolygon newF = FHousePolygon(f);
 	int place = stream.RandRange(1, f.points.Num());
-	float len = stream.FRandRange(200, 1200);
+	float len = stream.FRandRange(100, 1100);
 	// only shrink one side
 	if (stream.FRand() < 0.25) {
 		//float modifier = f.windows.Contains(place) && stream.FRand() < 0.1 ? -0.5 : 1;
