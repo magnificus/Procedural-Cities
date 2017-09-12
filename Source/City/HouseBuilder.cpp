@@ -541,7 +541,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 
 	//SplitStruct s = pol.getSplitProposal(true, 0.5);
 	//float boxMaxSize = FVector::Dist(s.p1, s.p2);
-	if (stream.FRand() < 0.5) {
+	if (stream.FRand() < 0.3) {
 		int numBoxes = stream.RandRange(0, maxBoxes);
 		// add box shapes on top of pol
 		for (int j = 0; j < numBoxes; j++) {
@@ -599,36 +599,41 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 		FMaterialPolygon shape = pol;
 		shape.offset(FVector(0, 0, offset));
 		FVector center = shape.getCenter();
-		float dist = stream.FRandRange(150.0f, 1000.0f);
-		for (int i = 0; i < shape.points.Num(); i++) {
-			FVector tangent = shape.getPointDirection(i, false);
-			shape[i] += dist*tangent;
+		SplitStruct res = pol.getSplitProposal(false, 0.5);
+		float maxDist = FVector::Dist(res.p1, res.p2)/2;
+		if (maxDist > 150 && res.min != -1) {
+			float dist = stream.FRandRange(150.0f, maxDist);
+			for (int i = 0; i < shape.points.Num(); i++) {
+				FVector tangent = shape.getPointDirection(i, false);
+				shape[i] += dist*tangent;
+			}
+			//for (FVector &point : shape.points) {
+			//	FVector tangent = center - point;
+			//	point += tangent / 4;
+			//}
+			if (!pol.getIsClockwise())
+				shape.reverse();
+			shape.normal = FVector(0, 0, -1);
+			for (int i = 1; i < shape.points.Num() + 1; i++) {
+				FMaterialPolygon side;
+				side.type = PolygonType::roof;
+				side.points.Add(shape.points[i - 1]);
+				side.points.Add(shape.points[i%shape.points.Num()]);
+				side.points.Add(shape.points[i%shape.points.Num()] - FVector(0, 0, offset));
+				side.points.Add(shape.points[i - 1] - FVector(0, 0, offset));
+				toReturn.pols.Add(side);
+			}
+			placed.Add(shape);
+			toReturn.pols.Add(shape);
+			nextShapes.Add(shape);
 		}
-		//for (FVector &point : shape.points) {
-		//	FVector tangent = center - point;
-		//	point += tangent / 4;
-		//}
-		if (!pol.getIsClockwise())
-			shape.reverse();
-		shape.normal = FVector(0, 0, -1);
-		for (int i = 1; i < shape.points.Num() + 1; i++) {
-			FMaterialPolygon side;
-			side.type = PolygonType::roof;
-			side.points.Add(shape.points[i - 1]);
-			side.points.Add(shape.points[i%shape.points.Num()]);
-			side.points.Add(shape.points[i%shape.points.Num()] - FVector(0, 0, offset));
-			side.points.Add(shape.points[i - 1] - FVector(0, 0, offset));
-			toReturn.pols.Add(side);
-		}
-		placed.Add(shape);
-		toReturn.pols.Add(shape);
-		nextShapes.Add(shape);
+
 	}
 
 	else if (stream.FRand() < 0.4 && canCoverCompletely) {
 		// pointy shape upwards
 		FVector centerP = pol.getCenter();
-		centerP += FVector(0, 0, stream.FRandRange(200, 900));
+		centerP += FVector(0, 0, stream.FRandRange(200, 1000));
 			for (int i = 1; i < pol.points.Num() + 1; i++) {
 				FMaterialPolygon rPol;
 				rPol.type = PolygonType::roof;
@@ -679,7 +684,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 	TArray<FMaterialPolygon> toReturn;
 	FHousePolygon newF = FHousePolygon(f);
 	int place = stream.RandRange(1, f.points.Num());
-	float len = stream.FRandRange(400, 1500);
+	float len = stream.FRandRange(200, 1200);
 	// only shrink one side
 	if (stream.FRand() < 0.25) {
 		//float modifier = f.windows.Contains(place) && stream.FRand() < 0.1 ? -0.5 : 1;
@@ -694,7 +699,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		}
 	}
 	// shrink whole symmetrically
-	else if (stream.FRand() < 0.25) {
+	else if (stream.FRand() < 0.2) {
 		float shrinkLen = stream.FRandRange(150, 1500);
 		FHousePolygon cp = FHousePolygon(f);
 		cp.symmetricShrink(shrinkLen, false);
@@ -715,7 +720,7 @@ TArray<FMaterialPolygon> potentiallyShrink(FHousePolygon &f, FPolygon &centerHol
 		}
 	}
 	// remove corner
-	else if (stream.FRand() < 0.2) {
+	else if (stream.FRand() < 0.15) {
 		FSimplePlot res = attemptRemoveCorner(f, place, centerHole, len, offset);
 		if (res.pol.points.Num() > 2) {
 			FMaterialPolygon pol;

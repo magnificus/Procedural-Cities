@@ -615,8 +615,8 @@ TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 		// exterior walls are interiors on the inside
 		if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
 			other.type = PolygonType::interior;
-			//if (!p.overridePolygonSides)
-			//	polygonSides = false;
+			if (!p.overridePolygonSides)
+				polygonSides = false;
 		}
 		if (!p.overridePolygonSides && (p.type == PolygonType::floor || p.type == PolygonType::interior) || p.type == PolygonType::roof) {
 			polygonSides = false;
