@@ -854,8 +854,8 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 		}
 		FRoomInfo newR = toUse->buildApartment(&p, 0, floorHeight, map, false, shellOnly, FRandomStream(1));
 		toReturn.roomInfo.pols.Append(newR.pols);
-		for (FMeshInfo &mesh : newR.meshes)
-			mesh.transform.SetTranslation(mesh.transform.GetTranslation() + FVector(0,0,20));
+		//for (FMeshInfo &mesh : newR.meshes)
+		//	mesh.transform.SetTranslation(mesh.transform.GetTranslation() + FVector(0,0,20));
 		toReturn.roomInfo.meshes.Append(newR.meshes);
 	}
 	FVector rot = getNormal(hole.points[1], hole.points[0], true);
@@ -883,7 +883,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 
 		FMaterialPolygon floor;
 		floor.points = f.points;
-		floor.offset(FVector(0, 0, 20));
+		//floor.offset(FVector(0, 0, 20));
 		floor.type = PolygonType::floor;
 		toReturn.roomInfo.pols.Add(floor);
 	}

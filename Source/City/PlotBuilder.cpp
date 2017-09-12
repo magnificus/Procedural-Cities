@@ -39,13 +39,14 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 	return added;
 }
 FLine getCrossingLine(float dist, FPolygon road) {
-	FVector tanL = road.points[2] - road.points[1];
+	FVector tanL = road.points[1] - road.points[0];
 	float totLen = tanL.Size();
 	tanL.Normalize();
-	FVector startP = road.points[1] + totLen*dist*tanL;
-	FVector endP = intersection(startP, startP + FRotator(0, 90, 0).RotateVector(tanL) * 10000, road.points[0], road.points[3]);
-	if (endP.X == 0.0f)
-		return{ FVector(0,0,0),FVector(0,0,0)};
+	FVector startP = road.points[0] + totLen*dist*tanL;
+	FVector endP = NearestPointOnLine(road.points[2], road.points[3] - road.points[2], startP);
+	//FVector endP = intersection(startP, startP + FRotator(0, 270, 0).RotateVector(tanL) * 10000, road.points[0], road.points[3]);
+	//if (endP.X == 0.0f)
+	//	return{ FVector(0,0,0),FVector(0,0,0)};
 	return{ startP, endP };
 }
 
@@ -70,9 +71,9 @@ TArray<FMaterialPolygon> getCrossingAt(float dist, FPolygon road, float lineWidt
 		FMaterialPolygon newLine;
 		newLine.type = PolygonType::roadMiddle;
 		newLine.points.Add(startPos + normal*lineWidth);
-		newLine.points.Add(startPos - normal*lineWidth);
-		newLine.points.Add(endPos - normal*lineWidth);
 		newLine.points.Add(endPos + normal*lineWidth);
+		newLine.points.Add(endPos - normal*lineWidth);
+		newLine.points.Add(startPos - normal*lineWidth);
 		newLine.offset(FVector(0, 0, 11));
 		lines.Add(newLine);
 					
@@ -93,17 +94,17 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 		tan.Normalize();
 		testLine.p1 = line.p1 - tan * 100;
 		testLine.p2 = line.p2 + tan * 100;
-		//for (FMetaPolygon &plot : plots) {
-			//if (intersection(testLine.p1, testLine.p2, plot).X != 0.0f) {
-			//	if (firstHit) {
-			//		sndHit = &plot;
-			//		// if these two plots werent previously connected, connections are added and crossing is placed, otherwise discard
-			//		if (!connectionsMap[firstHit].Contains(sndHit)) {
-			//			if (!connectionsMap.Contains(sndHit)) {
-			//				connectionsMap.Add(sndHit, TSet<FMetaPolygon*>());
-			//			}
-						//connectionsMap[firstHit].Add(sndHit);
-						//connectionsMap[sndHit].Add(firstHit);
+		for (FMetaPolygon &plot : plots) {
+			if (intersection(testLine.p1, testLine.p2, plot).X != 0.0f) {
+				if (firstHit) {
+					sndHit = &plot;
+					// if these two plots werent previously connected, connections are added and crossing is placed, otherwise discard
+					if (!connectionsMap[firstHit].Contains(sndHit)) {
+						if (!connectionsMap.Contains(sndHit)) {
+							connectionsMap.Add(sndHit, TSet<FMetaPolygon*>());
+						}
+						connectionsMap[firstHit].Add(sndHit);
+						connectionsMap[sndHit].Add(firstHit);
 						float width = 300;
 						dec.polygons.Append(getCrossingAt(0.25, road, width));
 						// add traffic lights
@@ -119,18 +120,18 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 						}
 
 
-			//			break;
+						break;
 
-			//		}
-			//	}
-			//	else {
-			//		firstHit = &plot;
-			//		if (!connectionsMap.Contains(firstHit)) {
-			//			connectionsMap.Add(firstHit, TSet<FMetaPolygon*>());
-			//		}
-			//	}
-			//}
-		//}
+					}
+				}
+				else {
+					firstHit = &plot;
+					if (!connectionsMap.Contains(firstHit)) {
+						connectionsMap.Add(firstHit, TSet<FMetaPolygon*>());
+					}
+				}
+			}
+		}
 	}
 
 	return dec;
