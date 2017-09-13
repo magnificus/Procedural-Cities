@@ -175,8 +175,9 @@ float getValueOfRotation(FVector testPoint, TArray<logicRoadSegment*> &others, f
 
 
 FRotator getBestRotation(float maxDiffAllowed, FRotator original, FVector originalPoint, FVector step, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
-	float bestVal = -1000000;
-	FRotator bestRotator;
+	FVector testPoint = originalPoint + original.RotateVector(step);
+	float bestVal = NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y);
+	FRotator bestRotator = original;
 	for (int i = 0; i < 10; i++) {
 		FRotator curr = original + FRotator(0, baseLibraryStream.FRandRange(-maxDiffAllowed, maxDiffAllowed), 0);
 		FVector testPoint = originalPoint + curr.RotateVector(step);
