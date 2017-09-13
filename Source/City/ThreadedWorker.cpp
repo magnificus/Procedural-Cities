@@ -10,12 +10,12 @@
 //		This line is essential! Compiler error without it
 ThreadedWorker* ThreadedWorker::Runnable = NULL;
 //***********************************************************
-
+FThreadSafeCounter  WorkerCounter = 0;
 ThreadedWorker::ThreadedWorker(AHouseBuilder* house)
 	: houseBuilder(house)
 {
 	//Link to where data should be stored
-	Thread = FRunnableThread::Create(this, TEXT("ThreadedWorker"), 0, TPri_Normal); //windows default = 8mb for thread, could specify more
+	Thread = FRunnableThread::Create(this, *FString::Printf(TEXT("Thread %i"), WorkerCounter.Increment()), 0, TPri_Normal); //windows default = 8mb for thread, could specify more
 }
 
 ThreadedWorker::~ThreadedWorker()

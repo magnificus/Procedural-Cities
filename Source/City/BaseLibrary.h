@@ -1099,8 +1099,8 @@ struct FRoomPolygon : public FPolygon
 		
 
 		for (int i = 1; i < r2->points.Num(); i++) {
-			if (r2->entrances.Contains(i)) {
-				FVector point = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle((*r2)[i - 1], (*r2)[i]);
+			if (r2->specificEntrances.Contains(i)) {
+				FVector point = r2->specificEntrances[i];
 				FVector tan = (*r2)[i] - (*r2)[i - 1];
 				tan.Normalize();
 				point += tan * 100;
@@ -1163,6 +1163,7 @@ struct FRoomPolygon : public FPolygon
 						connectionsFound++;
 					}
 				}
+				connectionsFound = r2->getTotalConnections() - connectionsFound;
 				if (connectionsFound == 0) {
 					r2->specificEntrances.Add(toUse, point);
 					UE_LOG(LogTemp, Warning, TEXT("sealing off room 2"));
@@ -1327,7 +1328,7 @@ struct FRoomPolygon : public FPolygon
 		SplitStruct res = getSealOffLine(room);
 		if (res.min == -1)
 			return nullptr;
-		FRoomPolygon *other = room->splitAlongSplitStruct(res, false);
+		FRoomPolygon *other = room->splitAlongSplitStruct(res, true);
 		if (other == nullptr)
 			return nullptr;
 		if (other->getTotalConnections() > 1) {
@@ -1337,7 +1338,6 @@ struct FRoomPolygon : public FPolygon
 			other->type = room->type;
 			room->type = SubRoomType::corridor;
 		}
-		//	std::swap(other, room);
 
 		return other;
 	}
@@ -1346,7 +1346,7 @@ struct FRoomPolygon : public FPolygon
 
 		TArray<FRoomPolygon*> toAdd;
 		for (FRoomPolygon *room : rooms) {
-			if (true || !splitableType(room->type) && room->getTotalConnections() > 1) {
+			if (!splitableType(room->type) && room->getTotalConnections() > 1) {
 				// need to modify room
 				FRoomPolygon* res = splitAndCreateSingleEntranceRoom(room);
 				if (res != nullptr)
@@ -1387,7 +1387,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(remaining);
 		// fix unsplitable rooms
 
-		//postFit(rooms);
+		postFit(rooms);
 
 
 		return rooms;
