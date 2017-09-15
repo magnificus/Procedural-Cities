@@ -375,8 +375,14 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 
 						if (windowFrames)
 							toReturn.Append(getAppropriateWindowFrame(p, center, rp->windowType));
-						else
-							toReturn.Append(fillOutPolygon(p));
+						//else {
+						//	FMaterialPolygon p3;
+						//	p3.points = p.points;
+						//	p3.type = PolygonType::interior;
+						//	p3.overridePolygonSides = true;
+						//	toReturn.Append(fillOutPolygon(p3));
+
+						//}
 
 				}
 				holes.Append(windows);
