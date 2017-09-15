@@ -606,47 +606,53 @@ FMeshInfo getEntranceMesh(FVector p1, FVector p2, FVector doorPos) {
 	return FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos - dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) };
 }
 
+TArray <FMaterialPolygon> fillOutPolygon(FMaterialPolygon &p) {
+	TArray<FMaterialPolygon> otherSides;
+	otherSides.Add(p);
+	FMaterialPolygon other = p;
+	bool polygonSides = true;
+	// exterior walls are interiors on the inside
+	if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
+		other.type = PolygonType::interior;
+		if (!p.overridePolygonSides)
+			polygonSides = false;
+	}
+	if (!p.overridePolygonSides && (p.type == PolygonType::floor || p.type == PolygonType::interior) || p.type == PolygonType::roof) {
+		polygonSides = false;
+		other.type = PolygonType::interior;
+	}
+
+	other.offset(p.getDirection() * p.width);
+	if (polygonSides) {
+		for (int i = 1; i < p.points.Num() + 1; i++) {
+			FMaterialPolygon newP1;
+			newP1.type = other.type;
+			newP1.points.Add(other.points[i - 1]);
+			newP1.points.Add(p.points[i%p.points.Num()]);
+			newP1.points.Add(p.points[i - 1]);
+			otherSides.Add(newP1);
+
+			FMaterialPolygon newP2;
+			newP2.type = other.type;
+			newP2.points.Add(other.points[i - 1]);
+			newP2.points.Add(other.points[i%other.points.Num()]);
+			newP2.points.Add(p.points[i%p.points.Num()]);
+			otherSides.Add(newP2);
+
+		}
+	}
+	other.normal = -p.normal;
+
+	other.reverse();
+	otherSides.Add(other);
+
+	return otherSides;
+}
+
 TArray <FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &inPols) {
 	TArray<FMaterialPolygon> otherSides;
 	for (FMaterialPolygon &p : inPols) {
-		otherSides.Add(p);
-		FMaterialPolygon other = p;
-		bool polygonSides = true;
-		// exterior walls are interiors on the inside
-		if (p.type == PolygonType::exterior || p.type == PolygonType::exteriorSnd) {
-			other.type = PolygonType::interior;
-			if (!p.overridePolygonSides)
-				polygonSides = false;
-		}
-		if (!p.overridePolygonSides && (p.type == PolygonType::floor || p.type == PolygonType::interior) || p.type == PolygonType::roof) {
-			polygonSides = false;
-			other.type = PolygonType::interior;
-		}
-
-		other.offset(p.getDirection() * p.width);
-		if (polygonSides) {
-			for (int i = 1; i < p.points.Num()+1; i++) {
-				FMaterialPolygon newP1;
-				newP1.type = other.type;
-				newP1.points.Add(other.points[i - 1]);
-				newP1.points.Add(p.points[i%p.points.Num()]);
-				newP1.points.Add(p.points[i - 1]);
-				otherSides.Add(newP1);
-
-				FMaterialPolygon newP2;
-				newP2.type = other.type;
-				newP2.points.Add(other.points[i - 1]);
-				newP2.points.Add(other.points[i%other.points.Num()]);
-				newP2.points.Add(p.points[i%p.points.Num()]);
-				otherSides.Add(newP2);
-
-			}
-		}
-		other.normal = -p.normal;
-
-		other.reverse();
-		otherSides.Add(other);
-
+		otherSides.Append(fillOutPolygon(p));
 	}
 	return otherSides;
 }

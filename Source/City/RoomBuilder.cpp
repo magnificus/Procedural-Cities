@@ -116,14 +116,7 @@ static TArray<FMaterialPolygon> getSign(FVector startP, FVector endP, FRandomStr
 	outline += endLoc + FVector(0, 0, actualHeight);
 	outline += endLoc;
 	FVector norm = outline.getDirection();
-	//outline.offset(-norm*outline.width / 3);
 	float outlineWidth = 15;
-	//TArray<FMaterialPolygon> around = getRectangularWindow(outline, outline.getCenter(), 10, 10, 25);
-	//for (auto &a : around) {
-	//	a.offset(-norm * outlineWidth / 3);
-	//	a.type = PolygonType::exteriorSnd;
-	//}
-	//signPols.Append(around);
 	signPols.Add(outline);
 	return signPols;
 }
@@ -270,15 +263,10 @@ TArray<FMaterialPolygon> getAppropriateWindowFrame(FPolygon p, FVector center, W
 	} break;
 	case WindowType::verticalLines: {
 		toReturn = getRectangularWindow(p, center, frameWidth, frameLength, frameDepth);
-		//for (int i = 0; i < toReturn.Num(); i++) {
-		//	toReturn.RemoveAt(i);
-		//}
 	} break;
 	case WindowType::rectangularHorizontalBigger: {
 		toReturn = getRectangularWindow(p, center, frameWidth, frameLength, frameDepth);
-		//for (int i = 1; i < toReturn.Num(); i++) {
-		//	toReturn.RemoveAt(i);
-		//}
+
 	} break;
 	}
 
@@ -387,6 +375,8 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 
 						if (windowFrames)
 							toReturn.Append(getAppropriateWindowFrame(p, center, rp->windowType));
+						else
+							toReturn.Append(fillOutPolygon(p));
 
 				}
 				holes.Append(windows);

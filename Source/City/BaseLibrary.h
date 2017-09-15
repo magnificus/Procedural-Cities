@@ -86,6 +86,7 @@ bool testCollision(FPolygon &, FPolygon &, float leniency);
 bool testCollision(TArray<FVector> tangents, TArray<FVector> vertices1, TArray<FVector> vertices2, float collisionLeniency);
 FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt);
 TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width);
+TArray <FMaterialPolygon> fillOutPolygon(FMaterialPolygon &p);
 TArray<FMaterialPolygon> fillOutPolygons(TArray<FMaterialPolygon> &first);
 FVector intersection(FVector p1, FVector p2, FVector p3, FVector p4);
 TArray<FPolygon> getBlockingEntrances(TArray<FVector> points, TSet<int32> entrances, TMap<int32, FVector> specificEntrances, float entranceWidth, float blockingLength);
