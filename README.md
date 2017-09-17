@@ -5,7 +5,7 @@ https://www.youtube.com/watch?v=e9PXCG02I5Y
 
 This project is done as a master thesis at LTH, link to thesis will be available ->here<- when available.
 
-The source code is available to everyone under the MIT licence and you're very welcome to clone or fork the reposity, but keep in mind that it is mostly a proof-of-concept and the code is hardly optimized or refined.
+The source code is available to everyone under the MIT licence and you're very welcome to clone or fork the reposity, but keep in mind that it is mostly a proof-of-concept and the code is hardly optimized or refined. Most parameters are accessible from the "Spawner" blueprint-class, but some are hidden in ProcMeshActorBP, PlotBuilderBP and HouseBuilderBP.
 
 Some pictures:
 
