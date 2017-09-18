@@ -111,15 +111,8 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 
 
 	mesh->SetMaterial(0, mat);
-	//FRuntimeMeshBatchUpdateData::
 	mesh->CreateMeshSection(0, vertices, triangles, normals, UV, vertexColors, tangents, false, EUpdateFrequency::Infrequent);
-	//TWeakObjectPtr<URuntimeMeshComponent> Mesh = mesh;
-	//FRuntimeMeshAsync::CreateMeshSection<FRuntimeMeshVertexSimple>(this, 0, Verts, Tris);
-	//FRuntimeMeshAsync::CreateMeshSection(Mesh, 0, vertices, triangles);
-	//FRuntimeMeshAsync::CreateMeshSection(Mesh, 1, vertices, triangles);
-	//FRuntimeMeshAsync::
 
-	//mesh->update
 
 	return true;
 }

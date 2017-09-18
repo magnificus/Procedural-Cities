@@ -364,7 +364,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	queue.push(start);
 
-	// map for faster comparisons, unused
+	// map for faster comparisons, unused currently
 	TMap <int, TArray<FRoadSegment*>*> segmentsOrganized;
 
 	// loop for everything else
@@ -396,11 +396,9 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 			FVector p2Prev = f2->p2;
 			FVector p1Prev = f2->p1;
 			f2->p2 += tangent*maxAttachDistance;
-			//f2->p1 -= tangent*maxAttachDistance;
 			float closestDist = 10000000.0f;
 			FRoadSegment* closest = nullptr;
 			FVector impactP;
-			//addVertices(f2);
 			bool foundCollision = false;
 			for (int j = 0; j < determinedSegments.Num(); j++) {
 				FRoadSegment* f = determinedSegments[j];

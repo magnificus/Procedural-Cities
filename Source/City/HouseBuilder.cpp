@@ -117,7 +117,6 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 			prevAttach = sndAttach;
 		}
 		connections[i - 1].b = conn;
-		//roomPols[i - 1].points.Add(hole.points[i-1]);
 		roomPols[i - 1].points.Add(firstAttach);
 		roomPols[i - 1].entrances.Add(roomPols[i - 1].points.Num());
 		roomPols[i - 1].points.Add(sndAttach);
@@ -158,14 +157,12 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 			roomPols[0].points.EmplaceAt(0, sndAttach);
 			roomPols[0].entrances.Add(1);
 			roomPols[0].points.EmplaceAt(1, firstAttach);
-			//roomPols[0].points.EmplaceAt(2, hole.points[i%hole.points.Num()]);
 		}
 		else {
 			connections[i].a = conn;
 			roomPols[i].points.Add(sndAttach);
 			roomPols[i].entrances.Add(roomPols[i].points.Num());
 			roomPols[i].points.Add(firstAttach);
-			//roomPols[i].points.Add(hole.points[i%hole.points.Num()]);
 		}
 
 
@@ -327,7 +324,6 @@ FSimplePlot attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &center
 		FSimplePlot simplePlot;
 		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 1000));
 		simplePlot.pol = pol;
-		//simplePlot.pol.points.Add(FVector(simplePlot.pol.points[0]));
 		simplePlot.pol.reverse();
 		simplePlot.type = f.simplePlotType;
 		//return pol;
@@ -337,8 +333,6 @@ FSimplePlot attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &center
 }
 
 FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHole, float len, FVector offset) {
-	// remove corner
-	//return FSimplePlot();
 	FVector p1 = middle(f.points[place - 1], f.points[place%f.points.Num()]);
 	FVector p2 = middle(f.points[(place + 1) % f.points.Num()], f.points[place%f.points.Num()]);
 
@@ -607,10 +601,6 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 				FVector tangent = shape.getPointDirection(i, false);
 				shape[i] += dist*tangent;
 			}
-			//for (FVector &point : shape.points) {
-			//	FVector tangent = center - point;
-			//	point += tangent / 4;
-			//}
 			if (!pol.getIsClockwise())
 				shape.reverse();
 			shape.normal = FVector(0, 0, -1);

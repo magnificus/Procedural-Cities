@@ -485,8 +485,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		}
 		else {
 			f.open = true;
-
-
 		}
 
 		polygons.Add(f);
@@ -552,7 +550,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 			f.points.RemoveAt(f.points.Num() - 1);
 		}
 		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) < maxConnect) {
-			//f.points.Add(FVector(f.points[0]));
 			f.open = false;
 		}
 		f.checkOrientation();
@@ -711,16 +708,6 @@ FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMe
 			FPolygon pol = getPolygon(rot, pos, string, map);
 
 			//// fit the polygon properly if possible
-			//float lenToMove = 0;
-			//for (int k = 0; k < pol.points.Num(); k++) {
-			//	FVector toPoint = pol[k] - points[place - 1];
-			//	float dot = FVector::DotProduct(dir, toPoint);
-			//	if (dot < 0) {
-			//		// need to move forward
-			//		lenToMove = std::max(lenToMove, toPoint.ProjectOnToNormal(dir).Size());
-			//	}
-
-			//}
 			FVector toMove = fitPolygonNextToPolygon(*this, pol, place, rot);
 			if (toMove.X != 0.0f) {
 				pos += toMove + 20 * dir;
@@ -873,7 +860,6 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 			bushAreaRatio *= 15;
 			grassRatio *= 15;
 		}
-		//attemptPlaceCenter(pol, blocking, meshes, "fountain", FRotator(0, 0, 0), FVector(0, 0, 0), map);
 		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*area, "tree1"));
 		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*area, "tree2"));
 		meshes.Append(placeRandomly(pol, blocking, bushAreaRatio*area, "bush1"));

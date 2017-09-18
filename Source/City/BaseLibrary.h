@@ -213,31 +213,32 @@ struct FPolygon
 			}
 		}
 
+
 		// untangle
 
-		for (int i = 1; i < points.Num(); i++) {
-			FVector tan1 = points[i] - points[i - 1];
-			tan1.Normalize();
-			for (int j = i + 2; j < points.Num() + 1; j++) {
-				FVector tan2 = points[j%points.Num()] - points[j-1];
-				tan2.Normalize();
-				FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j%points.Num()] - tan2*10);
-				if (res.X != 0.0f) {
-					TArray<FVector> newPoints;
-					for (int k = 0; k < i; k++) {
-						newPoints.Add(points[k]);
-					}
-					newPoints.Add(res);
-					for (int k = j; k < points.Num(); k++) {
-						newPoints.Add(points[k]);
-					}
-					points = newPoints;
-					i = 0;
-					break;
+		//for (int i = 1; i < points.Num(); i++) {
+		//	FVector tan1 = points[i] - points[i - 1];
+		//	tan1.Normalize();
+		//	for (int j = i + 2; j < points.Num() + 1; j++) {
+		//		FVector tan2 = points[j%points.Num()] - points[j-1];
+		//		tan2.Normalize();
+		//		FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j%points.Num()] - tan2*10);
+		//		if (res.X != 0.0f) {
+		//			TArray<FVector> newPoints;
+		//			for (int k = 0; k < i; k++) {
+		//				newPoints.Add(points[k]);
+		//			}
+		//			newPoints.Add(res);
+		//			for (int k = j; k < points.Num(); k++) {
+		//				newPoints.Add(points[k]);
+		//			}
+		//			points = newPoints;
+		//			i = 0;
+		//			break;
 
-				}
-			}
-		}
+		//		}
+		//	}
+		//}
 	}
 
 
@@ -922,33 +923,6 @@ struct FRoomPolygon : public FPolygon
 		offsetIntSetFromIndex(&exteriorWalls, p.max, -(p.max - p.min) + 2);
 		offsetIntSetFromIndex(&toIgnore, p.max, - (p.max - p.min) + 2);
 
-		//for (int32 i : windows) {
-		//	if (i >= p.max)
-		//		newList.Add(i - (p.max - p.min) + 2);
-		//	else
-		//		newList.Add(i);
-		//}
-		//windows = newList;
-
-		//newList.Empty();
-		//for (int32 i : exteriorWalls) {
-		//	if (i >= p.max)
-		//		newList.Add(i - (p.max - p.min) + 2);
-		//	else
-		//		newList.Add(i);
-		//}
-		//exteriorWalls = newList;
-
-		//newList.Empty();
-		//for (int32 i : toIgnore) {
-		//	if (i >= p.max)
-		//		newList.Add(i - (p.max - p.min) + 2);
-		//	else
-		//		newList.Add(i);
-		//}
-		//toIgnore = newList;
-
-
 
 		TMap<FRoomPolygon*, int32> newActive;
 		for (auto &pair : activeConnections) {
@@ -1253,73 +1227,6 @@ struct FRoomPolygon : public FPolygon
 
 
 		return SplitStruct{ bestMin, bestMax , bestP1, bestP2};
-
-
-		//FVector p1Min = FVector(0, 0, 0);
-		//FVector p1Max = FVector(0, 0, 0);
-		//FVector p2Min = FVector(0, 0, 0);
-		//FVector p2Max = FVector(0, 0, 0);
-		//int i1 = 0;
-		//int i2 = 0;
-		//auto it = r2->entrances.CreateIterator();
-		//while (it && p2Min.X == 0.0f) {
-		//	FVector pos = r2->specificEntrances.Contains(*it) ? r2->specificEntrances[*it] : middle(r2->points[*it%r2->points.Num()], r2->points[*it - 1]);
-		//	FVector tan = r2->points[*it%r2->points.Num()] - r2->points[*it - 1];
-		//	tan.Normalize();
-		//	FVector beginPos = pos - tan * 100;
-		//	FVector endPos = pos + tan * 100;
-		//	if (p1Min.X == 0.0f) {
-		//		p1Min = beginPos;
-		//		p1Max = endPos;
-		//		i1 = *it;
-		//	}
-		//	else {
-		//		p2Min = beginPos;
-		//		p2Max = endPos;
-		//		i2 = *it;
-		//	}
-		//	++it;
-		//}
-		//if (p2Min.X == 0.0f) {
-		//	auto it2 = r2->passiveConnections.CreateIterator();
-		//	while (it2 && p2Min.X == 0.0f) {
-		//		FVector beginPos;
-		//		FVector endPos;
-		//		for (auto &room : it2->Value) {
-		//			for (auto &passiveConn : room->passiveConnections) {
-		//				if (passiveConn.Value.Contains(r2)) {
-		//					int pos = room->activeConnections[r2];
-		//					FVector tan = room->points[pos%room->points.Num()] - room->points[pos - 1];
-		//					tan.Normalize();
-		//					beginPos = room->specificEntrances[pos] - tan * 100;
-		//					endPos = room->specificEntrances[pos] + tan * 100;
-		//				}
-		//			}
-		//		}
-		//		if (p1Min.X == 0.0f) {
-		//			i1 = it2->Key;
-		//			p1Min = beginPos;
-		//			p1Max = endPos;
-
-		//		}
-		//		else {
-		//			i2 = it2->Key;
-		//			p2Min = beginPos;
-		//			p2Max = endPos;
-		//		}
-		//		++it2;
-		//	}
-		//}
-		//FVector p1 = p1Max;
-		//FVector p2 = p2Min;
-		//if (i1 > i2) {
-		//	std::swap(i1, i2);
-		//	p1 = p2Max;
-		//	p2 = p1Min;
-		//}
-		//if (p1.X == 0.0f || p2.X == 0.0f)
-		//	return SplitStruct{ -1, -1, FVector(0,0,0), FVector(0, 0, 0) };
-		//return SplitStruct{i1,i2, p1, p2 };
 	}
 
 
@@ -1388,7 +1295,7 @@ struct FRoomPolygon : public FPolygon
 		rooms.Append(remaining);
 		// fix unsplitable rooms
 
-		postFit(rooms);
+		//postFit(rooms);
 
 
 		return rooms;

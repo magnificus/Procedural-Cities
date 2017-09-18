@@ -24,10 +24,10 @@ void APlotBuilder::BeginPlay()
 TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArray<FPolygon> others) {
 	TArray<FMetaPolygon> added;
 	for (FMetaPolygon p : plots) {
-		bool shouldAdd = true;
+		bool shouldAdd = !p.open;
 		if (shouldAdd) {
 			for (FMetaPolygon a : added) {
-				if (testCollision(p, a, -1000)) {
+				if (testCollision(p, a, 0)) {
 					shouldAdd = false;
 					break;
 				}
