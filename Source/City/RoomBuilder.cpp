@@ -375,6 +375,19 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 
 						if (windowFrames)
 							toReturn.Append(getAppropriateWindowFrame(p, center, rp->windowType));
+						else {
+							FVector normal = p.getDirection();
+							for (int i = 1; i < p.points.Num() + 1; i++) {
+								FMaterialPolygon sidePol;
+								sidePol.width = 0;
+								sidePol.type = PolygonType::exterior;
+								sidePol += p[i - 1];
+								sidePol += p[i%p.points.Num()];
+								sidePol += p[i%p.points.Num()] + p.getDirection() * 20;
+								sidePol += p[i - 1] + p.getDirection() * 20;
+								toReturn.Add(sidePol);
+							}
+						}
 
 
 				}
