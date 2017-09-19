@@ -33,7 +33,7 @@ public:
 	float getWindowWidth(FRandomStream stream) { return 200; }
 	float getWindowHeight(FRandomStream stream) { return 300; }
 	bool getWindowFrames() { return false; }
-	float getMaxApartmentSize() { return 500; }
+	float getMaxApartmentSize() { return 600; }
 
 };
 
@@ -47,7 +47,7 @@ public:
 	float getWindowWidth(FRandomStream stream) { return 200.0f; }
 	float getWindowHeight(FRandomStream stream) { return 200.0f; }
 	bool getWindowFrames() { return true;}
-	float getMaxApartmentSize() { return 200; }
+	float getMaxApartmentSize() { return 400; }
 
 };
 

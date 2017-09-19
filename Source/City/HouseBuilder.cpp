@@ -75,6 +75,21 @@ TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float h
 	return pols;
 }
 
+TArray<FRoomPolygon*> splitRoomsKeepingEntrancesRecursively(FRoomPolygon *original, float maxApartmentSize, int pEntrance) {
+	TArray<FRoomPolygon*> toReturn;
+	if (original->getArea() > maxApartmentSize) {
+		FRoomPolygon* newP = original->splitAlongMax(0.5, false, pEntrance);
+		if (newP) {
+			int newEntrance = newP->exteriorWalls.Contains(1) ? newP->points.Num() - 1 : 1;
+			newP->entrances.Add(newEntrance);
+			toReturn.Append(splitRoomsKeepingEntrancesRecursively(newP, maxApartmentSize, newEntrance));
+			toReturn.Add(newP);
+		}
+	}
+	return toReturn;
+}
+
+
 // this function returns all of the first grade Room Polygons, these can later be expanded upon when finalizing the room in RoomBuilder
 TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, FPolygon hole, bool ground, float corrWidth, FRandomStream stream, TArray<FMaterialPolygon> &pols, float maxApartmentSize){
 	TArray<FLine> lines;
@@ -190,35 +205,50 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 
 
 
-	TArray<FRoomPolygon> extra;
+	TArray<FRoomPolygon*> extra;
 	// we can split a polygon one time without fearing that any room is left without entrance 
 	for (FRoomPolygon &p : roomPols) {
-		if (p.getArea() > maxApartmentSize) {
-			FRoomPolygon* newP = p.splitAlongMax(0.5, false);
-			if (newP) {
-				// gotta make sure both apartments have an entrance
-				int newPEntrance = newP->exteriorWalls.Contains(1) ? newP->points.Num() - 1 : 1;
-				newP->entrances.Add(newPEntrance);
-				
-				int pEntrance = p.exteriorWalls.Contains(1) ? p.points.Num() - 1 : 1;
-				p.entrances.Add(pEntrance);
+		extra.Append(splitRoomsKeepingEntrancesRecursively(&p, maxApartmentSize, -1));
+	//	if (p.getArea() > maxApartmentSize) {
+	//		FRoomPolygon* newP = p.splitAlongMax(0.5, false);
+	//		if (newP) {
+	//			// gotta make sure both apartments have an entrance
+	//			int newPEntrance = newP->exteriorWalls.Contains(1) ? newP->points.Num() - 1 : 1;
+	//			newP->entrances.Add(newPEntrance);
+	//			
+	//			int pEntrance = p.exteriorWalls.Contains(1) ? p.points.Num() - 1 : 1;
+	//			p.entrances.Add(pEntrance);
 
-				//if (newP->getArea() > maxApartmentSize) {
-				//	FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false, newPEntrance);
-				//	extra.Add(*newP2);
-				//	delete(newP2);
-				//}
-				extra.Add(*newP);
-				delete(newP);
-				//if (p.getArea() > maxApartmentSize) {
-				//	FRoomPolygon* newP3 = p.splitAlongMax(0.5, false, p.points.Num()-1);
-				//	extra.Add(*newP3);
-				//	delete newP3;
-				//}
-			}
-		}
+	//			if (newP->getArea() > maxApartmentSize) {
+	//				FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false, newPEntrance);
+	//				if (newP2) {
+	//					int newEntrance = newP2->exteriorWalls.Contains(1) ? newP2->points.Num() - 1 : 1;
+	//					newP2->entrances.Add(newEntrance);
+	//					extra.Add(*newP2);
+	//					delete(newP2);
+	//				}
+	//			}
+	//			extra.Add(*newP);
+	//			delete(newP);
+	//			if (p.getArea() > maxApartmentSize) {
+	//				FRoomPolygon* newP3 = p.splitAlongMax(0.5, false, pEntrance);
+	//				if (newP3) {
+	//					int newEntrance = newP3->exteriorWalls.Contains(1) ? newP3->points.Num() - 1 : 1;
+	//					newP3->entrances.Add(newEntrance);
+	//					extra.Add(*newP3);
+	//					delete newP3;
+	//				}
+	//			}
+	//		}
+	//	}
 	}
-	roomPols.Append(extra);
+	for (FRoomPolygon *p : extra) {
+		roomPols.Add(*p);
+	}
+	for (FRoomPolygon *p : extra) {
+		delete p;
+	}
+	//roomPols.Append(extra);
 	
 
 

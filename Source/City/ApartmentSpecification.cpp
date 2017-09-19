@@ -82,8 +82,9 @@ RoomBlueprint LivingSpecification::getBlueprint(float areaScale) {
 	optional.Add(bedroom);
 	optional.Add(closet);
 	optional.Add(bedroom);
-	optional.Add(bathroom);
 	optional.Add(living);
+	optional.Add(bathroom);
+
 
 	return RoomBlueprint{ needed, optional, true };
 }
