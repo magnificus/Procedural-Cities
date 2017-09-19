@@ -618,6 +618,8 @@ TArray <FMaterialPolygon> fillOutPolygon(FMaterialPolygon &p) {
 		polygonSides = false;
 		other.type = PolygonType::interior;
 	}
+	if (overrideSides)
+		polygonSides = true;
 
 	other.offset(p.getDirection() * p.width);
 	if (polygonSides) {

@@ -927,7 +927,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			toReturn.roomInfo.pols.Append(floor);
 		}
 		if (horizontalFacade)
-			addFacade(f, toReturn.roomInfo, floorHeight*i + 1, 70, 20);
+			addFacade(f, toReturn.roomInfo, floorHeight*i - 50, 70, 20);
 
 		roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, stream, toReturn.roomInfo.pols, spec->getMaxApartmentSize());
 		for (FRoomPolygon &p : roomPols) {
