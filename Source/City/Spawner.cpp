@@ -180,7 +180,7 @@ FRotator getBestRotation(float maxDiffAllowed, FRotator original, FVector origin
 	FRotator bestRotator = original;
 	for (int i = 0; i < 7; i++) {
 		FRotator curr = original + FRotator(0, baseLibraryStream.FRandRange(-maxDiffAllowed, maxDiffAllowed), 0);
-		FVector testPoint = originalPoint + curr.RotateVector(step);
+		testPoint = originalPoint + curr.RotateVector(step);
 		float val = getValueOfRotation(testPoint, others, maxDist, detriment);
 		if (val > bestVal) {
 			bestRotator = curr;
@@ -322,7 +322,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	baseLibraryStream = stream;
 
 	// if we have no roof it looks better with polygons on side of walls as well, otherwise the top side of walls in the buildings will just be empty
-	overrideSides = !generateRoofs;
+	//overrideSides = !generateRoofs;
 
 	FVector origin;
 	TArray<FRoadSegment*> determinedSegments;

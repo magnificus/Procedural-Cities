@@ -27,6 +27,7 @@ struct SplitStruct {
 
 
 static FRandomStream baseLibraryStream;
+static bool overrideSides;
 
 struct FPolygon;
 struct FMaterialPolygon;
@@ -95,7 +96,6 @@ FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHe
 
 FPolygon getTinyPolygon(FVector point);
 
-static bool overrideSides;
 
 static FVector getNormal(FVector p1, FVector p2, bool left) {
 	return FRotator(0, left ? 90 : 270, 0).RotateVector(p2 - p1);

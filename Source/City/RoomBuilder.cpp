@@ -219,23 +219,23 @@ TArray<FPolygon> getBlockingVolumes(FRoomPolygon *r2, float entranceWidth, float
 
 
 
-TArray<FMaterialPolygon> getCrossWindow(FPolygon p, FVector center, float frameWidth, float frameLength, float frameDepth) {
+TArray<FMaterialPolygon> getCrossWindow(FPolygon p, float frameWidth, float frameLength, float frameDepth) {
 	TArray<FMaterialPolygon> toReturn;
-	for (int j = 1; j < 3; j++) {
+	for (int j = 2; j <= 3; j++) {
 		FMaterialPolygon frame;
 		frame.type = PolygonType::windowFrame;
 		frame.width = frameDepth;
-		FVector tangent1 = center - p.points[j - 1];
-		FVector tangent2 = p.points[j+1] - p.points[j];
+		FVector tangent1 = p.points[j - 1] - p.points[j - 2];
+		FVector tangent2 = p.points[j] - p.points[j - 1];
 		float tan2Len = tangent2.Size();
 		tangent1.Normalize();
 		tangent2.Normalize();
 		FVector windowNormal = getNormal(p.points[j], p.points[j - 1], true);
 		windowNormal.Normalize();
-		frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent1 * frameWidth/2);
-		frame.points.Add(middle(p.points[j - 1], p.points[j]) + tangent1 * frameWidth/2);
-		frame.points.Add(middle(p.points[j - 1], p.points[j]) + tangent1 * frameWidth/2 + tangent2*tan2Len);
-		frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent1 * frameWidth / 2 + tangent2*tan2Len);
+		frame.points.Add(middle(p.points[j - 1], p.points[j]) + tangent2 * frameWidth/2);
+		frame.points.Add(middle(p.points[j - 1], p.points[j]) + tangent2 * frameWidth / 2 - tangent1*tan2Len);
+		frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent2 * frameWidth/2 - tangent1*tan2Len);
+		frame.points.Add(middle(p.points[j - 1], p.points[j]) - tangent2 * frameWidth/2);
  		FVector frameDir = frame.getDirection();
 		frame.offset(frameDir*(frameDepth / 2 - 20));
 		toReturn.Add(frame);
@@ -259,7 +259,7 @@ TArray<FMaterialPolygon> getAppropriateWindowFrame(FPolygon p, FVector center, W
 	} break;
 	case WindowType::cross: {
 		toReturn = getRectangularWindow(p, center, frameWidth, frameLength, frameDepth);
-		toReturn.Append(getCrossWindow(p, center, frameWidth, frameLength, frameDepth));
+		toReturn.Append(getCrossWindow(p, frameWidth, frameLength, frameDepth));
 	} break;
 	case WindowType::verticalLines: {
 		toReturn = getRectangularWindow(p, center, frameWidth, frameLength, frameDepth);
@@ -377,14 +377,14 @@ TArray<FMaterialPolygon> ARoomBuilder::interiorPlanToPolygons(TArray<FRoomPolygo
 							toReturn.Append(getAppropriateWindowFrame(p, center, rp->windowType));
 						else {
 							FVector normal = p.getDirection();
-							for (int i = 1; i < p.points.Num() + 1; i++) {
+							for (int k = 1; k < p.points.Num() + 1; k++) {
 								FMaterialPolygon sidePol;
 								sidePol.width = 0;
 								sidePol.type = PolygonType::exterior;
-								sidePol += p[i - 1];
-								sidePol += p[i%p.points.Num()];
-								sidePol += p[i%p.points.Num()] + p.getDirection() * 20;
-								sidePol += p[i - 1] + p.getDirection() * 20;
+								sidePol += p[k - 1];
+								sidePol += p[k%p.points.Num()];
+								sidePol += p[k%p.points.Num()] + p.getDirection() * 20;
+								sidePol += p[k - 1] + p.getDirection() * 20;
 								toReturn.Add(sidePol);
 							}
 						}
