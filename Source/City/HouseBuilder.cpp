@@ -75,14 +75,16 @@ TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float h
 	return pols;
 }
 
-TArray<FRoomPolygon*> splitRoomsKeepingEntrancesRecursively(FRoomPolygon *original, float maxApartmentSize, int pEntrance) {
+TArray<FRoomPolygon*> splitRoomsKeepingEntrancesRecursively(FRoomPolygon *original, float maxApartmentSize, int pEntrance, int depth) {
 	TArray<FRoomPolygon*> toReturn;
+	if (depth > 2)
+		return toReturn;
 	if (original->getArea() > maxApartmentSize) {
 		FRoomPolygon* newP = original->splitAlongMax(0.5, false, pEntrance);
 		if (newP) {
 			int newEntrance = newP->exteriorWalls.Contains(1) ? newP->points.Num() - 1 : 1;
 			newP->entrances.Add(newEntrance);
-			toReturn.Append(splitRoomsKeepingEntrancesRecursively(newP, maxApartmentSize, newEntrance));
+			toReturn.Append(splitRoomsKeepingEntrancesRecursively(newP, maxApartmentSize, newEntrance, ++depth));
 			toReturn.Add(newP);
 		}
 	}
@@ -208,7 +210,7 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 	TArray<FRoomPolygon*> extra;
 	// we can split a polygon one time without fearing that any room is left without entrance 
 	for (FRoomPolygon &p : roomPols) {
-		extra.Append(splitRoomsKeepingEntrancesRecursively(&p, maxApartmentSize, -1));
+		extra.Append(splitRoomsKeepingEntrancesRecursively(&p, maxApartmentSize, -1, 0));
 	//	if (p.getArea() > maxApartmentSize) {
 	//		FRoomPolygon* newP = p.splitAlongMax(0.5, false);
 	//		if (newP) {

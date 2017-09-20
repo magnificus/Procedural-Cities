@@ -313,7 +313,8 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 	for (FRoadSegment f : blocking) {
 		FVector tangent = f.p2 - f.p1;
 		tangent.Normalize();
-		FVector intSec = getProperIntersection(f.p1 - tangent*extraRoadLen, f.p2 + tangent*extraRoadLen, inLine->line.p1, inLine->line.p2);
+		float toUseExtraLen = f.roadInFront ? extraRoadLen : 0;
+		FVector intSec = getProperIntersection(f.p1 - tangent*toUseExtraLen, f.p2 + tangent*toUseExtraLen, inLine->line.p1, inLine->line.p2);
 		if (intSec.X != 0.0f) {
 			if (!allowSplit) {
 				delete inLine;
@@ -340,7 +341,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 
 			newP->buildLeft = inLine->buildLeft;
 			decidePolygonFate(segments, blocking, newP, lines, true, extraRoadLen, width, middleOffset);
-			intSec = getProperIntersection(f.p1 - tangent * extraRoadLen, f.p2 + tangent * extraRoadLen, inLine->line.p1, inLine->line.p2);
+			intSec = getProperIntersection(f.p1 - tangent * toUseExtraLen, f.p2 + tangent * toUseExtraLen, inLine->line.p1, inLine->line.p2);
 			//return;
 		}
 	}
@@ -442,6 +443,14 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 			right->buildLeft = false;
 			decidePolygonFate(segments, blocking, right, lines, true, extraRoadLen, width, middleOffset);
 		}
+
+		//if (!f.roadInFront) {
+		//	LinkedLine* front = new LinkedLine();
+		//	front->line.p1 = f.p2 - sideOffsetBegin * 2 + extraLength/5;
+		//	front->line.p2 = f.p2 + sideOffsetEnd * 2 + extraLength/5;
+		//	front->buildLeft = true;
+		//	decidePolygonFate(segments, blocking, front, lines, true, extraRoadLen, width, middleOffset);
+		//}
 	}
 
 	TSet<LinkedLine*> remaining;
@@ -554,7 +563,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		}
 		f.checkOrientation();
 
-		f.clipEdges(-0.95f);
+		f.clipEdges(-0.96f);
 		if (f.points.Num() < 3) {
 			polygons.RemoveAt(i);
 			i--;
