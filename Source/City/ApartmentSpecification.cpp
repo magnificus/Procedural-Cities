@@ -40,12 +40,7 @@ void ApartmentSpecification::placeEntranceMeshes(FRoomInfo &r, FRoomPolygon *r2)
 			continue;
 		FVector doorPos = r2->specificEntrances.Contains(i) ? r2->specificEntrances[i] : middle(r2->points[i%r2->points.Num()], r2->points[i - 1]);
 		r.meshes.Add(getEntranceMesh(r2->points[i%r2->points.Num()], r2->points[i - 1], doorPos));
-		//FVector dir1 = getNormal(r2->points[i%r2->points.Num()], r2->points[i - 1], true);
-		//dir1.Normalize();
-		//FVector dir2 = r2->points[i%r2->points.Num()] - r2->points[i - 1];
-		//dir2.Normalize();
-		//r.meshes.Add(FMeshInfo{ "door_frame", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
-		//r.meshes.Add(FMeshInfo{ "door", FTransform(dir1.Rotation(), doorPos + dir1 * 10, FVector(1.0f, 1.0f, 1.0f)) });
+
 	}
 }
 
@@ -67,7 +62,7 @@ RoomBlueprint OfficeSpecification::getBlueprint(float areaScale) {
 
 RoomBlueprint LivingSpecification::getBlueprint(float areaScale) {
 	TArray<RoomSpecification> needed;
-	RoomSpecification kitchen{40*areaScale, 90*areaScale, SubRoomType::kitchen};
+	RoomSpecification kitchen{60*areaScale, 120*areaScale, SubRoomType::kitchen};
 	RoomSpecification bathroom{30*areaScale, 60*areaScale, SubRoomType::bath };
 	RoomSpecification bedroom{50*areaScale, 100*areaScale, SubRoomType::bed };
 	RoomSpecification living{100 * areaScale, 150 * areaScale, SubRoomType::living };

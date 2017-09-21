@@ -445,7 +445,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 				plot.type = f.simplePlotType;
 				plot.pol = a;
 				plot.pol.normal = FVector(0, 0, -1);
-				plot.pol.offset(FVector(0, 0, 30));
+				plot.pol.offset(FVector(0, 0, 20));
 				//a.normal = FVector(0, 0, -1);
 				//a.offset(FVector(0,0,30));
 				sPlots.Add(plot);

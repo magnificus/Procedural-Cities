@@ -27,7 +27,7 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 		bool shouldAdd = !p.open;
 		if (shouldAdd) {
 			for (FMetaPolygon a : added) {
-				if (testCollision(p, a, 0)) {
+				if (testCollision(p, a, -1000)) {
 					shouldAdd = false;
 					break;
 				}
