@@ -218,29 +218,29 @@ struct FPolygon
 
 		// untangle
 
-		//for (int i = 1; i < points.Num(); i++) {
-		//	FVector tan1 = points[i] - points[i - 1];
-		//	tan1.Normalize();
-		//	for (int j = i + 2; j < points.Num() + 1; j++) {
-		//		FVector tan2 = points[j%points.Num()] - points[j-1];
-		//		tan2.Normalize();
-		//		FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j%points.Num()] - tan2*10);
-		//		if (res.X != 0.0f) {
-		//			TArray<FVector> newPoints;
-		//			for (int k = 0; k < i; k++) {
-		//				newPoints.Add(points[k]);
-		//			}
-		//			newPoints.Add(res);
-		//			for (int k = j; k < points.Num(); k++) {
-		//				newPoints.Add(points[k]);
-		//			}
-		//			points = newPoints;
-		//			i = 0;
-		//			break;
+		for (int i = 1; i < points.Num(); i++) {
+			FVector tan1 = points[i] - points[i - 1];
+			tan1.Normalize();
+			for (int j = i + 2; j < points.Num() + 1; j++) {
+				FVector tan2 = points[j%points.Num()] - points[j-1];
+				tan2.Normalize();
+				FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j%points.Num()] - tan2*10);
+				if (res.X != 0.0f) {
+					TArray<FVector> newPoints;
+					for (int k = 0; k < i; k++) {
+						newPoints.Add(points[k]);
+					}
+					newPoints.Add(res);
+					for (int k = j; k < points.Num(); k++) {
+						newPoints.Add(points[k]);
+					}
+					points = newPoints;
+					i = 0;
+					break;
 
-		//		}
-		//	}
-		//}
+				}
+			}
+		}
 	}
 
 

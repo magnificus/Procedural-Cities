@@ -208,41 +208,10 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 
 
 	TArray<FRoomPolygon*> extra;
-	// we can split a polygon one time without fearing that any room is left without entrance 
+	// we can split a polygon without fearing that any room is left without entrance as long as we keep track of the entrance sides
 	for (FRoomPolygon &p : roomPols) {
 		extra.Append(splitRoomsKeepingEntrancesRecursively(&p, maxApartmentSize, -1, 0));
-	//	if (p.getArea() > maxApartmentSize) {
-	//		FRoomPolygon* newP = p.splitAlongMax(0.5, false);
-	//		if (newP) {
-	//			// gotta make sure both apartments have an entrance
-	//			int newPEntrance = newP->exteriorWalls.Contains(1) ? newP->points.Num() - 1 : 1;
-	//			newP->entrances.Add(newPEntrance);
-	//			
-	//			int pEntrance = p.exteriorWalls.Contains(1) ? p.points.Num() - 1 : 1;
-	//			p.entrances.Add(pEntrance);
 
-	//			if (newP->getArea() > maxApartmentSize) {
-	//				FRoomPolygon* newP2 = newP->splitAlongMax(0.5, false, newPEntrance);
-	//				if (newP2) {
-	//					int newEntrance = newP2->exteriorWalls.Contains(1) ? newP2->points.Num() - 1 : 1;
-	//					newP2->entrances.Add(newEntrance);
-	//					extra.Add(*newP2);
-	//					delete(newP2);
-	//				}
-	//			}
-	//			extra.Add(*newP);
-	//			delete(newP);
-	//			if (p.getArea() > maxApartmentSize) {
-	//				FRoomPolygon* newP3 = p.splitAlongMax(0.5, false, pEntrance);
-	//				if (newP3) {
-	//					int newEntrance = newP3->exteriorWalls.Contains(1) ? newP3->points.Num() - 1 : 1;
-	//					newP3->entrances.Add(newEntrance);
-	//					extra.Add(*newP3);
-	//					delete newP3;
-	//				}
-	//			}
-	//		}
-	//	}
 	}
 	for (FRoomPolygon *p : extra) {
 		roomPols.Add(*p);
@@ -250,7 +219,6 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 	for (FRoomPolygon *p : extra) {
 		delete p;
 	}
-	//roomPols.Append(extra);
 	
 
 
@@ -915,6 +883,8 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 
 	bool roofAccess = stream.FRand() < 0.35;
 	bool horizontalFacade = stream.FRand() < 0.15;
+	// we want to send the same stream to apartment generation so that it generates the same windows for each floor
+	auto unchangingCP = stream;
 	for (int i = 1; i < floors; i++) {
 		if (i == windowChangeCutoff)
 			currentWindowType = WindowType(stream.RandRange(0,3));
@@ -934,7 +904,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 		roomPols = getInteriorPlanAndPlaceEntrancePolygons(f, hole, false, corrWidth, stream, toReturn.roomInfo.pols, spec->getMaxApartmentSize());
 		for (FRoomPolygon &p : roomPols) {
 			p.windowType = currentWindowType;
-			FRoomInfo newR = spec->buildApartment(&p, i, floorHeight, map, potentialBalcony, shellOnly, stream);
+			FRoomInfo newR = spec->buildApartment(&p, i, floorHeight, map, potentialBalcony, shellOnly, unchangingCP);
 			newR.offset(FVector(0, 0, floorHeight*i));
 			toReturn.roomInfo.pols.Append(newR.pols);
 			toReturn.roomInfo.meshes.Append(newR.meshes);

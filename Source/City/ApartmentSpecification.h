@@ -30,8 +30,8 @@ class CITY_API OfficeSpecification : public ApartmentSpecification
 public:
 	RoomBlueprint getBlueprint(float areaScale);
 	float getWindowDensity(FRandomStream stream) { return 1; }
-	float getWindowWidth(FRandomStream stream) { return 200; }
-	float getWindowHeight(FRandomStream stream) { return 300; }
+	float getWindowWidth(FRandomStream stream) { return stream.FRandRange(200, 400); }
+	float getWindowHeight(FRandomStream stream) { return stream.FRandRange(200, 300); }
 	bool getWindowFrames() { return false; }
 	float getMaxApartmentSize() { return 600; }
 

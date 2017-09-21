@@ -750,13 +750,13 @@ FRoomInfo ARoomBuilder::placeBalcony(FRoomPolygon *p, int place, TMap<FString, U
 
 	FMaterialPolygon side1;
 	side1.type = PolygonType::exteriorSnd;
-	//side1.overridePolygonSides = true;
+	side1.overridePolygonSides = true;
 	FMaterialPolygon side2;
 	side2.type = PolygonType::exteriorSnd;
-	//side2.overridePolygonSides = true;
+	side2.overridePolygonSides = true;
 	FMaterialPolygon side3;
 	side3.type = PolygonType::exteriorSnd;
-	//side3.overridePolygonSides = true;
+	side3.overridePolygonSides = true;
 
 	side1.points.Add(start);
 	side1.points.Add(startOut);
