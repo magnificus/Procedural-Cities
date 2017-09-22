@@ -440,8 +440,6 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 			}
 			else {
 				f2->p2 = p2Prev;
-				//f2->p1 += tangent*maxAttachDistance;
-				//addVertices(f2);
 			}
 		}
 

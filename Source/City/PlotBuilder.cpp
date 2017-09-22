@@ -27,7 +27,7 @@ TArray<FMetaPolygon> APlotBuilder::sanityCheck(TArray<FMetaPolygon> plots, TArra
 		bool shouldAdd = !p.open;
 		if (shouldAdd) {
 			for (FMetaPolygon a : added) {
-				if (testCollision(p, a, -1000)) {
+				if (testCollision(p, a, 0)) {
 					shouldAdd = false;
 					break;
 				}
@@ -198,7 +198,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 		}
 		FVector center = p.getCenter();
 
-		bool normalPlacement = !(p.getArea() > 5000 && stream.FRand() < 0.2);
+		bool normalPlacement = !(p.getArea() > 3000 && stream.FRand() < 0.15);
 		if (!normalPlacement) {
 			// create a special plot with several similar houses placed around an area, this happens in real cities sometimes
 			FHousePolygon model = getRandomModel(3500,6000, minFloors, maxFloors, p.type, stream, noiseHeightInfluence);
@@ -230,7 +230,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			else {
 				FSimplePlot fs;
 				fs.pol = p;
-				fs.pol.offset(FVector(0, 0, 30));
+				fs.pol.offset(FVector(0, 0, 20));
 				fs.type = p.simplePlotType;
 				fs.decorate(placed, instancedMap);
 				info.leftovers.Add(fs);
@@ -242,35 +242,38 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			if (stream.FRand() < 0.05) {
 				FSimplePlot fs;
 				fs.pol = p;
-				fs.pol.offset(FVector(0, 0, 30));
+				fs.pol.offset(FVector(0, 0, 20));
 				fs.type = p.simplePlotType;
 				fs.decorate(instancedMap);
 				info.leftovers.Add(fs);
 			}
-			float currMaxArea = stream.FRandRange(minMaxArea, maxMaxArea);
-			TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, 0, 0);
-			for (FHousePolygon r : refinedPolygons) {
-				r.housePosition = r.getCenter();
-				r.height = getHeight(stream, minFloors, maxFloors, r.getCenter(), noiseHeightInfluence);
+			else {
+				float currMaxArea = stream.FRandRange(minMaxArea, maxMaxArea);
+				TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, 0, 0);
+				for (FHousePolygon r : refinedPolygons) {
+					r.housePosition = r.getCenter();
+					r.height = getHeight(stream, minFloors, maxFloors, r.getCenter(), noiseHeightInfluence);
 
-				r.type = p.type;
-				r.simplePlotType = p.simplePlotType;
+					r.type = p.type;
+					r.simplePlotType = p.simplePlotType;
 
-				float area = r.getArea();
+					float area = r.getArea();
 
-				if (area < minArea || area > currMaxArea) {
-					FSimplePlot fs;
-					fs.pol = r;
-					fs.pol.offset(FVector(0, 0, 20));
-					fs.type = p.simplePlotType;
-					fs.decorate(instancedMap);
-					info.leftovers.Add(fs);
-				}
-				else {
-					r.checkOrientation();
-					info.houses.Add(r);
+					if (area < minArea || area > currMaxArea) {
+						FSimplePlot fs;
+						fs.pol = r;
+						fs.pol.offset(FVector(0, 0, 20));
+						fs.type = p.simplePlotType;
+						fs.decorate(instancedMap);
+						info.leftovers.Add(fs);
+					}
+					else {
+						r.checkOrientation();
+						info.houses.Add(r);
+					}
 				}
 			}
+
 		}
 
 	}
