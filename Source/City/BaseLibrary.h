@@ -206,8 +206,8 @@ struct FPolygon
 				tan2.Normalize();
 				float dist = FVector::DotProduct(tan1, tan2);
 				if (dist < maxDot) {
-					points.RemoveAt(i);
-					i--;
+					points.RemoveAt((i + 1)%points.Num());
+					//i--;
 					changed = true;
 					break;
 				}
@@ -218,7 +218,7 @@ struct FPolygon
 
 		// untangle
 
-		for (int i = 1; i < points.Num(); i++) {
+		for (int i = 1; i < points.Num() - 1; i++) {
 			FVector tan1 = points[i] - points[i - 1];
 			tan1.Normalize();
 			for (int j = i + 2; j < points.Num() + 1; j++) {
