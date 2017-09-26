@@ -25,6 +25,9 @@ class CITY_API AHouseBuilder : public AActor
 
 	int makeInterestingAttempts = 4;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = generation, meta = (AllowPrivateAccess = "true"))
+	float maxChangeIntensity = 0.35;
+
 	bool generateRoofs = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = performance, meta = (AllowPrivateAccess = "true"))
@@ -103,8 +106,6 @@ public:
 
 	static void makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toReturn, FPolygon &centerHole, FRandomStream stream);
 
-	//static TArray<FMaterialPolygon> getShaftSides(FPolygon hole, int openSide, float height);
-
 	static FPolygon getShaftHolePolygon(FHousePolygon f, FRandomStream stream, bool useCenter = false);
 
 	ThreadedWorker *worker;
@@ -116,7 +117,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
-	//virtual void BeginDestroy() override;
 
 public:	
 

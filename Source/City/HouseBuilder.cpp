@@ -826,7 +826,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 
 
 	// this variable defines how violently the shape of the building will change, i.e. how often potentiallyShrink is called
-	float myChangeIntensity = stream.FRandRange(0, 0.35);
+	float myChangeIntensity = stream.FRandRange(0, maxChangeIntensity);
 	//myChangeIntensity = 0;
 
 	bool potentialBalcony = f.type == RoomType::apartment && floors < 10 && stream.FRand() < 0.3;

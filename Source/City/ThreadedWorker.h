@@ -47,14 +47,6 @@ public:
 	/** Makes sure this thread has stopped properly */
 	void EnsureCompletion();
 
-
-
-	//~~~ Starting and Stopping Thread ~~~
-
-
-
-	//static ThreadedWorker* JoyInit(AHouseBuilder *house, FHousePolygon p, float floorHeight, float maxRoomArea, bool shellOnly, bool simple, bool fullReplacement);
-
 	/** Shuts down the thread. Static so it can easily be called from outside the thread context */
 	static void Shutdown();
 

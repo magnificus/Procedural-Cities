@@ -675,7 +675,7 @@ TArray<FMaterialPolygon> BaseLibrary::getSimplePlotPolygons(TArray<FSimplePlot> 
 	for (FSimplePlot p : plots) {
 		FMaterialPolygon newP;
 		newP.points = p.pol.points;
-		newP.reverse();
+		//newP.reverse();
 		newP.type = type;
 		toReturn.Add(newP);
 
