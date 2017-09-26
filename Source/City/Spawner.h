@@ -98,7 +98,7 @@ class CITY_API ASpawner : public AActor
 	// minimum number of floors in a building
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
 		int32	minFloors = 3;
-	// maximum number of floors in a building, note that buildings may be higher though, it's more of a guideline
+	// maximum number of floors in a building
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
 		int32	maxFloors = 15;
 
