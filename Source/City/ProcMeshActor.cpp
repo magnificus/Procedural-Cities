@@ -66,13 +66,12 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 	int current = 0;
 	for (FPolygon &pol : pols) {
 
-		//pol.reverse();
 		if (pol.points.Num() < 3)
 			continue;
 		// local coordinates are found by getting the coordinates of points on the plane which they span up
 		FVector e1 = pol.points[1] - pol.points[0];
 		e1.Normalize();
-		FVector n =  pol.normal.Size() < 1.0f? FVector::CrossProduct(e1, pol.points[pol.points.Num() - 1] - pol.points[0]) : pol.normal;
+		FVector n = pol.normal.Size() < 1.0f ? FVector::CrossProduct(e1, pol.points[pol.points.Num() - 1] - pol.points[0]) : pol.normal;
 		FVector e2 = FVector::CrossProduct(e1, n);
 		e2.Normalize();
 

@@ -186,7 +186,6 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 		FHousePolygon original;
 		original.points = p.points;
 		original.checkOrientation();
-		original.buildLeft = true;
 		original.open = false;
 		original.population = p.population;
 		original.type = p.type;
@@ -295,7 +294,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 		// add the straight part
 		FMaterialPolygon current;
 		current.type = PolygonType::concrete;
-		FVector normal = getNormal(p1, p2, !p.buildLeft);
+		FVector normal = getNormal(p1, p2, !p.isClockwise);
 		normal.Normalize();
 		current.points.Add(p1);
 		current.points.Add(p2);
@@ -343,7 +342,7 @@ TArray<FMaterialPolygon> APlotBuilder::getSideWalkPolygons(FPlotPolygon p, float
 
 	}
 
-	FVector normal = getNormal(p.points[1], p.points[0], p.buildLeft);
+	FVector normal = getNormal(p.points[1], p.points[0], p.isClockwise);
 	normal.Normalize();
 	FMaterialPolygon corner;
 	corner.type = PolygonType::concrete;
@@ -375,7 +374,7 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 		for (int i = 1; i < p.points.Num(); i++) {
 			FVector tangent = p.points[i] - p.points[i - 1];
 			tangent.Normalize();
-			FVector offset = (p.buildLeft ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
+			FVector offset = (p.isClockwise ? FRotator(0, 270, 0) : FRotator(0, 90, 0)).RotateVector(tangent * offsetSize);
 			polygon.points.Add(p.points[i - 1] + offset);
 			polygon.points.Add(p.points[i] + offset);
 		}

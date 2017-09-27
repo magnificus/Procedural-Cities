@@ -324,7 +324,7 @@ FSimplePlot attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &center
 		FSimplePlot simplePlot;
 		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 1000));
 		simplePlot.pol = pol;
-		simplePlot.pol.reverse();
+		//simplePlot.pol.reverse();
 		simplePlot.type = f.simplePlotType;
 		//return pol;
 		return simplePlot;
@@ -346,7 +346,7 @@ FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHol
 
 		simplePlot.type = f.simplePlotType; // stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
 
-		simplePlot.pol.reverse();
+		//simplePlot.pol.reverse();
 		simplePlot.pol.offset(offset);
 
 		f.addPoint(place, p1);
@@ -371,7 +371,7 @@ FSimplePlot attemptTurnSideIntoU(FHousePolygon &f, int place, FPolygon &centerHo
 	FVector tangent = f.points[place%f.points.Num()] - f.points[place - 1];
 	float lenSide = tangent.Size();
 	tangent.Normalize();
-	FVector dir = FRotator(0, f.buildLeft ? 90 : 270, 0).RotateVector(tangent);
+	FVector dir = FRotator(0, f.isClockwise ? 90 : 270, 0).RotateVector(tangent);
 	FVector first = f.points[place - 1] + (tangent * (lenSide / 3));
 	FVector first2 = first + dir * depth;
 	FVector snd = f.points[place%f.points.Num()] - (tangent * (lenSide / 3));
@@ -384,7 +384,7 @@ FSimplePlot attemptTurnSideIntoU(FHousePolygon &f, int place, FPolygon &centerHo
 	simplePlot.pol.points.Add(snd);
 	simplePlot.pol.normal = FVector(0, 0, -1);
 	simplePlot.pol.offset(offset);
-	simplePlot.pol.reverse();
+	//simplePlot.pol.reverse();
 		
 	FHousePolygon cp = f;
 	if (intersection(simplePlot.pol, centerHole).X == 0.0f && !selfIntersection(simplePlot.pol)) {
@@ -601,8 +601,8 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 				FVector tangent = shape.getPointDirection(i, false);
 				shape[i] += dist*tangent;
 			}
-			if (!pol.getIsClockwise())
-				shape.reverse();
+			//if (!pol.getIsClockwise())
+			//	shape.reverse();
 			shape.normal = FVector(0, 0, -1);
 			for (int i = 1; i < shape.points.Num() + 1; i++) {
 				FMaterialPolygon side;

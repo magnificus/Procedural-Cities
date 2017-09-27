@@ -289,7 +289,7 @@ struct FPolygon
 
 	}
 
-	SplitStruct getSplitProposal(bool buildLeft, float approxRatio, int preDeterminedNum = -1) {
+	SplitStruct getSplitProposal(bool isClockwise, float approxRatio, int preDeterminedNum = -1) {
 
 		if (points.Num() < 3) {
 			return SplitStruct{ 0, 0, FVector(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f) };
@@ -320,7 +320,7 @@ struct FPolygon
 		FVector p1 = middle;
 		int split = 0;
 		FVector p2 = FVector(0.0f, 0.0f, 0.0f);
-		FVector tangent = FRotator(0, buildLeft ? 90 : 270, 0).RotateVector(curr);
+		FVector tangent = FRotator(0, isClockwise ? 90 : 270, 0).RotateVector(curr);
 		tangent.Normalize();
 
 		getSplitCorrespondingPoint(longest, middle, tangent, split, p2);
@@ -564,12 +564,12 @@ struct FMetaPolygon : public FPolygon
 		bool open = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool buildLeft;
+		bool isClockwise;
 
 	void checkOrientation() {
 		if (!getIsClockwise())
 			reverse();
-		buildLeft = true;
+		isClockwise = true;
 
 	}
 
@@ -1396,7 +1396,7 @@ struct FHousePolygon : public FMetaPolygon {
 
 		FHousePolygon newP;
 		newP.open = open;
-		newP.buildLeft = buildLeft;
+		newP.isClockwise = isClockwise;
 		newP.population = population;
 		newP.type = type;
 

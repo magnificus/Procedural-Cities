@@ -186,7 +186,6 @@ FVector NearestPointOnLine(FVector linePnt, FVector lineDir, FVector pnt)
 
 struct LinkedLine {
 	FLine line;
-	bool buildLeft;
 	FVector point = FVector(0.0f, 0.0f, 0.0f);
 	LinkedLine* parent;
 	LinkedLine* child;
@@ -215,7 +214,6 @@ void invertAndParents(LinkedLine* line) {
 		}
 		temp = line->point;
 		prev = line;
-		line->buildLeft = !line->buildLeft;
 
 		line = line->child;
 	}
@@ -242,7 +240,6 @@ void invertAndChildren(LinkedLine* line) {
 		line->point = prevPoint;
 		prevPoint = temp;
 		prev = line;
-		line->buildLeft = !line->buildLeft;
 
 		line = line->parent;
 	}
@@ -290,7 +287,8 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 
-	if (len < 1000) {
+	float minRoadLen = 2000;
+	if (len < minRoadLen) {
 		delete inLine;
 		return;
 	}
@@ -313,7 +311,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 	for (FRoadSegment f : blocking) {
 		FVector tangent = f.p2 - f.p1;
 		tangent.Normalize();
-		float toUseExtraLen = f.roadInFront ? extraRoadLen : 0;
+		float toUseExtraLen = extraRoadLen; //f.roadInFront ? extraRoadLen : 0;
 		FVector intSec = getProperIntersection(f.p1 - tangent*toUseExtraLen, f.p2 + tangent*toUseExtraLen, inLine->line.p1, inLine->line.p2);
 		if (intSec.X != 0.0f) {
 			if (!allowSplit) {
@@ -339,14 +337,13 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 				inLine->line.p2 = intSec - altTangent * middleOffset;
 			}
 
-			newP->buildLeft = inLine->buildLeft;
 			decidePolygonFate(segments, blocking, newP, lines, true, extraRoadLen, width, middleOffset);
 			intSec = getProperIntersection(f.p1 - tangent * toUseExtraLen, f.p2 + tangent * toUseExtraLen, inLine->line.p1, inLine->line.p2);
 			//return;
 		}
 	}
 	len = FVector::Dist(inLine->line.p1, inLine->line.p2);
-	if (len < 2000) {
+	if (len < minRoadLen) {
 		delete inLine;
 		return;
 	}
@@ -399,7 +396,6 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 					inLine->point = res;
 
 				}
-			//}
 		}
 	}
 	lines.Add(inLine);
@@ -432,7 +428,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		LinkedLine* left = new LinkedLine();
 		left->line.p1 = f.p1 + sideOffsetBegin - extraLength;
 		left->line.p2 = f.p2 + sideOffsetEnd + extraLength;
-		left->buildLeft = true;
 		decidePolygonFate(segments, blocking, left, lines, true, extraRoadLen, width, middleOffset);
 
 
@@ -440,7 +435,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 			LinkedLine* right = new LinkedLine();
 			right->line.p1 = f.p1 - sideOffsetBegin - extraLength;
 			right->line.p2 = f.p2 - sideOffsetEnd + extraLength;
-			right->buildLeft = false;
 			decidePolygonFate(segments, blocking, right, lines, true, extraRoadLen, width, middleOffset);
 		}
 
@@ -471,7 +465,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		}
 		// now curr is top dog
 		FMetaPolygon f;
-		f.buildLeft = curr->buildLeft;
 		f.points.Add(curr->line.p1);
 		f.points.Add(curr->point.X != 0.0f ? curr->point: curr->line.p2);
 
@@ -495,7 +488,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		else {
 			f.open = true;
 		}
-
+		//f.checkOrientation();
 		polygons.Add(f);
 
 	}
@@ -581,7 +574,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 
 TArray<FMaterialPolygon> getSidesOfPolygon(FPolygon p, PolygonType type, float width) {
 	TArray<FMaterialPolygon> toReturn;
-	for (int i = 1; i < p.points.Num()+1; i++) {
+	for (int i = 1; i < p.points.Num() + 1; i++) {
 		FMaterialPolygon side;
 		side.type = type;
 		side.points.Add(p.points[i - 1]);
@@ -673,9 +666,13 @@ TArray<FMaterialPolygon> BaseLibrary::getSimplePlotPolygons(TArray<FSimplePlot> 
 	else
 		return toReturn;
 	for (FSimplePlot p : plots) {
+
 		FMaterialPolygon newP;
 		newP.points = p.pol.points;
-		//newP.reverse();
+		if (!newP.getIsClockwise()) {
+			newP.reverse();
+		}
+		newP.normal = FVector(0, 0, -1);
 		newP.type = type;
 		toReturn.Add(newP);
 
