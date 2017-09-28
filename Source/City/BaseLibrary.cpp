@@ -822,8 +822,9 @@ TArray<FMeshInfo> attemptPlaceClusterAlongSide(FPolygon pol, TArray<FPolygon> &b
 	FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
 	FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
 	tan.Normalize();
+	FRotator finRot = tan.Rotation() + FRotator(0, 90, 0);// +FRotator(0, 180, 0);
+
 	for (int i = 0; i < num; i++) {
-		FRotator finRot = tan.Rotation();// +FRotator(0, 180, 0);
 		FVector loc = posStart + tan * i * distBetween + finRot.RotateVector(offset);
 		FPolygon toTest = useRealPolygon ? getPolygon(finRot, loc, name, *map) : getTinyPolygon(loc);
 		if (!testCollision(toTest, blocking, 0, pol)) {
@@ -877,28 +878,30 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 	}
 	case SimplePlotType::asphalt: {
 		if (baseLibraryStream.FRand() < 0.3) {
-			//FRoomPolygon rp;
-			//rp.points = pol.points;
-			//rp.reverse();
+			FRoomPolygon rp;
+			rp.points = pol.points;
+			rp.reverse();
 			//for (int i = 0; i < FMath::RandRange(1, 5); i++)
 			//	rp.attemptPlace(blocking, meshes, true, 1, "trash_box", FRotator(0, 0, 270), FVector(0, 0, 0), map, false);
-			//meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "trash_box", FVector(100, 0, 0), true, &map));
-			int numToPlace = baseLibraryStream.RandRange(1, 5);
-			int place = baseLibraryStream.RandRange(1, pol.points.Num());
-			FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
-			FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
-			float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
-			tan.Normalize();
-			FString name = "trash_box";
-			for (int i = 0; i < numToPlace; i++) {
-				FRotator finRot = tan.Rotation();
-				FVector loc = posStart + tan * i * 250 + finRot.RotateVector(FVector(0, 0, 0));
-				FPolygon toTest = getPolygon(finRot, loc, name, map); //getTinyPolygon(loc);
-				//if (!testCollision(toTest, blocking, 0, pol)) {
-					meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc}});
-				//}
+			meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "trash_box", FVector(100, 0, 0), true, &map));
+			meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "fence", FVector(100, 0, 0), true, &map));
 
-			}
+			//int numToPlace = baseLibraryStream.RandRange(1, 5);
+			//int place = baseLibraryStream.RandRange(1, pol.points.Num());
+			//FVector posStart = middle(pol[place - 1], pol[place%pol.points.Num()]);
+			//FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
+			//float len = FVector::Dist(pol[place%pol.points.Num()], pol[place - 1]);
+			//tan.Normalize();
+			//FString name = "trash_box";
+			//for (int i = 0; i < numToPlace; i++) {
+			//	FRotator finRot = tan.Rotation();
+			//	FVector loc = posStart + tan * i * 250 + finRot.RotateVector(FVector(0, 0, 0));
+			//	FPolygon toTest = getPolygon(finRot, loc, name, map); //getTinyPolygon(loc);
+			//	//if (!testCollision(toTest, blocking, 0, pol)) {
+			//		meshes.Add(FMeshInfo{ name, FTransform{ finRot, loc}});
+			//	//}
+
+			//}
 		}
 
 		break;
@@ -906,7 +909,7 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 	}
 }
 
-void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool left) {
+void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool left, int numToPlace) {
 	for (int k = 1; k < r2->points.Num() + 1; k++) {
 		FVector origin = middle(r2->points[k%r2->points.Num()], r2->points[k - 1]);
 		FVector tangent = r2->points[k%r2->points.Num()] - r2->points[k - 1];
@@ -916,7 +919,6 @@ void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes
 		FVector targetP;
 		r2->getSplitCorrespondingPoint(k, origin, normal, target, targetP);
 		if (target == -1) {
-			//UE_LOG(LogTemp, Warning, TEXT("Couldn't place row, no corresponding split point"));
 			return;
 		}
 		float width = FVector::Dist(r2->points[k%r2->points.Num()], r2->points[k - 1]);
@@ -928,16 +930,39 @@ void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes
 		float intervalWidth = width / numWidth;
 		float intervalHeight = height / numHeight;
 		TArray<FPolygon> toPlace;
-		for (int i = 1; i < numWidth; i++) {
-			for (int j = 1; j < numHeight; j++) {
-				FPolygon pol = getPolygon(normal.Rotation(), r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
-				// make sure it's fully inside the room
-				if (!testCollision(pol, placed, 0, *r2)) {// && intersection(pol, *r2).X == 0.0f) {
-					toPlace.Add(pol);
-					meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)) });
+		if (numToPlace == -1) {
+			for (int i = 1; i < numWidth; i++) {
+				for (int j = 1; j < numHeight; j++) {
+					FPolygon pol = getPolygon(normal.Rotation(), r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
+					// make sure it's fully inside the room
+					if (!testCollision(pol, placed, 0, *r2)) {// && intersection(pol, *r2).X == 0.0f) {
+						toPlace.Add(pol);
+						meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)) });
+					}
 				}
 			}
 		}
+		else {
+			int target1 = FMath::RandRange(1, numWidth);
+			int target2 = FMath::RandRange(1, numHeight);
+			int numPlaced = 0;
+			for (int i = target1; i < numWidth; i++) {
+				for (int j = target2; j < numHeight; j++) {
+					numPlaced++;
+					FPolygon pol = getPolygon(normal.Rotation(), r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, name, map);
+					// make sure it's fully inside the room
+					if (!testCollision(pol, placed, 0, *r2)) {
+						toPlace.Add(pol);
+						meshes.Add(FMeshInfo{ name, FTransform(normal.Rotation(),r2->points[k - 1] + i*intervalWidth*tangent + j*intervalHeight*normal, FVector(1.0f, 1.0f, 1.0f)) });
+					}
+					if (numPlaced == numToPlace)
+						goto outOfLoop;
+				}
+			}
+		outOfLoop:
+			;
+		}
+
 		if (toPlace.Num() > 0) {
 			placed.Append(toPlace);
 			return;

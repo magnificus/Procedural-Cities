@@ -463,7 +463,7 @@ enum class SimplePlotType : uint8
 TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int num, FString name, bool useRealPolygon = false, const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map = nullptr);
 TArray<FMeshInfo> attemptPlaceClusterAlongSide(FPolygon pol, TArray<FPolygon> &blocking, int num, float distBetween, FString name, FVector offset, bool useRealPolygon = false, const TMap<FString, UHierarchicalInstancedStaticMeshComponent*> *map = nullptr);
 void attemptPlaceCenter(FPolygon &pol, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FString string, FRotator offsetRot, FVector offsetPos, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map);
-void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool left = false);
+void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool left = false, int numToPlace = -1);
 FMeshInfo getEntranceMesh(FVector p1, FVector p2, FVector doorPos);
 
 

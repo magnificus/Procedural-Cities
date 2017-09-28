@@ -242,7 +242,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 				FSimplePlot fs;
 				fs.pol = p;
 				fs.pol.offset(FVector(0, 0, 20));
-				fs.type = p.simplePlotType;
+				fs.type = SimplePlotType::green;
 				fs.decorate(instancedMap);
 				info.leftovers.Add(fs);
 			}

@@ -533,8 +533,6 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 	float len = 500;
 	float offset = stream.FRandRange(minHeight, maxHeight);
 
-	//SplitStruct s = pol.getSplitProposal(true, 0.5);
-	//float boxMaxSize = FVector::Dist(s.p1, s.p2);
 	if (stream.FRand() < 0.3) {
 		int numBoxes = stream.RandRange(0, maxBoxes);
 		// add box shapes on top of pol
@@ -635,25 +633,17 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 		}
 	}
 	
-	// try placing meshes, could be done more effectively
-	TArray<FMeshInfo> toPlaceMeshes;
+	// try placing meshes
 	if (stream.FRand() < 0.45) {
-		placeRows(&pol, placed, toPlaceMeshes, FRotator(0, 0, 0), "rooftop_solar", 0.005, 0.005, map, true);
+		placeRows(&pol, placed, toReturn.meshes, FRotator(0, 0, 0), "rooftop_solar", 0.005, 0.005, map, true, stream.RandRange(1, 15));
 	}
-	int toKeepStart = stream.RandRange(0, toPlaceMeshes.Num() - 1);
-	int toKeepEnd = stream.RandRange(toKeepStart + 1, toKeepStart + 15);
-	for (int i = toKeepStart; i < std::min(toKeepEnd, toPlaceMeshes.Num()); i++) {
-		toReturn.meshes.Add(toPlaceMeshes[i]);
-	}
-	toPlaceMeshes.Empty();
-	if (stream.FRand() < 0.45) {
-		placeRows(&pol, placed, toPlaceMeshes, FRotator(0, 0, 0), "rooftop_ac", 0.007, 0.007, map, true);
 
+	if (stream.FRand() < 0.45) {
+		placeRows(&pol, placed, toReturn.meshes, FRotator(0, 0, 0), "rooftop_ac", 0.007, 0.007, map, true, stream.RandRange(1, 12));
 	}
-	toKeepStart = stream.RandRange(0, toPlaceMeshes.Num() - 1);
-	toKeepEnd = stream.RandRange(toKeepStart + 1, toKeepStart + 12);
-	for (int i = toKeepStart; i < std::min(toKeepEnd, toPlaceMeshes.Num()); i++) {
-		toReturn.meshes.Add(toPlaceMeshes[i]);
+
+	if (stream.FRand() < 0.33) {
+		placeRows(&pol, placed, toReturn.meshes, FRotator(0, 0, 0), "fence", 0.0024, 0.0024, map, true, stream.RandRange(1, 12));
 	}
 
 
