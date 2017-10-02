@@ -229,7 +229,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			else {
 				FSimplePlot fs;
 				fs.pol = p;
-				fs.pol.offset(FVector(0, 0, 20));
+				fs.pol.offset(FVector(0, 0, simplePlotGroundOffset));
 				fs.type = p.simplePlotType;
 				fs.decorate(placed, instancedMap);
 				info.leftovers.Add(fs);
@@ -241,7 +241,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			if (stream.FRand() < 0.05) {
 				FSimplePlot fs;
 				fs.pol = p;
-				fs.pol.offset(FVector(0, 0, 20));
+				fs.pol.offset(FVector(0, 0, simplePlotGroundOffset));
 				fs.type = SimplePlotType::green;
 				fs.decorate(instancedMap);
 				info.leftovers.Add(fs);
@@ -261,7 +261,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 					if (area < minArea || area > currMaxArea) {
 						FSimplePlot fs;
 						fs.pol = r;
-						fs.pol.offset(FVector(0, 0, 20));
+						fs.pol.offset(FVector(0, 0, simplePlotGroundOffset));
 						fs.type = p.simplePlotType;
 						fs.decorate(instancedMap);
 						info.leftovers.Add(fs);

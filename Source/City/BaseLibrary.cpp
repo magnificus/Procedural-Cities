@@ -287,7 +287,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 
-	float minRoadLen = 2000;
+	float minRoadLen = 1200;
 	if (len < minRoadLen) {
 		delete inLine;
 		return;
@@ -492,7 +492,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		polygons.Add(f);
 
 	}
-	float maxConnect = 4000;
+	float maxConnect = 0;
 
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
@@ -823,14 +823,15 @@ TArray<FMeshInfo> attemptPlaceClusterAlongSide(FPolygon pol, TArray<FPolygon> &b
 	FVector tan = pol[place%pol.points.Num()] - pol[place - 1];
 	tan.Normalize();
 	FVector finRot = getNormal(pol[place - 1], pol[place%pol.points.Num()], false);
+	finRot.Normalize();
 	///FRotator finRot = //tan.Rotation() + FRotator(0, 90, 0);// +FRotator(0, 180, 0);
 	float distToEnd = FVector::Dist(posStart, pol[place%pol.points.Num()]);
 	for (int i = 0; i < num; i++) {
 		if (i * distBetween > distToEnd)
 			break;
-		FVector loc = posStart + tan * i * distBetween + finRot * offset;
+		FVector loc = posStart + tan * i * distBetween - finRot * offset;
 		FPolygon toTest = useRealPolygon ? getPolygon(finRot.Rotation(), loc, name, *map) : getTinyPolygon(loc);
-		if (!testCollision(toTest, blocking, 1000, pol)) {
+		if (!testCollision(toTest, blocking, 0, pol)) {
 			meshes.Add(FMeshInfo{ name, FTransform{ tan.Rotation(), loc }});
 		}
 
@@ -881,13 +882,9 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 	}
 	case SimplePlotType::asphalt: {
 		if (baseLibraryStream.FRand() < 0.3) {
-			FRoomPolygon rp;
-			rp.points = pol.points;
-			rp.reverse();
-			//for (int i = 0; i < FMath::RandRange(1, 5); i++)
-			//	rp.attemptPlace(blocking, meshes, true, 1, "trash_box", FRotator(0, 0, 270), FVector(0, 0, 0), map, false);
-			meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 250, "trash_box", 150 , true, &map));
-			meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, 500, 410, "fence", 300, true, &map, true));
+			meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, FMath::RandRange(1, 5), 0, "trash_box", 150 , true, &map));
+		} if (baseLibraryStream.FRand() < 0.3) {
+			meshes.Append(attemptPlaceClusterAlongSide(pol, blocking, 500, 410, "fence", 150, true, &map, true));
 
 		}
 

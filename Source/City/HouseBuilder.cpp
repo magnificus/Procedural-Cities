@@ -56,22 +56,42 @@ bool increasing(TArray<twoInt> ints) {
 TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float height, float thickness) {
 	FMaterialPolygon roof;
 
-	float len = 200;
+	float len = 50;
+	FVector tan = end - begin;
+	tan.Normalize();
 	FVector dir = getNormal(begin, end, false);
 	dir.Normalize();
 	roof.type = PolygonType::exteriorSnd;
 	roof.width = thickness;
 	FVector mainDir = end - begin;
+	
 	mainDir.Normalize();
-	roof += begin + FVector(0, 0, height - 20) - mainDir * 50;
-	roof += end + FVector(0, 0, height - 20) + mainDir * 50;
-	roof += end + FVector(0, 0, height - 20) + dir * len + mainDir * 50;
-	roof += begin + FVector(0, 0, height - 20) + dir * len - mainDir * 50;
+	begin -= dir * 30;
+	end += dir * 30;
+	roof += begin + FVector(0, 0, height - 20) - mainDir * 20;
+	roof += end + FVector(0, 0, height - 20) + mainDir * 20;
+	roof += end + FVector(0, 0, height - 20) + dir * len + mainDir * 20;
+	roof += begin + FVector(0, 0, height - 20) + dir * len - mainDir * 20;
 	roof.overridePolygonSides = true;
+
+	FMaterialPolygon side;
+	side.type = PolygonType::exteriorSnd;
+	side.width = thickness;
+	side += begin - tan*10;
+	side += begin + tan * 10;
+	side += begin + FVector(0, 0, height - 20) + tan * 10;
+	side += begin + FVector(0, 0, height - 20) - tan * 10;
+
+	side.overridePolygonSides = true;
+	FMaterialPolygon oSide = side;
+	oSide.offset(end - begin);
+
 
 
 	TArray<FMaterialPolygon> pols;
 	pols.Add(roof);
+	pols.Add(side);
+	pols.Add(oSide);
 	return pols;
 }
 
@@ -156,8 +176,8 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 			corners.points.Add(sndAttach);
 		}
 		else {
-			if (stream.FRand() < 0.2 && sndAttach.X != 0.0f && FVector::Dist(prevAttach, sndAttach) < 20000.0f)
-				pols.Append(getEntrancePolygons(prevAttach, sndAttach, 450, 50));
+			//if (sndAttach.X != 0.0f && FVector::Dist(prevAttach, sndAttach) < 1000.0f)
+			//	pols.Append(getEntrancePolygons(prevAttach, sndAttach, 450, 100));
 		}
 
 		if (i == (hole.points.Num())) {
@@ -445,7 +465,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 				plot.type = f.simplePlotType;
 				plot.pol = a;
 				plot.pol.normal = FVector(0, 0, -1);
-				plot.pol.offset(FVector(0, 0, 20));
+				plot.pol.offset(FVector(0, 0, simplePlotGroundOffset));
 				//a.normal = FVector(0, 0, -1);
 				//a.offset(FVector(0,0,30));
 				sPlots.Add(plot);
@@ -785,7 +805,7 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			FHouseInfo emptyH;
 			FSimplePlot whole;
 			whole.pol = f;
-			whole.pol.offset(FVector(0, 0, 20));
+			whole.pol.offset(FVector(0, 0, simplePlotGroundOffset));
 			whole.type = f.simplePlotType;
 			emptyH.remainingPlots.Add(whole);
 			return emptyH;

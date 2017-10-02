@@ -97,6 +97,8 @@ FPolygon getEntranceHole(FVector p1, FVector p2, float floorHeight, float doorHe
 FPolygon getTinyPolygon(FVector point);
 
 
+const float simplePlotGroundOffset = 30;
+
 static FVector getNormal(FVector p1, FVector p2, bool right) {
 	return FRotator(0, right ? 90 : 270, 0).RotateVector(p2 - p1);
 }
@@ -224,7 +226,7 @@ struct FPolygon
 			for (int j = i + 2; j < points.Num() + 1; j++) {
 				FVector tan2 = points[j%points.Num()] - points[j-1];
 				tan2.Normalize();
-				FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j%points.Num()] - tan2*10);
+				FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j%points.Num()] - tan2*100);
 				if (res.X != 0.0f) {
 					TArray<FVector> newPoints;
 					for (int k = 0; k < i; k++) {
