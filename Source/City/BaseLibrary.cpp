@@ -247,17 +247,25 @@ void invertAndChildren(LinkedLine* line) {
 
 
 FVector getProperIntersection(FVector p1, FVector p2, FVector p3, FVector p4) {
-	FVector res = intersection(p1, p2, p3, p4);
+	// check if they collide into each other from the back
+	FVector otherTangent = p2 - p1;
+	otherTangent = FRotator(0, 90, 0).RotateVector(otherTangent);
+	otherTangent.Normalize();
+	float backLen = 300;
+	FVector res = intersection(p2 + otherTangent * backLen, p2 - otherTangent * backLen, p3, p4);
 	if (res.X == 0.0f) {
-		// check if they collide into each other from the back
-		FVector otherTangent = p2 - p1;
-		otherTangent = FRotator(0, 90, 0).RotateVector(otherTangent);
-		otherTangent.Normalize();
-
-		res = intersection(p1 + otherTangent * 150, p1 - otherTangent * 150, p3, p4);
+		res = intersection(p1 + otherTangent * backLen, p1 - otherTangent * backLen, p3, p4);
 		if (res.X == 0.0f) {
-			return intersection(p2 + otherTangent * 150, p2 - otherTangent * 150, p3, p4);
+			FVector otherTangent2 = FRotator(0, 90, 0).RotateVector(otherTangent2);
+			res = intersection(p1, p2, p3 - otherTangent2*backLen, p3 + otherTangent2*backLen);
+			if (res.X == 0.0f) {
+				res = intersection(p1, p2, p4 - otherTangent2*backLen, p4 + otherTangent2*backLen);
+				if (res.X == 0.0f) {
+					res = intersection(p1, p2, p3, p4);
+				}
+			}
 		}
+
 	}
 	return res;
 }
@@ -287,7 +295,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 
-	float minRoadLen = 1200;
+	float minRoadLen = 3000;
 	if (len < minRoadLen) {
 		delete inLine;
 		return;
@@ -412,6 +420,7 @@ struct PolygonPoint {
 TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset) {
 
 	TArray<LinkedLine*> lines;
+
 	// get coherent polygons
 	for (FRoadSegment f : segments) {
 		// two collision segments for every road
@@ -420,8 +429,8 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		FVector extraLength = tangent * extraLen;
 		FVector beginNorm = f.beginTangent;
 		beginNorm.Normalize();
-		FVector endNorm = f.endTangent;
-		endNorm.Normalize();
+		//FVector endNorm = f.endTangent;
+		//endNorm.Normalize();
 		FVector sideOffsetBegin = FRotator(0, 90, 0).RotateVector(beginNorm)*(stdWidth/2 * f.width);
 		FVector sideOffsetEnd = FRotator(0, 90, 0).RotateVector(tangent)*(stdWidth / 2 * f.width);
 
@@ -556,7 +565,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		}
 		f.checkOrientation();
 
-		f.clipEdges(-0.96f);
+		//f.clipEdges(-0.96f);
 		if (f.points.Num() < 3) {
 			polygons.RemoveAt(i);
 			i--;
