@@ -100,7 +100,10 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		TArray<FVector> tangents;
 
 		// can't be too close to another segment
-		if (FVector::Dist((f->p2 - f->p1) / 2 + f->p1, (current->segment->p2 - current->segment->p1) / 2 + current->segment->p1) < 5000) {
+		bool closeMiddle = FVector::Dist((f->p2 + f->p1) / 2, (current->segment->p2 + current->segment->p1) / 2) < 5000;
+		//bool closeOtherEnd = FVector::Dist(f->p2, current->segment->p2) < 3000;
+		//bool
+		if (closeMiddle) {
 			return false;
 		}
 
@@ -126,10 +129,9 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				FVector otherTangent = f->p2 - f->p1;
 				otherTangent = FRotator(0, 90, 0).RotateVector(otherTangent);
 				otherTangent.Normalize();
-
-				newE = intersection(f->p1 + otherTangent * 200, f->p1 - otherTangent * 200, current->segment->p1, current->segment->p2);
+				newE = intersection(f->p1 + otherTangent * standardWidth/2, f->p1 - otherTangent * standardWidth/2, current->segment->p1, current->segment->p2);
 				if (newE.X == 0.0f) {
-					newE = intersection(f->p2 + otherTangent * 200, f->p2 - otherTangent * 200, current->segment->p1, current->segment->p2);
+					newE = intersection(f->p2 + otherTangent * standardWidth/2, f->p2 - otherTangent * standardWidth/2, current->segment->p1, current->segment->p2);
 
 				}
 				if (newE.X == 0.0f)

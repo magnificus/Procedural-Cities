@@ -501,7 +501,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		polygons.Add(f);
 
 	}
-	float maxConnect = 0;
+	float maxConnect = 2000;
 
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
