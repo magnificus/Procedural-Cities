@@ -110,7 +110,7 @@ bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URunt
 
 
 	mesh->SetMaterial(0, mat);
-	mesh->CreateMeshSection(0, vertices, triangles, normals, UV, vertexColors, tangents, false, EUpdateFrequency::Infrequent);
+	mesh->CreateMeshSection(0, vertices, triangles, normals, UV, vertexColors, tangents, true, EUpdateFrequency::Infrequent);
 
 
 	return true;

@@ -99,17 +99,25 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		
 		TArray<FVector> tangents;
 
-		// can't be too close to another segment
-		bool closeMiddle = FVector::Dist((f->p2 + f->p1) / 2, (current->segment->p2 + current->segment->p1) / 2) < 5000;
-		//bool closeOtherEnd = FVector::Dist(f->p2, current->segment->p2) < 3000;
-		//bool
-		if (closeMiddle) {
-			return false;
-		}
+
 
 
 		FVector tangent3 = f->p2 - f->p1;
 		FVector tangent4 = FRotator(0, 90, 0).RotateVector(tangent3);
+
+		tangent1.Normalize();
+		tangent2.Normalize();
+		tangent3.Normalize();
+		tangent4.Normalize();
+		// can't be too close to another segment
+		bool closeMiddle = FVector::Dist((f->p2 + f->p1) / 2, (current->segment->p2 + current->segment->p1) / 2) < 3000;
+		bool closeOtherEnd = FVector::Dist(f->p2, current->segment->p2) < 3000;
+		if (closeMiddle) {
+			return false;
+		}
+		if (closeOtherEnd && FVector::DotProduct(tangent3, tangent1) < -0.8f){
+			return false;
+		}
 
 		tangents.Add(tangent1);
 		tangents.Add(tangent2);
@@ -533,7 +541,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FRoadSegment> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, extraLen, extraBlockingLen, 0, 5);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, extraLen, extraBlockingLen, 100, 100);
 }
 
 // Called when the game starts or when spawned
