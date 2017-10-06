@@ -158,11 +158,25 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 				pot1.Normalize();
 				FVector pot2 = FRotator(0, 270, 0).RotateVector(f->p2 - f->p1);
 				pot2.Normalize();
-				addVertices(current->segment);
+				FVector potentialNewTangent;
 				if (FVector::Dist(pot1, naturalTangent) < FVector::Dist(pot2, naturalTangent))//(FVector::DotProduct(pot1, naturalTangent) > 0.7)
-					current->segment->endTangent = pot1;
-				else// if (FVector::DotProduct(pot2, naturalTangent) > 0.7)
-					current->segment->endTangent = pot2;
+					potentialNewTangent = pot1;
+				else
+					potentialNewTangent = pot2;
+
+				// make sure new tangent is not completely off the rails, it's possible they collide from front
+				if (FVector::DotProduct(naturalTangent, potentialNewTangent) > 0.3)
+					current->segment->endTangent = potentialNewTangent;
+				else {
+					current->segment->endTangent = -f->endTangent;
+					current->segment->v3 = f->v4;
+					current->segment->v4 = f->v3;
+					current->segment->p2 = middle(f->v4, f->v3);
+					f->roadInFront = true;
+				}
+
+				addVertices(current->segment);
+
 		}
 
 

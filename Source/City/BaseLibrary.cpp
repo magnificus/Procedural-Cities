@@ -192,60 +192,6 @@ struct LinkedLine {
 };
 
 
-// change direction of line hierarchy, me and the parents
-void invertAndParents(LinkedLine* line) {
-	//return;
-
-	TSet<LinkedLine*> taken;
-	LinkedLine* prev = NULL;
-	while (line && !taken.Contains(line)) {
-		taken.Add(line);
-		FVector temp = line->line.p1;
-		line->line.p1 = line->line.p2;
-		line->line.p2 = temp;
-		
-		if (line->parent)
-			line->point = line->parent->point;
-		else 
-			line->point = FVector(0, 0, 0);
-		line->child = line->parent;	
-		if (prev) {
-			line->parent = prev;
-		}
-		temp = line->point;
-		prev = line;
-
-		line = line->child;
-	}
-}
-
-// change direction of line hierarchy, me and the children
-void invertAndChildren(LinkedLine* line) {
-	//return;
-	TSet<LinkedLine*> taken;
-	LinkedLine* prev = NULL;
-	FVector prevPoint = FVector(0,0,0);
-	while (line && !taken.Contains(line)) {
-		taken.Add(line);
-
-		FVector temp = line->line.p1;
-		line->line.p1 = line->line.p2;
-		line->line.p2 = temp;
-
-		line->parent = line->child;
-		if (prev) {
-			line->child = prev;
-		}
-		temp = line->point;
-		line->point = prevPoint;
-		prevPoint = temp;
-		prev = line;
-
-		line = line->parent;
-	}
-}
-
-
 FVector getProperIntersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 	// check if they collide into each other from the back
 	FVector otherTangent = p2 - p1;
@@ -381,24 +327,15 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 
 		FVector res = getProperIntersection(pol->line.p1, pol->line.p2, inLine->line.p1, inLine->line.p2);
 			if (res.X != 0.0f) {
-				// on the previous line, is the collision close to the end? if so, old pol is master
-				if (FVector::Dist(pol->line.p1, res) > FVector::Dist(pol->line.p2, res)) {
-					// on the new line, collision end?
-					if (FVector::Dist(inLine->line.p1, res) > FVector::Dist(inLine->line.p2, res)) {
-						// then flip
-						invertAndParents(inLine);
-					}
+				// is the collision close to the end? if so, old pol is master
+				if (FVector::DistSquared(pol->line.p1, res) + FVector::DistSquared(inLine->line.p2, res) > FVector::DistSquared(pol->line.p2, res) + FVector::DistSquared(inLine->line.p1, res)) {
 					inLine->parent = pol;
 					pol->child = inLine;
 					pol->point = res;
 
 				}
-				// so the new line is maybe the master
-				else {
-					// on inLine, collision end?
-					if (FVector::Dist(inLine->line.p1, res) < FVector::Dist(inLine->line.p2, res)) {
-						invertAndChildren(inLine);
-					}
+				// so the new line is the master
+				else {	
 					pol->parent = inLine;
 					inLine->child = pol;
 					inLine->point = res;
@@ -435,8 +372,8 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		FVector sideOffsetEnd = FRotator(0, 90, 0).RotateVector(tangent)*(stdWidth / 2 * f.width);
 
 		LinkedLine* left = new LinkedLine();
-		left->line.p1 = f.p1 + sideOffsetBegin - extraLength;
-		left->line.p2 = f.p2 + sideOffsetEnd + extraLength;
+		left->line.p2 = f.p1 + sideOffsetBegin - extraLength;
+		left->line.p1 = f.p2 + sideOffsetEnd + extraLength;
 		decidePolygonFate(segments, blocking, left, lines, true, extraRoadLen, width, middleOffset);
 
 
@@ -501,7 +438,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		polygons.Add(f);
 
 	}
-	float maxConnect = 2000;
+	float maxConnect = 5000;
 
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
