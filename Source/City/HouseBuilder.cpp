@@ -62,14 +62,14 @@ TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float h
 	FVector dir = getNormal(begin, end, false);
 	dir.Normalize();
 	roof.type = PolygonType::exteriorSnd;
-	roof.width = thickness;
+	roof.width = thickness + 30 + len;
 	
 	begin -= dir * 30;
 	end -= dir * 30;
-	roof += begin + FVector(0, 0, height - 50) + dir * len - tan * 10;
-	roof += begin + FVector(0, 0, height + 20) + dir * len - tan * 10;
-	roof += end + FVector(0, 0, height + 20) + dir * len + tan * 10;
-	roof += end + FVector(0, 0, height - 50) + dir * len + tan * 10;
+	roof += begin + FVector(0, 0, height - 50) + dir * (len + 30)  - tan * 10;
+	roof += begin + FVector(0, 0, height + 20) + dir * (len + 30) - tan * 10;
+	roof += end + FVector(0, 0, height + 20) + dir * (len + 30) + tan * 10;
+	roof += end + FVector(0, 0, height - 50) + dir * (len + 30) + tan * 10;
 	roof.overridePolygonSides = true;
 
 	FMaterialPolygon side;
