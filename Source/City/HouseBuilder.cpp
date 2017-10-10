@@ -54,42 +54,32 @@ bool increasing(TArray<twoInt> ints) {
 }
 
 TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float height, float thickness) {
-	FMaterialPolygon roof;
+	FMaterialPolygon polygon;
 
-	float len = 50;
+
+	float columnWidth = 30.0f;
 	FVector tan = end - begin;
 	tan.Normalize();
 	FVector dir = getNormal(begin, end, false);
 	dir.Normalize();
-	roof.type = PolygonType::exteriorSnd;
-	roof.width = thickness + 30 + len;
-	
-	begin -= dir * 30;
-	end -= dir * 30;
-	roof += begin + FVector(0, 0, height - 50) + dir * (len + 30)  - tan * 10;
-	roof += begin + FVector(0, 0, height + 20) + dir * (len + 30) - tan * 10;
-	roof += end + FVector(0, 0, height + 20) + dir * (len + 30) + tan * 10;
-	roof += end + FVector(0, 0, height - 50) + dir * (len + 30) + tan * 10;
-	roof.overridePolygonSides = true;
-
-	FMaterialPolygon side;
-	side.type = PolygonType::exteriorSnd;
-	side.width = thickness;
-	side += begin - tan*10;
-	side += begin + tan * 10;
-	side += begin + FVector(0, 0, height - 20) + tan * 10;
-	side += begin + FVector(0, 0, height - 20) - tan * 10;
-
-	side.overridePolygonSides = true;
-	FMaterialPolygon oSide = side;
-	oSide.offset(end - begin);
-
+	polygon.normal = -dir;
+	begin += dir * 10;
+	end += dir * 10;
+	polygon.type = PolygonType::exterior;
+	polygon.width = thickness;
+	polygon += begin - tan * columnWidth/2;
+	polygon += begin - tan * columnWidth / 2 + FVector(0,0, height + columnWidth / 2);
+	polygon += end + tan * columnWidth / 2 + FVector(0,0, height + columnWidth/2);
+	polygon += end + tan * columnWidth / 2;
+	polygon += end - tan * columnWidth / 2;
+	polygon += end - tan * columnWidth / 2 + FVector(0, 0 , height - columnWidth / 2);
+	polygon += begin + tan * columnWidth / 2  + FVector(0,0, height - columnWidth / 2);
+	polygon += begin + tan * columnWidth / 2;
+	polygon.overridePolygonSides = true;
 
 
 	TArray<FMaterialPolygon> pols;
-	pols.Add(roof);
-	pols.Add(side);
-	pols.Add(oSide);
+	pols.Add(polygon);
 	return pols;
 }
 
@@ -175,7 +165,7 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 		}
 		else {
 			if (sndAttach.X != 0.0f && FVector::Dist(prevAttach, sndAttach) < 1000.0f)
-				pols.Append(getEntrancePolygons(prevAttach, sndAttach, 450, 100));
+				pols.Append(getEntrancePolygons(prevAttach, sndAttach, 390, 50));
 		}
 
 		if (i == (hole.points.Num())) {
