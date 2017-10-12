@@ -98,7 +98,7 @@ FPolygon getTinyPolygon(FVector point);
 
 
 const float simplePlotGroundOffset = 30;
-const bool ProceduralMeshesCollision = true;
+const bool proceduralMeshesCollision = true;
 
 static FVector getNormal(FVector p1, FVector p2, bool right) {
 	return FRotator(0, right ? 90 : 270, 0).RotateVector(p2 - p1);

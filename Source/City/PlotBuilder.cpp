@@ -248,27 +248,37 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			}
 			else {
 				float currMaxArea = stream.FRandRange(minMaxArea, maxMaxArea);
-				TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, 0, 0);
-				for (FHousePolygon r : refinedPolygons) {
-					r.housePosition = r.getCenter();
-					r.height = getHeight(stream, minFloors, maxFloors, r.getCenter(), noiseHeightInfluence);
+				if (original.getArea() > currMaxArea * 8) {
+					FSimplePlot fs;
+					fs.pol = original;
+					fs.pol.offset(FVector(0, 0, simplePlotGroundOffset));
+					fs.type = SimplePlotType::green;
+					fs.decorate(instancedMap);
+					info.leftovers.Add(fs);
+				}
+				else {
+					TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, 0, 0);
+					for (FHousePolygon r : refinedPolygons) {
+						r.housePosition = r.getCenter();
+						r.height = getHeight(stream, minFloors, maxFloors, r.getCenter(), noiseHeightInfluence);
 
-					r.type = p.type;
-					r.simplePlotType = p.simplePlotType;
+						r.type = p.type;
+						r.simplePlotType = p.simplePlotType;
 
-					float area = r.getArea();
+						float area = r.getArea();
 
-					if (area < minArea || area > currMaxArea) {
-						FSimplePlot fs;
-						fs.pol = r;
-						fs.pol.offset(FVector(0, 0, simplePlotGroundOffset));
-						fs.type = area < minArea ? p.simplePlotType : SimplePlotType::green;
-						fs.decorate(instancedMap);
-						info.leftovers.Add(fs);
-					}
-					else {
-						r.checkOrientation();
-						info.houses.Add(r);
+						if (area < minArea) {
+							FSimplePlot fs;
+							fs.pol = r;
+							fs.pol.offset(FVector(0, 0, simplePlotGroundOffset));
+							fs.type = p.simplePlotType;
+							fs.decorate(instancedMap);
+							info.leftovers.Add(fs);
+						}
+						else {
+							r.checkOrientation();
+							info.houses.Add(r);
+						}
 					}
 				}
 			}

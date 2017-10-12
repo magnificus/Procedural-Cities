@@ -114,6 +114,7 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 		bool generateRoofs = true;
 
+
 	UPROPERTY(EditAnywhere, Instanced, Category = "Path spline")
 		USplineMeshComponent* PathSpline;
 

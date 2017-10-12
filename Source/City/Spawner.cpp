@@ -111,13 +111,13 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		tangent4.Normalize();
 		// can't be too close to another segment
 		bool closeMiddle = FVector::Dist((f->p2 + f->p1) / 2, (current->segment->p2 + current->segment->p1) / 2) < 3000;
-		bool closeOtherEnd = FVector::Dist(f->p2, current->segment->p2) < 3000;
+		//bool closeOtherEnd = FVector::Dist(f->p2, current->segment->p2) < 3000;
 		if (closeMiddle) {
 			return false;
 		}
-		if (closeOtherEnd && FVector::DotProduct(tangent3, tangent1) < -0.8f){
-			return false;
-		}
+		//if (closeOtherEnd && FVector::DotProduct(tangent3, tangent1) < -0.8f){
+		//	return false;
+		//}
 
 		tangents.Add(tangent1);
 		tangents.Add(tangent2);
