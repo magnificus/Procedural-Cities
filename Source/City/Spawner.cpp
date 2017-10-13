@@ -75,6 +75,41 @@ void ASpawner::addVertices(FRoadSegment* road) {
 }
 
 
+void ASpawner::collideInto(FRoadSegment *s1, FRoadSegment *s2, FVector impactP) {
+	//FVector tangent2 = impactP - f2->p1;
+	//tangent2.Normalize();
+	s1->p2 = impactP;// f2->p1 + (len - standardWidth / 2) * tangent;
+
+	FVector naturalTangent = s1->p2 - s1->p1;
+	naturalTangent.Normalize();
+	FVector pot1 = FRotator(0, 90, 0).RotateVector(s2->p2 - s2->p1);
+	pot1.Normalize();
+	FVector pot2 = FRotator(0, 270, 0).RotateVector(s2->p2 - s2->p1);
+	pot2.Normalize();
+
+	FVector potentialNewTangent;
+	if (FVector::Dist(pot1, naturalTangent) < FVector::Dist(pot2, naturalTangent))//(FVector::DotProduct(pot1, naturalTangent) > 0.7)
+		potentialNewTangent = pot1;
+	else
+		potentialNewTangent = pot2;
+
+
+	// make sure new tangent is not completely off the rails, it's possible they collide from front
+	if (FVector::DotProduct(naturalTangent, potentialNewTangent) > 0.3) {
+		s1->endTangent = potentialNewTangent;
+		addVertices(s1);
+	}
+	else {
+		s1->endTangent = -s2->endTangent;
+		s1->v3 = s2->v4;
+		s1->v4 = s2->v3;
+		s1->p2 = middle(s2->v4, s2->v3);
+		s2->roadInFront = true;
+	}
+	
+	s1->roadInFront = true;
+}
+
 //float noise(float multiplier, float x, float y) {
 //	return raw_noise_2d(multiplier * (x + noiseXOffset), multiplier*(y + noiseYOffset));
 //}
@@ -110,7 +145,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		tangent3.Normalize();
 		tangent4.Normalize();
 		// can't be too close to another segment
-		bool closeMiddle = FVector::Dist((f->p2 + f->p1) / 2, (current->segment->p2 + current->segment->p1) / 2) < 3000;
+		bool closeMiddle = FVector::Dist((f->p2 + f->p1) / 2, (current->segment->p2 + current->segment->p1) / 2) < 4000;
 		//bool closeOtherEnd = FVector::Dist(f->p2, current->segment->p2) < 3000;
 		if (closeMiddle) {
 			return false;
@@ -130,54 +165,29 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 		vert2.Add(f->v3);
 		vert2.Add(f->v4);
 
-		if (testCollision(tangents, vert1, vert2, collisionLeniency)) {
-			FVector newE = intersection(current->segment->p1, current->segment->p2, f->p1, f->p2);
-			if (newE.X == 0) {
-				// check if they collide into each other from the back
-				FVector otherTangent = f->p2 - f->p1;
-				otherTangent = FRotator(0, 90, 0).RotateVector(otherTangent);
-				otherTangent.Normalize();
-				newE = intersection(f->p1 + otherTangent * standardWidth/2, f->p1 - otherTangent * standardWidth/2, current->segment->p1, current->segment->p2);
-				if (newE.X == 0.0f) {
-					newE = intersection(f->p2 + otherTangent * standardWidth/2, f->p2 - otherTangent * standardWidth/2, current->segment->p1, current->segment->p2);
+		//if (testCollision(tangents, vert1, vert2, collisionLeniency)) {
+		FVector newE = intersection(current->segment->p1, current->segment->p2, f->p1, f->p2);
+		//if (newE.X == 0) {
+		//	// check if they collide into each other from the back
+		//	FVector otherTangent = f->p2 - f->p1;
+		//	otherTangent = FRotator(0, 90, 0).RotateVector(otherTangent);
+		//	otherTangent.Normalize();
+		//	newE = intersection(f->p1 + otherTangent * standardWidth/2, f->p1 - otherTangent * standardWidth/2, current->segment->p1, current->segment->p2);
+		//	if (newE.X == 0.0f) {
+		//		newE = intersection(f->p2 + otherTangent * standardWidth/2, f->p2 - otherTangent * standardWidth/2, current->segment->p1, current->segment->p2);
 
-				}
-				if (newE.X == 0.0f)
-					continue;
-			}
-				current->time = 100000;
-				FVector tangent = newE - current->segment->p1;
-				tangent.Normalize();
-				float len = FVector::Dist(newE, current->segment->p1);
-				current->segment->p2 = current->segment->p1 + (len - standardWidth / 2) * tangent;
-				current->segment->roadInFront = true;
-
-				FVector naturalTangent = current->segment->p2 - current->segment->p1;
-				naturalTangent.Normalize();
-				FVector pot1 = FRotator(0, 90, 0).RotateVector(f->p2 - f->p1);
-				pot1.Normalize();
-				FVector pot2 = FRotator(0, 270, 0).RotateVector(f->p2 - f->p1);
-				pot2.Normalize();
-				FVector potentialNewTangent;
-				if (FVector::Dist(pot1, naturalTangent) < FVector::Dist(pot2, naturalTangent))//(FVector::DotProduct(pot1, naturalTangent) > 0.7)
-					potentialNewTangent = pot1;
-				else
-					potentialNewTangent = pot2;
-
-				// make sure new tangent is not completely off the rails, it's possible they collide from front
-				if (FVector::DotProduct(naturalTangent, potentialNewTangent) > 0.3)
-					current->segment->endTangent = potentialNewTangent;
-				else {
-					current->segment->endTangent = -f->endTangent;
-					current->segment->v3 = f->v4;
-					current->segment->v4 = f->v3;
-					current->segment->p2 = middle(f->v4, f->v3);
-					f->roadInFront = true;
-				}
-
-				addVertices(current->segment);
-
+		//	}
+		//	if (newE.X == 0.0f)
+		//		continue;
+		//}
+		if (newE.X != 0) {
+			current->time = 100000;
+			collideInto(current->segment, f, newE);
 		}
+
+
+
+		//}
 
 
 	}
@@ -426,7 +436,6 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 			float closestDist = 10000000.0f;
 			FRoadSegment* closest = nullptr;
 			FVector impactP;
-			bool foundCollision = false;
 			for (int j = 0; j < determinedSegments.Num(); j++) {
 				FRoadSegment* f = determinedSegments[j];
 				if (i == j) {
@@ -440,27 +449,14 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 					closestDist = FVector::Dist(p2Prev, res);
 					closest = f;
 					impactP = res;
-					foundCollision = true;
 					//break;
 				}
 
 
 			}
-			if (foundCollision) {
-				//FVector tangent2 = impactP - f2->p1;
-				//tangent2.Normalize();
-				float len = FVector::Dist(impactP, f2->p1);
-				f2->p2 = impactP;// f2->p1 + (len - standardWidth / 2) * tangent;
+			if (closest) {
+				collideInto(f2, closest, impactP);
 
-				FVector naturalTangent = f2->p2 - f2->p1;
-				naturalTangent.Normalize();
-				FVector pot1 = FRotator(0, 90, 0).RotateVector(closest->p2 - closest->p1);
-				pot1.Normalize();
-				FVector pot2 = FRotator(0, 270, 0).RotateVector(closest->p2 - closest->p1);
-				pot2.Normalize();
-				addVertices(f2);
-				f2->endTangent = FVector::DistSquared(naturalTangent, pot1) < FVector::DistSquared(naturalTangent, pot2) ? pot1 : pot2;
-				f2->roadInFront = true;
 			}
 			else {
 				f2->p2 = p2Prev;

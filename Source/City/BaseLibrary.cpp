@@ -500,7 +500,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) < maxConnect) {
 			f.open = false;
 		}
-		f.checkOrientation();
+		//f.checkOrientation();
 
 		f.clipEdges(-0.96f);
 		if (f.points.Num() < 3) {
