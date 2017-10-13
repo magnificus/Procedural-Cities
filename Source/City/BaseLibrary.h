@@ -25,6 +25,8 @@ struct SplitStruct {
 	FVector p2;
 };
 
+//const unsigned int MAX_BUILDING_RECURSION_DEPTH = 2;
+
 
 static FRandomStream baseLibraryStream;
 static bool overrideSides;
@@ -276,6 +278,9 @@ struct FPolygon
 		Algo::Reverse(points);
 	}
 
+	/*
+	This function finds the intersection point of the splitting line from point in direction inNormal, placing the index of the line in split and point in p2
+	*/
 	void getSplitCorrespondingPoint(int begin, FVector point, FVector inNormal, int &split, FVector &p2) {
 		float closest = 10000000.0f;
 		for (int i = 1; i < points.Num()+1; i++) {
@@ -484,6 +489,13 @@ struct FSimplePlot {
 		TArray<FPolygon> obstacles;
 
 	SimplePlotType type = SimplePlotType::undecided;
+
+	FSimplePlot() {}
+
+	FSimplePlot(const SimplePlotType inType, const FPolygon &inPol, float inOffset = 0) : type(inType), pol(inPol) {
+		pol.offset(FVector(0, 0, inOffset));
+
+	}
 
 
 	void decorate(TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {

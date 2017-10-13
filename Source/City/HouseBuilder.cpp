@@ -329,12 +329,8 @@ FSimplePlot attemptMoveSideInwards(FHousePolygon &f, int place, FPolygon &center
 		pol.points.Add(toChange2To);
 		pol.offset(offset);
 		f.windows.Add(place);
-		FSimplePlot simplePlot;
+		FSimplePlot simplePlot = FSimplePlot(f.simplePlotType, pol);
 		simplePlot.obstacles.Append(getBlockingEntrances(f.points, f.entrances, TMap<int32, FVector>(), 400, 1000));
-		simplePlot.pol = pol;
-		//simplePlot.pol.reverse();
-		simplePlot.type = f.simplePlotType;
-		//return pol;
 		return simplePlot;
 	}
 	return FSimplePlot();
@@ -449,13 +445,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 			TArray<FMaterialPolygon> res = ARoomBuilder::getSideWithHoles(f, holes, PolygonType::roof);
 			TArray<FSimplePlot> sPlots;
 			for (auto a : res) {
-				FSimplePlot plot;
-				plot.type = f.simplePlotType;
-				plot.pol = a;
-				plot.pol.normal = FVector(0, 0, -1);
-				plot.pol.offset(FVector(0, 0, simplePlotGroundOffset));
-				//a.normal = FVector(0, 0, -1);
-				//a.offset(FVector(0,0,30));
+				FSimplePlot plot (f.simplePlotType, a, simplePlotGroundOffset);
 				sPlots.Add(plot);
 			}
 			toReturn.Append(sPlots);
@@ -465,12 +455,7 @@ void AHouseBuilder::makeInteresting(FHousePolygon &f, TArray<FSimplePlot> &toRet
 			}
 		}
 	}
-	//else if (stream.FRand() < 0.1f && FVector::Dist(f.points[place%f.points.Num()],f.points[place - 1]) > 3000) {
-	//	FSimplePlot res = attemptTurnSideIntoU(f, place, centerHole, len, FVector(0, 0, 20), stream);
-	//	if (res.pol.points.Num() > 0) {
-	//		toReturn.Add(res);
-	//	}
-	//}
+
 }
 
 
@@ -626,7 +611,7 @@ void addDetailOnPolygon(int depth, int maxDepth, int maxBoxes, FMaterialPolygon 
 
 	}
 
-	else if (stream.FRand() < 0.4 && canCoverCompletely) {
+	else if (stream.FRand() < 0.2 && canCoverCompletely) {
 		// pointy shape upwards
 		FVector centerP = pol.getCenter();
 		centerP += FVector(0, 0, stream.FRandRange(200, 1000));
@@ -825,7 +810,6 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 
 	// this variable defines how violently the shape of the building will change, i.e. how often potentiallyShrink is called
 	float myChangeIntensity = stream.FRandRange(0, maxChangeIntensity);
-	//myChangeIntensity = 0;
 
 	bool potentialBalcony = f.type == RoomType::apartment && floors < 10 && stream.FRand() < 0.3;
 	for (FRoomPolygon &p : roomPols) {

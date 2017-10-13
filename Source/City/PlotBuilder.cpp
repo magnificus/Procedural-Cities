@@ -138,9 +138,7 @@ FCityDecoration APlotBuilder::getCityDecoration(TArray<FMetaPolygon> plots, TArr
 }
 
 float getHeight(FRandomStream &stream, int minFloors, int maxFloors, FVector position, float noiseHeightInfluence) {
-	// value inbetween 0..1
 	float noise = NoiseSingleton::getInstance()->noise(position.X, position.Y);
-	// value inbetween 0..1
 	float adjustedNoiseFactor = (1.0 - noiseHeightInfluence) + (noise*noiseHeightInfluence);
 	// value inbetween 0..1
 	float modifier = -std::log(stream.FRandRange(std::min(1.02 - adjustedNoiseFactor/* e^(-4) */, 1.0), 1.0)) / 4;
@@ -230,10 +228,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 				normalPlacement = true;
 			}
 			else {
-				FSimplePlot fs;
-				fs.pol = p;
-				fs.pol.offset(FVector(0, 0, simplePlotGroundOffset));
-				fs.type = p.simplePlotType;
+				FSimplePlot fs = FSimplePlot(p.simplePlotType, p, simplePlotGroundOffset);
 				fs.decorate(placed, instancedMap);
 				info.leftovers.Add(fs);
 
@@ -242,35 +237,35 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 		if (normalPlacement) {
 			// have a chance of just making it empty
 			if (stream.FRand() < 0.05) {
-				FSimplePlot fs;
-				fs.pol = p;
-				fs.pol.offset(FVector(0, 0, simplePlotGroundOffset));
-				fs.type = p.simplePlotType;
+				FSimplePlot fs = FSimplePlot(p.simplePlotType, p, simplePlotGroundOffset);
 				fs.decorate(instancedMap);
 				info.leftovers.Add(fs);
 			}
 			else {
 				float currMaxArea = stream.FRandRange(minMaxArea, maxMaxArea);
+				if (p.getArea() > currMaxArea * 8) {
+					// area is too large for even the max number of buildings, just make it a green simple plot
+					FSimplePlot fs = FSimplePlot(SimplePlotType::green, p, simplePlotGroundOffset);
+					fs.decorate(instancedMap);
+					info.leftovers.Add(fs);
+				}
 				TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, minArea, 0);
 				for (FHousePolygon r : refinedPolygons) {
  					r.housePosition = r.getCenter();
  					r.height = getHeight(stream, minFloors, maxFloors, r.getCenter(), noiseHeightInfluence);
- 
  					r.type = p.type;
  					r.simplePlotType = p.simplePlotType;
  
  					float area = r.getArea();
  
- 					if (area < minArea || area > currMaxArea) {
- 						FSimplePlot fs;
- 						fs.pol = r;
- 						fs.pol.offset(FVector(0, 0, simplePlotGroundOffset));
- 						fs.type = area < minArea ? p.simplePlotType : SimplePlotType::green;
+ 					if (area < minArea) {
+						// too small, turn into simple plot
+ 						FSimplePlot fs = FSimplePlot(p.simplePlotType, r, simplePlotGroundOffset);
+ 						fs.type = p.simplePlotType;
  						fs.decorate(instancedMap);
  						info.leftovers.Add(fs);
  					}
  					else {
- 						//r.checkOrientation();
  						info.houses.Add(r);
 					}
 				}
