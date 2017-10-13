@@ -415,7 +415,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 				current->previous->segment->roadInFront = true;
 			//addRoadToMap(segmentsOrganized, current->segment, primaryStepLength.Size() / 2);
 
-			UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT PRIORITY %f"), current->time);
+			//UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT PRIORITY %f"), current->time);
 			addExtensions(queue, current, allSegments);
 		}
 	}

@@ -4,7 +4,7 @@
 #include "NoiseSingleton.h"
 #include "PlotBuilder.h"
 #include <random>
-
+#include <ctime>
 
 
 // Sets default values
@@ -177,11 +177,13 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 	FPlotInfo info;
 	FVector cen = p.getCenter();
 	FRandomStream stream(cen.X * 1000 + cen.Y);
-
+	std::clock_t begin = clock();
 	p.checkOrientation();
 	float maxMaxArea = 6000.0f;
 	float minMaxArea = 3000;
 	float minArea = 1200.0f;
+
+	UE_LOG( LogTemp, Warning, TEXT("size of p: %i, area: %f"), p.points.Num(), p.getArea());
 
 	if (!p.open) {
 		FHousePolygon original;
@@ -249,7 +251,7 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 			}
 			else {
 				float currMaxArea = stream.FRandRange(minMaxArea, maxMaxArea);
-				TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, 0, 0);
+				TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, minArea, 0);
 				for (FHousePolygon r : refinedPolygons) {
  					r.housePosition = r.getCenter();
  					r.height = getHeight(stream, minFloors, maxFloors, r.getCenter(), noiseHeightInfluence);
@@ -277,6 +279,11 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 		}
 
 	}
+	std::clock_t end = clock();
+	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	//FString res = FString();
+	UE_LOG(LogTemp, Warning, TEXT("time to run generatehousepolygons: %f"), elapsed_secs);
+
 	return info;
 
 }

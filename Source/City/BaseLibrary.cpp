@@ -813,11 +813,11 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 		
 		float treeAreaRatio = 0.001;
 		float bushAreaRatio = 0.005;
-		float grassRatio = 0.2;
+		float grassRatio = 0.005;
 		if (area < 500) {
 			treeAreaRatio *= 15;
 			bushAreaRatio *= 15;
-			grassRatio *= 15;
+			grassRatio *= 35;
 		}
 		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*area, "tree1"));
 		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*area, "tree2"));
