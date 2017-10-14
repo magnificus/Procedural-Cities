@@ -3,6 +3,7 @@
 #include "City.h"
 #include "NoiseSingleton.h"
 #include "Spawner.h"
+#include <ctime>
 
 
 // Sets default values
@@ -348,6 +349,8 @@ void ASpawner::addExtensions(std::priority_queue<logicRoadSegment*, std::deque<l
 TArray<FRoadSegment> ASpawner::determineRoadSegments()
 {
 
+	std::clock_t begin = clock();
+
 	if (useTexture)
 		NoiseSingleton::getInstance()->setUseTexture(noiseTexture, noiseTextureScale);
 
@@ -447,14 +450,10 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 					closestDist = FVector::Dist(p2Prev, res);
 					closest = f;
 					impactP = res;
-					//break;
 				}
-
-
 			}
 			if (closest) {
 				collideInto(f2, closest, impactP);
-
 			}
 			else {
 				f2->p2 = p2Prev;
@@ -480,6 +479,11 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 		delete(s->segment);
 		delete(s);
 	}
+
+	std::clock_t end = clock();
+	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	UE_LOG(LogTemp, Warning, TEXT("time to generate road segments: %f"), elapsed_secs);
+
 
 	return finishedSegments;
 }

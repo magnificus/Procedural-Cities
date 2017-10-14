@@ -744,8 +744,9 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res) {
 		procMeshActor = GetWorld()->SpawnActor<AProcMeshActor>(procMeshActorClass, FActorSpawnParameters());
 		procMeshActor->init(generationMode);
 	}
-	for (FSimplePlot fs : res.remainingPlots) {
+	for (FSimplePlot &fs : res.remainingPlots) {
 		fs.decorate(map);
+		//res.roomInfo.meshes.Append(fs.meshes);
 		for (FMeshInfo mesh : fs.meshes) {
 					map[mesh.description]->AddInstance(mesh.transform);
 			}
@@ -826,14 +827,12 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 		}
 		FRoomInfo newR = toUse->buildApartment(&p, 0, floorHeight, map, false, shellOnly, FRandomStream(1));
 		toReturn.roomInfo.pols.Append(newR.pols);
-		//for (FMeshInfo &mesh : newR.meshes)
-		//	mesh.transform.SetTranslation(mesh.transform.GetTranslation() + FVector(0,0,20));
 		toReturn.roomInfo.meshes.Append(newR.meshes);
 	}
 	FVector rot = getNormal(hole.points[1], hole.points[0], true);
 	rot.Normalize();
-	FPolygon stairPol = MeshPolygonReference::getStairPolygon(hole.getCenter() + rot*200, rot.Rotation());
-	FPolygon elevatorPol = MeshPolygonReference::getStairPolygon(hole.getCenter() - rot * 200, rot.Rotation());
+	FPolygon stairPol = MeshPolygonReference::getStairPolygon(hole.getCenter() + rot*190, rot.Rotation());
+	FPolygon elevatorPol = MeshPolygonReference::getStairPolygon(hole.getCenter() - rot * 190, rot.Rotation());
 	FVector stairPos = stairPol.getCenter();
 	FVector elevatorPos = elevatorPol.getCenter();
 
@@ -855,11 +854,11 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 
 		FMaterialPolygon floor;
 		floor.points = f.points;
-		//floor.offset(FVector(0, 0, 20));
 		floor.type = PolygonType::floor;
 		toReturn.roomInfo.pols.Add(floor);
 	}
 
+	// change window type after a certain floor because it looks better
 	int windowChangeCutoff = stream.RandRange(1, 20);
 	WindowType currentWindowType = WindowType(stream.RandRange(0, 3));
 
@@ -940,7 +939,6 @@ FHouseInfo AHouseBuilder::getHouseInfo()
 			boxRoof.reverse();
 			TArray<FMaterialPolygon> sides = getSidesOfPolygon(boxRoof, PolygonType::exterior, floorHeight);
 			FMaterialPolygon &exitSide = sides[0];
-			//sides.RemoveAt(0);
 			FVector middleP = middle(exitSide[2], exitSide[1]);
 			FPolygon entH = getEntranceHole(exitSide[2], exitSide[1], floorHeight, 297, 137, middleP);
 			exitSide.points.EmplaceAt(2, entH[2]);

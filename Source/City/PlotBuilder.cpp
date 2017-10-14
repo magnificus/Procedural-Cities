@@ -390,8 +390,6 @@ FPolygon APlotBuilder::generateSidewalkPolygon(FPlotPolygon p, float offsetSize)
 		else {
 			FVector last = p.points[p.points.Num() - 1];
 			polygon.points.Add(last);
-			//polygon.points.Add(last);
-
 		}
 	}
 	return polygon;

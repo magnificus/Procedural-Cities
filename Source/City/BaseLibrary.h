@@ -499,7 +499,7 @@ struct FSimplePlot {
 
 
 	void decorate(TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
-		decorate(TArray<FPolygon>(), map);
+		decorate(obstacles, map);
 	}
 
 
