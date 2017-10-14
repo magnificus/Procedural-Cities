@@ -249,25 +249,27 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 					fs.decorate(instancedMap);
 					info.leftovers.Add(fs);
 				}
-				TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, minArea, 0);
+				else {
+				TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, 0, 0);
 				for (FHousePolygon r : refinedPolygons) {
- 					r.housePosition = r.getCenter();
- 					r.height = getHeight(stream, minFloors, maxFloors, r.getCenter(), noiseHeightInfluence);
- 					r.type = p.type;
- 					r.simplePlotType = p.simplePlotType;
- 
- 					float area = r.getArea();
- 
- 					if (area < minArea) {
+					r.housePosition = r.getCenter();
+					r.height = getHeight(stream, minFloors, maxFloors, r.getCenter(), noiseHeightInfluence);
+					r.type = p.type;
+					r.simplePlotType = p.simplePlotType;
+
+					float area = r.getArea();
+
+					if (area < minArea) {
 						// too small, turn into simple plot
- 						FSimplePlot fs = FSimplePlot(p.simplePlotType, r, simplePlotGroundOffset);
- 						fs.type = p.simplePlotType;
- 						fs.decorate(instancedMap);
- 						info.leftovers.Add(fs);
- 					}
- 					else {
- 						info.houses.Add(r);
+						FSimplePlot fs = FSimplePlot(p.simplePlotType, r, simplePlotGroundOffset);
+						fs.type = p.simplePlotType;
+						fs.decorate(instancedMap);
+						info.leftovers.Add(fs);
 					}
+					else {
+						info.houses.Add(r);
+					}
+				}
 				}
 			}
 

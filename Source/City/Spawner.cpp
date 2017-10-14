@@ -242,12 +242,12 @@ void ASpawner::addRoadForward(std::priority_queue<logicRoadSegment*, std::deque<
 	}
 
 
-	FRotator bestRotator = getBestRotation((prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity), previous->firstDegreeRot,newRoad->p1, stepLength, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
+	FRotator bestRotator = getBestRotation((prevSeg->type == RoadType::main ? changeIntensity : secondaryChangeIntensity), previous->rotation,newRoad->p1, stepLength, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
 
-	newRoadL->firstDegreeRot = bestRotator;//previous->firstDegreeRot + newRoadL->secondDegreeRot;
+	newRoadL->rotation = bestRotator;
 
 
-	newRoad->p2 = newRoad->p1 + newRoadL->firstDegreeRot.RotateVector(stepLength);
+	newRoad->p2 = newRoad->p1 + newRoadL->rotation.RotateVector(stepLength);
 	newRoad->beginTangent = prevSeg->p2 - prevSeg->p1;
 	newRoad->beginTangent.Normalize();
 	newRoad->width = prevSeg->width;
@@ -270,10 +270,9 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 	FRoadSegment* newRoad = new FRoadSegment();
 	FVector stepLength = newType == RoadType::main ? primaryStepLength : secondaryStepLength;
 
-	newRoadL->secondDegreeRot = FRotator(0, 0, 0);;
 	FRotator newRotation = left ? FRotator(0, 90, 0) : FRotator(0, 270, 0);
-	newRoadL->firstDegreeRot = previous->firstDegreeRot + newRotation;
-	FVector startOffset = newRoadL->firstDegreeRot.RotateVector(FVector(standardWidth*previous->segment->width / 2, 0, 0));
+	newRoadL->rotation = previous->rotation + newRotation;
+	FVector startOffset = newRoadL->rotation.RotateVector(FVector(standardWidth*previous->segment->width / 2, 0, 0));
 	newRoad->p1 =prevSeg->p1 + (prevSeg->p2 - prevSeg->p1) / 2 + startOffset;
 
 
@@ -285,11 +284,11 @@ void ASpawner::addRoadSide(std::priority_queue<logicRoadSegment*, std::deque<log
 			}
 		}
 	}
-	FRotator bestRotator = getBestRotation(secondaryChangeIntensity, newRoadL->firstDegreeRot, newRoad->p1, stepLength, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
-	newRoadL->firstDegreeRot = bestRotator;//previous->firstDegreeRot + newRoadL->secondDegreeRot;
+	FRotator bestRotator = getBestRotation(secondaryChangeIntensity, newRoadL->rotation, newRoad->p1, stepLength, others, mainRoadDetrimentRange, mainRoadDetrimentImpact);
+	newRoadL->rotation = bestRotator;
 
 
-	newRoad->p2 = newRoad->p1 + newRoadL->firstDegreeRot.RotateVector(stepLength);
+	newRoad->p2 = newRoad->p1 + newRoadL->rotation.RotateVector(stepLength);
 	newRoad->beginTangent = FRotator(0, left ? 90 : 270, 0).RotateVector(previous->segment->p2 - previous->segment->p1); //->p2 - newRoad->p1;
 	newRoad->beginTangent.Normalize();
 	newRoad->width = width;
@@ -394,8 +393,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	startR->type = RoadType::main;
 	startR->endTangent = startR->p2 - startR->p1;
 
-	start->firstDegreeRot = bestRot;
-	start->secondDegreeRot = FRotator(0, 0, 0);
+	start->rotation = bestRot;
 	start->roadLength = 1;
 	addVertices(startR);
 

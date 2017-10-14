@@ -157,7 +157,7 @@ struct FPolygon
 		return center;
 	}
 
-	// not totally random, favors placement closer to the sides a bit, but good enough
+	// not totally random, favors placement closer to the edges a bit, but good enough
 	FVector getRandomPoint(bool left, float minDist, FRandomStream &stream = baseLibraryStream) {
 		int place = stream.RandRange(1, points.Num());
 		FVector tangent = (points[place%points.Num()] - points[place - 1]);
@@ -254,7 +254,7 @@ struct FPolygon
 
 	// this method merges polygon sides when possible, and combines points
 	bool decreaseEdges() {
-		float distDiffAllowed = 40000;
+		float distDiffAllowed = 50000;
 		bool hasModified = false;
 		for (int i = 1; i < points.Num() + 1; i++) {
 			if (FVector::DistSquared(points[i - 1], points[i%points.Num()]) < distDiffAllowed) {
@@ -1570,8 +1570,7 @@ struct logicRoadSegment {
 	float time;
 	logicRoadSegment* previous;
 	FRoadSegment* segment;
-	FRotator firstDegreeRot;
-	FRotator secondDegreeRot;
+	FRotator rotation;
 	int roadLength;
 };
 

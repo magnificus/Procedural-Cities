@@ -87,20 +87,20 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = mesh, meta = (AllowPrivateAccess = "true"))
 		UStaticMesh* meshPolygon;
 
-	// maximum size of house before being split into new houses
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
-	float maxHouseArea = 2000.0f;
+	//// maximum size of house before being split into new houses
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
+	//float maxHouseArea = 2000.0f;
 
-	// minimum size of houses before they're turned into simple plots
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
-	float minHouseArea = 200.0f;
+	//// minimum size of houses before they're turned into simple plots
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
+	//float minHouseArea = 200.0f;
 
 	// minimum number of floors in a building
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
 		int32	minFloors = 3;
 	// maximum number of floors in a building
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
-		int32	maxFloors = 15;
+		int32	maxFloors = 60;
 
 	// the height of individual floors, should not really be changed too much since mesh placement can get a bit wonky looking is misaligned with floor height
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
@@ -133,10 +133,6 @@ class CITY_API ASpawner : public AActor
 	// sidewalk offset
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = sidewalk, meta = (AllowPrivateAccess = "true"))
 		float offsetSize = 500;
-
-	//// maximum size of apartment
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = rooms, meta = (AllowPrivateAccess = "true"))
-	//	float maxRoomSize = 500;
 		
 
 	// extra length of lines placed for plot generation
@@ -152,8 +148,7 @@ class CITY_API ASpawner : public AActor
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Generation, meta = (AllowPrivateAccess = "true"))
 		FRandomStream stream;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = plotCreation, meta = (AllowPrivateAccess = "true"))
-	//	float extraLen;
+
 public:	
 	// Sets default values for this actor's properties
 	ASpawner();

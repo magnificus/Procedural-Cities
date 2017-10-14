@@ -758,7 +758,6 @@ TArray<FMeshInfo> placeRandomly(FPolygon pol, TArray<FPolygon> &blocking, int nu
 			}
 		}
 	}
-	//UE_LOG(LogTemp, Warning, TEXT("Out of %i attempts at placing %s randomly %i were successful"), num, *name, hits);
 	return meshes;
 }
 
@@ -817,7 +816,7 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 		if (area < 500) {
 			treeAreaRatio *= 15;
 			bushAreaRatio *= 15;
-			grassRatio *= 35;
+			grassRatio *= 30;
 		}
 		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*area, "tree1"));
 		meshes.Append(placeRandomly(pol, blocking, treeAreaRatio*area, "tree2"));
@@ -838,6 +837,8 @@ void FSimplePlot::decorate(TArray<FPolygon> blocking, TMap<FString, UHierarchica
 	}
 	}
 }
+
+
 
 void placeRows(FPolygon *r2, TArray<FPolygon> &placed, TArray<FMeshInfo> &meshes, FRotator offsetRot, FString name, float vertDens, float horDens, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map, bool left, int numToPlace) {
 	for (int k = 1; k < r2->points.Num() + 1; k++) {
