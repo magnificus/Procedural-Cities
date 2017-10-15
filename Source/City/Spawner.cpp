@@ -358,7 +358,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	baseLibraryStream = stream;
 
 	// if we have no roof it looks better with polygons on side of walls as well, otherwise the top side of walls in the buildings will just be empty
-	//overrideSides = !generateRoofs;
+	BaseLibrary::overrideSides = !generateRoofs;
 
 	FVector origin;
 	TArray<FRoadSegment*> determinedSegments;

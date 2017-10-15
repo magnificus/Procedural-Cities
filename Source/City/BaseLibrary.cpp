@@ -11,6 +11,8 @@ BaseLibrary::~BaseLibrary()
 {
 }
 
+bool BaseLibrary::overrideSides = false;
+
 FPolygon getTinyPolygon(FVector point) {
 	FPolygon temp;
 	temp.points.Add(point);
@@ -566,7 +568,7 @@ TArray <FMaterialPolygon> fillOutPolygon(FMaterialPolygon &p) {
 		polygonSides = false;
 		other.type = PolygonType::interior;
 	}
-	if (overrideSides)
+	if (BaseLibrary::overrideSides)
 		polygonSides = true;
 
 	other.offset(p.getDirection() * p.width);

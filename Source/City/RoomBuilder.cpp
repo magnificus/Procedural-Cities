@@ -642,6 +642,7 @@ static FRoomInfo getBedRoom(FRoomPolygon *r2, TMap<FString, UHierarchicalInstanc
 static FRoomInfo getHallWay(FRoomPolygon *r2, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map) {
 	FRoomInfo r;
 	TArray<FPolygon> placed;
+	placed.Append(getBlockingVolumes(r2, 200, 200));
 
 	r2->attemptPlace(placed, r.meshes, true, 1, "hanger", FRotator(0, 90, 0), FVector(0, 0, 10), map, false);
 	r2->attemptPlace(placed, r.meshes, false, 1, "mirror2", FRotator(0, 0, 0), FVector(0, 0, 100), map, true);
