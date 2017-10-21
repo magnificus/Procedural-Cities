@@ -1,10 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "City.h"
-//#include "simplexnoise.h"
-//#include "polypartition.h"
 #include "HouseBuilder.h"
-//#include "ThreadedWorker.h"
 struct FPolygon;
 
 
@@ -21,10 +17,6 @@ AHouseBuilder::AHouseBuilder()
 
 AHouseBuilder::~AHouseBuilder()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	//SetActorTickEnabled(false);
-	//if (worker)
-	//	delete worker;
 
 }
 
@@ -32,26 +24,6 @@ struct twoInt {
 	int32 a;
 	int32 b;
 };
-
-// very crudely checks which direction an array is going, needs to be checked in this way because it can wrap around 0 unfortunately
-bool increasing(std::vector<int> nbrs) {
-	for (int i = 1; i < nbrs.size(); i++) {
-		if (nbrs[i] == nbrs[i - 1] + 1) {
-			return true;
-		}
-	}
-	return false;
-}
-
-// similar to above but for a different structure
-bool increasing(TArray<twoInt> ints) {
-	for (twoInt t : ints) {
-		if (t.b == t.a + 1) {
-			return true;
-		}
-	}
-	return false;
-}
 
 TArray<FMaterialPolygon> getEntrancePolygons(FVector begin, FVector end, float height, float thickness) {
 	FMaterialPolygon polygon;
@@ -198,7 +170,6 @@ TArray<FRoomPolygon> getInteriorPlanAndPlaceEntrancePolygons(FHousePolygon &f, F
 	for (int i = 0; i < roomPols.Num(); i++) {
 		FRoomPolygon &fp = roomPols[i];
 
-		//if (isIncreasing) {
 		fp.exteriorWalls.Add(fp.points.Num());
 		for (int j = connections[i].b - 1 == -1 ? f.points.Num(): connections[i].b - 1; j != (connections[i].a - 1 == -1 ? f.points.Num(): connections[i].a - 1); j = j == 0 ? f.points.Num(): j - 1) {
 			if (f.windows.Contains(j+1)) {
@@ -348,9 +319,8 @@ FSimplePlot attemptRemoveCorner(FHousePolygon &f, int place, FPolygon &centerHol
 		bool hadW = f.windows.Contains(place);
 		bool hadE = f.entrances.Contains(place);
 
-		simplePlot.type = f.simplePlotType; // stream.RandBool() ? SimplePlotType::green : SimplePlotType::asphalt;
+		simplePlot.type = f.simplePlotType; 
 
-		//simplePlot.pol.reverse();
 		simplePlot.pol.offset(offset);
 
 		f.addPoint(place, p1);

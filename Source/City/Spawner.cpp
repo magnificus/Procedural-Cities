@@ -111,10 +111,6 @@ void ASpawner::collideInto(FRoadSegment *s1, FRoadSegment *s2, FVector impactP) 
 	s1->roadInFront = true;
 }
 
-//float noise(float multiplier, float x, float y) {
-//	return raw_noise_2d(multiplier * (x + noiseXOffset), multiplier*(y + noiseYOffset));
-//}
-
 bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment* current, TMap <int, TArray<FRoadSegment*>*> &map){
 
 	// use SAT collision between all roads
@@ -211,7 +207,7 @@ float getValueOfRotation(FVector testPoint, TArray<logicRoadSegment*> &others, f
 
 FRotator getBestRotation(float maxDiffAllowed, FRotator original, FVector originalPoint, FVector step, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
 	FVector testPoint = originalPoint + original.RotateVector(step);
-	float bestVal = -10000; //NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y);
+	float bestVal = -10000;
 	FRotator bestRotator = original;
 	for (int i = 0; i < 7; i++) {
 		FRotator curr = original + FRotator(0, baseLibraryStream.FRandRange(-maxDiffAllowed, maxDiffAllowed), 0);
@@ -553,7 +549,7 @@ TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, 
 
 TArray<FMetaPolygon> ASpawner::getSurroundingPolygons(TArray<FRoadSegment> segments)
 {
-	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, extraLen, extraBlockingLen, 100, 100);
+	return BaseLibrary::getSurroundingPolygons(segments, segments, standardWidth, extraLen, extraBlockingLen, 50, 100);
 }
 
 // Called when the game starts or when spawned

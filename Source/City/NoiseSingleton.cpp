@@ -25,7 +25,6 @@ float NoiseSingleton::noise(float x, float y){
 	if (!useTexture) {
 
 		float val = SimplexNoise::simplexnoise(noiseScale * x + xOffset, noiseScale*y + yOffset);
-		//val = MAX(0.0, MIN(1.0, 0.5 + (val - 0.5) * 2));
 		return val * 0.5 + 0.5;
 
 	}

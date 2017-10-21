@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "City.h"
 #include "polypartition.h"
 #include "RoomBuilder.h"
@@ -101,8 +99,6 @@ static TArray<FMaterialPolygon> getSign(FVector startP, FVector endP, FRandomStr
 		signPols.Add(lineVertical);
 		signPols.Add(lineVertical2);
 
-
-		//startP +=
 	}
 
 
@@ -429,7 +425,6 @@ static void attemptPlaceAroundPolygon(FPolygon center, FString itemName, TArray<
 
 
 bool attemptPlaceOnTop(FMeshInfo toUse, TArray<FMeshInfo> &meshes, FString name, float minDist, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> map) {
-	//getPolygon(toUse.transform.Rotator(), toUse.transform.GetLocation(), , map);
 	FVector min;
 	FVector max;
 	if (map.Contains(toUse.description))

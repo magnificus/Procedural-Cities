@@ -1098,125 +1098,124 @@ struct FRoomPolygon : public FPolygon
 	}
 
 
-	static SplitStruct getSealOffLine(FRoomPolygon *r2) {
-		// get split struct for cut off room inside current room
+	//static SplitStruct getSealOffLine(FRoomPolygon *r2) {
+	//	// get split struct for cut off room inside current room
 
-		int current = 0;
-		
+	//	int current = 0;
+	//	
 
-		for (int i = 1; i < r2->points.Num(); i++) {
-			if (r2->specificEntrances.Contains(i)) {
-				FVector point = r2->specificEntrances[i];
-				FVector tan = (*r2)[i] - (*r2)[i - 1];
-				tan.Normalize();
-				point += tan * 100;
-				int split = -1;
-				FVector otherP;
-				r2->getSplitCorrespondingPoint(i, point, getNormal((*r2)[i - 1], (*r2)[i], false), split, otherP);
-				int connectionsFound = 0;
-				if (split == -1)
-					continue;
+	//	for (int i = 1; i < r2->points.Num(); i++) {
+	//		if (r2->specificEntrances.Contains(i)) {
+	//			FVector point = r2->specificEntrances[i];
+	//			FVector tan = (*r2)[i] - (*r2)[i - 1];
+	//			tan.Normalize();
+	//			point += tan * 100;
+	//			int split = -1;
+	//			FVector otherP;
+	//			r2->getSplitCorrespondingPoint(i, point, getNormal((*r2)[i - 1], (*r2)[i], false), split, otherP);
+	//			int connectionsFound = 0;
+	//			if (split == -1)
+	//				continue;
 
-				int toUse = i;
-				if (split < toUse) {
-					std::swap(toUse, split);
-					std::swap(point, otherP);
-				}
-				if (r2->specificEntrances.Contains(toUse)) {
-					if (FVector::DistSquared(r2->specificEntrances[toUse], (*r2)[toUse - 1]) > FVector::DistSquared(point, (*r2)[toUse-1])) {
-						connectionsFound++;
-					}
-				}
+	//			int toUse = i;
+	//			if (split < toUse) {
+	//				std::swap(toUse, split);
+	//				std::swap(point, otherP);
+	//			}
+	//			if (r2->specificEntrances.Contains(toUse)) {
+	//				if (FVector::DistSquared(r2->specificEntrances[toUse], (*r2)[toUse - 1]) > FVector::DistSquared(point, (*r2)[toUse-1])) {
+	//					connectionsFound++;
+	//				}
+	//			}
 
-				for (int j = toUse+1; j < split; j++) {
-					if (r2->specificEntrances.Contains(j))
-						connectionsFound++;
-				}
-				if (r2->specificEntrances.Contains(split)) {
-					if (FVector::DistSquared(r2->specificEntrances[split], (*r2)[split - 1]) < FVector::DistSquared(otherP, (*r2)[split - 1])) {
-						connectionsFound++;
-					}
-				}
-				if (connectionsFound == 0) {
-					r2->specificEntrances.Add(toUse, point);
-					UE_LOG(LogTemp, Warning, TEXT("sealing off room 1"));
-					return SplitStruct{ toUse, split, point, otherP };
-				}
+	//			for (int j = toUse+1; j < split; j++) {
+	//				if (r2->specificEntrances.Contains(j))
+	//					connectionsFound++;
+	//			}
+	//			if (r2->specificEntrances.Contains(split)) {
+	//				if (FVector::DistSquared(r2->specificEntrances[split], (*r2)[split - 1]) < FVector::DistSquared(otherP, (*r2)[split - 1])) {
+	//					connectionsFound++;
+	//				}
+	//			}
+	//			if (connectionsFound == 0) {
+	//				r2->specificEntrances.Add(toUse, point);
+	//				UE_LOG(LogTemp, Warning, TEXT("sealing off room 1"));
+	//				return SplitStruct{ toUse, split, point, otherP };
+	//			}
 
-				point -= tan * 200;
-				r2->getSplitCorrespondingPoint(i, point, getNormal((*r2)[i - 1], (*r2)[i], false), split, otherP);
-				connectionsFound = 0;
-				if (split == -1)
-					continue;
+	//			point -= tan * 200;
+	//			r2->getSplitCorrespondingPoint(i, point, getNormal((*r2)[i - 1], (*r2)[i], false), split, otherP);
+	//			connectionsFound = 0;
+	//			if (split == -1)
+	//				continue;
 
-				toUse = i;
-				if (split < toUse) {
-					std::swap(toUse, split);
-					std::swap(point, otherP);
-				}
-				if (r2->specificEntrances.Contains(toUse)) {
-					if (FVector::DistSquared(r2->specificEntrances[toUse], (*r2)[toUse - 1]) > FVector::DistSquared(point, (*r2)[toUse - 1])) {
-						connectionsFound++;
-					}
-				}
+	//			toUse = i;
+	//			if (split < toUse) {
+	//				std::swap(toUse, split);
+	//				std::swap(point, otherP);
+	//			}
+	//			if (r2->specificEntrances.Contains(toUse)) {
+	//				if (FVector::DistSquared(r2->specificEntrances[toUse], (*r2)[toUse - 1]) > FVector::DistSquared(point, (*r2)[toUse - 1])) {
+	//					connectionsFound++;
+	//				}
+	//			}
 
-				for (int j = toUse + 1; j < split; j++) {
-					if (r2->specificEntrances.Contains(j))
-						connectionsFound++;
-				}
-				if (r2->specificEntrances.Contains(split)) {
-					if (FVector::DistSquared(r2->specificEntrances[split], (*r2)[split - 1]) < FVector::DistSquared(otherP, (*r2)[split - 1])) {
-						connectionsFound++;
-					}
-				}
-				connectionsFound = r2->getTotalConnections() - connectionsFound;
-				if (connectionsFound == 0) {
-					r2->specificEntrances.Add(toUse, point);
-					UE_LOG(LogTemp, Warning, TEXT("sealing off room 2"));
-					return SplitStruct{ toUse, split, point, otherP };
-				}
+	//			for (int j = toUse + 1; j < split; j++) {
+	//				if (r2->specificEntrances.Contains(j))
+	//					connectionsFound++;
+	//			}
+	//			if (r2->specificEntrances.Contains(split)) {
+	//				if (FVector::DistSquared(r2->specificEntrances[split], (*r2)[split - 1]) < FVector::DistSquared(otherP, (*r2)[split - 1])) {
+	//					connectionsFound++;
+	//				}
+	//			}
+	//			connectionsFound = r2->getTotalConnections() - connectionsFound;
+	//			if (connectionsFound == 0) {
+	//				r2->specificEntrances.Add(toUse, point);
+	//				UE_LOG(LogTemp, Warning, TEXT("sealing off room 2"));
+	//				return SplitStruct{ toUse, split, point, otherP };
+	//			}
 
-			}
-		}
-		return SplitStruct{ -1, -1, FVector(0,0,0), FVector(0,0,0) };
+	//		}
+	//	}
+	//	return SplitStruct{ -1, -1, FVector(0,0,0), FVector(0,0,0) };
 
-	}
+	//}
 
 
+	//FRoomPolygon* splitAndCreateSingleEntranceRoom(FRoomPolygon* room) {
+	//	FRoomPolygon cp = *room;
+	//	SplitStruct res = getSealOffLine(room);
+	//	if (res.min == -1)
+	//		return nullptr;
+	//	FRoomPolygon *other = room->splitAlongSplitStruct(res, true);
+	//	if (other == nullptr)
+	//		return nullptr;
+	//	if (other->getTotalConnections() > 1) {
+	//		other->type = SubRoomType::corridor;
+	//	}
+	//	else {
+	//		other->type = room->type;
+	//		room->type = SubRoomType::corridor;
+	//	}
 
-	FRoomPolygon* splitAndCreateSingleEntranceRoom(FRoomPolygon* room) {
-		FRoomPolygon cp = *room;
-		SplitStruct res = getSealOffLine(room);
-		if (res.min == -1)
-			return nullptr;
-		FRoomPolygon *other = room->splitAlongSplitStruct(res, true);
-		if (other == nullptr)
-			return nullptr;
-		if (other->getTotalConnections() > 1) {
-			other->type = SubRoomType::corridor;
-		}
-		else {
-			other->type = room->type;
-			room->type = SubRoomType::corridor;
-		}
+	//	return other;
+	//}
 
-		return other;
-	}
+	//void postFit(TArray<FRoomPolygon*> &rooms){
 
-	void postFit(TArray<FRoomPolygon*> &rooms){
+	//	TArray<FRoomPolygon*> toAdd;
+	//	for (FRoomPolygon *room : rooms) {
+	//		if (!splitableType(room->type) && room->getTotalConnections() > 1) {
+	//			// need to modify room
+	//			FRoomPolygon* res = splitAndCreateSingleEntranceRoom(room);
+	//			if (res != nullptr)
+	//				toAdd.Add(res);
+	//		}
+	//	}
+	//	rooms.Append(toAdd);
 
-		TArray<FRoomPolygon*> toAdd;
-		for (FRoomPolygon *room : rooms) {
-			if (!splitableType(room->type) && room->getTotalConnections() > 1) {
-				// need to modify room
-				FRoomPolygon* res = splitAndCreateSingleEntranceRoom(room);
-				if (res != nullptr)
-					toAdd.Add(res);
-			}
-		}
-		rooms.Append(toAdd);
-
-	}
+	//}
 
 	FRoomPolygon* splitAlongMax(float approxRatio, bool entranceBetween, int preDeterminedNum = -1) {
 		SplitStruct p = getSplitProposal(false, approxRatio, preDeterminedNum);
@@ -1254,7 +1253,6 @@ struct FRoomPolygon : public FPolygon
 				}
 			}
 		}
-
 
 		//postFit(rooms);
 

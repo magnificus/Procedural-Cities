@@ -1,13 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "RoomBuilder.h"
-//#include "RoomBuilder.cpp"
+
 
 /**
- * 
+ * In here and in ApartmentSpecification.cpp the specifications for the different apartments are defined. Expanding the number of apartments should be easy by just following the same structure, make sure you use the new specifications when generating interiors in HouseBuilder as well.
  */
 class CITY_API ApartmentSpecification
 {

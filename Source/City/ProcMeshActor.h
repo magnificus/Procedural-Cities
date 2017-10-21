@@ -5,7 +5,6 @@
 #include "GameFramework/Actor.h"
 #include "ProceduralMeshComponent.h"
 #include "BaseLibrary.h"
-//#include "RuntimeMeshCore.h"
 #include "RuntimeMeshComponent.h"
 
 #include "ProcMeshActor.generated.h"

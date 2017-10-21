@@ -238,13 +238,13 @@ TArray<FPolygon> getBlockingEntrances(TArray<FVector> points, TSet<int32> entran
 }
 
 
-// this method takes a line from one side of a road and finds its place among other lines and polygons
-void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blocking, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen, float width, float middleOffset)
+// this method takes a line from one side of a road and finds its place among other lines already placed
+void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blocking, LinkedLine* &inLine, TArray<LinkedLine*> &lines, bool allowSplit, float extraRoadLen, float width, float middleOffset, int depth)
 {
 	float len = FVector::Dist(inLine->line.p1, inLine->line.p2);
 
 	float minRoadLen = 3000;
-	if (len < minRoadLen) {
+	if (len < minRoadLen || depth > 10) {
 		delete inLine;
 		return;
 	}
@@ -267,7 +267,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 	for (FRoadSegment f : blocking) {
 		FVector tangent = f.p2 - f.p1;
 		tangent.Normalize();
-		float toUseExtraLen = extraRoadLen; //f.roadInFront ? extraRoadLen : 0;
+		float toUseExtraLen = extraRoadLen;
 		FVector intSec = getProperIntersection(f.p1 - tangent*toUseExtraLen, f.p2 + tangent*toUseExtraLen, inLine->line.p1, inLine->line.p2);
 		if (intSec.X != 0.0f) {
 			if (!allowSplit) {
@@ -293,7 +293,7 @@ void decidePolygonFate(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blo
 				inLine->line.p2 = intSec - altTangent * middleOffset;
 			}
 
-			decidePolygonFate(segments, blocking, newP, lines, true, extraRoadLen, width, middleOffset);
+			decidePolygonFate(segments, blocking, newP, lines, true, extraRoadLen, width, middleOffset, ++depth);
 			intSec = getProperIntersection(f.p1 - tangent * toUseExtraLen, f.p2 + tangent * toUseExtraLen, inLine->line.p1, inLine->line.p2);
 			//return;
 		}
@@ -368,31 +368,21 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		FVector extraLength = tangent * extraLen;
 		FVector beginNorm = f.beginTangent;
 		beginNorm.Normalize();
-		//FVector endNorm = f.endTangent;
-		//endNorm.Normalize();
 		FVector sideOffsetBegin = FRotator(0, 90, 0).RotateVector(beginNorm)*(stdWidth/2 * f.width);
 		FVector sideOffsetEnd = FRotator(0, 90, 0).RotateVector(tangent)*(stdWidth / 2 * f.width);
 
 		LinkedLine* left = new LinkedLine();
 		left->line.p2 = f.p1 + sideOffsetBegin - extraLength;
 		left->line.p1 = f.p2 + sideOffsetEnd + extraLength;
-		decidePolygonFate(segments, blocking, left, lines, true, extraRoadLen, width, middleOffset);
+		decidePolygonFate(segments, blocking, left, lines, true, extraRoadLen, width, middleOffset, 0);
 
 
 		if (f.width != 0.0f) {
 			LinkedLine* right = new LinkedLine();
 			right->line.p1 = f.p1 - sideOffsetBegin - extraLength;
 			right->line.p2 = f.p2 - sideOffsetEnd + extraLength;
-			decidePolygonFate(segments, blocking, right, lines, true, extraRoadLen, width, middleOffset);
+			decidePolygonFate(segments, blocking, right, lines, true, extraRoadLen, width, middleOffset, 0);
 		}
-
-		//if (!f.roadInFront) {
-		//	LinkedLine* front = new LinkedLine();
-		//	front->line.p1 = f.p2 - sideOffsetBegin * 2 + extraLength/5;
-		//	front->line.p2 = f.p2 + sideOffsetEnd * 2 + extraLength/5;
-		//	front->buildLeft = true;
-		//	decidePolygonFate(segments, blocking, front, lines, true, extraRoadLen, width, middleOffset);
-		//}
 	}
 
 	TSet<LinkedLine*> remaining;
@@ -436,7 +426,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		else {
 			f.open = true;
 		}
-		//f.checkOrientation();
 		polygons.Add(f);
 
 	}
@@ -502,7 +491,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) < maxConnect) {
 			f.open = false;
 		}
-		//f.checkOrientation();
 
 		f.clipEdges(-0.96f);
 		if (f.points.Num() < 3) {
@@ -663,7 +651,7 @@ FTransform FRoomPolygon::attemptGetPosition(TArray<FPolygon> &placed, TArray<FMe
 			FRotator rot = dir.Rotation() + offsetRot;
 			FPolygon pol = getPolygon(rot, pos, string, map);
 
-			//// fit the polygon properly if possible
+			// fit the polygon properly if possible
 			FVector toMove = fitPolygonNextToPolygon(*this, pol, place, rot);
 			if (toMove.X != 0.0f) {
 				pos += toMove + 20 * dir;
