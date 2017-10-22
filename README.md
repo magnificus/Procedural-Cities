@@ -6,7 +6,11 @@ Small demo: https://www.youtube.com/watch?v=n1eZOV8r_g4
 
 This project is done as a master thesis at LTH, link to preliminary thesis is available here: https://drive.google.com/file/d/0B02EA_wWrNSmREcwd0tweldPY1k/view
 
-The source code is available to everyone under the MIT licence and you're very welcome to clone or fork the reposity, but keep in mind that it is mostly a proof-of-concept and the code is hardly optimized or refined. Most parameters are accessible from the "Spawner" blueprint-class, but some are hidden in ProcMeshActorBP, PlotBuilderBP and HouseBuilderBP.
+The source code is available to everyone under the MIT licence and you're very welcome to clone or fork the reposity, but keep in mind that it is mostly a proof-of-concept and the code is hardly optimized or refined.
+
+Most parameters are accessible from the "Spawner" blueprint-class, one is spawned in the default map, so edit the values inside of that. Some parameters are hidden in ProcMeshActorBP, PlotBuilderBP and HouseBuilderBP.
+
+Starting the project generates the city, the defalt character can either walk (with collisions enabled) or fly (with collisions disabled), switch by pressing R. 
 
 Some pictures:
 
