@@ -8,7 +8,7 @@ This project is done as a master thesis at LTH, link to preliminary thesis is av
 
 The source code is available to everyone under the MIT licence and you're very welcome to clone or fork the reposity, but keep in mind that it is mostly a proof-of-concept and the code is hardly optimized or refined.
 
-Most parameters are accessible from the "Spawner" blueprint-class, one is spawned in the default map, so edit the values inside of that. Some parameters are hidden in ProcMeshActorBP, PlotBuilderBP and HouseBuilderBP.
+Most parameters are accessible from the "Spawner" blueprint-class, one is spawned in the default map, so edit the values inside of that. Some parameters can be found in ProcMeshActorBP, PlotBuilderBP and HouseBuilderBP. The most interesting parameters to change might be length, maximum turn rate for roads and heatmap settings.
 
 Starting the project generates the city, the defalt character can either walk (with collisions enabled) or fly (with collisions disabled), switch by pressing R. 
 
