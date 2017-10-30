@@ -35,8 +35,8 @@ float NoiseSingleton::noise(float x, float y){
 		uint32 TextureWidth = MyMipMap->SizeX, TextureHeight = MyMipMap->SizeY;
 		FColor PixelColor;
 
-		uint32 intX = (FMath::FloorToInt(x * noiseScale * noiseTextureScale));
-		uint32 intY = (FMath::FloorToInt(y * noiseScale * noiseTextureScale));
+		uint32 intX = (FMath::FloorToInt((x +xOffset)* noiseScale * noiseTextureScale));
+		uint32 intY = (FMath::FloorToInt((y +yOffset) * noiseScale * noiseTextureScale));
 
 		if (intX >= TextureWidth || intY >= TextureHeight) {
 			RawImageData->Unlock();
@@ -51,17 +51,19 @@ float NoiseSingleton::noise(float x, float y){
 	}
 }
 
-FVector NoiseSingleton::getStartSuggestion() {
-	if (!useTexture)
-		return FVector(0, 0, 0);
-	else {
-		FTexture2DMipMap* MyMipMap = &image->PlatformData->Mips[0];
-		FByteBulkData* RawImageData = &MyMipMap->BulkData;
-		FColor* FormatedImageData = static_cast<FColor*>(RawImageData->Lock(LOCK_READ_ONLY));
-		uint32 TextureWidth = MyMipMap->SizeX, TextureHeight = MyMipMap->SizeY;
-		RawImageData->Unlock();
+void NoiseSingleton::initForPerlin(float inX, float inY) {
+	xOffset = inX;
+	yOffset = inY;
+}
 
-		UE_LOG(LogTemp, Warning, TEXT("start x,y: %f, %f"), (TextureWidth / (noiseTextureScale * noiseScale)), (TextureHeight / (noiseTextureScale * noiseScale)));
-		return FVector((TextureWidth / (noiseTextureScale * noiseScale)) / 2, (TextureHeight / (noiseTextureScale * noiseScale)) / 2, 0);
-	}
+void NoiseSingleton::initForImage() {
+	FTexture2DMipMap* MyMipMap = &image->PlatformData->Mips[0];
+	FByteBulkData* RawImageData = &MyMipMap->BulkData;
+	FColor* FormatedImageData = static_cast<FColor*>(RawImageData->Lock(LOCK_READ_ONLY));
+	uint32 TextureWidth = MyMipMap->SizeX, TextureHeight = MyMipMap->SizeY;
+	RawImageData->Unlock();
+
+	UE_LOG(LogTemp, Warning, TEXT("start x,y: %f, %f"), (TextureWidth / (noiseTextureScale * noiseScale)), (TextureHeight / (noiseTextureScale * noiseScale)));
+	xOffset = (TextureWidth / (noiseTextureScale * noiseScale)) / 2;
+	yOffset = (TextureHeight / (noiseTextureScale * noiseScale)) / 2;
 }

@@ -28,7 +28,8 @@ public:
 	}
 
 	float noise(float x, float y);
-	FVector getStartSuggestion();
+	void initForPerlin(float inX, float inY);
+	void initForImage();
 	bool useTexture = false;
 
 	void setUseTexture(UTexture2D* inImage, float scale) {

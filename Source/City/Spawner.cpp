@@ -347,11 +347,19 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	std::clock_t begin = clock();
 
-	if (useTexture)
-		NoiseSingleton::getInstance()->setUseTexture(noiseTexture, noiseTextureScale);
+
 
 	// set the common random stream
 	baseLibraryStream = stream;
+	NoiseSingleton::getInstance()->setNoiseScale(noiseScale);
+
+	if (useTexture) {
+		NoiseSingleton::getInstance()->setUseTexture(noiseTexture, noiseTextureScale);
+		NoiseSingleton::getInstance()->initForImage();
+	}
+	else {
+		NoiseSingleton::getInstance()->initForPerlin(baseLibraryStream.RandRange(-10000, 10000), baseLibraryStream.RandRange(-10000, 10000));
+	}
 
 	// if we have no roof it looks better with polygons on side of walls as well, otherwise the top side of walls in the buildings will just be empty
 	BaseLibrary::overrideSides = !generateRoofs;
@@ -359,9 +367,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	FVector origin;
 	TArray<FRoadSegment*> determinedSegments;
 	TArray<FRoadSegment> finishedSegments;
-	NoiseSingleton::getInstance()->setNoiseScale(noiseScale);
-	NoiseSingleton::getInstance()->xOffset = baseLibraryStream.RandRange(-10000, 10000);
-	NoiseSingleton::getInstance()->yOffset = baseLibraryStream.RandRange(-10000, 10000);
+
 
 	std::priority_queue<logicRoadSegment*, std::deque<logicRoadSegment*>, roadComparator> queue;
 
@@ -372,7 +378,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	FRoadSegment* startR = new FRoadSegment();
 	startR->beginTangent = primaryStepLength;
 
-	FVector point = NoiseSingleton::getInstance()->getStartSuggestion();
+	FVector point = FVector(0, 0, 0);
 
 	startR->p1 = point;
 
