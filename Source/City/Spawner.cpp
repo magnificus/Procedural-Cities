@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "City.h"
 #include "NoiseSingleton.h"
 #include "Spawner.h"
@@ -12,11 +10,6 @@ ASpawner::ASpawner()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	PathSpline = CreateDefaultSubobject<USplineMeshComponent>(TEXT("Path"));
-
-	FString pathName = "StaticMesh'/Game/road.road'";
-	ConstructorHelpers::FObjectFinder<UStaticMesh> buildingMesh(*pathName);
-	meshRoad = buildingMesh.Object;
 }
 
 
@@ -164,19 +157,6 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 
 		//if (testCollision(tangents, vert1, vert2, collisionLeniency)) {
 		FVector newE = intersection(current->segment->p1, current->segment->p2, f->p1, f->p2);
-		//if (newE.X == 0) {
-		//	// check if they collide into each other from the back
-		//	FVector otherTangent = f->p2 - f->p1;
-		//	otherTangent = FRotator(0, 90, 0).RotateVector(otherTangent);
-		//	otherTangent.Normalize();
-		//	newE = intersection(f->p1 + otherTangent * standardWidth/2, f->p1 - otherTangent * standardWidth/2, current->segment->p1, current->segment->p2);
-		//	if (newE.X == 0.0f) {
-		//		newE = intersection(f->p2 + otherTangent * standardWidth/2, f->p2 - otherTangent * standardWidth/2, current->segment->p1, current->segment->p2);
-
-		//	}
-		//	if (newE.X == 0.0f)
-		//		continue;
-		//}
 		if (newE.X != 0) {
 			current->time = 100000;
 			collideInto(current->segment, f, newE);
@@ -197,7 +177,7 @@ bool ASpawner::placementCheck(TArray<FRoadSegment*> &segments, logicRoadSegment*
 float getValueOfRotation(FVector testPoint, TArray<logicRoadSegment*> &others, float maxDist, float detriment) {
 	float val = NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y);//noise(noiseScale, testPoint.X, testPoint.Y);
 	for (logicRoadSegment* t : others) {
-		//if (FVector::Dist(t->segment->getMiddle(), testPoint) < maxDist)
+		if (FVector::Dist(t->segment->getMiddle(), testPoint) < maxDist)
 			val -= std::max(0.0f, detriment * (maxDist - FVector::Dist(t->segment->getMiddle(), testPoint))/maxDist);
 	}
 	return val;
@@ -351,7 +331,7 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 
 	// set the common random stream
 	baseLibraryStream = stream;
-	NoiseSingleton::getInstance()->setNoiseScale(noiseScale);
+		NoiseSingleton::getInstance()->setNoiseScale(noiseScale);
 
 	if (useTexture) {
 		NoiseSingleton::getInstance()->setUseTexture(noiseTexture, noiseTextureScale);
@@ -376,7 +356,6 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	logicRoadSegment* start = new logicRoadSegment();
 	start->time = -10000;
 	FRoadSegment* startR = new FRoadSegment();
-	startR->beginTangent = primaryStepLength;
 
 	FVector point = FVector(0, 0, 0);
 
@@ -397,7 +376,8 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	startR->width = 4.0f;
 	startR->type = RoadType::main;
 	startR->endTangent = startR->p2 - startR->p1;
-
+	startR->endTangent.Normalize();
+	startR->beginTangent = startR->endTangent;
 	start->rotation = bestRot;
 	start->roadLength = 1;
 	addVertices(startR);
@@ -418,7 +398,6 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 				current->previous->segment->roadInFront = true;
 			//addRoadToMap(segmentsOrganized, current->segment, primaryStepLength.Size() / 2);
 
-			//UE_LOG(LogTemp, Warning, TEXT("CURRENT SEGMENT PRIORITY %f"), current->time);
 			addExtensions(queue, current, allSegments);
 		}
 	}
@@ -533,6 +512,27 @@ TArray<FPolygon> ASpawner::roadsToPolygons(TArray<FRoadSegment> segments)
 	}
 	return polygons;
 }
+
+TArray<FMaterialPolygon> ASpawner::roadPolygonsToMaterialPolygons(TArray<FPolygon> pols)
+{
+	TArray<FMaterialPolygon> polygons;
+	for (int i = 0; i < pols.Num(); i++) {
+		FPolygon p = pols[i];
+		FMaterialPolygon fp;
+		fp.type = PolygonType::asphalt;
+		fp.points = p.points;
+		fp.offset(FVector(0, 0, 10));
+		polygons.Add(fp);
+	}
+	//for (FPolygon p : pols) {
+
+	//}
+	return polygons;
+}
+
+
+
+
 
 
 TArray<FTransform> ASpawner::visualizeNoise(int numSide, float noiseMultiplier, float posMultiplier) {

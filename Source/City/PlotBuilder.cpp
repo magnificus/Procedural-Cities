@@ -44,9 +44,6 @@ FLine getCrossingLine(float dist, FPolygon road) {
 	tanL.Normalize();
 	FVector startP = road.points[0] + totLen*dist*tanL;
 	FVector endP = NearestPointOnLine(road.points[2], road.points[3] - road.points[2], startP);
-	//FVector endP = intersection(startP, startP + FRotator(0, 270, 0).RotateVector(tanL) * 10000, road.points[0], road.points[3]);
-	//if (endP.X == 0.0f)
-	//	return{ FVector(0,0,0),FVector(0,0,0)};
 	return{ startP, endP };
 }
 
@@ -248,6 +245,10 @@ FPlotInfo APlotBuilder::generateHousePolygons(FPlotPolygon p, int minFloors, int
 					FSimplePlot fs = FSimplePlot(SimplePlotType::green, p, simplePlotGroundOffset);
 					fs.decorate(instancedMap);
 					info.leftovers.Add(fs);
+				}
+				// too big to even be reasonable to make a simple plot, ignore it
+				else if (p.getArea() > currMaxArea * 30) {
+					// nothing
 				}
 				else {
 				TArray<FHousePolygon> refinedPolygons = original.refine(currMaxArea, 0, 0);

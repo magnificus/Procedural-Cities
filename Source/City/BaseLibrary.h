@@ -60,6 +60,7 @@ enum class RoomType : uint8
 	restaurant UMETA(DisplayName = "Restaurant")
 };
 
+
 UENUM(BlueprintType)
 enum class PolygonType : uint8
 {

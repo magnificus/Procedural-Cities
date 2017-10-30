@@ -1,8 +1,6 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-
-#include "Components/SplineMeshComponent.h"
 //#include "BaseLibrary.h"
 #include "PlotBuilder.h"
 #include "Spawner.generated.h"
@@ -82,10 +80,6 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = road, meta = (AllowPrivateAccess = "true"))
 		float maxSecondaryRoadLength;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = mesh, meta = (AllowPrivateAccess = "true"))
-		UStaticMesh* meshRoad;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = mesh, meta = (AllowPrivateAccess = "true"))
-		UStaticMesh* meshPolygon;
 
 	//// maximum size of house before being split into new houses
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = house, meta = (AllowPrivateAccess = "true"))
@@ -114,11 +108,6 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = meshes, meta = (AllowPrivateAccess = "true"))
 		bool generateRoofs = true;
 
-
-	UPROPERTY(EditAnywhere, Instanced, Category = "Path spline")
-		USplineMeshComponent* PathSpline;
-
-	TArray<USplineMeshComponent*> splineComponents;
 	
 	// whether to use provided texture as heat map or not
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = noise, meta = (AllowPrivateAccess = "true"))
@@ -169,6 +158,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Data")
 		TArray<FPolygon> roadsToPolygons(TArray<FRoadSegment> segments);
+
+	UFUNCTION(BlueprintCallable, Category = "Data")
+		TArray<FMaterialPolygon> roadPolygonsToMaterialPolygons(TArray<FPolygon> pols);
 
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
