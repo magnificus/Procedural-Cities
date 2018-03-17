@@ -4,7 +4,7 @@ This project aims to provide a framework and a solid implementation of different
 
 Small demo: https://www.youtube.com/watch?v=n1eZOV8r_g4
 
-This project is done as a master thesis at LTH, link to preliminary thesis is available here: https://drive.google.com/file/d/0B02EA_wWrNSmREcwd0tweldPY1k/view
+This project was done as a master thesis at LTH, link to thesis is available here: http://lup.lub.lu.se/luur/download?func=downloadFile&recordOId=8929185&fileOId=8929189
 
 The source code is available to everyone under the MIT licence and you're very welcome to clone or fork the reposity, but keep in mind that it is mostly a proof-of-concept and the code is hardly optimized or refined.
 
