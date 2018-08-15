@@ -724,7 +724,7 @@ void AHouseBuilder::buildHouseFromInfo(FHouseInfo res) {
 	res.roomInfo.pols.Append(BaseLibrary::getSimplePlotPolygons(res.remainingPlots));
 
 	currentIndex = 0;
-	procMeshActor->buildPolygons(res.roomInfo.pols, FVector(0, 0, 0));
+	procMeshActor->buildMaterialPolygons(res.roomInfo.pols, FVector(0, 0, 0));
 	meshesToPlace = res.roomInfo.meshes;
 	isWorking = true;
 
@@ -951,7 +951,6 @@ void AHouseBuilder::Tick(float DeltaTime)
 	if (workerWantsToWork && workersWorking.load(std::memory_order_relaxed) < maxThreads) {
 		workerWantsToWork = false;
 		workersWorking++;
-		//delete worker;
 		worker = new ThreadedWorker(this);
 		workerWorking = true;
 	}

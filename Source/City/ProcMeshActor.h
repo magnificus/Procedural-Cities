@@ -3,9 +3,8 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "ProceduralMeshComponent.h"
 #include "BaseLibrary.h"
-#include "RuntimeMeshComponent.h"
+#include "RuntimeMeshComponent/Public/RuntimeMeshComponent.h"
 
 #include "ProcMeshActor.generated.h"
 
@@ -24,7 +23,7 @@ public:
 	~AProcMeshActor();
 
 	UFUNCTION(BlueprintCallable, Category = "Generation")
-	bool buildPolygons(TArray<FMaterialPolygon> pols, FVector offset);
+	bool buildMaterialPolygons(TArray<FMaterialPolygon> pols, FVector offset);
 
 	bool clearMeshes(bool fullReplacement);
 
@@ -76,7 +75,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	bool AProcMeshActor::buildPolygons(TArray<FPolygon> &pols, FVector offset, URuntimeMeshComponent* mesh, UMaterialInterface *mat);
+	bool buildPolygons(TArray<FPolygon> &pols, FVector offset, URuntimeMeshComponent* mesh, UMaterialInterface *mat);
 
 
 	bool wantsToWork = false;

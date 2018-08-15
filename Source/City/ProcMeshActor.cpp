@@ -3,7 +3,6 @@
 #include "City.h"
 #include "ProcMeshActor.h"
 #include "polypartition.h"
-#include "RuntimeMeshAsync.h"
 
 // Sets default values
 
@@ -136,7 +135,7 @@ bool AProcMeshActor::clearMeshes(bool fullReplacement) {
 
 
 // divides the polygon into the different materials used by the house
-bool AProcMeshActor::buildPolygons(TArray<FMaterialPolygon> pols, FVector offset) {
+bool AProcMeshActor::buildMaterialPolygons(TArray<FMaterialPolygon> pols, FVector offset) {
 	if (isWorking) {
 		clearMeshes(true);
 		isWorking = false;

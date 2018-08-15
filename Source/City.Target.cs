@@ -5,21 +5,10 @@ using System.Collections.Generic;
 
 public class CityTarget : TargetRules
 {
-	public CityTarget(TargetInfo Target)
+	public CityTarget(TargetInfo Target) : base (Target)
 	{
 		Type = TargetType.Game;
-	}
 
-	//
-	// TargetRules interface.
-	//
-
-	public override void SetupBinaries(
-		TargetInfo Target,
-		ref List<UEBuildBinaryConfiguration> OutBuildBinaryConfigurations,
-		ref List<string> OutExtraModuleNames
-		)
-	{
-		OutExtraModuleNames.Add("City");
+        ExtraModuleNames.Add("City");
 	}
 }

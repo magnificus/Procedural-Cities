@@ -11,7 +11,7 @@ class CITY_API ApartmentSpecification
 {
 public:
 	ApartmentSpecification();
-	~ApartmentSpecification();
+	virtual ~ApartmentSpecification();
 	virtual RoomBlueprint getBlueprint(float areaScale) = 0;
 	virtual FRoomInfo buildApartment(FRoomPolygon *f, int floor, float height, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony, bool shellOnly, FRandomStream stream);
 	virtual void intermediateInteractWithRooms(TArray<FRoomPolygon*> &roomPols, FRoomInfo &r, TMap<FString, UHierarchicalInstancedStaticMeshComponent*> &map, bool potentialBalcony) {};

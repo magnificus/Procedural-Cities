@@ -4,8 +4,8 @@ using UnrealBuildTool;
 
 public class City : ModuleRules
 {
-	public City(TargetInfo Target)
+	public City(ReadOnlyTargetRules Target) : base (Target)
 	{
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay","ProceduralMeshComponent", "RuntimeMeshComponent", "ShaderCore", "RenderCore", "RHI"});
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "RuntimeMeshComponent", "ShaderCore", "RenderCore", "RHI"});
     }
 }
