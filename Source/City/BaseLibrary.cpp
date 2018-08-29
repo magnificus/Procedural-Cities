@@ -492,7 +492,7 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 			f.open = false;
 		}
 
-		//f.clipEdges(-0.96f);
+		f.clipEdges(-0.96f);
 		if (f.points.Num() < 3) {
 			polygons.RemoveAt(i);
 			i--;
