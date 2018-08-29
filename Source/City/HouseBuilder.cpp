@@ -961,8 +961,8 @@ void AHouseBuilder::Tick(float DeltaTime)
 		worker = nullptr;
 		workerWorking = false;
 		workersWorking--;
-		if (!isWorking)
-			SetActorTickEnabled(false);
+		//if (!isWorking)
+			//SetActorTickEnabled(false);
 
 	}
 
@@ -974,8 +974,8 @@ void AHouseBuilder::Tick(float DeltaTime)
 		}
 		if (nextStop == meshesToPlace.Num()) {
 			isWorking = false;
-			if (!workerWorking)
-				SetActorTickEnabled(false);
+			//if (!workerWorking)
+			//	SetActorTickEnabled(false);
 
 		}
 	}
