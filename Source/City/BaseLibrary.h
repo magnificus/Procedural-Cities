@@ -16,7 +16,7 @@
 #include "BaseLibrary.generated.h"
 
 /**
- * 
+ *
  */
 struct SplitStruct {
 	int min;
@@ -132,9 +132,9 @@ struct FPolygon
 		float tot = 0;
 		FVector first = points[0];
 		for (int i = 1; i < points.Num() + 1; i++) {
-			tot += (points[i-1].X*0.01 * points[i%points.Num()].Y*0.01 - points[i%points.Num()].X*0.01 * points[i-1].Y*0.01);
+			tot += (points[i - 1].X*0.01 * points[i%points.Num()].Y*0.01 - points[i%points.Num()].X*0.01 * points[i - 1].Y*0.01);
 		}
-			//UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %f"), tot);
+		//UE_LOG(LogTemp, Warning, TEXT("getisclockwise res : %f"), tot);
 		return tot > 0;
 	}
 
@@ -202,51 +202,55 @@ struct FPolygon
 
 	// removes corners that stick out in an ugly way
 	void clipEdges(float maxDot) {
-		bool changed = true;
-		while (changed) {
-			changed = decreaseEdges();
-			for (int i = 1; i < points.Num(); i++) {
-				FVector tan1 = points[i] - points[i - 1];
-				FVector tan2 = points[(i + 1)%points.Num()] - points[i];
-				tan1.Normalize();
-				tan2.Normalize();
-				float dist = FVector::DotProduct(tan1, tan2);
-				if (dist < maxDot) {
-					points.RemoveAt((i + 1)%points.Num());
-					//i--;
-					changed = true;
-					break;
-				}
-
+		//bool changed = true;
+		//while (decreaseEdges()) {
+		//	continue;
+		//}
+			//changed = decreaseEdges();
+			//if (changed)
+			//	continue;
+		for (int i = 1; i < points.Num(); i++) {
+			FVector tan1 = points[i] - points[i - 1];
+			FVector tan2 = points[(i + 1) % points.Num()] - points[i];
+			tan1.Normalize();
+			tan2.Normalize();
+			float dist = FVector::DotProduct(tan1, tan2);
+			if (dist < maxDot && points.Num() > 3) {
+				points.RemoveAt((i + 1) % points.Num());
+				//changed = true;
+				i--;
+				//break;
 			}
+
 		}
+		//}
 
 
 		// untangle
 
-		for (int i = 1; i < points.Num() - 1; i++) {
-			FVector tan1 = points[i] - points[i - 1];
-			tan1.Normalize();
-			for (int j = i + 2; j < points.Num() + 1; j++) {
-				FVector tan2 = points[j%points.Num()] - points[j-1];
-				tan2.Normalize();
-				FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j%points.Num()] - tan2*100);
-				if (res.X != 0.0f) {
-					TArray<FVector> newPoints;
-					for (int k = 0; k < i; k++) {
-						newPoints.Add(points[k]);
-					}
-					newPoints.Add(res);
-					for (int k = j; k < points.Num(); k++) {
-						newPoints.Add(points[k]);
-					}
-					points = newPoints;
-					i = 0;
-					break;
+		//for (int i = 1; i < points.Num() - 1; i++) {
+		//	FVector tan1 = points[i] - points[i - 1];
+		//	tan1.Normalize();
+		//	for (int j = i + 2; j < points.Num() + 1; j++) {
+		//		FVector tan2 = points[j%points.Num()] - points[j - 1];
+		//		tan2.Normalize();
+		//		FVector res = intersection(points[i - 1], points[i], points[j - 1], points[j%points.Num()] - tan2 * 100);
+		//		if (res.X != 0.0f) {
+		//			TArray<FVector> newPoints;
+		//			for (int k = 0; k < i; k++) {
+		//				newPoints.Add(points[k]);
+		//			}
+		//			newPoints.Add(res);
+		//			for (int k = j; k < points.Num(); k++) {
+		//				newPoints.Add(points[k]);
+		//			}
+		//			points = newPoints;
+		//			i = 0;
+		//			break;
 
-				}
-			}
-		}
+		//		}
+		//	}
+		//}
 	}
 
 
@@ -255,10 +259,10 @@ struct FPolygon
 
 	// this method merges polygon sides when possible, and combines points
 	bool decreaseEdges() {
-		float distDiffAllowed = 50000;
+		float distDiffAllowed = 50;
 		bool hasModified = false;
 		for (int i = 1; i < points.Num() + 1; i++) {
-			if (FVector::DistSquared(points[i - 1], points[i%points.Num()]) < distDiffAllowed) {
+			if (FVector::Dist(points[i - 1], points[i%points.Num()]) < distDiffAllowed) {
 				points.RemoveAt(i%points.Num());
 				hasModified = true;
 				i--;
@@ -270,7 +274,7 @@ struct FPolygon
 
 	// assumes at least 3 points in polygon
 	FVector getDirection() {
-		FVector res = normal.Size() < 1.0f ? FVector::CrossProduct(points[1] - points[0], points[points.Num()-1] - points[0]) : normal;
+		FVector res = normal.Size() < 1.0f ? FVector::CrossProduct(points[1] - points[0], points[points.Num() - 1] - points[0]) : normal;
 		res.Normalize();
 		return res;
 	}
@@ -284,7 +288,7 @@ struct FPolygon
 	*/
 	void getSplitCorrespondingPoint(int begin, FVector point, FVector inNormal, int &split, FVector &p2) {
 		float closest = 10000000.0f;
-		for (int i = 1; i < points.Num()+1; i++) {
+		for (int i = 1; i < points.Num() + 1; i++) {
 			if (i == begin) {
 				continue;
 			}
@@ -362,7 +366,7 @@ struct FPolygon
 		int prev = place == 0 ? points.Num() - 1 : place - 1;
 
 		FVector dir1 = getNormal(points[place], points[prev], left);
-		FVector dir2 = getNormal(points[(place + 1) % points.Num()], points[place] , left);
+		FVector dir2 = getNormal(points[(place + 1) % points.Num()], points[place], left);
 
 		dir1.Normalize();
 		dir2.Normalize();
@@ -410,7 +414,7 @@ struct FMeshInfo {
 	FMeshInfo() :
 		description(""),
 		transform(FTransform()) {}
-		FMeshInfo(const FString &description, const FTransform &transform) :
+	FMeshInfo(const FString &description, const FTransform &transform) :
 		description(description),
 		transform(transform) {}
 
@@ -513,13 +517,13 @@ struct FTextStruct {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FTransform pos;
+		FTransform pos;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString string;
+		FString string;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString font;
+		FString font;
 
 };
 
@@ -528,10 +532,10 @@ struct FHouseInfo {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FRoomInfo roomInfo;
+		FRoomInfo roomInfo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FSimplePlot> remainingPlots;
+		TArray<FSimplePlot> remainingPlots;
 
 
 };
@@ -616,7 +620,7 @@ enum class SubRoomType : uint8
 
 // this tells us whether the room type is allowed to branch into several rooms, a bathroom should for example not lead into several other rooms, whereas a living room might
 static bool splitableType(SubRoomType type) {
-	switch (type){
+	switch (type) {
 	case SubRoomType::meeting: return false;
 	case SubRoomType::work: return true;
 	case SubRoomType::bath: return false;
@@ -708,21 +712,21 @@ struct FRoomPolygon : public FPolygon
 			if (dist < 100) {
 				FVector tangent = points[num%points.Num()] - points[num - 1];
 				tangent.Normalize();
-				inPoint = preferEntrancesInThis^!first ? point - tangent * 100 : point + tangent * 100;
+				inPoint = preferEntrancesInThis ^ !first ? point - tangent * 100 : point + tangent * 100;
 				// our child is now free from our master, but we're still slaves
 			}
-				// new cut doesn't interfere overlap with the entrance, now to see who gets it
-				if (first && isOnLine(point, points[num - 1], inPoint) || !first && !isOnLine(point, points[num - 1], inPoint)) {
-					// i got it, no change
-				}
-				else {
-					// my child got it
-					childPassive.Add(p1);
-					p1->activeConnections.Remove(this);
-					p1->activeConnections.Add(newP, loc);
-					toRemove.Add(p1);
-					newP->toIgnore.Add(passiveNum);
-				}
+			// new cut doesn't interfere overlap with the entrance, now to see who gets it
+			if (first && isOnLine(point, points[num - 1], inPoint) || !first && !isOnLine(point, points[num - 1], inPoint)) {
+				// i got it, no change
+			}
+			else {
+				// my child got it
+				childPassive.Add(p1);
+				p1->activeConnections.Remove(this);
+				p1->activeConnections.Add(newP, loc);
+				toRemove.Add(p1);
+				newP->toIgnore.Add(passiveNum);
+			}
 		}
 		if (childPassive.Num() > 0)
 			newP->passiveConnections.Add(passiveNum, childPassive);
@@ -936,7 +940,7 @@ struct FRoomPolygon : public FPolygon
 		TSet<int32> newList;
 		TMap<int32, FVector> newSpecificList;
 		for (int32 i : entrances) {
-			if (i >= p.max){
+			if (i >= p.max) {
 				newList.Add(i - (p.max - p.min) + 2);
 				if (specificEntrances.Contains(i))
 					newSpecificList.Add(i - (p.max - p.min) + 2, specificEntrances[i]);
@@ -953,7 +957,7 @@ struct FRoomPolygon : public FPolygon
 		newList.Empty();
 		offsetIntSetFromIndex(&windows, p.max, -(p.max - p.min) + 2);
 		offsetIntSetFromIndex(&exteriorWalls, p.max, -(p.max - p.min) + 2);
-		offsetIntSetFromIndex(&toIgnore, p.max, - (p.max - p.min) + 2);
+		offsetIntSetFromIndex(&toIgnore, p.max, -(p.max - p.min) + 2);
 
 
 		TMap<FRoomPolygon*, int32> newActive;
@@ -970,7 +974,7 @@ struct FRoomPolygon : public FPolygon
 		TMap<int32, TSet<FRoomPolygon*> > newPassive;
 		for (auto &pair : passiveConnections) {
 			if (pair.Key >= p.max) {
-				newPassive.Add(pair.Key - (p.max - p.min) + 2, pair.Value );
+				newPassive.Add(pair.Key - (p.max - p.min) + 2, pair.Value);
 			}
 			else {
 				newPassive.Add(pair.Key, pair.Value);
@@ -981,9 +985,9 @@ struct FRoomPolygon : public FPolygon
 		newP->points.Add(p.p2);
 
 		// dont place the wall twice
-		toIgnore.Add(p.min+1);
+		toIgnore.Add(p.min + 1);
 		// entrance to next room
-		if (entranceBetween){
+		if (entranceBetween) {
 			TSet<FRoomPolygon*> passive = newP->passiveConnections.Contains(newP->points.Num()) ? newP->passiveConnections[newP->points.Num()] : TSet<FRoomPolygon*>();
 			passive.Add(newP);
 			passiveConnections.Add(p.min + 1, passive);
@@ -1047,7 +1051,7 @@ struct FRoomPolygon : public FPolygon
 					float scale = 0.0f;
 					for (int i = 0; i < remaining.Num(); i++) {
 						target = remaining[i];
-						
+
 						float newScale = spec.minArea / target->getArea();
 						if (newScale < 1.0) {
 							targetNum = i;
@@ -1095,7 +1099,7 @@ struct FRoomPolygon : public FPolygon
 		for (auto &list : passiveConnections) {
 			totPassive += list.Value.Num();
 		}
-		return entrances.Num()	+ totPassive;
+		return entrances.Num() + totPassive;
 	}
 
 
@@ -1274,17 +1278,17 @@ struct FHousePolygon : public FMetaPolygon {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector housePosition;
+		FVector housePosition;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float height;
+		float height;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float population;
+		float population;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	RoomType type;
+		RoomType type;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	SimplePlotType simplePlotType;
+		SimplePlotType simplePlotType;
 
 	bool canBeModified = true;
 
@@ -1414,7 +1418,7 @@ struct FHousePolygon : public FMetaPolygon {
 
 		newP.points.Add(p.p2);
 		//newP.points.Add(p.p1);
-		
+
 		points.RemoveAt(p.min, p.max - p.min);
 		points.EmplaceAt(p.min, p.p1);
 		points.EmplaceAt(p.min + 1, p.p2);
@@ -1458,7 +1462,7 @@ struct FHousePolygon : public FMetaPolygon {
 		if (!open) {
 			toReturn.Append(recursiveSplit(maxArea, minArea, 0, spaceBetween));
 		}
-		else 
+		else
 			toReturn.Add(*this);
 		return toReturn;
 	}
@@ -1470,9 +1474,9 @@ struct FLine {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector p1;
+		FVector p1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector p2;
+		FVector p2;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float width;
 
@@ -1534,7 +1538,7 @@ struct FCityDecoration {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FMaterialPolygon> polygons;
+		TArray<FMaterialPolygon> polygons;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<FMeshInfo> meshes;
 
@@ -1545,21 +1549,21 @@ struct FPlotInfo {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FHousePolygon> houses;
+		TArray<FHousePolygon> houses;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FSimplePlot> leftovers;
+		TArray<FSimplePlot> leftovers;
 };
 
 USTRUCT(BlueprintType)
-struct FPlotPolygon : public FMetaPolygon{
+struct FPlotPolygon : public FMetaPolygon {
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float population;
+		float population;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	RoomType type;
+		RoomType type;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	SimplePlotType simplePlotType;
+		SimplePlotType simplePlotType;
 
 };
 
@@ -1576,7 +1580,7 @@ public:
 	~BaseLibrary();
 	static bool overrideSides;
 	UFUNCTION(BlueprintCallable, Category = conversion)
-	static TArray<FMaterialPolygon> getSimplePlotPolygons(TArray<FSimplePlot> plots);
+		static TArray<FMaterialPolygon> getSimplePlotPolygons(TArray<FSimplePlot> plots);
 	static TArray<FMetaPolygon> getSurroundingPolygons(TArray<FRoadSegment> &segments, TArray<FRoadSegment> &blocking, float stdWidth, float extraLen, float extraRoadLen, float width, float middleOffset);
 
 

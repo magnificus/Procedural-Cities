@@ -485,9 +485,6 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 	// remove redundant points, zip together open polygons where end and beginning are really close together, and check orientation, and remove very pointy edges
 	for (int i = 0; i < polygons.Num(); i++) {
 		FMetaPolygon &f = polygons[i];
-		//while (f.points.Num() > 3 && FVector::Dist(f.points[f.points.Num() - 2], f.points[f.points.Num() - 1]) < 10.0f) {
-		//	f.points.RemoveAt(f.points.Num() - 1);
-		//}
 		if (f.open && FVector::Dist(f.points[0], f.points[f.points.Num() - 1]) < maxConnect) {
 			f.open = false;
 		}
