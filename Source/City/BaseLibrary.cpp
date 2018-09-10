@@ -396,10 +396,10 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		UE_LOG(LogTemp, Log, TEXT("remaining: %i"), remaining.Num());
 		auto it = remaining.CreateIterator();
 		LinkedLine* curr = *it;
-		taken.Add(curr);
+		taken.Emplace(curr);
 		while (curr->parent && remaining.Contains(curr->parent) && !taken.Contains(curr->parent)) {
 			curr = curr->parent;
-			taken.Add(curr);
+			taken.Emplace(curr);
 		}
 		// now curr is top dog
 		FMetaPolygon f;
@@ -407,13 +407,13 @@ TArray<FMetaPolygon> BaseLibrary::getSurroundingPolygons(TArray<FRoadSegment> &s
 		f.points.Add(curr->point.X != 0.0f ? curr->point: curr->line.p2);
 
 		taken.Empty();
-		taken.Add(curr);
+		taken.Emplace(curr);
 		remaining.Remove(curr);
 		while (curr->child && !taken.Contains(curr->child)) {
 			curr = curr->child;
 			f.points.Add(curr->point.X != 0.0f ? curr->point : curr->line.p2);
 			remaining.Remove(curr);
-			taken.Add(curr);
+			taken.Emplace(curr);
 		}
 		if (curr->child && taken.Contains(curr->child)) {
 			// closed polygon since last point continues into first

@@ -203,9 +203,9 @@ struct FPolygon
 	// removes corners that stick out in an ugly way
 	void clipEdges(float maxDot) {
 		//bool changed = true;
-		//while (decreaseEdges()) {
-		//	continue;
-		//}
+		while (decreaseEdges()) {
+			continue;
+		}
 			//changed = decreaseEdges();
 			//if (changed)
 			//	continue;
@@ -260,16 +260,14 @@ struct FPolygon
 	// this method merges polygon sides when possible, and combines points
 	bool decreaseEdges() {
 		float distDiffAllowed = 50;
-		bool hasModified = false;
 		for (int i = 1; i < points.Num() + 1; i++) {
 			if (FVector::Dist(points[i - 1], points[i%points.Num()]) < distDiffAllowed) {
 				points.RemoveAt(i%points.Num());
-				hasModified = true;
-				i--;
+				return true;
 			}
 		}
 
-		return hasModified;
+		return false;
 	}
 
 	// assumes at least 3 points in polygon
