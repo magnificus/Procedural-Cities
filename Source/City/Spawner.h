@@ -135,6 +135,10 @@ class CITY_API ASpawner : public AActor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = performance, meta = (AllowPrivateAccess = "true"))
 		GenerationMode generationMode;
 
+	// Dont generate building interiors, may require generation mode to be "complete generation"
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = performance, meta = (AllowPrivateAccess = "true"))
+		bool shellOnly = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Generation, meta = (AllowPrivateAccess = "true"))
 		FRandomStream stream;
 
