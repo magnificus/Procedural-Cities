@@ -259,7 +259,7 @@ struct FPolygon
 
 	// this method merges polygon sides when possible, and combines points
 	bool decreaseEdges() {
-		float distDiffAllowed = 50;
+		float distDiffAllowed = 10;
 		for (int i = 1; i < points.Num() + 1; i++) {
 			if (FVector::Dist(points[i - 1], points[i%points.Num()]) < distDiffAllowed) {
 				points.RemoveAt(i%points.Num());
@@ -535,13 +535,7 @@ struct FHouseInfo {
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<FSimplePlot> remainingPlots;
 
-
 };
-
-
-
-
-
 
 
 static TArray<int32> getIntList(int32 min, int32 max) {
@@ -567,9 +561,6 @@ static void removeAllButOne(TSet<int32> &entries) {
 		entries.Remove(i);
 	}
 }
-
-
-
 
 
 USTRUCT(BlueprintType)
