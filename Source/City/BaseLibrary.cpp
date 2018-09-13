@@ -204,10 +204,12 @@ FVector getProperIntersection(FVector p1, FVector p2, FVector p3, FVector p4) {
 	if (res.X == 0.0f) {
 		res = intersection(p1 + otherTangent * backLen, p1 - otherTangent * backLen, p3, p4);
 		if (res.X == 0.0f) {
-			FVector otherTangent2 = FRotator(0, 90, 0).RotateVector(otherTangent2);
-			res = intersection(p1, p2, p3 - otherTangent2*backLen, p3 + otherTangent2*backLen);
+			// FVector otherTangent2 = FRotator(0, 90, 0).RotateVector(otherTangent2); // otherTangent2 should not be used in its own construction
+			// probably was been pulling random data, causing "heisenbug", with random polygons, and very, very long loops+recursion
+
+			// res = intersection(p1, p2, p3 - otherTangent2*backLen, p3 + otherTangent2*backLen); // disable buggy intersection tests for now
 			if (res.X == 0.0f) {
-				res = intersection(p1, p2, p4 - otherTangent2*backLen, p4 + otherTangent2*backLen);
+				// res = intersection(p1, p2, p4 - otherTangent2*backLen, p4 + otherTangent2*backLen);
 				if (res.X == 0.0f) {
 					res = intersection(p1, p2, p3, p4);
 				}
