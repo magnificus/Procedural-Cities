@@ -367,8 +367,9 @@ TArray<FRoadSegment> ASpawner::determineRoadSegments()
 	FRotator bestRot;
 	for (int i = 0; i < 360; i++) {
 		FVector testPoint = point + FRotator(0, i, 0).RotateVector(primaryStepLength);
-		if (NoiseSingleton::getInstance()->noise(point.X, point.Y) > bestVal) {
-			bestVal = NoiseSingleton::getInstance()->noise(point.X, point.Y);
+		float testVal = NoiseSingleton::getInstance()->noise(testPoint.X, testPoint.Y);
+		if (testVal > bestVal) {
+			bestVal = testVal;
 			bestRot = FRotator(0, i, 0);
 		}
 	}
