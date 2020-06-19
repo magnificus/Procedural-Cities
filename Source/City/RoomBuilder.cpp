@@ -1,3 +1,4 @@
+#include <cmath>
 #include "City.h"
 #include "polypartition.h"
 #include "RoomBuilder.h"
